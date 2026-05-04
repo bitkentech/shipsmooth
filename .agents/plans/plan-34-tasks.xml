@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan-tasks>
+  <plan>34</plan>
+  <plan-version>plan-34-v1</plan-version>
+  <metadata>
+    <backlog-issue></backlog-issue>
+    <status>active</status>
+    <created>2026-05-04</created>
+  </metadata>
+
+  <tasks>
+  <task>
+    <id>1</id>
+    <risk>medium</risk>
+    <status>pending</status>
+    <name>Lift ledger substrate into plugin-tasks-java</name>
+    <commit></commit>
+    <created-from>plan-34-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  <task>
+    <id>2</id>
+    <risk>medium</risk>
+    <status>pending</status>
+    <name>Wire ledger writes into mutating commands</name>
+    <commit></commit>
+    <created-from>plan-34-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  <task>
+    <id>3</id>
+    <risk>low</risk>
+    <status>pending</status>
+    <name>Bootstrap .agents layout and .gitignore on init</name>
+    <commit></commit>
+    <created-from>plan-34-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  <task>
+    <id>4</id>
+    <risk>low</risk>
+    <status>pending</status>
+    <name>Add `shipsmooth-tasks ledger` subcommand</name>
+    <commit></commit>
+    <created-from>plan-34-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  <task>
+    <id>5</id>
+    <risk>low</risk>
+    <status>pending</status>
+    <name>Update existing command/integration tests</name>
+    <commit></commit>
+    <created-from>plan-34-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  <task>
+    <id>6</id>
+    <risk>low</risk>
+    <status>pending</status>
+    <name>Document ledger in SKILL</name>
+    <commit></commit>
+    <created-from>plan-34-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  </tasks>
+
+  <project-updates>
+    <update>
+      <timestamp>2026-05-04T06:58:38.435Z</timestamp>
+      <message>Plan initialised.</message>
+      <blocked>false</blocked>
+    </update>
+  </project-updates>
+</plan-tasks>
