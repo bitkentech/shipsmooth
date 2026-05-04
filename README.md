@@ -48,6 +48,32 @@ Load the skill as `/shipsmooth:start`. Start discussing the feature with Claude.
 
 The full workflow specification lives in [SKILL.md](plugin-skill/src/main/jte-src/skills/SKILL.jte.md).
 
+## Experimental
+
+These features are in active development and may change.
+
+### Java runtime for `shipsmooth-tasks`
+
+Task tracking commands (`update-status`, `add-comment`, `set-commit`, etc.) are now backed by a jlink-packaged Java runtime rather than Node.js scripts. The runtime bundles a minimal JRE and is installed to `~/.cache/shipsmooth/runtime-{version}/` by the session-start hook. It starts in ~150 ms via OpenJ9's shared class cache and requires no separate JDK installation.
+
+The CLI entry point is `shipsmooth-tasks` and exposes subcommands for every task-tracking operation. The module is at `plugin-tasks-java/`.
+
+### Ledger-backed task tracking
+
+Every mutating `shipsmooth-tasks` command now records an append-only event to `.agents/ledger.jsonl`, backed by a content-addressed object store at `.agents/objects/` (same layout as git's loose objects, SHA-1 keyed). The XML file remains the human-readable source of truth; the ledger is a machine-readable execution trace.
+
+Six event types are recorded: `TASK_REGISTRATION`, `STATUS_UPDATED`, `COMMENT_ADDED`, `DEVIATION_ADDED`, `COMMIT_RECORDED`, `PROJECT_UPDATE`. Ledger writes are non-fatal — if a write fails after the XML mutation succeeds, the error is surfaced as a warning and execution continues.
+
+Inspect the ledger with:
+```bash
+shipsmooth-tasks ledger list              # all events, newest last
+shipsmooth-tasks ledger list --task 3     # filter by task id
+shipsmooth-tasks ledger verify            # reconstruct timeline, exit non-zero on corruption
+shipsmooth-tasks ledger read <sha>        # print JSON event blob (full or abbreviated SHA)
+```
+
+Both `.agents/ledger.jsonl` and `.agents/objects/` are tracked in git. `shipsmooth-tasks init` appends the necessary `.gitignore` entries idempotently. The ledger is the foundation for future parallel subagent execution (Phase 2).
+
 ## Development
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for build instructions, repo structure, and dev setup.
