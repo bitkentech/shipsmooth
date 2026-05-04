@@ -76,9 +76,9 @@
     <task>
       <id>6</id>
       <risk>low</risk>
-      <status>pending</status>
+      <status>agent-coded</status>
       <name>Document ledger in SKILL</name>
-      <commit></commit>
+      <commit>bf1ba9d84ad35895d9ba92c2ddc84c4f0311d5b3</commit>
       <created-from>plan-34-v1</created-from>
       <closed-at-version></closed-at-version>
       <comments></comments>
