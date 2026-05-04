@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan-tasks>
+  <plan>35</plan>
+  <plan-version>plan-35-v1</plan-version>
+  <metadata>
+    <backlog-issue></backlog-issue>
+    <status>active</status>
+    <created>2026-05-04</created>
+  </metadata>
+
+  <tasks>
+  <task>
+    <id>1</id>
+    <risk>low</risk>
+    <status>pending</status>
+    <name>Extend EventType</name>
+    <commit></commit>
+    <created-from>plan-35-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  <task>
+    <id>2</id>
+    <risk>medium</risk>
+    <status>pending</status>
+    <name>Lift WorktreeService into plugin-tasks-java</name>
+    <commit></commit>
+    <created-from>plan-35-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  <task>
+    <id>3</id>
+    <risk>low</risk>
+    <status>pending</status>
+    <name>`worker-init` command</name>
+    <commit></commit>
+    <created-from>plan-35-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  <task>
+    <id>4</id>
+    <risk>high</risk>
+    <status>pending</status>
+    <name>`worker-finish` command (with anti-rogue-commit guard)</name>
+    <commit></commit>
+    <created-from>plan-35-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  <task>
+    <id>5</id>
+    <risk>low</risk>
+    <status>pending</status>
+    <name>`claim` command</name>
+    <commit></commit>
+    <created-from>plan-35-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  <task>
+    <id>6</id>
+    <risk>low</risk>
+    <status>pending</status>
+    <name>`worker-cleanup` command</name>
+    <commit></commit>
+    <created-from>plan-35-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  <task>
+    <id>7</id>
+    <risk>low</risk>
+    <status>pending</status>
+    <name>Skill changes — Parallel Execution Protocol + Worker Instruction Block</name>
+    <commit></commit>
+    <created-from>plan-35-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  <task>
+    <id>8</id>
+    <risk>medium</risk>
+    <status>pending</status>
+    <name>End-to-end lifecycle test</name>
+    <commit></commit>
+    <created-from>plan-35-v1</created-from>
+    <closed-at-version></closed-at-version>
+    <comments></comments>
+    <deviations></deviations>
+  </task>
+  </tasks>
+
+  <project-updates>
+    <update>
+      <timestamp>2026-05-04T12:54:19.500Z</timestamp>
+      <message>Plan initialised.</message>
+      <blocked>false</blocked>
+    </update>
+  </project-updates>
+</plan-tasks>
