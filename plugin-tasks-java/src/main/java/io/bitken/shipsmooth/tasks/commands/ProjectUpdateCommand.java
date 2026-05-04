@@ -1,11 +1,15 @@
 package io.bitken.shipsmooth.tasks.commands;
 
 import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
+import io.bitken.shipsmooth.tasks.ledger.Event;
+import io.bitken.shipsmooth.tasks.ledger.EventType;
+import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 @Command(name = "project-update", description = "Add a project update.")
@@ -31,6 +35,17 @@ public class ProjectUpdateCommand implements Callable<Integer> {
         service.projectUpdate(planTasks, status, blocked, message);
         service.writePlanTasks(planTasks, file);
         System.out.println("Project update added.");
+
+        try {
+            LedgerService ledger = new LedgerService(Paths.get("."));
+            ledger.ensureLedgerFile();
+            String payload = (status != null ? "status=" + status : "") +
+                    (Boolean.TRUE.equals(blocked) ? " blocked=true" : "") +
+                    (message != null ? " " + message : "");
+            ledger.record(Event.system(EventType.PROJECT_UPDATE, null, payload.strip(), null));
+        } catch (Exception e) {
+            System.err.println("Warning: ledger record failed (XML mutation preserved): " + e.getMessage());
+        }
         return 0;
     }
 }

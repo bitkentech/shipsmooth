@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan-tasks>
+  <plan>34</plan>
+  <plan-version>plan-34-v1</plan-version>
+  <metadata>
+    <backlog-issue></backlog-issue>
+    <status>complete</status>
+    <created>2026-05-04</created>
+  </metadata>
+  <tasks>
+    <task>
+      <id>1</id>
+      <risk>medium</risk>
+      <status>agent-coded</status>
+      <name>Lift ledger substrate into plugin-tasks-java</name>
+      <commit>cbb58c48e4194329ffff073610c9bfc2f87b24a8</commit>
+      <created-from>plan-34-v1</created-from>
+      <closed-at-version></closed-at-version>
+      <comments>
+        <comment>
+          <timestamp>2026-05-04T07:10:15.960Z</timestamp>
+          <message>De-risk draft ready for review: LedgerService, ObjectStore, Event, EventType created in plugin-tasks-java/src/main/java/.../ledger/. All 19 tests pass including 5 new LedgerServiceTest + 2 LedgerIntegrationTest. Jackson 2.17.2 added to pom.xml, module-info.java updated.</message>
+        </comment>
+      </comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>2</id>
+      <risk>medium</risk>
+      <status>agent-coded</status>
+      <name>Wire ledger writes into mutating commands</name>
+      <commit>cbb58c48e4194329ffff073610c9bfc2f87b24a8</commit>
+      <created-from>plan-34-v1</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>3</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>Bootstrap .agents layout and .gitignore on init</name>
+      <commit>01412618b845532128cd57b80c8dc6231817dc89</commit>
+      <created-from>plan-34-v1</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>4</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>Add `shipsmooth-tasks ledger` subcommand</name>
+      <commit>cbb58c48e4194329ffff073610c9bfc2f87b24a8</commit>
+      <created-from>plan-34-v1</created-from>
+      <closed-at-version></closed-at-version>
+      <comments>
+        <comment>
+          <timestamp>2026-05-04T07:37:32.911Z</timestamp>
+          <message>De-risk complete. ledger list/verify/read subcommands working.</message>
+        </comment>
+      </comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>5</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>Update existing command/integration tests</name>
+      <commit>c06a797d9a94de31ca193b9b57a0441ee2b6ad51</commit>
+      <created-from>plan-34-v1</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>6</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>Document ledger in SKILL</name>
+      <commit>bf1ba9d84ad35895d9ba92c2ddc84c4f0311d5b3</commit>
+      <created-from>plan-34-v1</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+  </tasks>
+  <project-updates>
+    <update>
+      <timestamp>2026-05-04T06:58:38.435Z</timestamp>
+      <message>Plan initialised.</message>
+      <blocked>false</blocked>
+    </update>
+    <update>
+      <timestamp>2026-05-04T09:56:13.074Z</timestamp>
+      <message>All 6 tasks agent-coded. 37 tests green.</message>
+      <blocked>false</blocked>
+    </update>
+  </project-updates>
+</plan-tasks>

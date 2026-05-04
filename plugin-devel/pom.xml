@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.github.pramodbiligiri</groupId>
+    <groupId>io.bitken</groupId>
     <artifactId>shipsmooth</artifactId>
     <version>0.2.0</version>
   </parent>

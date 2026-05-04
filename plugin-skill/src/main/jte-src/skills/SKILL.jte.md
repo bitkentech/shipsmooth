@@ -203,6 +203,8 @@ All task commits go on this branch. The `t/` prefix stands for "task" (covers fe
 
 **Before writing any code**, confirm the test coverage threshold with the human (default: 95%). Record the agreed value before proceeding.
 
+`[Local]` All `${model.cliBin()}` mutations also append one event to `.agents/ledger.jsonl` (content-addressed blobs in `.agents/objects/`). The XML remains the human-readable source of truth; the ledger is the machine-readable execution trace and the foundation for future parallel execution. Inspect with `${model.cliBin()} ledger list` or `${model.cliBin()} ledger verify`.
+
 ### Preamble: integration tests (once, before any task)
 
 1. Write 1–2 integration tests that exercise the feature end-to-end. No more than two.

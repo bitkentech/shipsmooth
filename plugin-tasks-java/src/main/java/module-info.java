@@ -3,7 +3,10 @@ module io.bitken.shipsmooth.tasks {
     requires jakarta.xml.bind;
     requires java.xml;
     requires org.glassfish.jaxb.runtime;
+    requires com.fasterxml.jackson.databind;
+    requires com.fasterxml.jackson.datatype.jsr310;
 
     opens io.bitken.shipsmooth.tasks.commands to info.picocli;
     opens io.bitken.shipsmooth.tasks.jaxb to jakarta.xml.bind;
+    opens io.bitken.shipsmooth.tasks.ledger to com.fasterxml.jackson.databind;
 }

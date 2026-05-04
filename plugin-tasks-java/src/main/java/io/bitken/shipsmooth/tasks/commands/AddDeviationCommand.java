@@ -1,11 +1,15 @@
 package io.bitken.shipsmooth.tasks.commands;
 
 import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
+import io.bitken.shipsmooth.tasks.ledger.Event;
+import io.bitken.shipsmooth.tasks.ledger.EventType;
+import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 @Command(name = "add-deviation", description = "Add a deviation to a task.")
@@ -31,6 +35,14 @@ public class AddDeviationCommand implements Callable<Integer> {
         service.addDeviation(planTasks, task, type, message);
         service.writePlanTasks(planTasks, file);
         System.out.println("Deviation added to task " + task);
+
+        try {
+            LedgerService ledger = new LedgerService(Paths.get("."));
+            ledger.ensureLedgerFile();
+            ledger.record(Event.forTask(EventType.DEVIATION_ADDED, String.valueOf(task), null, type + ": " + message, null));
+        } catch (Exception e) {
+            System.err.println("Warning: ledger record failed (XML mutation preserved): " + e.getMessage());
+        }
         return 0;
     }
 }
