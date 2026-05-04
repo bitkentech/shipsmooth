@@ -268,6 +268,46 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
 
 ---
 
+## Parallel Execution Protocol (optional)
+
+The Lead Agent **may** delegate tasks to coding subagents instead of implementing them directly. This is opt-in — sequential single-agent execution is the default and always supported.
+
+**When to use:** clearly-scoped, low-architectural-risk tasks where the scope is well-defined by the plan. Do **not** use for High-risk de-risk passes — those require human review after each iteration.
+
+**Parallelism cap:** up to **3 subagents** in a single assistant turn (multiple `Agent` tool calls in one response).
+
+### Per-task command sequence (run by the Lead Agent, not the subagent)
+
+```
+1. ${model.cliBin()} claim --plan {N} --task {id}
+2. ${model.cliBin()} worker-init --plan {N} --task {id}   # prints worktree absolute path to stdout
+3. Agent tool call — see Worker Instruction Block below
+4. ${model.cliBin()} worker-finish --plan {N} --task {id} # captures diff, commits, records events
+5. ${model.cliBin()} worker-cleanup --plan {N} --task {id} # removes worktree dir, keeps branch
+```
+
+`worker-finish` aborts loudly if the subagent made any git commits inside the worktree (a contract violation). The `agent-work/{id}` branch ref is intentionally left behind after cleanup — a future integration plan will consume it.
+
+### Worker Instruction Block
+
+The Lead Agent pastes this verbatim into the `Agent` tool call's prompt, filling in the four `{...}` slots. **Do not pass `isolation: worktree` to the `Agent` tool** — `worker-init` already created a real git worktree; Claude Code's built-in isolation would create a second, hidden one and the subagent's edits would never be captured.
+
+> You are a ShipSmooth coding worker for task {N}: {task-name}.
+>
+> **Your working directory is `{absolute-worktree-path}`.** All file operations (Read/Edit/Write) must use absolute paths under that directory, and every Bash call must begin with `cd {absolute-worktree-path} &&`. Do not modify any file outside that directory.
+>
+> **You are forbidden from running any git command.** No `git commit`, `git add`, `git checkout`, `git branch`, `git push`, `git worktree`, `git stash`, `git reset`. The Lead Agent handles all git operations via `${model.cliBin()}` after you exit. If you run any git command, the lifecycle will detect it and abort the task.
+>
+> **Task scope** (from `.agents/plans/plan-{N}.md`):
+>
+> {task-markdown-slice}
+>
+> **Coverage threshold:** {coverage-pct}%. Per Core Invariant #6, write at least one failing unit test before implementation, then implement until green and coverage passes.
+>
+> **When done, exit with a one-line summary** of files changed: `Modified: path/a, path/b. Added: path/c. Tests: path/test.`
+
+---
+
 - **Minor deviation** (task split, reorder, clarification):
   - `[Linear]` Update the Linear issue(s), add a deviation comment explaining why, continue.
   - `[Local]` Run `${model.cliBin()} add-deviation --plan {N} --task {id} --type minor --message "..."`, continue.
