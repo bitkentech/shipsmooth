@@ -11,9 +11,9 @@
     <task>
       <id>1</id>
       <risk>medium</risk>
-      <status>de-risked</status>
+      <status>agent-coded</status>
       <name>Lift ledger substrate into plugin-tasks-java</name>
-      <commit></commit>
+      <commit>cbb58c48e4194329ffff073610c9bfc2f87b24a8</commit>
       <created-from>plan-34-v1</created-from>
       <closed-at-version></closed-at-version>
       <comments>
@@ -27,9 +27,9 @@
     <task>
       <id>2</id>
       <risk>medium</risk>
-      <status>de-risked</status>
+      <status>agent-coded</status>
       <name>Wire ledger writes into mutating commands</name>
-      <commit></commit>
+      <commit>cbb58c48e4194329ffff073610c9bfc2f87b24a8</commit>
       <created-from>plan-34-v1</created-from>
       <closed-at-version></closed-at-version>
       <comments></comments>
@@ -38,9 +38,9 @@
     <task>
       <id>3</id>
       <risk>low</risk>
-      <status>pending</status>
+      <status>agent-coded</status>
       <name>Bootstrap .agents layout and .gitignore on init</name>
-      <commit></commit>
+      <commit>01412618b845532128cd57b80c8dc6231817dc89</commit>
       <created-from>plan-34-v1</created-from>
       <closed-at-version></closed-at-version>
       <comments></comments>
@@ -49,9 +49,9 @@
     <task>
       <id>4</id>
       <risk>low</risk>
-      <status>de-risked</status>
+      <status>agent-coded</status>
       <name>Add `shipsmooth-tasks ledger` subcommand</name>
-      <commit></commit>
+      <commit>cbb58c48e4194329ffff073610c9bfc2f87b24a8</commit>
       <created-from>plan-34-v1</created-from>
       <closed-at-version></closed-at-version>
       <comments>
