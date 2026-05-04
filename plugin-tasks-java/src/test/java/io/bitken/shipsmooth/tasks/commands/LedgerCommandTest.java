@@ -77,4 +77,20 @@ public class LedgerCommandTest {
             System.setOut(original);
         }
     }
+
+    @Test
+    public void ledgerReadAcceptsShaPrefix() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PrintStream original = System.out;
+        System.setOut(new PrintStream(out));
+        try {
+            int exit = new CommandLine(new LedgerCommand()).execute("read", recordedSha.substring(0, 8));
+            assertEquals(0, exit);
+            String output = out.toString();
+            assertTrue(output.contains("COMMENT_ADDED"));
+            assertTrue(output.contains("42"));
+        } finally {
+            System.setOut(original);
+        }
+    }
 }
