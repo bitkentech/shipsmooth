@@ -4,7 +4,7 @@
   <plan-version>plan-34-v1</plan-version>
   <metadata>
     <backlog-issue></backlog-issue>
-    <status>active</status>
+    <status>complete</status>
     <created>2026-05-04</created>
   </metadata>
   <tasks>
@@ -65,9 +65,9 @@
     <task>
       <id>5</id>
       <risk>low</risk>
-      <status>pending</status>
+      <status>agent-coded</status>
       <name>Update existing command/integration tests</name>
-      <commit></commit>
+      <commit>c06a797d9a94de31ca193b9b57a0441ee2b6ad51</commit>
       <created-from>plan-34-v1</created-from>
       <closed-at-version></closed-at-version>
       <comments></comments>
@@ -89,6 +89,11 @@
     <update>
       <timestamp>2026-05-04T06:58:38.435Z</timestamp>
       <message>Plan initialised.</message>
+      <blocked>false</blocked>
+    </update>
+    <update>
+      <timestamp>2026-05-04T09:56:13.074Z</timestamp>
+      <message>All 6 tasks agent-coded. 37 tests green.</message>
       <blocked>false</blocked>
     </update>
   </project-updates>
