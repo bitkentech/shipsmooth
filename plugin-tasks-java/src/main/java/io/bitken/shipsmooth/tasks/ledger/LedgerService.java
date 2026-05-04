@@ -78,6 +78,19 @@ public class LedgerService {
         return mapper.readValue(bytes, Event.class);
     }
 
+    /** Returns the most recent event of the given type for the given task, or null if none. */
+    public Event findLastEvent(String taskId, EventType type) throws IOException {
+        List<String> hashes = readHashes();
+        Event result = null;
+        for (String hash : hashes) {
+            Event ev = readEvent(hash);
+            if (type == ev.eventType() && taskId.equals(ev.taskId())) {
+                result = ev;
+            }
+        }
+        return result;
+    }
+
     public List<Event> verifyLedger() throws IOException {
         List<String> hashes = readHashes();
         List<Event> timeline = new ArrayList<>(hashes.size());
