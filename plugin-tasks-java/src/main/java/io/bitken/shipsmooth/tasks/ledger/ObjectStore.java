@@ -8,6 +8,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.List;
 
 public class ObjectStore {
 
@@ -50,7 +51,23 @@ public class ObjectStore {
     }
 
     public byte[] readObject(String sha1) throws IOException {
-        Path obj = root.resolve(sha1.substring(0, 2)).resolve(sha1.substring(2));
-        return Files.readAllBytes(obj);
+        if (sha1.length() == 40) {
+            return Files.readAllBytes(root.resolve(sha1.substring(0, 2)).resolve(sha1.substring(2)));
+        }
+        // Prefix lookup: scan the fan-out directory for a unique match.
+        String dir = sha1.substring(0, Math.min(2, sha1.length()));
+        String remainder = sha1.length() > 2 ? sha1.substring(2) : "";
+        Path fanDir = root.resolve(dir);
+        if (!Files.isDirectory(fanDir)) {
+            throw new IOException("No object with prefix: " + sha1);
+        }
+        try (var entries = Files.list(fanDir)) {
+            List<Path> matches = entries
+                    .filter(p -> p.getFileName().toString().startsWith(remainder))
+                    .toList();
+            if (matches.isEmpty()) throw new IOException("No object with prefix: " + sha1);
+            if (matches.size() > 1) throw new IOException("Ambiguous SHA prefix: " + sha1);
+            return Files.readAllBytes(matches.get(0));
+        }
     }
 }
