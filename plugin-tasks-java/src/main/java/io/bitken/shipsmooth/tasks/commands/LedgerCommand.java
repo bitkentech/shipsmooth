@@ -75,8 +75,14 @@ public class LedgerCommand implements Runnable {
         @Override
         public Integer call() throws Exception {
             LedgerService ledger = new LedgerService(Paths.get("."));
-            Event ev = ledger.readEvent(sha);
-            // Print as pretty JSON via the same mapper the ledger uses
+            Event ev;
+            try {
+                ev = ledger.readEvent(sha);
+            } catch (java.io.IOException e) {
+                System.err.printf("ERROR: '%s' not found in ledger object store (.agents/objects/).%n", sha);
+                System.err.println("       Git commit SHAs live in .git/ — use 'worker-base' to resolve a task's recorded commit SHA.");
+                return 1;
+            }
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper()
                     .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
                     .disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
