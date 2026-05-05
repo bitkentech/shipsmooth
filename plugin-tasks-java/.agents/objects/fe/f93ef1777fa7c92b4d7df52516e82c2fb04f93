@@ -1,8 +1,0 @@
-diff --git a/output-1.txt b/output-1.txt
-new file mode 100644
-index 0000000..e1eb0c5
---- /dev/null
-+++ b/output-1.txt
-@@ -0,0 +1 @@
-+task 1 output
-\ No newline at end of file

@@ -1,1 +1,0 @@
-{"event_type":"WORKTREE_CREATED","timestamp":"2026-05-05T05:55:20.548968360Z","task_id":"1","base_commit_sha":"7b74e025d7db838cdd4faa24e266ea5dc2eec751","payload":".agents/tasks/1","metadata":{"branch":"agent-work/1","worktree_rel":".agents/tasks/1"}}
