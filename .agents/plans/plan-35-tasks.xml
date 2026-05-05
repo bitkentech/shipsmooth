@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>35</plan>
+    <plan-version>plan-35-v2</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-05-04</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Extend EventType</name>
+            <commit></commit>
+            <created-from>plan-35-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Lift WorktreeService into plugin-tasks-java</name>
+            <commit></commit>
+            <created-from>plan-35-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>`worker-init` command</name>
+            <commit></commit>
+            <created-from>plan-35-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>`worker-finish` command (with anti-rogue-commit guard)</name>
+            <commit></commit>
+            <created-from>plan-35-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>`claim` command</name>
+            <commit></commit>
+            <created-from>plan-35-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>`worker-cleanup` command</name>
+            <commit></commit>
+            <created-from>plan-35-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Skill changes — Parallel Execution Protocol + Worker Instruction Block</name>
+            <commit></commit>
+            <created-from>plan-35-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>End-to-end lifecycle test</name>
+            <commit></commit>
+            <created-from>plan-35-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>`depends-on` field in XSD + `worker-init --base` flag</name>
+            <commit></commit>
+            <created-from>plan-35-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>10</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>`worker-base` command + SKILL.md dependency protocol</name>
+            <commit></commit>
+            <created-from>plan-35-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>11</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Integration test for dependency chain</name>
+            <commit></commit>
+            <created-from>plan-35-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-04T12:54:19.500Z</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-04T13:13:21.103Z</timestamp>
+            <message>All 8 tasks agent-coded. 43 tests green.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-05T05:29:12.599Z</timestamp>
+            <message>Resuming plan: adding dependency tracking tasks (9-11) to fix dependency-blindness bug observed in todo-1 project.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-05T05:31:37.513Z</timestamp>
+            <message>Plan status set to active for tasks 9-11.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-05T05:56:29.637Z</timestamp>
+            <message>Tasks 9-11 agent-coded. 45 tests green. Dependency chain verified.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-05T12:41:21.526+05:30</timestamp>
+            <message>Plan 35 complete. All 11 tasks agent-coded. Manually verified. Merging to main.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

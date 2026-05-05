@@ -68,7 +68,7 @@
       <xs:element name="closed-at-version" type="xs:string"/>
       <xs:element name="comments" type="CommentsContainerType"/>
       <xs:element name="deviations" type="DeviationsContainerType"/>
-      <!-- Extension point: unknown elements allowed for future ad-hoc fields -->
+      <!-- Extension point: unknown elements allowed for future ad-hoc fields (e.g. depends-on) -->
       <xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
   </xs:complexType>

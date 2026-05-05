@@ -79,6 +79,22 @@ public class LedgerCommandTest {
     }
 
     @Test
+    public void ledgerReadExitsOneForUnknownSha() {
+        java.io.ByteArrayOutputStream err = new java.io.ByteArrayOutputStream();
+        PrintStream originalErr = System.err;
+        System.setErr(new PrintStream(err));
+        try {
+            int exit = new CommandLine(new LedgerCommand()).execute("read", "73fbd39585a74a3e70e6620699b48d2ea31dc5ed");
+            assertEquals(1, exit);
+            String errOutput = err.toString();
+            assertTrue(errOutput.contains("not found in ledger object store"), "Expected helpful error message");
+            assertTrue(errOutput.contains("worker-base"), "Expected hint about worker-base command");
+        } finally {
+            System.setErr(originalErr);
+        }
+    }
+
+    @Test
     public void ledgerReadAcceptsShaPrefix() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         PrintStream original = System.out;
