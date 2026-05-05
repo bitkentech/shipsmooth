@@ -5,7 +5,6 @@ import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
-import io.bitken.shipsmooth.tasks.ledger.ObjectStore;
 import io.bitken.shipsmooth.tasks.service.XmlService;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -69,11 +68,6 @@ public class WorkerFinishCommand implements Callable<Integer> {
             return 1;
         }
 
-        // Store patch blob
-        ObjectStore store = new ObjectStore(repoRoot);
-        byte[] patchBytes = diff.getBytes(StandardCharsets.UTF_8);
-        String patchSha = store.writeObject(patchBytes);
-
         // Derive task name from XML for the commit message
         XmlService xmlService = new XmlService();
         File xmlFile = new File(".agents/plans/plan-" + plan + "-tasks.xml");
@@ -88,8 +82,7 @@ public class WorkerFinishCommand implements Callable<Integer> {
         String commitSha = git.commitAll(worktreeDir, "agent: task " + task + " - " + taskName);
 
         // Record ledger events
-        ledger.record(Event.forTask(EventType.PATCH_EMITTED, task, headSha, diff,
-                Map.of("patch_blob_sha1", patchSha, "bytes", String.valueOf(patchBytes.length))));
+        ledger.record(Event.forTask(EventType.PATCH_EMITTED, task, headSha, diff, Map.of()));
         ledger.record(Event.forTask(EventType.COMMIT_RECORDED, task, headSha, commitSha,
                 Map.of("branch", branch, "commit_sha", commitSha)));
 
