@@ -276,14 +276,36 @@ The Lead Agent **may** delegate tasks to coding subagents instead of implementin
 
 **Parallelism cap:** up to **3 subagents** in a single assistant turn (multiple `Agent` tool calls in one response).
 
+### Dependency resolution
+
+Tasks may carry a `<depends-on>` field in the XML (comma-separated parent task IDs). Before dispatching such a task:
+
+1. Verify the parent task's `COMMIT_RECORDED` ledger event exists: `${model.cliBin()} worker-base --plan {N} --task {id}` — this prints the parent's commit SHA or exits 1 if the parent hasn't finished yet.
+2. Pass that SHA as `--base` to `worker-init` so the worktree starts from the parent's commit, not repo HEAD.
+
+A task with `<depends-on>` **must not** be dispatched in the same parallel batch as its parents — wait for the parent batch to complete first.
+
+Tasks with no `<depends-on>` (or an empty value) fork from repo HEAD as before.
+
 ### Per-task command sequence (run by the Lead Agent, not the subagent)
 
+For tasks **without** `<depends-on>`:
 ```
 1. ${model.cliBin()} claim --plan {N} --task {id}
-2. ${model.cliBin()} worker-init --plan {N} --task {id}   # prints worktree absolute path to stdout
+2. ${model.cliBin()} worker-init --plan {N} --task {id}            # prints worktree absolute path to stdout
 3. Agent tool call — see Worker Instruction Block below
-4. ${model.cliBin()} worker-finish --plan {N} --task {id} # captures diff, commits, records events
-5. ${model.cliBin()} worker-cleanup --plan {N} --task {id} # removes worktree dir, keeps branch
+4. ${model.cliBin()} worker-finish --plan {N} --task {id}          # captures diff, commits, records events
+5. ${model.cliBin()} worker-cleanup --plan {N} --task {id}         # removes worktree dir, keeps branch
+```
+
+For tasks **with** `<depends-on>` (run after parent batch is complete):
+```
+1. ${model.cliBin()} claim --plan {N} --task {id}
+2. BASE=$(${model.cliBin()} worker-base --plan {N} --task {id})    # resolve parent commit SHA
+3. ${model.cliBin()} worker-init --plan {N} --task {id} --base "$BASE"
+4. Agent tool call — see Worker Instruction Block below
+5. ${model.cliBin()} worker-finish --plan {N} --task {id}
+6. ${model.cliBin()} worker-cleanup --plan {N} --task {id}
 ```
 
 `worker-finish` aborts loudly if the subagent made any git commits inside the worktree (a contract violation). The `agent-work/{id}` branch ref is intentionally left behind after cleanup — a future integration plan will consume it.

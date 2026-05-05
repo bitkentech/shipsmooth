@@ -5,10 +5,13 @@ import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
 import jakarta.xml.bind.Unmarshaller;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -133,6 +136,30 @@ public class XmlService {
     public void setCommit(PlanTasks planTasks, int taskId, String commit) {
         TaskType task = findTask(planTasks, taskId);
         task.setCommit(commit);
+    }
+
+    /** Returns the raw <depends-on> string, or "" if absent. */
+    public String getDependsOn(PlanTasks planTasks, int taskId) {
+        TaskType task = findTask(planTasks, taskId);
+        for (Object obj : task.getAny()) {
+            if (obj instanceof Element el && "depends-on".equals(el.getLocalName())) {
+                String text = el.getTextContent();
+                return text != null ? text.trim() : "";
+            }
+        }
+        return "";
+    }
+
+    /** Sets or replaces the <depends-on> element on the task. Pass "" to remove it. */
+    public void setDependsOn(PlanTasks planTasks, int taskId, String value) throws Exception {
+        TaskType task = findTask(planTasks, taskId);
+        task.getAny().removeIf(obj -> obj instanceof Element el && "depends-on".equals(el.getLocalName()));
+        if (value != null && !value.isBlank()) {
+            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+            Element el = doc.createElement("depends-on");
+            el.setTextContent(value.trim());
+            task.getAny().add(el);
+        }
     }
 
     public void projectUpdate(PlanTasks planTasks, String status, Boolean blocked, String message) throws DatatypeConfigurationException {

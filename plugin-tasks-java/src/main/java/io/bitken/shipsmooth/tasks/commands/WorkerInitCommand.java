@@ -21,6 +21,9 @@ public class WorkerInitCommand implements Callable<Integer> {
     @Option(names = "--task", required = true)
     private String task;
 
+    @Option(names = "--base", description = "Base commit SHA to branch from (defaults to HEAD)")
+    private String base;
+
     @Override
     public Integer call() throws Exception {
         Path repoRoot = Paths.get(".");
@@ -34,11 +37,14 @@ public class WorkerInitCommand implements Callable<Integer> {
             return 1;
         }
 
-        git.addWorktree(worktreeRel, branch);
+        git.addWorktree(worktreeRel, branch, base);
+
+        // Record the actual base SHA the branch was created from (may differ from HEAD when --base is used)
+        String baseSha = (base != null && !base.isBlank()) ? base : git.headSha();
 
         LedgerService ledger = new LedgerService(repoRoot);
         ledger.ensureLedgerFile();
-        ledger.record(Event.forTask(EventType.WORKTREE_CREATED, task, git.headSha(), worktreeRel,
+        ledger.record(Event.forTask(EventType.WORKTREE_CREATED, task, baseSha, worktreeRel,
                 Map.of("branch", branch, "worktree_rel", worktreeRel)));
 
         Path worktreePath = repoRoot.resolve(worktreeRel).toAbsolutePath();

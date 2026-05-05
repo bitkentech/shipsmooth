@@ -4,7 +4,7 @@
   <plan-version>plan-35-v2</plan-version>
   <metadata>
     <backlog-issue></backlog-issue>
-    <status>active</status>
+    <status>complete</status>
     <created>2026-05-04</created>
   </metadata>
   <tasks>
@@ -99,7 +99,7 @@
     <task>
       <id>9</id>
       <risk>medium</risk>
-      <status>pending</status>
+      <status>agent-coded</status>
       <name>`depends-on` field in XSD + `worker-init --base` flag</name>
       <commit></commit>
       <created-from>plan-35-v2</created-from>
@@ -110,7 +110,7 @@
     <task>
       <id>10</id>
       <risk>low</risk>
-      <status>pending</status>
+      <status>agent-coded</status>
       <name>`worker-base` command + SKILL.md dependency protocol</name>
       <commit></commit>
       <created-from>plan-35-v2</created-from>
@@ -121,7 +121,7 @@
     <task>
       <id>11</id>
       <risk>medium</risk>
-      <status>pending</status>
+      <status>agent-coded</status>
       <name>Integration test for dependency chain</name>
       <commit></commit>
       <created-from>plan-35-v2</created-from>
@@ -149,6 +149,11 @@
     <update>
       <timestamp>2026-05-05T05:31:37.513Z</timestamp>
       <message>Plan status set to active for tasks 9-11.</message>
+      <blocked>false</blocked>
+    </update>
+    <update>
+      <timestamp>2026-05-05T05:56:29.637Z</timestamp>
+      <message>Tasks 9-11 agent-coded. 45 tests green. Dependency chain verified.</message>
       <blocked>false</blocked>
     </update>
   </project-updates>

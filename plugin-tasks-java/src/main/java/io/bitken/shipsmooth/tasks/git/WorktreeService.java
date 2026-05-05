@@ -35,9 +35,18 @@ public class WorktreeService {
     }
 
     public void addWorktree(String relativePath, String branch) throws IOException, InterruptedException {
+        addWorktree(relativePath, branch, null);
+    }
+
+    /** When baseSha is non-blank, the worktree starts at that commit instead of HEAD. */
+    public void addWorktree(String relativePath, String branch, String baseSha) throws IOException, InterruptedException {
         gitGate.acquire();
         try {
-            run(repoRoot.toFile(), "git", "worktree", "add", relativePath, "-b", branch);
+            if (baseSha != null && !baseSha.isBlank()) {
+                run(repoRoot.toFile(), "git", "worktree", "add", relativePath, "-b", branch, baseSha);
+            } else {
+                run(repoRoot.toFile(), "git", "worktree", "add", relativePath, "-b", branch);
+            }
         } finally {
             gitGate.release();
         }
