@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plan-tasks>
   <plan>35</plan>
-  <plan-version>plan-35-v1</plan-version>
+  <plan-version>plan-35-v2</plan-version>
   <metadata>
     <backlog-issue></backlog-issue>
-    <status>complete</status>
+    <status>active</status>
     <created>2026-05-04</created>
   </metadata>
   <tasks>
@@ -96,6 +96,39 @@
       <comments></comments>
       <deviations></deviations>
     </task>
+    <task>
+      <id>9</id>
+      <risk>medium</risk>
+      <status>pending</status>
+      <name>`depends-on` field in XSD + `worker-init --base` flag</name>
+      <commit></commit>
+      <created-from>plan-35-v2</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>10</id>
+      <risk>low</risk>
+      <status>pending</status>
+      <name>`worker-base` command + SKILL.md dependency protocol</name>
+      <commit></commit>
+      <created-from>plan-35-v2</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>11</id>
+      <risk>medium</risk>
+      <status>pending</status>
+      <name>Integration test for dependency chain</name>
+      <commit></commit>
+      <created-from>plan-35-v2</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
   </tasks>
   <project-updates>
     <update>
@@ -106,6 +139,16 @@
     <update>
       <timestamp>2026-05-04T13:13:21.103Z</timestamp>
       <message>All 8 tasks agent-coded. 43 tests green.</message>
+      <blocked>false</blocked>
+    </update>
+    <update>
+      <timestamp>2026-05-05T05:29:12.599Z</timestamp>
+      <message>Resuming plan: adding dependency tracking tasks (9-11) to fix dependency-blindness bug observed in todo-1 project.</message>
+      <blocked>false</blocked>
+    </update>
+    <update>
+      <timestamp>2026-05-05T05:31:37.513Z</timestamp>
+      <message>Plan status set to active for tasks 9-11.</message>
       <blocked>false</blocked>
     </update>
   </project-updates>

@@ -181,6 +181,55 @@ In `SKILL.jte.md` Phase 2 Execute section, add a new subsection titled **"Parall
 
 ---
 
+## v2 extension — Dependency Tracking (Tasks 9–11)
+
+Added after observing the "dependency blindness" bug in the `todo-1` project: parallel workers all forked from the same repo HEAD instead of inheriting predecessor commits, so workers for tasks 2 and 3 couldn't see code added by task 1.
+
+### Task 9: `<depends-on>` field in XSD + `worker-init --base` flag [Medium]
+
+**XSD change** (`plugin-node/src/main/scripts/tasks/plan-tasks.xsd`):
+Add an optional `<depends-on>` element to `TaskType`, before the `xs:any` extension point:
+```xml
+<xs:element name="depends-on" type="xs:string" minOccurs="0"/>
+```
+This is a comma-separated list of task IDs (e.g. `"1"` or `"1,2"`). The XSD extension point means existing XML without this element remains valid.
+
+**`WorkerInitCommand` change**: add `--base <sha>` option. When provided, pass that SHA to `WorktreeService.addWorktree` as the starting point instead of HEAD. `WorktreeService.addWorktree` signature becomes `addWorktree(String rel, String branch, String baseSha)` — when `baseSha` is null or blank, default to HEAD (existing behaviour).
+
+**`XmlService` additions**: `getDependsOn(PlanTasks, int taskId) → List<String>` and `setDependsOn(PlanTasks, int taskId, String value)`. These read/write the `<depends-on>` element via the JAXB `TaskType.getAny()` extension list (same technique used for any ad-hoc field in `xs:any`).
+
+*Order rationale:* hard dependency for Tasks 10 and 11.
+
+### Task 10: `worker-base` command + SKILL.md dependency protocol [Low]
+
+**New command** `WorkerBaseCommand` (`worker-base --plan {N} --task {id}`):
+Reads the target task's `<depends-on>` from XML, looks up the `COMMIT_RECORDED` ledger event for each listed parent task, and prints the latest parent commit SHA to stdout. Exit 1 if any parent has no `COMMIT_RECORDED` event (parent not yet finished). This lets the Lead Agent do:
+```
+BASE=$(shipsmooth-tasks worker-base --plan 35 --task 2)
+shipsmooth-tasks worker-init --plan 35 --task 2 --base "$BASE"
+```
+
+**SKILL.md update**: In the Parallel Execution Protocol section, add a "Dependency resolution" rule before the per-task command sequence:
+- If a task has `<depends-on>`, it must not be dispatched in the same batch as its parents.
+- Before calling `worker-init` for such a task, run `worker-base --plan {N} --task {id}` and pass the output as `--base` to `worker-init`.
+- Tasks with no `<depends-on>` (or an empty value) fork from repo HEAD as before.
+
+*Order rationale:* depends on Task 9 (XSD + `--base` flag must exist first).
+
+### Task 11: Integration test for dependency chain [Medium]
+
+`WorkerDependencyIntegrationTest` in `plugin-tasks-java`: two tasks in sequence.
+1. Task 1: `claim` → `worker-init` → write `output-1.txt` in worktree → `worker-finish` → `worker-cleanup`. Capture the `COMMIT_RECORDED` SHA.
+2. Task 2 (`depends-on=1`): `claim` → `worker-init --base <task1-commit-sha>` → assert `output-1.txt` exists in task 2's worktree → write `output-2.txt` → `worker-finish` → `worker-cleanup`.
+
+Asserts:
+- Task 2's worktree contains `output-1.txt` (inherited from task 1's branch).
+- Both `agent-work/1` and `agent-work/2` branches exist after cleanup.
+- XML `<commit>` is populated for both tasks.
+- Ledger has the full 5-event sequence for each task (10 events total, excluding prior entries).
+
+---
+
 ## Verification (end-to-end, after all tasks done)
 
 1. `mvn -pl plugin-tasks-java test` passes.
