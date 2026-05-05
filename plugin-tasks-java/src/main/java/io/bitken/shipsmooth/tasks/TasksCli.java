@@ -1,6 +1,7 @@
 package io.bitken.shipsmooth.tasks;
 
 import io.bitken.shipsmooth.tasks.commands.*;
+import io.bitken.shipsmooth.tasks.commands.IntegrateCommand;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
@@ -19,7 +20,8 @@ import picocli.CommandLine.Command;
             WorkerInitCommand.class,
             WorkerFinishCommand.class,
             WorkerCleanupCommand.class,
-            WorkerBaseCommand.class
+            WorkerBaseCommand.class,
+            IntegrateCommand.class
         })
 public class TasksCli implements Runnable {
 

@@ -1,0 +1,1 @@
+{"event_type":"AGENT_START","timestamp":"2026-05-04T13:09:44.155729798Z","task_id":"1","base_commit_sha":"dcbf07642a43fbb6fd6e1ab125f26ba11a200599","payload":"task claimed for subagent execution","metadata":{"plan":"993"}}

@@ -1,0 +1,1 @@
+{"event_type":"CLEANUP","timestamp":"2026-05-05T06:49:00.120226622Z","task_id":"2","base_commit_sha":"1a1ac4aba86bd42132b4eae6a76a1cae696281e4","payload":"worktree removed, branch retained","metadata":{"branch":"agent-work/2"}}

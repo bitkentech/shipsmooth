@@ -1,0 +1,1 @@
+{"event_type":"COMMIT_RECORDED","timestamp":"2026-05-04T13:17:29.711584797Z","task_id":"1","base_commit_sha":"f4e838468530fb559b6dc6396bd822ca512451cb","payload":"3c895f0d39644f239464ebdeecf44fd7503d513d","metadata":{"branch":"agent-work/1","commit_sha":"3c895f0d39644f239464ebdeecf44fd7503d513d"}}
