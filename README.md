@@ -62,7 +62,7 @@ The CLI entry point is `shipsmooth-tasks` and exposes subcommands for every task
 
 Every mutating `shipsmooth-tasks` command now records an append-only event to `.agents/ledger.jsonl`, backed by a content-addressed object store at `.agents/objects/` (same layout as git's loose objects, SHA-1 keyed). The XML file remains the human-readable source of truth; the ledger is a machine-readable execution trace.
 
-Six event types are recorded: `TASK_REGISTRATION`, `STATUS_UPDATED`, `COMMENT_ADDED`, `DEVIATION_ADDED`, `COMMIT_RECORDED`, `PROJECT_UPDATE`. Ledger writes are non-fatal — if a write fails after the XML mutation succeeds, the error is surfaced as a warning and execution continues.
+Ten event types are recorded: `TASK_REGISTRATION`, `STATUS_UPDATED`, `COMMENT_ADDED`, `DEVIATION_ADDED`, `COMMIT_RECORDED`, `PROJECT_UPDATE`, `AGENT_START`, `WORKTREE_CREATED`, `PATCH_EMITTED`, `CLEANUP`. Ledger writes are non-fatal — if a write fails after the XML mutation succeeds, the error is surfaced as a warning and execution continues.
 
 Inspect the ledger with:
 ```bash
@@ -72,7 +72,32 @@ shipsmooth-tasks ledger verify            # reconstruct timeline, exit non-zero 
 shipsmooth-tasks ledger read <sha>        # print JSON event blob (full or abbreviated SHA)
 ```
 
-Both `.agents/ledger.jsonl` and `.agents/objects/` are tracked in git. `shipsmooth-tasks init` appends the necessary `.gitignore` entries idempotently. The ledger is the foundation for future parallel subagent execution (Phase 2).
+Both `.agents/ledger.jsonl` and `.agents/objects/` are tracked in git. `shipsmooth-tasks init` appends the necessary `.gitignore` entries idempotently.
+
+### Parallel coding subagents
+
+The Lead Agent can delegate tasks to coding subagents running in isolated git worktrees. Each subagent works in `.agents/tasks/{id}/` on its own `agent-work/{id}` branch. Up to 3 subagents may run in parallel (one assistant turn, multiple `Agent` tool calls).
+
+The worktree lifecycle is managed by four new commands:
+
+```bash
+shipsmooth-tasks claim --plan N --task id          # acquire gitGate, record AGENT_START
+shipsmooth-tasks worker-init --plan N --task id    # create worktree + branch, print path
+# ... subagent edits files inside the worktree ...
+shipsmooth-tasks worker-finish --plan N --task id  # stage, diff, commit, record events
+shipsmooth-tasks worker-cleanup --plan N --task id # remove worktree dir, keep branch ref
+```
+
+`worker-finish` aborts loudly if the subagent ran any git commands (detected by comparing HEAD SHA against the `WORKTREE_CREATED` event). After cleanup, the `agent-work/{id}` branch ref is preserved for a future integration step.
+
+Tasks with dependencies can use `<depends-on>` in the XML and `worker-init --base <sha>` to fork from a parent task's commit rather than repo HEAD:
+
+```bash
+BASE=$(shipsmooth-tasks worker-base --plan N --task id)   # resolve parent commit SHA
+shipsmooth-tasks worker-init --plan N --task id --base "$BASE"
+```
+
+Patch integration (cherry-picking `agent-work/*` branches back onto the task branch) is deferred to a future plan.
 
 ## Development
 
