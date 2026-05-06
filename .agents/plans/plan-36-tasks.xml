@@ -66,9 +66,9 @@
         <task>
             <id>6</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>IntegrateCommand happy path — clean merges only</name>
-            <commit></commit>
+            <commit>f549c10a6bd9e8ef691239c13a8254cc29d2ffb8</commit>
             <created-from>plan-36-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments>
@@ -86,9 +86,9 @@
         <task>
             <id>7</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>LLM resolver step — conflict path</name>
-            <commit></commit>
+            <commit>f549c10a6bd9e8ef691239c13a8254cc29d2ffb8</commit>
             <created-from>plan-36-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments>
