@@ -106,9 +106,9 @@
     <task>
       <id>8</id>
       <risk>low</risk>
-      <status>de-risked</status>
+      <status>agent-coded</status>
       <name>SKILL prose update</name>
-      <commit></commit>
+      <commit>c2abd21</commit>
       <created-from>plan-36-v1</created-from>
       <closed-at-version></closed-at-version>
       <comments></comments>
