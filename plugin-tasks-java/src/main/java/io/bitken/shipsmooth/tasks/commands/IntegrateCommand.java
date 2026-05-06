@@ -61,23 +61,53 @@ public class IntegrateCommand implements Callable<Integer> {
         File xmlFile = new File(".agents/plans/plan-" + plan + "-tasks.xml");
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
 
-        // Build TaskOrderInput list: collect id, depends-on, and files touched by agent-work/{id}
+        // Read COMMIT_RECORDED events from ledger to determine which tasks have agent-work branches.
+        // Tasks recorded with integration_mode=worktree have an agent-work/{id} branch to merge.
+        // Tasks recorded with integration_mode=direct (or no metadata) were done on the task branch
+        // and need no merge.
+        Map<Integer, String> taskAgentBranch = new HashMap<>();
+        for (TaskType t : planTasks.getTasks().getTask()) {
+            int id = t.getId().intValue();
+            Event commitEvent = ledger.findLastEvent(String.valueOf(id), EventType.COMMIT_RECORDED);
+            if (commitEvent == null) continue;
+            String recordedBranch = commitEvent.metadata().get("branch");
+            String integrationMode = commitEvent.metadata().get("integration_mode");
+            // worktree mode: branch recorded explicitly as agent-work/{id}
+            if (recordedBranch != null && recordedBranch.startsWith("agent-work/")) {
+                taskAgentBranch.put(id, recordedBranch);
+            } else if (integrationMode == null && recordedBranch == null) {
+                // Legacy: no metadata — fall back to checking if agent-work/{id} exists
+                String fallbackBranch = "agent-work/" + id;
+                if (branchExists(repoRoot.toFile(), fallbackBranch)) {
+                    taskAgentBranch.put(id, fallbackBranch);
+                }
+            }
+            // integration_mode=direct or branch not agent-work/* → skip (already on task branch)
+        }
+
+        // Build TaskOrderInput list for dependency resolution.
+        // All tasks with a COMMIT_RECORDED event are included so the dependency validator
+        // accepts them as known. Tasks without an agent-work branch get empty filesTouched
+        // and will be skipped during the merge loop.
         List<TaskOrderInput> orderInputs = new ArrayList<>();
         for (TaskType t : planTasks.getTasks().getTask()) {
             int id = t.getId().intValue();
-            String branch = "agent-work/" + id;
-            // Check if agent-work branch exists
-            if (!branchExists(repoRoot.toFile(), branch)) continue;
-
+            Event commitEvent = ledger.findLastEvent(String.valueOf(id), EventType.COMMIT_RECORDED);
+            if (commitEvent == null) continue;
             String dependsOnStr = xmlService.getDependsOn(planTasks, id);
             List<Integer> dependsOn = parseDependsOn(dependsOnStr);
-            Set<String> files = getFilesTouched(repoRoot.toFile(), branch);
+            String branch = taskAgentBranch.get(id);
+            Set<String> files = branch != null ? getFilesTouched(repoRoot.toFile(), branch) : Set.of();
             orderInputs.add(new TaskOrderInput(id, dependsOn, files));
         }
 
         if (orderInputs.isEmpty()) {
-            System.err.println("integrate: no agent-work/* branches found for plan " + plan);
+            System.err.println("integrate: no COMMIT_RECORDED events found for plan " + plan + ". Nothing to integrate.");
             return 1;
+        }
+        if (taskAgentBranch.isEmpty()) {
+            System.out.println("integrate: all tasks were done directly on the task branch — nothing to merge.");
+            return 0;
         }
 
         List<Integer> order;
@@ -114,7 +144,11 @@ public class IntegrateCommand implements Callable<Integer> {
         int totalFailures = 0;
 
         for (int taskId : order) {
-            String agentBranch = "agent-work/" + taskId;
+            String agentBranch = taskAgentBranch.get(taskId);
+            if (agentBranch == null) {
+                System.out.println("integrate: task " + taskId + " was done directly on task branch — skipping.");
+                continue;
+            }
             String agentWorkSha = captureGit(repoRoot.toFile(), "git", "rev-parse", agentBranch).trim();
             String presMergeSha = captureGit(integrationDir, "git", "rev-parse", "HEAD").trim();
 
@@ -187,12 +221,12 @@ public class IntegrateCommand implements Callable<Integer> {
         }
         xmlService.writePlanTasks(planTasks, xmlFile);
 
-        // Delete agent-work/* branches
-        for (int taskId : order) {
+        // Delete agent-work/* branches (only those that were actually merged)
+        for (Map.Entry<Integer, String> entry : taskAgentBranch.entrySet()) {
             try {
-                runGit(repoRoot.toFile(), "git", "branch", "-D", "agent-work/" + taskId);
+                runGit(repoRoot.toFile(), "git", "branch", "-D", entry.getValue());
             } catch (IOException e) {
-                System.err.println("Warning: could not delete agent-work/" + taskId + ": " + e.getMessage());
+                System.err.println("Warning: could not delete " + entry.getValue() + ": " + e.getMessage());
             }
         }
 
