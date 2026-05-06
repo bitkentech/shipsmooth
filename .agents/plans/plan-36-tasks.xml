@@ -122,7 +122,12 @@
       <commit></commit>
       <created-from>plan-36-v1</created-from>
       <closed-at-version></closed-at-version>
-      <comments></comments>
+      <comments>
+        <comment>
+          <timestamp>2026-05-06T12:11:09.405Z</timestamp>
+          <message>plan-11 run 2 (2026-05-06): parallel subagents worked (Tasks 2+3 dispatched correctly). Four bugs hit during integrate: (1) set-commit --branch writes integration_mode=direct, causing integrate to skip tasks; (2) ledger wiped by git reset --hard; (3) worker-finish can&apos;t recover after worker-cleanup; (4) verify cmd -pl flag breaks inside integration worktree. Full resolver loop not yet exercised. Bugs documented in plan-36.md.</message>
+        </comment>
+      </comments>
       <deviations></deviations>
     </task>
   </tasks>

@@ -256,6 +256,34 @@ Build the CLI and run against a scratch scenario:
 
 ---
 
+## Bugs found during plan-11 E2E runs (2026-05-06)
+
+Four issues surfaced during two E2E runs against plan-11 (XML/YAML TaskStore backends). All are candidates for a Task 9 hardening pass or a follow-on plan.
+
+### Bug 1 — `set-commit --branch agent-work/*` always writes `integration_mode=direct`
+
+`SetCommitCommand` unconditionally writes `integration_mode=direct` to the ledger even when `--branch agent-work/{id}` is passed. `IntegrateCommand` reads this field and skips any task with `integration_mode=direct`. Result: manually recovering a wiped ledger via `set-commit` causes `integrate` to silently skip those tasks.
+
+**Fix:** when `--branch` starts with `agent-work/`, write `integration_mode=worktree` instead.
+
+### Bug 2 — Ledger wiped by `git reset --hard`
+
+`.agents/ledger.jsonl` is git-tracked (`!.agents/ledger.jsonl` in `.gitignore`). A `git reset --hard` restores it to the committed state, destroying any uncommitted events (e.g. `COMMIT_RECORDED` events written by `worker-finish` after the last commit). This leaves `integrate` with no `COMMIT_RECORDED` events and nothing to merge.
+
+**Fix:** gitignore the ledger (remove the `!` negation) so it is never reset. The ledger is an append-only execution trace, not source of truth — it should survive resets.
+
+### Bug 3 — `worker-finish` requires worktree to reconstruct ledger
+
+If the ledger is wiped and `worker-cleanup` has already removed `.agents/tasks/{id}`, there is no way to re-run `worker-finish` to reconstruct the `COMMIT_RECORDED` event. The only recovery is manual `set-commit` calls, which are broken by Bug 1.
+
+**Fix:** add a `ledger-record-commit --plan {N} --task {id} --commit {sha} --branch agent-work/{id}` subcommand for emergency recovery that writes a proper `COMMIT_RECORDED` event with `integration_mode=worktree`.
+
+### Bug 4 — Verify command `-pl` flag breaks inside integration worktree
+
+The integration worktree (`.agents/integration/plan-{N}/`) is itself the Maven project root. Passing `-pl /path/to/repo` to `mvn` inside this worktree fails because `-pl` is relative to the reactor root, not an absolute override. The resolver cannot fix this — it is a configuration error.
+
+**Fix (SKILL):** document that the verify command must work when invoked from the integration worktree root. Never use `-pl` with an absolute path. Recommend testing the verify command from `.agents/integration/plan-{N}/` before the first `integrate` call (the integration worktree must be created first, or test from repo root without `-pl`).
+
 ## Phase 4 preview (not in scope)
 
 - `--resume` from the last `PATCH_INTEGRATED` event.
