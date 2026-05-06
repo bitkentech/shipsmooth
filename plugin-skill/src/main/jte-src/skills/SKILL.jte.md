@@ -180,7 +180,7 @@ Use this hash (not the tag name) in Linear links — it is immutable and survive
    ```
 7. **Create Task Tracking Infrastructure:**
    - `[Linear]` Create the `[agent]` Linear project. Create Linear issues from the **risk-sorted** plan tasks. Each issue description must include the **Risk Level** ($L/M/H$) and the tag-based GitHub URL of the specific plan version that generated it.
-   - `[Local]` Run `${model.cliBin()} init --plan {N} --tasks-from .agents/plans/plan-{N}.md` to generate `.agents/plans/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI. The format uses child elements, not attributes.** The CLI requires task headings in the form `### Task N: Name [Risk]` where `N` is a positive integer — alphanumeric IDs (e.g. `01-A`) are not supported.
+   - `[Local]` Run `${model.cliBin()} init --plan {N} --tasks-from .agents/plans/plan-{N}.md` to generate `.agents/plans/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI. The format uses child elements, not attributes.** The CLI requires task headings in the form `### Task N: Name [Risk]` where `N` is a positive integer — alphanumeric IDs (e.g. `01-A`) are not supported. To express a dependency between tasks, add a `*Depends-on: P[,Q...]*` line anywhere in the task body before the next heading (e.g. `*Depends-on: 1,3*`). The CLI parses this line and writes `<depends-on>` into the XML automatically.
    - Organise tasks as **thin vertical slices** in both modes.
 8. **Final Review & Go-ahead:**
    - `[Linear]` **Stop.** Post to the Linear project that the risk-sorted plan is ready for review.
@@ -285,38 +285,116 @@ Tasks may carry a `<depends-on>` field in the XML (comma-separated parent task I
 
 A task with `<depends-on>` **must not** be dispatched in the same parallel batch as its parents — wait for the parent batch to complete first.
 
-Tasks with no `<depends-on>` (or an empty value) fork from repo HEAD as before.
+Tasks with no `<depends-on>` (or an empty value) fork from repo HEAD. **A task that has no `<depends-on>` but is itself a dependency of other tasks should be executed directly by the Lead Agent** (not dispatched as a subagent) — dispatch only starts once those prerequisite tasks are complete and their dependents can run in parallel.
+
+### User consent (required before first parallel dispatch)
+
+Before launching any subagents, ask the user:
+
+> "ShipSmooth is about to launch parallel agents for Tasks {list} (prerequisite Tasks {prereq-list} will run first in this context). You will be asked for permission to read/write in `.agents/tasks/`. How would you like to proceed?
+> 1. Yes, go ahead
+> 2. No, don't use subagents"
+
+If the user chooses **Yes**: proceed with the parallel dispatch below.
+If the user chooses **No**: execute all tasks sequentially in the main context window using the standard per-task loop instead. Do not dispatch any `Agent` tool calls.
 
 ### Per-task command sequence (run by the Lead Agent, not the subagent)
 
 For tasks **without** `<depends-on>`:
 ```
 1. ${model.cliBin()} claim --plan {N} --task {id}
-2. ${model.cliBin()} worker-init --plan {N} --task {id}            # prints worktree absolute path to stdout
-3. Agent tool call — see Worker Instruction Block below
-4. ${model.cliBin()} worker-finish --plan {N} --task {id}          # captures diff, commits, records events
-5. ${model.cliBin()} worker-cleanup --plan {N} --task {id}         # removes worktree dir, keeps branch
+2. WORKTREE=$(${model.cliBin()} worker-init --plan {N} --task {id})   # captures absolute worktree path
+3. Agent tool call — fill {absolute-worktree-path} with $WORKTREE — see Worker Instruction Block below
+4. ${model.cliBin()} worker-finish --plan {N} --task {id}             # captures diff, commits, records events
+5. ${model.cliBin()} worker-cleanup --plan {N} --task {id}            # removes worktree dir, keeps branch
 ```
 
 For tasks **with** `<depends-on>` (run after parent batch is complete):
 ```
 1. ${model.cliBin()} claim --plan {N} --task {id}
-2. BASE=$(${model.cliBin()} worker-base --plan {N} --task {id})    # resolve parent commit SHA
-3. ${model.cliBin()} worker-init --plan {N} --task {id} --base "$BASE"
-4. Agent tool call — see Worker Instruction Block below
+2. BASE=$(${model.cliBin()} worker-base --plan {N} --task {id})       # resolve parent commit SHA
+3. WORKTREE=$(${model.cliBin()} worker-init --plan {N} --task {id} --base "$BASE")
+4. Agent tool call — fill {absolute-worktree-path} with $WORKTREE — see Worker Instruction Block below
 5. ${model.cliBin()} worker-finish --plan {N} --task {id}
 6. ${model.cliBin()} worker-cleanup --plan {N} --task {id}
 ```
 
-`worker-finish` aborts loudly if the subagent made any git commits inside the worktree (a contract violation). The `agent-work/{id}` branch ref is intentionally left behind after cleanup — a future integration plan will consume it.
+**`$WORKTREE` is required input for the Agent call.** Never dispatch a worker without capturing this value first — the worker has no other way to know where its files are.
+
+`worker-finish` aborts loudly if the subagent made any git commits inside the worktree (a contract violation). `worker-cleanup` removes the `.agents/tasks/{id}` directory but intentionally keeps the `agent-work/{id}` branch — that branch is the only input `integrate` needs. The disappearance of `.agents/tasks/{id}` before `integrate` runs is expected and correct.
+
+### Integration step (mandatory after all worker-cleanup calls)
+
+**When to run:** once every task in the batch has status `agent-coded` (confirmed via `${model.cliBin()} show --plan {N}`) and their `agent-work/{id}` branches exist (confirmed via `git branch -l 'agent-work/*'`).
+
+**Before running integrate — probe the verify command:**
+
+Run the verify command once manually in the repo root and confirm it exits 0 before passing it to `integrate`. This catches environment failures (missing Docker, missing credentials, pre-existing test failures) before they consume resolver iterations:
+
+```bash
+{your-test-command}   # must exit 0 before you proceed
+```
+
+If it fails for environment reasons (e.g. Docker not available), add the necessary exclusion flags now. Never pass a verify command that is already red.
+
+**File overlap warning:** Before running `integrate`, check which tasks touch the same files:
+
+```bash
+for branch in $(git branch -l 'agent-work/*' --format '%(refname:short)'); do
+  echo "=== $branch ==="; git diff --name-only $(git merge-base HEAD $branch)..$branch
+done
+```
+
+If two or more independent tasks (no `<depends-on>` between them) touch the same file, **expect a conflict** on that file. Brief the user before proceeding — the resolver will handle it, but manual resolution may be needed if the resolver exhausts its attempts.
+
+**Conflict surface note:** Tasks that carry `<depends-on>` fork from their parent's commit rather than from HEAD, so they form a chain and integrate cleanly in dependency order — conflicts among them are rare by construction. Independent tasks (no `<depends-on>`, all forked from the same HEAD) are the conflict-prone set. The overlap-minimization ordering heuristic in `IntegrationOrder` applies primarily to these.
+
+**Running integrate:**
+
+```bash
+${model.cliBin()} integrate --plan {N} --task-branch $(git rev-parse --abbrev-ref HEAD) --verify-cmd "{your-test-command}"
+```
+
+**Monitoring stdout — required while integrate runs:** `integrate` uses a stdin/stdout protocol to invoke the LLM resolver. When a conflict or verify failure occurs, the command prints a JSON line to stdout and blocks waiting for a response:
+
+```json
+{"action":"spawn-resolver","prompt":"<full prompt>","worktree":"<absolute path>"}
+```
+
+The Lead Agent **must actively watch stdout** for this line. When it appears:
+1. Perform an `Agent` tool call using `subagent_type: general-purpose`, `prompt` from the JSON, and working directory set to the `worktree` path. **Do not pass `isolation: worktree`.**
+2. Write `{"action":"continue"}` followed by a newline back to the process stdin.
+3. Resume watching stdout for the next JSON line or completion.
+
+If `integrate` appears to hang after a conflict, it is almost certainly waiting for this stdin response.
+
+**On success:** `integrate` prints the integration tip SHA and the fast-forward command:
+
+```bash
+git merge --ff-only integration/plan-{N}
+git push
+```
+
+Apply both immediately, then proceed to Plan Closeout.
+
+**On failure:** `integrate` exits non-zero and prints the failing task id. The integration branch is left in place for inspection. Report the task id and branch name to the human and stop — do not attempt manual merges.
+
+**Do not manually merge `agent-work/*` branches or stash-pop changes** — that bypasses conflict detection and LLM-assisted resolution.
 
 ### Worker Instruction Block
 
-The Lead Agent pastes this verbatim into the `Agent` tool call's prompt, filling in the four `{...}` slots. **Do not pass `isolation: worktree` to the `Agent` tool** — `worker-init` already created a real git worktree; Claude Code's built-in isolation would create a second, hidden one and the subagent's edits would never be captured.
+The Lead Agent pastes this verbatim into the `Agent` tool call's prompt, filling in the five `{...}` slots: `{task-id}`, `{task-name}`, `{absolute-worktree-path}`, `{N}` (plan number), `{task-markdown-slice}`, `{coverage-pct}`. **Do not pass `isolation: worktree` to the `Agent` tool** — `worker-init` already created a real git worktree; Claude Code's built-in isolation would create a second, hidden one and the subagent's edits would never be captured.
 
-> You are a ShipSmooth coding worker for task {N}: {task-name}.
+> **WORKER: Task {task-id} — {task-name}** (say this as your first output line so the user knows which task this agent is working on)
+>
+> You are a ShipSmooth coding worker. Your only job is to implement the task scope below and exit.
+>
+> **Pre-flight check (do this before anything else):**
+> Run: `ls {absolute-worktree-path}` — if the directory is empty or does not exist, stop immediately with: `WORKER ABORT: worktree {absolute-worktree-path} is missing or empty — Lead Agent must run worker-init first.` Do not write any code.
 >
 > **Your working directory is `{absolute-worktree-path}`.** All file operations (Read/Edit/Write) must use absolute paths under that directory, and every Bash call must begin with `cd {absolute-worktree-path} &&`. Do not modify any file outside that directory.
+>
+> **If any tool call is denied by the permission system**, stop immediately and report: `WORKER BLOCKED: <tool> was denied — grant permission to proceed.` Do not retry the denied tool, do not attempt workarounds.
 >
 > **You are forbidden from running any git command.** No `git commit`, `git add`, `git checkout`, `git branch`, `git push`, `git worktree`, `git stash`, `git reset`. The Lead Agent handles all git operations via `${model.cliBin()}` after you exit. If you run any git command, the lifecycle will detect it and abort the task.
 >
