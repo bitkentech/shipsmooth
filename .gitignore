@@ -11,5 +11,4 @@ target/
 plugin-tasks-java/target/
 .agents/tasks/*
 .agents/integration/*
-!.agents/ledger.jsonl
 !.agents/objects/

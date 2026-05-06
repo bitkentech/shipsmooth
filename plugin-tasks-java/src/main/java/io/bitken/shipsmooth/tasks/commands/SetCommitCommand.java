@@ -40,9 +40,10 @@ public class SetCommitCommand implements Callable<Integer> {
         try {
             LedgerService ledger = new LedgerService(Paths.get("."));
             ledger.ensureLedgerFile();
+            String integrationMode = branch != null && branch.startsWith("agent-work/") ? "worktree" : "direct";
             Map<String, String> meta = branch != null && !branch.isBlank()
-                    ? Map.of("branch", branch, "commit_sha", commit, "integration_mode", "direct")
-                    : Map.of("commit_sha", commit, "integration_mode", "direct");
+                    ? Map.of("branch", branch, "commit_sha", commit, "integration_mode", integrationMode)
+                    : Map.of("commit_sha", commit, "integration_mode", integrationMode);
             ledger.record(Event.forTask(EventType.COMMIT_RECORDED, String.valueOf(task), commit, commit, meta));
         } catch (Exception e) {
             System.err.println("Warning: ledger record failed (XML mutation preserved): " + e.getMessage());

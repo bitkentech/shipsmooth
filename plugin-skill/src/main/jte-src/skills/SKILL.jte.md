@@ -337,6 +337,8 @@ Run the verify command once manually in the repo root and confirm it exits 0 bef
 
 If it fails for environment reasons (e.g. Docker not available), add the necessary exclusion flags now. Never pass a verify command that is already red.
 
+**`-pl` flag warning (Maven projects):** The integration worktree (`.agents/integration/plan-{N}/`) is its own Maven reactor root — the command runs from inside it. Never use `-pl` with an absolute path (e.g. `-pl /abs/path/to/module`); Maven resolves `-pl` relative to the reactor root, so an absolute path breaks inside the worktree. Relative `-pl` submodule references (e.g. `-pl plugin-tasks-java`) work correctly. If your verify command currently uses an absolute `-pl`, drop the flag and run from the module directory instead, or use a relative path.
+
 **File overlap warning:** Before running `integrate`, check which tasks touch the same files:
 
 ```bash
@@ -380,6 +382,17 @@ Apply both immediately, then proceed to Plan Closeout.
 **On failure:** `integrate` exits non-zero and prints the failing task id. The integration branch is left in place for inspection. Report the task id and branch name to the human and stop — do not attempt manual merges.
 
 **Do not manually merge `agent-work/*` branches or stash-pop changes** — that bypasses conflict detection and LLM-assisted resolution.
+
+**Recovery — ledger wiped, worktrees gone:**
+
+If `git reset --hard` was run before `integrate` and the ledger no longer contains `COMMIT_RECORDED` events for the tasks, `integrate` will find nothing to merge. To recover:
+
+1. Detect the problem: `${model.cliBin()} ledger list` — if no `COMMIT_RECORDED` events appear for your tasks, the ledger was wiped.
+2. For each affected task, find its commit SHA on the `agent-work/{id}` branch: `git rev-parse agent-work/{id}`.
+3. Reconstruct the ledger event: `${model.cliBin()} ledger-record-commit --plan {N} --task {id} --commit {sha} --branch agent-work/{id}`
+4. Repeat for all affected tasks, then re-run `integrate` normally.
+
+Note: this recovery path requires the `agent-work/{id}` branches to still exist. If they were also deleted, restore them from the known commit SHAs via `git branch agent-work/{id} {sha}` before step 3.
 
 ### Worker Instruction Block
 

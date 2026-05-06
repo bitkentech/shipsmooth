@@ -133,9 +133,9 @@
         <task>
             <id>10</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Fix set-commit integration_mode for agent-work branches</name>
-            <commit></commit>
+            <commit>3baf6ffaccf5bf4aa4d5263e02af4a35b88411cb</commit>
             <created-from>plan-36-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -144,9 +144,9 @@
         <task>
             <id>11</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Gitignore the ledger so git reset --hard cannot wipe it</name>
-            <commit></commit>
+            <commit>3baf6ffaccf5bf4aa4d5263e02af4a35b88411cb</commit>
             <created-from>plan-36-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -155,9 +155,9 @@
         <task>
             <id>12</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add ledger-record-commit recovery subcommand</name>
-            <commit></commit>
+            <commit>3baf6ffaccf5bf4aa4d5263e02af4a35b88411cb</commit>
             <created-from>plan-36-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -166,9 +166,9 @@
         <task>
             <id>13</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>SKILL — verify cmd -pl guidance + ledger recovery instructions</name>
-            <commit></commit>
+            <commit>3baf6ffaccf5bf4aa4d5263e02af4a35b88411cb</commit>
             <created-from>plan-36-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
