@@ -242,6 +242,45 @@ Document the run in a short note under `.agents/notes/plan-36-e2e.md` (committed
 
 *Order rationale:* last; depends on the entire stack landing.
 
+### Task 10: Fix set-commit integration_mode for agent-work branches [Low]
+
+`SetCommitCommand` unconditionally writes `integration_mode=direct` even when `--branch agent-work/{id}` is passed. `IntegrateCommand` reads this field and skips any task with `integration_mode=direct`, so manual ledger recovery via `set-commit` silently breaks integration.
+
+**Fix:** in `SetCommitCommand.call()`, check if `branch` starts with `agent-work/`; if so, write `integration_mode=worktree`, otherwise `integration_mode=direct`.
+
+File: `plugin-tasks-java/.../tasks/commands/SetCommitCommand.java`
+
+### Task 11: Gitignore the ledger so git reset --hard cannot wipe it [Low]
+
+`.agents/ledger.jsonl` has a `!` negation in both `.gitignore` and `plugin-tasks-java/.gitignore`, making it git-tracked. A `git reset --hard` restores the committed state and destroys uncommitted events (e.g. `COMMIT_RECORDED` written by `worker-finish`). This leaves `integrate` with nothing to merge.
+
+**Fix:** remove the `!.agents/ledger.jsonl` negation from both `.gitignore` files so the ledger is never tracked or reset. The ledger is an append-only execution trace, not source of truth.
+
+Files: `.gitignore`, `plugin-tasks-java/.gitignore`
+
+### Task 12: Add ledger-record-commit recovery subcommand [Low]
+
+When the ledger is wiped and `worker-cleanup` has already removed `.agents/tasks/{id}`, there is no way to reconstruct a `COMMIT_RECORDED` event. The only fallback (`set-commit`) is broken by Bug 1 (now fixed by Task 10), but even after that fix, a dedicated recovery command is safer and more explicit.
+
+**Fix:** add `ledger-record-commit --plan {N} --task {id} --commit {sha} --branch agent-work/{id}` subcommand. It writes a `COMMIT_RECORDED` event with `integration_mode=worktree` directly to the ledger, bypassing XML. Register it in `TasksCli.java`.
+
+Files: `plugin-tasks-java/.../tasks/commands/LedgerRecordCommitCommand.java` (new), `plugin-tasks-java/.../tasks/TasksCli.java`
+
+### Task 13: SKILL — verify cmd -pl guidance + ledger recovery instructions [Low]
+
+Two SKILL gaps exposed by the E2E run:
+
+1. The "probe the verify command" block says to run it from repo root and add exclusion flags, but never says: **do not use `-pl` with an absolute path** — the integration worktree IS its own Maven root, so `-pl /abs/path` breaks inside it.
+2. There are no recovery instructions for the "ledger wiped, worktrees gone" scenario.
+
+**Fix:** in `SKILL.jte.md`, under the "Before running integrate — probe the verify command" block:
+- Add an explicit warning: *"Never use `-pl` with an absolute path. The integration worktree is its own Maven reactor root; relative `-pl` submodule references work, absolute ones do not."*
+- Add a **Recovery** subsection after the integration block covering: (a) how to detect a wiped ledger (`ledger list` shows no `COMMIT_RECORDED` events), (b) use `ledger-record-commit` per task to reconstruct, (c) re-run `integrate`.
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 12*
+
 ---
 
 ## Verification (manual, via dev build)
@@ -258,7 +297,7 @@ Build the CLI and run against a scratch scenario:
 
 ## Bugs found during plan-11 E2E runs (2026-05-06)
 
-Four issues surfaced during two E2E runs against plan-11 (XML/YAML TaskStore backends). All are candidates for a Task 9 hardening pass or a follow-on plan.
+Four issues surfaced during two E2E runs against plan-11 (XML/YAML TaskStore backends). Tracked as Tasks 10–13.
 
 ### Bug 1 — `set-commit --branch agent-work/*` always writes `integration_mode=direct`
 
