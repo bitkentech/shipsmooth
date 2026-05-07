@@ -228,6 +228,18 @@
       <comments></comments>
       <deviations></deviations>
     </task>
+    <task>
+      <id>21</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>SKILL — fix Monitor loop exit on non-matching lines</name>
+      <commit></commit>
+      <created-from>plan-36-v7</created-from>
+      <closed-at-version></closed-at-version>
+      <depends-on>20</depends-on>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
   </tasks>
   <project-updates>
     <update>

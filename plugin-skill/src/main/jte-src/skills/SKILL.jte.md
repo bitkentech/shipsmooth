@@ -389,7 +389,7 @@ touch .agents/ledger.jsonl && tail -f .agents/ledger.jsonl | while IFS= read -r 
   dir=$(echo "$sha" | cut -c1-2)
   rest=$(echo "$sha" | cut -c3-)
   f=".agents/objects/$dir/$rest"
-  [ -f "$f" ] && grep -q "RESOLVER_REQUESTED" "$f" && cat "$f"
+  if [ -f "$f" ] && grep -q "RESOLVER_REQUESTED" "$f"; then cat "$f"; fi
 done
 ```
 

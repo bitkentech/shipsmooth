@@ -513,7 +513,7 @@ The integration worktree (`.agents/integration/plan-{N}/`) is itself the Maven p
 
 ## Bugs found during plan-36 E2E run (2026-05-07)
 
-Two issues surfaced during the E2E run (Task 9) against plan-11 (XML/YAML TaskStore). Tracked as Tasks 19–20.
+Two issues surfaced during the E2E run (Task 9) against plan-11 (XML/YAML TaskStore). Tracked as Tasks 19–20. A third was found in the plan-11 E2E run on 2026-05-07, tracked as Task 21.
 
 ### Bug 5 — Monitor is single-shot; must be re-armed each resolver cycle
 
@@ -526,6 +526,23 @@ The Monitor tool emits output and then exits — it does not remain open. The SK
 When Monitor is armed before `integrate` has started, `.agents/ledger.jsonl` may not yet exist. `tail -f` on a non-existent file exits immediately (exit 1), causing the Monitor to exit before `integrate` writes the first `RESOLVER_REQUESTED` event. The Lead Agent misses that first event.
 
 **Fix (Task 20):** prepend `touch .agents/ledger.jsonl &&` to the Monitor command so the file always exists before `tail -f` opens it.
+
+### Bug 7 — Monitor command exits early on non-matching lines due to `grep -q && cat` shell pattern
+
+During the plan-11 E2E run, the Monitor command exited immediately with status failed (code 1) rather than staying alive to catch events. The root cause: `[ -f "$f" ] && grep -q "RESOLVER_REQUESTED" "$f" && cat "$f"` — when `grep -q` finds no match it exits 1, which propagates out of `&&` as the while loop body's exit code. On some shells this kills the pipeline or causes `while` to exit early.
+
+**Fix (Task 21):** replace the `&&`-chain with `if/then/fi` so the loop body always returns 0 regardless of whether the line matched:
+```bash
+if [ -f "$f" ] && grep -q "RESOLVER_REQUESTED" "$f"; then cat "$f"; fi
+```
+
+### Task 21: SKILL — fix Monitor loop exit on non-matching lines [Low]
+
+Replace the `&&`-chain in the Monitor command with `if/then/fi` so the `while` loop body always exits 0, keeping the pipeline alive when an incoming ledger line does not contain `RESOLVER_REQUESTED`.
+
+Files: `build/skills/start-dev/SKILL.md`, `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 20*
 
 ## Phase 4 preview (not in scope)
 
