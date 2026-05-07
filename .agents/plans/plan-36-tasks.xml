@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>36</plan>
-    <plan-version>plan-36-v3</plan-version>
+    <plan-version>plan-36-v4</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -14,7 +14,7 @@
             <status>agent-coded</status>
             <name>Extend EventType</name>
             <commit>8080b3db102a7bd614526fa4436eff46ea1ea7c0</commit>
-            <created-from>plan-36-v3</created-from>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -25,7 +25,7 @@
             <status>agent-coded</status>
             <name>WorktreeService merge primitives</name>
             <commit>8080b3db102a7bd614526fa4436eff46ea1ea7c0</commit>
-            <created-from>plan-36-v3</created-from>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -36,7 +36,7 @@
             <status>agent-coded</status>
             <name>IntegrationOrder pure function</name>
             <commit>8080b3db102a7bd614526fa4436eff46ea1ea7c0</commit>
-            <created-from>plan-36-v3</created-from>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -47,7 +47,7 @@
             <status>agent-coded</status>
             <name>Resolver interface + stub</name>
             <commit>8080b3db102a7bd614526fa4436eff46ea1ea7c0</commit>
-            <created-from>plan-36-v3</created-from>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -58,7 +58,7 @@
             <status>agent-coded</status>
             <name>Ledger event payload helpers</name>
             <commit>8080b3db102a7bd614526fa4436eff46ea1ea7c0</commit>
-            <created-from>plan-36-v3</created-from>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -69,22 +69,9 @@
             <status>agent-coded</status>
             <name>IntegrateCommand happy path — clean merges only</name>
             <commit>f549c10</commit>
-            <created-from>plan-36-v3</created-from>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
-            <comments>
-                <comment>
-                    <timestamp>2026-05-07T10:21:25.264+05:30</timestamp>
-                    <message>De-risk draft ready: IntegrateCommand compiles, orchestration loop + ledger spine implemented. Skipped XML commit rewrite and branch GC.</message>
-                </comment>
-                <comment>
-                    <timestamp>2026-05-07T10:21:26.662+05:30</timestamp>
-                    <message>Integration tested via plan-11 re-run. Bugs found: (1) verify command ran Docker-dependent tests; (2) IntegrationOrder overlap warning missing.</message>
-                </comment>
-                <comment>
-                    <timestamp>2026-05-07T10:21:28.137+05:30</timestamp>
-                    <message>Hardening complete: XML commit rewrite, branch GC, INTEGRATION_COMPLETE all confirmed wired.</message>
-                </comment>
-            </comments>
+            <comments/>
             <deviations/>
         </task>
         <task>
@@ -93,18 +80,9 @@
             <status>agent-coded</status>
             <name>LLM resolver step — conflict path</name>
             <commit>f549c10</commit>
-            <created-from>plan-36-v3</created-from>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
-            <comments>
-                <comment>
-                    <timestamp>2026-05-07T10:21:29.541+05:30</timestamp>
-                    <message>De-risk draft ready: StdinStdoutSubagentRunner + SubagentResolver wired into IntegrateCommand.</message>
-                </comment>
-                <comment>
-                    <timestamp>2026-05-07T10:21:32.586+05:30</timestamp>
-                    <message>Resolver invoked during plan-11 integration but silent failure when Lead Agent misses stdout signal. Fixed in hardening: 30-minute timeout with actionable error message.</message>
-                </comment>
-            </comments>
+            <comments/>
             <deviations/>
         </task>
         <task>
@@ -113,7 +91,7 @@
             <status>agent-coded</status>
             <name>SKILL prose update</name>
             <commit>c2abd21</commit>
-            <created-from>plan-36-v3</created-from>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -124,14 +102,9 @@
             <status>pending</status>
             <name>E2E manual verification run</name>
             <commit></commit>
-            <created-from>plan-36-v3</created-from>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
-            <comments>
-                <comment>
-                    <timestamp>2026-05-07T10:21:34.824+05:30</timestamp>
-                    <message>plan-11 run 2 (2026-05-06): parallel subagents worked (Tasks 2+3 dispatched correctly). Four bugs hit during integrate. Full resolver loop not yet exercised. Bugs documented in plan-36.md.</message>
-                </comment>
-            </comments>
+            <comments/>
             <deviations/>
         </task>
         <task>
@@ -140,7 +113,7 @@
             <status>agent-coded</status>
             <name>Fix set-commit integration_mode for agent-work branches</name>
             <commit>6702a2f</commit>
-            <created-from>plan-36-v3</created-from>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -151,7 +124,7 @@
             <status>agent-coded</status>
             <name>Gitignore the ledger so git reset --hard cannot wipe it</name>
             <commit>6702a2f</commit>
-            <created-from>plan-36-v3</created-from>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -162,7 +135,7 @@
             <status>agent-coded</status>
             <name>Add ledger-record-commit recovery subcommand</name>
             <commit>6702a2f</commit>
-            <created-from>plan-36-v3</created-from>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -173,7 +146,7 @@
             <status>agent-coded</status>
             <name>SKILL — verify cmd -pl guidance + ledger recovery instructions</name>
             <commit>6702a2f</commit>
-            <created-from>plan-36-v3</created-from>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -183,8 +156,8 @@
             <risk>low</risk>
             <status>agent-coded</status>
             <name>Pre-approve worktree paths in target repo settings</name>
-            <commit>edab7d436f98b5e659dfe9559d9b077636d5ccd3</commit>
-            <created-from>plan-36-v3</created-from>
+            <commit>bbc872d</commit>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -194,8 +167,41 @@
             <risk>low</risk>
             <status>agent-coded</status>
             <name>SKILL — integrate resolver via background Bash + Monitor</name>
-            <commit>edab7d436f98b5e659dfe9559d9b077636d5ccd3</commit>
-            <created-from>plan-36-v3</created-from>
+            <commit>bbc872d</commit>
+            <created-from>plan-36-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>16</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Add RESOLVER_REQUESTED and RESOLVER_COMPLETE EventTypes</name>
+            <commit></commit>
+            <created-from>plan-36-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>17</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Replace StdinStdoutSubagentRunner with LedgerSubagentRunner + ledger-resolver-complete subcommand</name>
+            <commit></commit>
+            <created-from>plan-36-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>18</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>SKILL — rewrite integrate protocol to use ledger + Monitor</name>
+            <commit></commit>
+            <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -203,7 +209,7 @@
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-05-07T10:19:31.174+05:30</timestamp>
+            <timestamp>2026-05-07T10:33:02.268+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>

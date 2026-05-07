@@ -360,6 +360,81 @@ File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
 
 *Depends-on: 14*
 
+*Note: Task 15's named-pipe approach is Linux/macOS only. Superseded by Tasks 16–18 which use the ledger as the coordination channel instead — portable across all platforms and automatically audited.*
+
+### Task 16: Add RESOLVER_REQUESTED and RESOLVER_COMPLETE EventTypes [Low]
+
+Add two entries to `EventType.java`:
+- `RESOLVER_REQUESTED` — emitted by `integrate` when it needs the Lead Agent to spawn a resolver subagent. Payload: the full resolver prompt string. Metadata: `task_id`, `worktree`, `attempt`.
+- `RESOLVER_COMPLETE` — emitted by the Lead Agent (via CLI) after the resolver subagent returns. Metadata: `task_id`.
+
+File: `plugin-tasks-java/.../tasks/ledger/EventType.java`
+
+### Task 17: Replace StdinStdoutSubagentRunner with LedgerSubagentRunner + ledger-resolver-complete subcommand [Medium]
+
+Replace the stdin/stdout blocking protocol with a ledger-poll protocol. No named pipes, no fd manipulation — pure file append, works on all platforms.
+
+**`LedgerSubagentRunner`** (replaces `StdinStdoutSubagentRunner`):
+- `run(String prompt)`: writes a `RESOLVER_REQUESTED` event to the ledger (payload = prompt, metadata includes `worktree`, `attempt` counter, `task_id`).
+- Then polls `ledger.findLastEvent(taskId, RESOLVER_COMPLETE)` in a loop (100 ms sleep) until a matching event appears or `CONTINUE_TIMEOUT_MINUTES` (30) elapses.
+- On timeout: throws `IllegalStateException` with a message explaining the Lead Agent must run `ledger-resolver-complete`.
+
+`StdinStdoutSubagentRunner` can be deleted or kept as dead code — delete it.
+
+**`LedgerResolverCompleteCommand`** (new CLI subcommand `ledger-resolver-complete`):
+- Options: `--plan {N}`, `--task {id}`.
+- Writes a `RESOLVER_COMPLETE` event to the ledger with `task_id` in metadata.
+- Prints: `Resolver complete recorded for task {id}`.
+- Register in `TasksCli.java`.
+
+`IntegrateCommand` must pass `plan` and `taskId` into `LedgerSubagentRunner` so it can key the poll on the correct task.
+
+Files:
+- `plugin-tasks-java/.../tasks/integration/LedgerSubagentRunner.java` (new)
+- `plugin-tasks-java/.../tasks/integration/StdinStdoutSubagentRunner.java` (delete)
+- `plugin-tasks-java/.../tasks/commands/LedgerResolverCompleteCommand.java` (new)
+- `plugin-tasks-java/.../tasks/TasksCli.java`
+- `plugin-tasks-java/.../tasks/commands/IntegrateCommand.java`
+
+*Depends-on: 16*
+
+### Task 18: SKILL — rewrite integrate protocol to use ledger + Monitor [Low]
+
+Replace the named-pipe block in Task 15 with the ledger-based protocol. No background process management needed — `integrate` can run as a normal blocking `Bash` call because it no longer blocks on stdin.
+
+**Updated "Running integrate" SKILL block:**
+
+Run integrate normally (blocking):
+```bash
+${model.cliBin()} integrate \
+  --plan {N} \
+  --task-branch $(git rev-parse --abbrev-ref HEAD) \
+  --verify-cmd "{your-test-command}"
+```
+
+But first, arm a Monitor **before** running integrate, to watch for `RESOLVER_REQUESTED` events in the ledger:
+
+```bash
+tail -f .agents/ledger.jsonl | grep --line-buffered "RESOLVER_REQUESTED"
+```
+
+When Monitor fires with a `RESOLVER_REQUESTED` line:
+1. Parse the JSON: extract `payload` (the prompt) and `metadata.worktree`.
+2. Extract `metadata.task_id`.
+3. Perform an `Agent` tool call: `subagent_type: general-purpose`, prompt from `payload`, working directory = `metadata.worktree`. **Do not pass `isolation: worktree`.**
+4. After the Agent call returns, run: `${model.cliBin()} ledger-resolver-complete --plan {N} --task {metadata.task_id}`
+5. Resume watching Monitor for the next event.
+
+When `integrate` exits (the blocking Bash call returns), stop the Monitor.
+
+On success: apply the fast-forward as printed by integrate. On failure: report task id and integration branch to the human.
+
+The SKILL must note: arm Monitor **before** starting integrate so no event is missed in the window between process start and Monitor attach.
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 17*
+
 ---
 
 ## Verification (manual, via dev build)
