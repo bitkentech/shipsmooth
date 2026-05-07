@@ -20,9 +20,12 @@ public class LedgerResolverCompleteCommand implements Callable<Integer> {
     @Option(names = "--task", required = true)
     private int task;
 
+    @Option(names = "--repo", description = "Repo root (default: current directory)")
+    private String repo;
+
     @Override
     public Integer call() throws Exception {
-        LedgerService ledger = new LedgerService(Paths.get("."));
+        LedgerService ledger = new LedgerService(repo != null ? Paths.get(repo) : Paths.get("."));
         ledger.ensureLedgerFile();
         ledger.record(Event.forTask(
                 EventType.RESOLVER_COMPLETE,

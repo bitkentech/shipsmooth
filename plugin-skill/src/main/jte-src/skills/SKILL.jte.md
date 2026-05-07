@@ -387,7 +387,7 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 Use the Monitor tool with this command:
 ```bash
-${model.cliBin()} ledger-watch --plan {N}
+${model.cliBin()} ledger-watch --plan {N} --repo $(git rev-parse --show-toplevel)
 ```
 
 `ledger-watch` blocks until a `RESOLVER_REQUESTED` event appears in `.agents/ledger.jsonl`, prints its full JSON payload to stdout, and exits 0. It creates the ledger file if it does not yet exist, so it is safe to arm before `integrate` has started. Exit 1 means it timed out (default 30 minutes) without seeing an event.
@@ -408,7 +408,7 @@ You will be notified when integrate finishes. While it runs, watch for Monitor e
 2. Perform an `Agent` tool call: `subagent_type: general-purpose`, prompt = `payload`, working directory = `metadata.worktree`. **Do not pass `isolation: worktree`.**
 3. After the Agent call returns, signal integrate to continue:
    ```bash
-   ${model.cliBin()} ledger-resolver-complete --plan {N} --task {metadata.task_id}
+   ${model.cliBin()} ledger-resolver-complete --plan {N} --task {metadata.task_id} --repo $(git rev-parse --show-toplevel)
    ```
 4. **Arm Monitor again (Cycle N+1)** — make a new Monitor tool call with the same command above before waiting for the next event. Monitor has exited; you must re-arm it for each additional resolver cycle.
 
