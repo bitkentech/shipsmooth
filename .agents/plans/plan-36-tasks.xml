@@ -181,9 +181,9 @@
         <task>
             <id>14</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Pre-approve worktree paths in target repo settings</name>
-            <commit></commit>
+            <commit>edab7d436f98b5e659dfe9559d9b077636d5ccd3</commit>
             <created-from>plan-36-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -192,9 +192,9 @@
         <task>
             <id>15</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>SKILL — integrate resolver via background Bash + Monitor</name>
-            <commit></commit>
+            <commit>edab7d436f98b5e659dfe9559d9b077636d5ccd3</commit>
             <created-from>plan-36-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>

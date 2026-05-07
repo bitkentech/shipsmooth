@@ -295,8 +295,28 @@ Before launching any subagents, ask the user:
 > 1. Yes, go ahead
 > 2. No, don't use subagents"
 
-If the user chooses **Yes**: proceed with the parallel dispatch below.
+If the user chooses **Yes**: patch `.claude/settings.json` in the target repo (see below), then proceed with the parallel dispatch.
 If the user chooses **No**: execute all tasks sequentially in the main context window using the standard per-task loop instead. Do not dispatch any `Agent` tool calls.
+
+**Worktree permission patch (required before first dispatch, reverted after last worker-cleanup):**
+
+Subagents run in a fresh permission context and do not inherit the Lead Agent's session approvals. Without pre-approved paths, subagents will be blocked when they attempt to `Edit`/`Write` files in their worktree.
+
+Before dispatching any subagent, patch `.claude/settings.json` in the **target repo** (not `~/.claude/settings.json`):
+
+1. Read the file — if it does not exist, treat its current content as `{}`.
+2. Merge the following entries into the `permissions.allow` array (do not overwrite unrelated keys):
+   ```json
+   "Edit(.agents/tasks/**)",
+   "Write(.agents/tasks/**)",
+   "Bash(cd .agents/tasks/** *)"
+   ```
+3. Write the file back. Tell the user: *"Adding temporary worktree permissions to .claude/settings.json so subagents can edit their worktree paths. These will be removed after integration completes."*
+
+After **all** `worker-cleanup` calls have completed, revert:
+
+1. Remove only the three entries added above from `permissions.allow`. If the array is now empty, remove it. If `permissions` is now empty, remove it. If the file was created from scratch (it did not exist before), delete it entirely.
+2. Tell the user: *"Restored .claude/settings.json — temporary worktree permissions removed."*
 
 ### Per-task command sequence (run by the Lead Agent, not the subagent)
 
@@ -353,33 +373,63 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 **Running integrate:**
 
+`integrate` uses a stdin/stdout protocol: when a conflict or verify failure occurs it prints a JSON line to stdout and blocks waiting for `{"action":"continue"}` on stdin. This is incompatible with the blocking `Bash` tool — the command would run to completion before the Lead Agent can respond, closing stdin and aborting the resolver.
+
+Use a **named pipe + background process + Monitor** instead:
+
 ```bash
-${model.cliBin()} integrate --plan {N} --task-branch $(git rev-parse --abbrev-ref HEAD) --verify-cmd "{your-test-command}"
+# 1. Create a named pipe for replies and a log file for output
+mkdir -p .agents/tmp
+mkfifo .agents/tmp/integrate-stdin
+touch .agents/tmp/integrate-stdout.log
+
+# 2. Run integrate in the background, feeding stdin from the pipe
+${model.cliBin()} integrate \
+  --plan {N} \
+  --task-branch $(git rev-parse --abbrev-ref HEAD) \
+  --verify-cmd "{your-test-command}" \
+  < .agents/tmp/integrate-stdin \
+  >> .agents/tmp/integrate-stdout.log 2>&1 &
+INTEGRATE_PID=$!
+
+# 3. Open the write end of the pipe (keeps it open so integrate doesn't get EOF)
+exec 9>.agents/tmp/integrate-stdin
 ```
 
-**Monitoring stdout — required while integrate runs:** `integrate` uses a stdin/stdout protocol to invoke the LLM resolver. When a conflict or verify failure occurs, the command prints a JSON line to stdout and blocks waiting for a response:
+Then arm a Monitor to watch for spawn-resolver events:
 
-```json
-{"action":"spawn-resolver","prompt":"<full prompt>","worktree":"<absolute path>"}
+```bash
+tail -f .agents/tmp/integrate-stdout.log | grep --line-buffered "spawn-resolver"
 ```
 
-The Lead Agent **must actively watch stdout** for this line. When it appears:
-1. Perform an `Agent` tool call using `subagent_type: general-purpose`, `prompt` from the JSON, and working directory set to the `worktree` path. **Do not pass `isolation: worktree`.**
-2. Write `{"action":"continue"}` followed by a newline back to the process stdin.
-3. Resume watching stdout for the next JSON line or completion.
+**When Monitor fires with a `spawn-resolver` line:**
+1. Parse the JSON: extract `prompt` and `worktree`.
+2. Perform an `Agent` tool call: `subagent_type: general-purpose`, prompt from the JSON, working directory = `worktree`. **Do not pass `isolation: worktree`.**
+3. Write the continue reply to the pipe:
+   ```bash
+   echo '{"action":"continue"}' >&9
+   ```
+4. Resume watching Monitor for the next event or completion.
 
-If `integrate` appears to hang after a conflict, it is almost certainly waiting for this stdin response.
+**When integrate exits** (Monitor goes quiet and `wait $INTEGRATE_PID` returns), close the pipe and clean up:
 
-**On success:** `integrate` prints the integration tip SHA and the fast-forward command:
+```bash
+exec 9>&-
+rm -f .agents/tmp/integrate-stdin
+```
+
+Check the exit code via `wait $INTEGRATE_PID` or by scanning `.agents/tmp/integrate-stdout.log` for the final line.
+
+**On success:** `integrate` prints the integration tip SHA and fast-forward command to the log:
 
 ```bash
 git merge --ff-only integration/plan-{N}
 git push
 ```
 
-Apply both immediately, then proceed to Plan Closeout.
+Apply both, then proceed to Plan Closeout.
 
-**On failure:** `integrate` exits non-zero and prints the failing task id. The integration branch is left in place for inspection. Report the task id and branch name to the human and stop — do not attempt manual merges.
+**On failure:** `integrate` exits non-zero and logs the failing task id. The integration branch is left in place for inspection. Report the task id and branch name to the human and stop — do not attempt manual merges.
 
 **Do not manually merge `agent-work/*` branches or stash-pop changes** — that bypasses conflict detection and LLM-assisted resolution.
 
