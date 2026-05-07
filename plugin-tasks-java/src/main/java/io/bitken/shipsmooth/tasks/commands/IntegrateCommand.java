@@ -301,8 +301,12 @@ public class IntegrateCommand implements Callable<Integer> {
 
     /** Returns null on success, or the tail of stderr/stdout on failure. */
     private String runVerify(File cwd, String verifyCmd) throws IOException, InterruptedException {
-        String[] parts = verifyCmd.split("\\s+");
-        Process p = new ProcessBuilder(parts)
+        // Delegate to the shell so quotes and globs in verifyCmd are handled correctly.
+        String os = System.getProperty("os.name", "").toLowerCase();
+        String[] cmd = os.contains("win")
+                ? new String[]{"cmd", "/c", verifyCmd}
+                : new String[]{"sh", "-c", verifyCmd};
+        Process p = new ProcessBuilder(cmd)
                 .directory(cwd)
                 .redirectErrorStream(true)
                 .start();

@@ -381,8 +381,15 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 Use the Monitor tool with this command:
 ```bash
-tail -f .agents/ledger.jsonl | grep --line-buffered "RESOLVER_REQUESTED"
+tail -f .agents/ledger.jsonl | while IFS= read -r sha; do
+  dir=$(echo "$sha" | cut -c1-2)
+  rest=$(echo "$sha" | cut -c3-)
+  f=".agents/objects/$dir/$rest"
+  [ -f "$f" ] && grep -q "RESOLVER_REQUESTED" "$f" && cat "$f"
+done
 ```
+
+Note: `.agents/ledger.jsonl` contains SHA hashes, one per line — the JSON event bodies live in `.agents/objects/`. The Monitor command reads each new hash, locates the object file, and emits the full JSON when it contains `RESOLVER_REQUESTED`.
 
 **Step 2 — run integrate in the background** (Bash tool with `run_in_background: true`):
 
