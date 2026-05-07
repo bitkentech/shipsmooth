@@ -371,6 +371,8 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 **Conflict surface note:** Tasks that carry `<depends-on>` fork from their parent's commit rather than from HEAD, so they form a chain and integrate cleanly in dependency order — conflicts among them are rare by construction. Independent tasks (no `<depends-on>`, all forked from the same HEAD) are the conflict-prone set. The overlap-minimization ordering heuristic in `IntegrationOrder` applies primarily to these.
 
+**Verify scope:** The `--verify-cmd` you pass to `integrate` is the baseline. For each task's merge step, the integration agent will narrow the command to tests relevant to that task before running the full baseline. If `--verify-cmd` runs tests for features not yet integrated (e.g. YAML tests when only XML has landed), the narrowed command avoids spurious resolver cycles. The resolver prompt instructs the LLM to apply this narrowing — you do not need to pre-scope the command at plan-write time.
+
 **Running integrate:**
 
 `integrate` coordinates with the Lead Agent via the ledger: when a conflict or verify failure occurs it writes a `RESOLVER_REQUESTED` event to `.agents/ledger.jsonl` and polls for a `RESOLVER_COMPLETE` event.

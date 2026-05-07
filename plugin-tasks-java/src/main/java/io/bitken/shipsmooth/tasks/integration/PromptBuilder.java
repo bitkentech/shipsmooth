@@ -43,6 +43,12 @@ public class PromptBuilder {
             sb.append("Resolve all conflict markers so the worktree compiles and tests pass.\n\n");
         }
 
+        sb.append("**Verify scope:** Before running the full verify command, consider whether you can narrow it ")
+          .append("to tests that directly exercise this task's changes. If the full command tests features not yet ")
+          .append("present in the integration branch (e.g. a YAML test suite when only XML has landed), run a scoped ")
+          .append("subset first (e.g. `-Dtest=FooTest` or `pytest tests/test_foo.py`). Only fall back to the full ")
+          .append("verify command once the scoped tests pass. This avoids spurious failures from features not yet integrated.\n\n");
+
         sb.append("**When done, exit with a one-line summary** of files changed: ")
           .append("`Modified: path/a, path/b. Added: path/c.`");
 
