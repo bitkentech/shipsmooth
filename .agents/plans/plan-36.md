@@ -513,7 +513,7 @@ The integration worktree (`.agents/integration/plan-{N}/`) is itself the Maven p
 
 ## Bugs found during plan-36 E2E run (2026-05-07)
 
-Two issues surfaced during the E2E run (Task 9) against plan-11 (XML/YAML TaskStore). Tracked as Tasks 19–20. A third was found in the plan-11 E2E run on 2026-05-07, tracked as Task 21.
+Two issues surfaced during the E2E run (Task 9) against plan-11 (XML/YAML TaskStore). Tracked as Tasks 19–20. A third and fourth were found in the plan-11 E2E run on 2026-05-07, tracked as Tasks 21–22. Issue 4 (verify scope) is tracked as Task 23.
 
 ### Bug 5 — Monitor is single-shot; must be re-armed each resolver cycle
 
@@ -543,6 +543,55 @@ Replace the `&&`-chain in the Monitor command with `if/then/fi` so the `while` l
 Files: `build/skills/start-dev/SKILL.md`, `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
 
 *Depends-on: 20*
+
+### Bug 8 — Monitor command shell pipeline is fragile and non-portable
+
+Even after Tasks 20–21, the Monitor command is a multi-stage shell pipeline (`touch && tail -f | while read ... | grep | cat`). It is brittle across shells, non-testable, and fails in obscure ways in different execution environments (as shown by the plan-11 E2E run requiring manual polling workarounds). The right fix is to move the ledger-watching logic into the Java CLI as a `ledger-watch` subcommand that blocks until a `RESOLVER_REQUESTED` event appears and prints the JSON payload, then exits. The Monitor tool then runs a single CLI call — no shell pipeline at all.
+
+**Fix (Task 22):** implement `shipsmooth-tasks ledger-watch --plan N` in Java. Write a JUnit test. Update SKILL to use it.
+
+### Task 22: Implement `ledger-watch` subcommand in Java [Medium]
+
+Add a `ledger-watch` subcommand to the `shipsmooth-tasks` CLI. It blocks, reading `.agents/ledger.jsonl` from the end (following appends), and exits with the full JSON payload printed to stdout as soon as it sees a `RESOLVER_REQUESTED` event. Exit 0 on success, exit 1 if the ledger file is unreadable after a configurable timeout.
+
+Write a JUnit test that:
+1. Creates a temp ledger file.
+2. Starts `ledger-watch` in a background thread.
+3. Appends non-matching events — verifies it keeps blocking.
+4. Appends a `RESOLVER_REQUESTED` event — verifies it unblocks and prints the correct JSON.
+
+Update the Monitor command in SKILL (both `SKILL.jte.md` and `build/skills/start-dev/SKILL.md`) from the shell pipeline to:
+```bash
+~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger-watch --plan {N}
+```
+
+Files: `plugin-tasks-java/src/main/java/…/LedgerWatchCommand.java`, `plugin-tasks-java/src/test/java/…/LedgerWatchCommandTest.java`, `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`, `build/skills/start-dev/SKILL.md`
+
+*Depends-on: 21*
+
+### Bug 9 — verify command during integration is too broad, causing spurious resolver cycles
+
+During the plan-11 E2E run, the `<verify-cmd>` ran the full `TaskStoreTest` suite, which tests both XML and YAML formats. When Task 2 (XML) was merged first, the YAML tests were red — triggering a resolver cycle to add YAML proactively, even though Task 3 hadn't been integrated yet. The resolver had to do Task 3's work early to satisfy the verify command.
+
+The right fix is not to hard-code a narrower verify command at plan-write time (the plan author can't know the integration order in advance). Instead, the integration agent — which is LLM-driven and has the task description, patch diff, and full test output — should reason about scope and pick a narrower verify invocation for each task's merge step. The SKILL should give it a guideline to do so, and the resolver prompt in `IntegrateCommand` should include this instruction.
+
+**Fix (Task 23):** add a SKILL guideline and update the `IntegrateCommand` resolver prompt to instruct the LLM to scope the verify command to the task under integration.
+
+### Task 23: Scope verify command to task under integration [Medium]
+
+Two changes:
+
+**1. SKILL prose (both files):** Add a note under the "Running integrate" section:
+
+> **Verify scope:** The `--verify-cmd` you pass to `integrate` is the baseline. For each task's merge step, the integration agent will narrow the command to tests relevant to that task before running the full baseline. If `--verify-cmd` runs tests for features not yet integrated (e.g. YAML tests when only XML has landed), the narrowed command avoids spurious resolver cycles.
+
+**2. `IntegrateCommand` resolver prompt:** After the existing conflict context, add:
+
+> Before running the verify command, consider whether it can be narrowed to tests directly exercising this task's changes. If the full verify command tests features not yet present in the integration branch, run a scoped subset first (e.g. `-Dtest=Foo` or `pytest tests/test_foo.py`). Only run the full verify command once the scoped tests pass.
+
+Files: `plugin-tasks-java/src/main/java/…/IntegrateCommand.java`, `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`, `build/skills/start-dev/SKILL.md`
+
+*Depends-on: 7*
 
 ## Phase 4 preview (not in scope)
 
