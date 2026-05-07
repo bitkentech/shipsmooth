@@ -137,10 +137,6 @@ public class IntegrateCommand implements Callable<Integer> {
         System.out.println("integrate: created " + integrationBranch + " from " + taskBranch);
         System.out.println("integrate: merge order: " + order);
 
-        // Build resolver — stdin/stdout protocol for production
-        SubagentRunner runner = new StdinStdoutSubagentRunner(integrationAbs);
-        Resolver resolver = new SubagentResolver(runner, integrationAbs);
-
         int totalFailures = 0;
 
         for (int taskId : order) {
@@ -149,6 +145,10 @@ public class IntegrateCommand implements Callable<Integer> {
                 System.out.println("integrate: task " + taskId + " was done directly on task branch — skipping.");
                 continue;
             }
+            // Fresh runner per task so the ledger poll is keyed to the correct task id
+            Resolver resolver = new SubagentResolver(
+                    new LedgerSubagentRunner(ledger, integrationAbs, taskId), integrationAbs);
+
             String agentWorkSha = captureGit(repoRoot.toFile(), "git", "rev-parse", agentBranch).trim();
             String presMergeSha = captureGit(integrationDir, "git", "rev-parse", "HEAD").trim();
 

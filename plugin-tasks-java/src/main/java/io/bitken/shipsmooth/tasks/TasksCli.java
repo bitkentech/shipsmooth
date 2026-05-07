@@ -22,7 +22,8 @@ import picocli.CommandLine.Command;
             WorkerCleanupCommand.class,
             WorkerBaseCommand.class,
             IntegrateCommand.class,
-            LedgerRecordCommitCommand.class
+            LedgerRecordCommitCommand.class,
+            LedgerResolverCompleteCommand.class
         })
 public class TasksCli implements Runnable {
 

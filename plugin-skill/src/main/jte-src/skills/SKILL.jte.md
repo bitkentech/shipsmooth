@@ -373,63 +373,45 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 **Running integrate:**
 
-`integrate` uses a stdin/stdout protocol: when a conflict or verify failure occurs it prints a JSON line to stdout and blocks waiting for `{"action":"continue"}` on stdin. This is incompatible with the blocking `Bash` tool — the command would run to completion before the Lead Agent can respond, closing stdin and aborting the resolver.
+`integrate` coordinates with the Lead Agent via the ledger: when a conflict or verify failure occurs it writes a `RESOLVER_REQUESTED` event to `.agents/ledger.jsonl` and polls for a `RESOLVER_COMPLETE` event. This means integrate runs as a normal blocking `Bash` call — no named pipes or background processes needed.
 
-Use a **named pipe + background process + Monitor** instead:
+**Step 1 — arm Monitor before starting integrate** (so no event is missed in the startup window):
+
+Use the Monitor tool with this command:
+```bash
+tail -f .agents/ledger.jsonl | grep --line-buffered "RESOLVER_REQUESTED"
+```
+
+**Step 2 — run integrate normally:**
 
 ```bash
-# 1. Create a named pipe for replies and a log file for output
-mkdir -p .agents/tmp
-mkfifo .agents/tmp/integrate-stdin
-touch .agents/tmp/integrate-stdout.log
-
-# 2. Run integrate in the background, feeding stdin from the pipe
 ${model.cliBin()} integrate \
   --plan {N} \
   --task-branch $(git rev-parse --abbrev-ref HEAD) \
-  --verify-cmd "{your-test-command}" \
-  < .agents/tmp/integrate-stdin \
-  >> .agents/tmp/integrate-stdout.log 2>&1 &
-INTEGRATE_PID=$!
-
-# 3. Open the write end of the pipe (keeps it open so integrate doesn't get EOF)
-exec 9>.agents/tmp/integrate-stdin
+  --verify-cmd "{your-test-command}"
 ```
 
-Then arm a Monitor to watch for spawn-resolver events:
-
-```bash
-tail -f .agents/tmp/integrate-stdout.log | grep --line-buffered "spawn-resolver"
-```
-
-**When Monitor fires with a `spawn-resolver` line:**
-1. Parse the JSON: extract `prompt` and `worktree`.
-2. Perform an `Agent` tool call: `subagent_type: general-purpose`, prompt from the JSON, working directory = `worktree`. **Do not pass `isolation: worktree`.**
-3. Write the continue reply to the pipe:
+**When Monitor fires with a `RESOLVER_REQUESTED` line:**
+1. Parse the JSON blob from the ledger line — it contains `payload` (the resolver prompt) and `metadata` fields including `worktree` and `task_id`.
+2. Perform an `Agent` tool call: `subagent_type: general-purpose`, prompt = `payload`, working directory = `metadata.worktree`. **Do not pass `isolation: worktree`.**
+3. After the Agent call returns, signal integrate to continue:
    ```bash
-   echo '{"action":"continue"}' >&9
+   ${model.cliBin()} ledger-resolver-complete --plan {N} --task {metadata.task_id}
    ```
-4. Resume watching Monitor for the next event or completion.
+4. Resume watching Monitor for the next `RESOLVER_REQUESTED` event.
 
-**When integrate exits** (Monitor goes quiet and `wait $INTEGRATE_PID` returns), close the pipe and clean up:
+Integrate will unblock within 500 ms of the `ledger-resolver-complete` call and continue to the next task.
 
-```bash
-exec 9>&-
-rm -f .agents/tmp/integrate-stdin
-```
-
-Check the exit code via `wait $INTEGRATE_PID` or by scanning `.agents/tmp/integrate-stdout.log` for the final line.
-
-**On success:** `integrate` prints the integration tip SHA and fast-forward command to the log:
+**On success:** `integrate` prints the integration tip SHA and the fast-forward command:
 
 ```bash
 git merge --ff-only integration/plan-{N}
 git push
 ```
 
-Apply both, then proceed to Plan Closeout.
+Apply both immediately, then proceed to Plan Closeout.
 
-**On failure:** `integrate` exits non-zero and logs the failing task id. The integration branch is left in place for inspection. Report the task id and branch name to the human and stop — do not attempt manual merges.
+**On failure:** `integrate` exits non-zero and prints the failing task id. The integration branch is left in place for inspection. Report the task id and branch name to the human and stop — do not attempt manual merges.
 
 **Do not manually merge `agent-work/*` branches or stash-pop changes** — that bypasses conflict detection and LLM-assisted resolution.
 
