@@ -385,15 +385,10 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 Use the Monitor tool with this command:
 ```bash
-touch .agents/ledger.jsonl && tail -f .agents/ledger.jsonl | while IFS= read -r sha; do
-  dir=$(echo "$sha" | cut -c1-2)
-  rest=$(echo "$sha" | cut -c3-)
-  f=".agents/objects/$dir/$rest"
-  if [ -f "$f" ] && grep -q "RESOLVER_REQUESTED" "$f"; then cat "$f"; fi
-done
+${model.cliBin()} ledger-watch --plan {N}
 ```
 
-Note: `touch` ensures the file exists before `tail -f` opens it — integrate may not have written to the ledger yet when you arm Monitor. `.agents/ledger.jsonl` contains SHA hashes, one per line — the JSON event bodies live in `.agents/objects/`. The Monitor command reads each new hash, locates the object file, and emits the full JSON when it contains `RESOLVER_REQUESTED`.
+`ledger-watch` blocks until a `RESOLVER_REQUESTED` event appears in `.agents/ledger.jsonl`, prints its full JSON payload to stdout, and exits 0. It creates the ledger file if it does not yet exist, so it is safe to arm before `integrate` has started. Exit 1 means it timed out (default 30 minutes) without seeing an event.
 
 **Step 2 — run integrate in the background** (Bash tool with `run_in_background: true`):
 
