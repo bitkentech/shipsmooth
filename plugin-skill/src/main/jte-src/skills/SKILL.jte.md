@@ -373,7 +373,9 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 **Running integrate:**
 
-`integrate` coordinates with the Lead Agent via the ledger: when a conflict or verify failure occurs it writes a `RESOLVER_REQUESTED` event to `.agents/ledger.jsonl` and polls for a `RESOLVER_COMPLETE` event. This means integrate runs as a normal blocking `Bash` call — no named pipes or background processes needed.
+`integrate` coordinates with the Lead Agent via the ledger: when a conflict or verify failure occurs it writes a `RESOLVER_REQUESTED` event to `.agents/ledger.jsonl` and polls for a `RESOLVER_COMPLETE` event.
+
+**Critical:** `integrate` must be run with `run_in_background: true` in the Bash tool. If run as a blocking Bash call, the Lead Agent cannot act on Monitor events while waiting for the command to finish — integrate will time out waiting for `ledger-resolver-complete` that never comes.
 
 **Step 1 — arm Monitor before starting integrate** (so no event is missed in the startup window):
 
@@ -382,7 +384,7 @@ Use the Monitor tool with this command:
 tail -f .agents/ledger.jsonl | grep --line-buffered "RESOLVER_REQUESTED"
 ```
 
-**Step 2 — run integrate normally:**
+**Step 2 — run integrate in the background** (Bash tool with `run_in_background: true`):
 
 ```bash
 ${model.cliBin()} integrate \
@@ -391,8 +393,10 @@ ${model.cliBin()} integrate \
   --verify-cmd "{your-test-command}"
 ```
 
+You will be notified when integrate finishes. While it runs, watch for Monitor events.
+
 **When Monitor fires with a `RESOLVER_REQUESTED` line:**
-1. Parse the JSON blob from the ledger line — it contains `payload` (the resolver prompt) and `metadata` fields including `worktree` and `task_id`.
+1. Parse the JSON blob from the ledger entry — it contains `payload` (the resolver prompt) and `metadata` fields including `worktree` and `task_id`.
 2. Perform an `Agent` tool call: `subagent_type: general-purpose`, prompt = `payload`, working directory = `metadata.worktree`. **Do not pass `isolation: worktree`.**
 3. After the Agent call returns, signal integrate to continue:
    ```bash
