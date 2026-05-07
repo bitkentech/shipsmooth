@@ -281,6 +281,85 @@ File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
 
 *Depends-on: 12*
 
+### Task 14: Pre-approve worktree paths in target repo settings [Low]
+
+Subagents launched via the `Agent` tool run in a fresh permission context and do not inherit the Lead Agent's session approvals. When worker subagents attempt to `Edit`/`Write` files under `.agents/tasks/{id}/` in the target repo, they are blocked and must stop.
+
+**Fix:** update the SKILL's "User consent" block to instruct the Lead Agent to temporarily patch `.claude/settings.json` in the target repo before dispatching subagents, and revert it afterward. The patch:
+
+1. **Before dispatch:** read the existing `.claude/settings.json` (create it as `{}` if absent). Merge in the worktree permission entries — do not overwrite unrelated keys. Tell the user: *"Adding temporary worktree permissions to .claude/settings.json so subagents can edit their worktree paths. These will be removed after integration completes."*
+2. **After all `worker-cleanup` calls complete:** remove only the entries that were added (restore the file to its pre-patch state, or delete it if it was created from scratch). Tell the user: *"Restored .claude/settings.json — temporary worktree permissions removed."*
+
+The permissions to add:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Edit(.agents/tasks/**)",
+      "Write(.agents/tasks/**)",
+      "Bash(cd .agents/tasks/**)"
+    ]
+  }
+}
+```
+
+The SKILL must include:
+- The exact JSON snippet.
+- The read-merge-write pattern (not a blind overwrite).
+- The create-if-absent step.
+- The user-facing messages at both patch and restore points.
+- A note that this is scoped to the target repo's `.claude/settings.json`, not `~/.claude/settings.json`.
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+### Task 15: SKILL — integrate resolver via background Bash + Monitor [Low]
+
+The stdin/stdout resolver protocol requires the Lead Agent to watch a running process and write back mid-execution. This is incompatible with the blocking `Bash` tool: the command runs to completion before the Lead Agent can act, so `stdin` closes and the runner throws.
+
+**Fix:** update the SKILL's "Running integrate" block to use a named pipe + background process pattern:
+
+```bash
+# Create a named pipe for the Lead Agent to write responses into
+mkfifo .agents/tmp/integrate-stdin
+
+# Run integrate in background, feeding stdin from the pipe
+~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks integrate \
+  --plan {N} --task-branch $(git rev-parse --abbrev-ref HEAD) \
+  --verify-cmd "{your-test-command}" \
+  < .agents/tmp/integrate-stdin \
+  > .agents/tmp/integrate-stdout.log 2>&1 &
+INTEGRATE_PID=$!
+
+# Open the write end of the pipe (keeps it open so integrate doesn't get EOF)
+exec 3>.agents/tmp/integrate-stdin
+```
+
+Then use `Monitor` to watch `.agents/tmp/integrate-stdout.log` for the `spawn-resolver` JSON line:
+
+```bash
+tail -f .agents/tmp/integrate-stdout.log | grep --line-buffered "spawn-resolver"
+```
+
+When Monitor fires with a `spawn-resolver` line: parse the `prompt` and `worktree` fields, perform the `Agent` tool call, then write the continue reply to the pipe:
+
+```bash
+echo '{"action":"continue"}' >&3
+```
+
+When `integrate` exits (Monitor sees no more output, or `wait $INTEGRATE_PID` completes), close the pipe and clean up:
+
+```bash
+exec 3>&-
+rm -f .agents/tmp/integrate-stdin
+```
+
+The SKILL must include the full snippet verbatim (with `{N}` and `{your-test-command}` as fill-in slots), and note that `.agents/tmp/` must exist (it is gitignored by default in shipsmooth-managed repos).
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 14*
+
 ---
 
 ## Verification (manual, via dev build)
@@ -297,7 +376,7 @@ Build the CLI and run against a scratch scenario:
 
 ## Bugs found during plan-11 E2E runs (2026-05-06)
 
-Four issues surfaced during two E2E runs against plan-11 (XML/YAML TaskStore backends). Tracked as Tasks 10–13.
+Six issues surfaced during two E2E runs against plan-11 (XML/YAML TaskStore backends). Tracked as Tasks 10–15.
 
 ### Bug 1 — `set-commit --branch agent-work/*` always writes `integration_mode=direct`
 
