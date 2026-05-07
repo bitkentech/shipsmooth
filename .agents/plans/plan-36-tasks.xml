@@ -176,9 +176,9 @@
         <task>
             <id>16</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add RESOLVER_REQUESTED and RESOLVER_COMPLETE EventTypes</name>
-            <commit></commit>
+            <commit>cc0659dd183eefca70a2840509c5b298a9413f33</commit>
             <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -187,9 +187,9 @@
         <task>
             <id>17</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Replace StdinStdoutSubagentRunner with LedgerSubagentRunner + ledger-resolver-complete subcommand</name>
-            <commit></commit>
+            <commit>cc0659dd183eefca70a2840509c5b298a9413f33</commit>
             <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -198,9 +198,9 @@
         <task>
             <id>18</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>SKILL — rewrite integrate protocol to use ledger + Monitor</name>
-            <commit></commit>
+            <commit>cc0659dd183eefca70a2840509c5b298a9413f33</commit>
             <created-from>plan-36-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
