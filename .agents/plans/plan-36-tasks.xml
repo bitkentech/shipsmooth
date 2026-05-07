@@ -1,217 +1,239 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <plan-tasks>
-    <plan>36</plan>
-    <plan-version>plan-36-v4</plan-version>
-    <metadata>
-        <backlog-issue></backlog-issue>
-        <status>active</status>
-        <created>2026-05-07</created>
-    </metadata>
-    <tasks>
-        <task>
-            <id>1</id>
-            <risk>low</risk>
-            <status>agent-coded</status>
-            <name>Extend EventType</name>
-            <commit>8080b3db102a7bd614526fa4436eff46ea1ea7c0</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>2</id>
-            <risk>medium</risk>
-            <status>agent-coded</status>
-            <name>WorktreeService merge primitives</name>
-            <commit>8080b3db102a7bd614526fa4436eff46ea1ea7c0</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>3</id>
-            <risk>medium</risk>
-            <status>agent-coded</status>
-            <name>IntegrationOrder pure function</name>
-            <commit>8080b3db102a7bd614526fa4436eff46ea1ea7c0</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>4</id>
-            <risk>low</risk>
-            <status>agent-coded</status>
-            <name>Resolver interface + stub</name>
-            <commit>8080b3db102a7bd614526fa4436eff46ea1ea7c0</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>5</id>
-            <risk>low</risk>
-            <status>agent-coded</status>
-            <name>Ledger event payload helpers</name>
-            <commit>8080b3db102a7bd614526fa4436eff46ea1ea7c0</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>6</id>
-            <risk>high</risk>
-            <status>agent-coded</status>
-            <name>IntegrateCommand happy path — clean merges only</name>
-            <commit>f549c10</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>7</id>
-            <risk>high</risk>
-            <status>agent-coded</status>
-            <name>LLM resolver step — conflict path</name>
-            <commit>f549c10</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>8</id>
-            <risk>low</risk>
-            <status>agent-coded</status>
-            <name>SKILL prose update</name>
-            <commit>c2abd21</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>9</id>
-            <risk>medium</risk>
-            <status>pending</status>
-            <name>E2E manual verification run</name>
-            <commit></commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>10</id>
-            <risk>low</risk>
-            <status>agent-coded</status>
-            <name>Fix set-commit integration_mode for agent-work branches</name>
-            <commit>6702a2f</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>11</id>
-            <risk>low</risk>
-            <status>agent-coded</status>
-            <name>Gitignore the ledger so git reset --hard cannot wipe it</name>
-            <commit>6702a2f</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>12</id>
-            <risk>low</risk>
-            <status>agent-coded</status>
-            <name>Add ledger-record-commit recovery subcommand</name>
-            <commit>6702a2f</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>13</id>
-            <risk>low</risk>
-            <status>agent-coded</status>
-            <name>SKILL — verify cmd -pl guidance + ledger recovery instructions</name>
-            <commit>6702a2f</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>14</id>
-            <risk>low</risk>
-            <status>agent-coded</status>
-            <name>Pre-approve worktree paths in target repo settings</name>
-            <commit>bbc872d</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>15</id>
-            <risk>low</risk>
-            <status>agent-coded</status>
-            <name>SKILL — integrate resolver via background Bash + Monitor</name>
-            <commit>bbc872d</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>16</id>
-            <risk>low</risk>
-            <status>agent-coded</status>
-            <name>Add RESOLVER_REQUESTED and RESOLVER_COMPLETE EventTypes</name>
-            <commit>cc0659dd183eefca70a2840509c5b298a9413f33</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>17</id>
-            <risk>medium</risk>
-            <status>agent-coded</status>
-            <name>Replace StdinStdoutSubagentRunner with LedgerSubagentRunner + ledger-resolver-complete subcommand</name>
-            <commit>cc0659dd183eefca70a2840509c5b298a9413f33</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>18</id>
-            <risk>low</risk>
-            <status>agent-coded</status>
-            <name>SKILL — rewrite integrate protocol to use ledger + Monitor</name>
-            <commit>cc0659dd183eefca70a2840509c5b298a9413f33</commit>
-            <created-from>plan-36-v4</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-    </tasks>
-    <project-updates>
-        <update>
-            <timestamp>2026-05-07T10:33:02.268+05:30</timestamp>
-            <message>Plan initialised.</message>
-            <blocked>false</blocked>
-        </update>
-    </project-updates>
+  <plan>36</plan>
+  <plan-version>plan-36-v5</plan-version>
+  <metadata>
+    <backlog-issue></backlog-issue>
+    <status>active</status>
+    <created>2026-05-07</created>
+  </metadata>
+  <tasks>
+    <task>
+      <id>1</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>Extend EventType</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>2</id>
+      <risk>medium</risk>
+      <status>agent-coded</status>
+      <name>WorktreeService merge primitives</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>3</id>
+      <risk>medium</risk>
+      <status>agent-coded</status>
+      <name>IntegrationOrder pure function</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>4</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>Resolver interface + stub</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>5</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>Ledger event payload helpers</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>6</id>
+      <risk>high</risk>
+      <status>agent-coded</status>
+      <name>IntegrateCommand happy path — clean merges only</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>7</id>
+      <risk>high</risk>
+      <status>agent-coded</status>
+      <name>LLM resolver step — conflict path</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>8</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>SKILL prose update</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>9</id>
+      <risk>medium</risk>
+      <status>pending</status>
+      <name>E2E manual verification run</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>10</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>Fix set-commit integration_mode for agent-work branches</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>11</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>Gitignore the ledger so git reset --hard cannot wipe it</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>12</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>Add ledger-record-commit recovery subcommand</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>13</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>SKILL — verify cmd -pl guidance + ledger recovery instructions</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>14</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>Pre-approve worktree paths in target repo settings</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>15</id>
+      <risk>low</risk>
+      <status>closed</status>
+      <name>SKILL — integrate resolver via background Bash + Monitor</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>16</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>Add RESOLVER_REQUESTED and RESOLVER_COMPLETE EventTypes</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>17</id>
+      <risk>medium</risk>
+      <status>agent-coded</status>
+      <name>Replace StdinStdoutSubagentRunner with LedgerSubagentRunner + ledger-resolver-complete subcommand</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>18</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>SKILL — rewrite integrate protocol to use ledger + Monitor</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>19</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>SKILL — Monitor is single-shot; add re-arm loop</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+    <task>
+      <id>20</id>
+      <risk>low</risk>
+      <status>agent-coded</status>
+      <name>SKILL — handle ledger non-existent at Monitor arm time</name>
+      <commit></commit>
+      <created-from>plan-36-v5</created-from>
+      <closed-at-version></closed-at-version>
+      <comments></comments>
+      <deviations></deviations>
+    </task>
+  </tasks>
+  <project-updates>
+    <update>
+      <timestamp>2026-05-07T07:14:24.503Z</timestamp>
+      <message>Plan initialised.</message>
+      <blocked>false</blocked>
+    </update>
+  </project-updates>
 </plan-tasks>

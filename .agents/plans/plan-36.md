@@ -449,6 +449,40 @@ Build the CLI and run against a scratch scenario:
 
 ---
 
+### Task 19: SKILL — Monitor is single-shot; add re-arm loop [Low]
+
+The Monitor tool emits one batch of output and exits — it does not stay running indefinitely after the first event fires. The SKILL's step 4 says "Resume watching Monitor for the next `RESOLVER_REQUESTED` event", but the Monitor tool itself has exited by then. The Lead Agent must make a new Monitor tool call for each resolver cycle.
+
+**Fix:** rewrite the Monitor instruction in `SKILL.jte.md` to make this explicit:
+- Label the Monitor call "**Cycle N — arm Monitor**" (where N increments each cycle).
+- After step 4 ("resume watching Monitor"), clarify: *"Arm Monitor again (a new Monitor tool call) before waiting for the next event — Monitor is single-shot and exits after emitting."*
+- Add a note: *"There is one Monitor call per resolver cycle. N cycles = N Monitor tool calls."*
+
+The instruction block currently says "Step 1 — arm Monitor before starting integrate". That label implies it is a one-time setup. Change it to "**Before each resolver cycle — arm Monitor**" (or similar) so it is clear the call repeats.
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 18*
+
+### Task 20: SKILL — handle ledger non-existent at Monitor arm time [Low]
+
+`tail -f .agents/ledger.jsonl` exits immediately (exit 1) if the file does not exist. When the Lead Agent arms Monitor before `integrate` has started (as instructed), the ledger may not yet exist — `integrate` creates it on first write. The Monitor exits before `integrate` writes anything, so the first `RESOLVER_REQUESTED` event is missed.
+
+**Fix:** prepend `touch .agents/ledger.jsonl &&` to the Monitor command so the file exists before `tail -f` opens it:
+
+```bash
+touch .agents/ledger.jsonl && tail -f .agents/ledger.jsonl | while IFS= read -r sha; do
+  dir=$(echo "$sha" | cut -c1-2)
+  rest=$(echo "$sha" | cut -c3-)
+  f=".agents/objects/$dir/$rest"
+  [ -f "$f" ] && grep -q "RESOLVER_REQUESTED" "$f" && cat "$f"
+done
+```
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 18*
+
 ## Bugs found during plan-11 E2E runs (2026-05-06)
 
 Six issues surfaced during two E2E runs against plan-11 (XML/YAML TaskStore backends). Tracked as Tasks 10–15.
@@ -476,6 +510,22 @@ If the ledger is wiped and `worker-cleanup` has already removed `.agents/tasks/{
 The integration worktree (`.agents/integration/plan-{N}/`) is itself the Maven project root. Passing `-pl /path/to/repo` to `mvn` inside this worktree fails because `-pl` is relative to the reactor root, not an absolute override. The resolver cannot fix this — it is a configuration error.
 
 **Fix (SKILL):** document that the verify command must work when invoked from the integration worktree root. Never use `-pl` with an absolute path. Recommend testing the verify command from `.agents/integration/plan-{N}/` before the first `integrate` call (the integration worktree must be created first, or test from repo root without `-pl`).
+
+## Bugs found during plan-36 E2E run (2026-05-07)
+
+Two issues surfaced during the E2E run (Task 9) against plan-11 (XML/YAML TaskStore). Tracked as Tasks 19–20.
+
+### Bug 5 — Monitor is single-shot; must be re-armed each resolver cycle
+
+The Monitor tool emits output and then exits — it does not remain open. The SKILL step 4 says "resume watching Monitor" but does not clarify that this requires a new Monitor tool call. During the E2E run, three separate Monitor tool calls were needed across the session because each one exited after firing.
+
+**Fix (Task 19):** update SKILL to explicitly label each Monitor call as per-cycle and state that re-arming = a new Monitor tool call.
+
+### Bug 6 — `tail -f` on ledger exits if file doesn't exist yet
+
+When Monitor is armed before `integrate` has started, `.agents/ledger.jsonl` may not yet exist. `tail -f` on a non-existent file exits immediately (exit 1), causing the Monitor to exit before `integrate` writes the first `RESOLVER_REQUESTED` event. The Lead Agent misses that first event.
+
+**Fix (Task 20):** prepend `touch .agents/ledger.jsonl &&` to the Monitor command so the file always exists before `tail -f` opens it.
 
 ## Phase 4 preview (not in scope)
 

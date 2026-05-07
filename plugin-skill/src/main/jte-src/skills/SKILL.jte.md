@@ -377,11 +377,15 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 **Critical:** `integrate` must be run with `run_in_background: true` in the Bash tool. If run as a blocking Bash call, the Lead Agent cannot act on Monitor events while waiting for the command to finish — integrate will time out waiting for `ledger-resolver-complete` that never comes.
 
-**Step 1 — arm Monitor before starting integrate** (so no event is missed in the startup window):
+**Monitor protocol — one call per resolver cycle:**
+
+> **Important:** The Monitor tool is single-shot — it emits output once and exits. You need one Monitor tool call per resolver cycle. If integrate requests two resolver passes, you arm Monitor twice (once before each expected event).
+
+**Step 1 — arm Monitor (Cycle 1) before starting integrate** (so no event is missed in the startup window):
 
 Use the Monitor tool with this command:
 ```bash
-tail -f .agents/ledger.jsonl | while IFS= read -r sha; do
+touch .agents/ledger.jsonl && tail -f .agents/ledger.jsonl | while IFS= read -r sha; do
   dir=$(echo "$sha" | cut -c1-2)
   rest=$(echo "$sha" | cut -c3-)
   f=".agents/objects/$dir/$rest"
@@ -389,7 +393,7 @@ tail -f .agents/ledger.jsonl | while IFS= read -r sha; do
 done
 ```
 
-Note: `.agents/ledger.jsonl` contains SHA hashes, one per line — the JSON event bodies live in `.agents/objects/`. The Monitor command reads each new hash, locates the object file, and emits the full JSON when it contains `RESOLVER_REQUESTED`.
+Note: `touch` ensures the file exists before `tail -f` opens it — integrate may not have written to the ledger yet when you arm Monitor. `.agents/ledger.jsonl` contains SHA hashes, one per line — the JSON event bodies live in `.agents/objects/`. The Monitor command reads each new hash, locates the object file, and emits the full JSON when it contains `RESOLVER_REQUESTED`.
 
 **Step 2 — run integrate in the background** (Bash tool with `run_in_background: true`):
 
@@ -409,7 +413,7 @@ You will be notified when integrate finishes. While it runs, watch for Monitor e
    ```bash
    ${model.cliBin()} ledger-resolver-complete --plan {N} --task {metadata.task_id}
    ```
-4. Resume watching Monitor for the next `RESOLVER_REQUESTED` event.
+4. **Arm Monitor again (Cycle N+1)** — make a new Monitor tool call with the same command above before waiting for the next event. Monitor has exited; you must re-arm it for each additional resolver cycle.
 
 Integrate will unblock within 500 ms of the `ledger-resolver-complete` call and continue to the next task.
 
