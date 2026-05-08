@@ -6,9 +6,10 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @Command(name = "tasks", mixinStandardHelpOptions = true, version = "0.1.0",
-        description = "Task management CLI for shipsmooth.",
+        description = "CLI to manage tasks, subagents and ledger for shipsmooth",
         subcommands = {
             InitCommand.class,
+            // TODO: Implement an AddTask Command?
             UpdateStatusCommand.class,
             AddCommentCommand.class,
             AddDeviationCommand.class,
