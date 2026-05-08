@@ -11,8 +11,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Low-level git worktree operations lifted from agent-simulator's GitWorktreeService.
- * Spring-stripped; uses stderr for warnings.
+ * Low-level git worktree operations.
  */
 public class WorktreeService {
 
