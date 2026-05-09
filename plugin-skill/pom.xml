@@ -137,10 +137,6 @@
                   <value>${plugin.skillName}</value>
                 </systemProperty>
                 <systemProperty>
-                  <key>shipsmooth.cache.dir.resolved</key>
-                  <value>${shipsmooth.cache.dir}</value>
-                </systemProperty>
-                <systemProperty>
                   <key>skill.frontmatter</key>
                   <value>${skill.frontmatter}</value>
                 </systemProperty>
@@ -151,6 +147,14 @@
                 <systemProperty>
                   <key>shipsmooth.jlink.dir</key>
                   <value>${shipsmooth.jlink.dir}</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>shipsmooth.cache.dir.resolved</key>
+                  <value>${shipsmooth.cache.dir.resolved}</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>plugin.hook.command</key>
+                  <value>${plugin.hook.base}</value>
                 </systemProperty>
               </systemProperties>
             </configuration>

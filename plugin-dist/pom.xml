@@ -26,6 +26,12 @@
       <version>${project.version}</version>
       <type>pom</type>
     </dependency>
+    <dependency>
+      <groupId>io.bitken</groupId>
+      <artifactId>plugin-skill</artifactId>
+      <version>${project.version}</version>
+      <type>jar</type>
+    </dependency>
   </dependencies>
 
   <profiles>
@@ -170,6 +176,18 @@
     </profile>
 
     <profile>
+      <id>gemini-logic</id>
+      <activation>
+        <property>
+          <name>build.platform</name>
+          <value>gemini</value>
+        </property>
+      </activation>
+      <build>
+      </build>
+    </profile>
+
+    <profile>
       <id>gemini</id>
       <build>
         <plugins>
@@ -209,13 +227,17 @@
                 </goals>
                 <configuration>
                   <outputDirectory>${build.outputDir}</outputDirectory>
+                  <useDefaultDelimiters>false</useDefaultDelimiters>
+                  <delimiters>
+                    <delimiter>@</delimiter>
+                  </delimiters>
                   <resources>
                     <resource>
                       <directory>${maven.multiModuleProjectDirectory}/plugin-node</directory>
-                      <filtering>false</filtering>
+                      <filtering>true</filtering>
                       <includes>
                         <include>package.json</include>
-                      </includes>
+                    </includes>
                     </resource>
                   </resources>
                 </configuration>

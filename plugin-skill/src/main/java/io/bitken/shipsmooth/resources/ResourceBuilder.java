@@ -58,7 +58,7 @@ public class ResourceBuilder {
     }
 
     static void writeHooksJson(ObjectMapper mapper, PluginModel model, Path outputFile) throws IOException {
-        String command = "node \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"";
+        String command = System.getProperty("plugin.hook.command", "node \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"");
 
         ObjectNode hook = mapper.createObjectNode()
             .put("type", "command")

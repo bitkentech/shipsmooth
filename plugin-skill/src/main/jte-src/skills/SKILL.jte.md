@@ -1,6 +1,10 @@
 @import io.bitken.shipsmooth.resources.PluginModel
 @param PluginModel model
-@if(!model.skillFrontmatter().isEmpty())${model.skillFrontmatter()}@endif# ${model.skillName()} — Agent Coding Workflow
+@if(!model.skillFrontmatter().isEmpty())
+${model.skillFrontmatter()}
+@endif
+
+# ${model.skillName()} — Agent Coding Workflow
 
 ## When to apply this skill
 Apply this skill whenever you are:
