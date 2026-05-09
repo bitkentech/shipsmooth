@@ -399,7 +399,11 @@ ${model.cliBin()} ledger-watch --plan {N} --repo $(git rev-parse --show-toplevel
 
 **When Monitor fires with a `RESOLVER_REQUESTED` line:**
 1. Parse the JSON blob from the ledger entry — it contains `payload` (the resolver prompt) and `metadata` fields including `worktree` and `task_id`.
-2. Perform an `Agent` tool call: `subagent_type: general-purpose`, prompt = `payload`, `cwd` = `metadata.worktree`. **Do not pass `isolation: worktree`.** The `cwd` parameter pins the resolver agent's working directory to the integration worktree — omitting it causes the agent to write files into the main repo instead.
+@if("gemini".equals(model.platform()))
+@template.skills.gemini.agent-resolver-call(model = model)
+@else
+@template.skills.claude.agent-resolver-call(model = model)
+@endif
 3. After the Agent call returns, signal integrate to continue:
    ```bash
    ${model.cliBin()} ledger-resolver-complete --plan {N} --task {metadata.task_id} --repo $(git rev-parse --show-toplevel)
@@ -434,7 +438,7 @@ Note: this recovery path requires the `agent-work/{id}` branches to still exist.
 
 ### Worker Instruction Block
 
-The Lead Agent pastes this verbatim into the `Agent` tool call's prompt, filling in the five `{...}` slots: `{task-id}`, `{task-name}`, `{absolute-worktree-path}`, `{N}` (plan number), `{task-markdown-slice}`, `{coverage-pct}`. **Do not pass `isolation: worktree` to the `Agent` tool** — `worker-init` already created a real git worktree; Claude Code's built-in isolation would create a second, hidden one and the subagent's edits would never be captured.
+The Lead Agent pastes this verbatim into the agent tool call's prompt, filling in the five `{...}` slots: `{task-id}`, `{task-name}`, `{absolute-worktree-path}`, `{N}` (plan number), `{task-markdown-slice}`, `{coverage-pct}`. **Do not pass `isolation: worktree` if using Claude** — `worker-init` already created a real git worktree; Claude Code's built-in isolation would create a second, hidden one and the subagent's edits would never be captured.
 
 > **WORKER: Task {task-id} — {task-name}** (say this as your first output line so the user knows which task this agent is working on)
 >
