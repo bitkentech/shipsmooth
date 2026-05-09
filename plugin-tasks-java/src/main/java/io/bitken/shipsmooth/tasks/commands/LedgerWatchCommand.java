@@ -55,15 +55,25 @@ public class LedgerWatchCommand implements Callable<Integer> {
 
         while (System.currentTimeMillis() < deadline) {
             List<String> hashes = ledger.readHashes();
-            // Only scan hashes we haven't seen yet
-            for (int i = seenCount; i < hashes.size(); i++) {
-                Event ev = ledger.readEvent(hashes.get(i));
+            // Read all events once so we can check for matching RESOLVER_COMPLETE inline.
+            // Only scan hashes we haven't seen yet to avoid re-firing on past cycles.
+            List<Event> allEvents = new java.util.ArrayList<>(hashes.size());
+            for (String h : hashes) allEvents.add(ledger.readEvent(h));
+
+            for (int i = seenCount; i < allEvents.size(); i++) {
+                Event ev = allEvents.get(i);
                 if (ev.eventType() == EventType.RESOLVER_REQUESTED) {
+                    // Skip if a RESOLVER_COMPLETE for the same task already exists after this request
+                    boolean alreadyResolved = allEvents.stream().anyMatch(e ->
+                            e.eventType() == EventType.RESOLVER_COMPLETE
+                            && ev.taskId() != null && ev.taskId().equals(e.taskId())
+                            && e.timestamp().compareTo(ev.timestamp()) >= 0);
+                    if (alreadyResolved) continue;
                     System.out.println(mapper.writeValueAsString(ev));
                     return 0;
                 }
             }
-            seenCount = hashes.size();
+            seenCount = allEvents.size();
             //noinspection BusyWait
             Thread.sleep(POLL_INTERVAL_MS);
         }

@@ -68,6 +68,45 @@ public class LedgerWatchCommandTest {
     }
 
     @Test
+    public void watchSkipsResolverRequestedThatAlreadyHasMatchingComplete() throws Exception {
+        LedgerService ledger = new LedgerService(tempDir);
+        ledger.ensureLedgerFile();
+
+        // Simulate a completed resolver cycle already in the ledger
+        ledger.record(Event.forTask(EventType.RESOLVER_REQUESTED, "1", null,
+                "old request", Map.of("worktree", "/tmp/wt", "attempt", "1")));
+        Thread.sleep(10); // ensure COMPLETE timestamp > REQUESTED timestamp
+        ledger.record(Event.forTask(EventType.RESOLVER_COMPLETE, "1", null, null,
+                Map.of("task_id", "1")));
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PrintStream savedOut = System.out;
+        System.setOut(new PrintStream(out));
+
+        ExecutorService exec = Executors.newSingleThreadExecutor();
+        try {
+            Future<Integer> future = exec.submit(() ->
+                    new CommandLine(new LedgerWatchCommand())
+                            .execute("--plan", "99", "--repo", tempDir.toString()));
+
+            // Should not fire on the already-resolved request
+            Thread.sleep(400);
+            assertFalse(future.isDone(), "ledger-watch should skip already-resolved RESOLVER_REQUESTED");
+
+            // New unresolved request — should fire
+            ledger.record(Event.forTask(EventType.RESOLVER_REQUESTED, "1", null,
+                    "new request", Map.of("worktree", "/tmp/wt", "attempt", "2")));
+
+            Integer exitCode = future.get(5, TimeUnit.SECONDS);
+            assertEquals(0, exitCode);
+            assertTrue(out.toString().contains("new request"), "Should output the new unresolved request");
+        } finally {
+            System.setOut(savedOut);
+            exec.shutdownNow();
+        }
+    }
+
+    @Test
     public void watchExitsOneOnTimeout() throws Exception {
         LedgerService ledger = new LedgerService(tempDir);
         ledger.ensureLedgerFile();
