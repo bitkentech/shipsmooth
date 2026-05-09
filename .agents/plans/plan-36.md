@@ -593,6 +593,37 @@ Files: `plugin-tasks-java/src/main/java/…/IntegrateCommand.java`, `plugin-skil
 
 *Depends-on: 7*
 
+### Task 24: Platform-Specific JTE Partials Structure [Low]
+
+The SKILL prose currently contains Claude-specific instructions for background execution, agent dispatch, and permission handling. To support Gemini CLI natively, we will use JTE partials based on the `model.platform()`.
+
+**Action:**
+1. Create `plugin-skill/src/main/jte-src/skills/claude/` and `plugin-skill/src/main/jte-src/skills/gemini/` directories.
+2. Create `background-execution.jte.md` in both directories:
+   - **Claude:** Keeps the existing blocking `Bash` tool with `run_in_background: true` instruction.
+   - **Gemini:** Instructs to use the `run_shell_command` tool with `is_background: true` and notes that `read_background_output` can be used to check stdout.
+3. Create `agent-dispatch.jte.md` in both directories:
+   - **Claude:** Keeps the existing `Agent` tool instructions.
+   - **Gemini:** Instructs to use the `invoke_agent` tool, calling the `generalist` subagent, and passing the worktree path in the prompt.
+4. Create `permission-consent.jte.md` in both directories:
+   - **Claude:** Keeps the existing `.claude/settings.json` patching instructions.
+   - **Gemini:** Omits the `.claude/settings.json` patching instructions entirely.
+
+*Depends-on: 23*
+
+### Task 25: Refactor SKILL.jte.md to use JTE dynamic includes [Low]
+
+Refactor the main `SKILL.jte.md` template to replace the hardcoded Claude instructions with dynamic template calls using `@template.call(...)` based on the `model.platform()`.
+
+**Action:**
+1. In the "User consent" section, replace the Claude-specific `.claude/settings.json` patching instructions with a dynamic include pointing to the `permission-consent.jte.md` partial.
+2. In the "Per-task command sequence" section, replace the `Agent` tool call line with a dynamic include pointing to the `agent-dispatch.jte.md` partial.
+3. In the "Integration step" -> "Running integrate" section, replace the `Bash` tool background instruction with a dynamic include pointing to the `background-execution.jte.md` partial.
+
+Files: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 24*
+
 ## Phase 4 preview (not in scope)
 
 - `--resume` from the last `PATCH_INTEGRATED` event.
