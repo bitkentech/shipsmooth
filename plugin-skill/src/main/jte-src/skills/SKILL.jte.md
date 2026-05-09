@@ -299,7 +299,11 @@ Before launching any subagents, ask the user:
 > 1. Yes, go ahead
 > 2. No, don't use subagents"
 
-@template.skills.${model.platform()}.permission-consent(model = model)
+@if("gemini".equals(model.platform()))
+@template.skills.gemini.permission-consent(model = model)
+@else
+@template.skills.claude.permission-consent(model = model)
+@endif
 
 ### Per-task command sequence (run by the Lead Agent, not the subagent)
 
@@ -307,7 +311,11 @@ For tasks **without** `<depends-on>`:
 ```
 1. ${model.cliBin()} claim --plan {N} --task {id}
 2. WORKTREE=$(${model.cliBin()} worker-init --plan {N} --task {id})   # captures absolute worktree path
-@template.skills.${model.platform()}.agent-dispatch-independent(model = model)
+@if("gemini".equals(model.platform()))
+@template.skills.gemini.agent-dispatch-independent(model = model)
+@else
+@template.skills.claude.agent-dispatch-independent(model = model)
+@endif
 4. ${model.cliBin()} worker-finish --plan {N} --task {id}             # captures diff, commits, records events
 5. ${model.cliBin()} worker-cleanup --plan {N} --task {id}            # removes worktree dir, keeps branch
 ```
@@ -317,12 +325,20 @@ For tasks **with** `<depends-on>` (run after parent batch is complete):
 1. ${model.cliBin()} claim --plan {N} --task {id}
 2. BASE=$(${model.cliBin()} worker-base --plan {N} --task {id})       # resolve parent commit SHA
 3. WORKTREE=$(${model.cliBin()} worker-init --plan {N} --task {id} --base "$BASE")
-@template.skills.${model.platform()}.agent-dispatch-dependent(model = model)
+@if("gemini".equals(model.platform()))
+@template.skills.gemini.agent-dispatch-dependent(model = model)
+@else
+@template.skills.claude.agent-dispatch-dependent(model = model)
+@endif
 5. ${model.cliBin()} worker-finish --plan {N} --task {id}
 6. ${model.cliBin()} worker-cleanup --plan {N} --task {id}
 ```
 
-@template.skills.${model.platform()}.agent-instruction(model = model) 
+@if("gemini".equals(model.platform()))
+@template.skills.gemini.agent-instruction(model = model)
+@else
+@template.skills.claude.agent-instruction(model = model)
+@endif 
 
 `worker-finish` aborts loudly if the subagent made any git commits inside the worktree (a contract violation). `worker-cleanup` removes the `.agents/tasks/{id}` directory but intentionally keeps the `agent-work/{id}` branch — that branch is the only input `integrate` needs. The disappearance of `.agents/tasks/{id}` before `integrate` runs is expected and correct.
 
@@ -375,7 +391,11 @@ ${model.cliBin()} ledger-watch --plan {N} --repo $(git rev-parse --show-toplevel
 
 `ledger-watch` blocks until a `RESOLVER_REQUESTED` event appears in `.agents/ledger.jsonl`, prints its full JSON payload to stdout, and exits 0. It creates the ledger file if it does not yet exist, so it is safe to arm before `integrate` has started. Exit 1 means it timed out (default 30 minutes) without seeing an event.
 
-@template.skills.${model.platform()}.background-execution(model = model)
+@if("gemini".equals(model.platform()))
+@template.skills.gemini.background-execution(model = model)
+@else
+@template.skills.claude.background-execution(model = model)
+@endif
 
 **When Monitor fires with a `RESOLVER_REQUESTED` line:**
 1. Parse the JSON blob from the ledger entry — it contains `payload` (the resolver prompt) and `metadata` fields including `worktree` and `task_id`.
