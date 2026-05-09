@@ -264,29 +264,29 @@
             <deviations/>
             <depends-on>7</depends-on>
         </task>
-            <task>
+        <task>
             <id>24</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Platform-Specific JTE Partials Structure</name>
             <commit></commit>
             <created-from>plan-36-v10</created-from>
             <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
             <depends-on>23</depends-on>
-            <comments></comments>
-            <deviations></deviations>
         </task>
         <task>
             <id>25</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Refactor SKILL.jte.md to use JTE dynamic includes</name>
             <commit></commit>
             <created-from>plan-36-v10</created-from>
             <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
             <depends-on>24</depends-on>
-            <comments></comments>
-            <deviations></deviations>
         </task>
     </tasks>
     <project-updates>

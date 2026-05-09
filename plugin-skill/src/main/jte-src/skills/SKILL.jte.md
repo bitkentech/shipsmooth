@@ -299,28 +299,7 @@ Before launching any subagents, ask the user:
 > 1. Yes, go ahead
 > 2. No, don't use subagents"
 
-If the user chooses **Yes**: patch `.claude/settings.json` in the target repo (see below), then proceed with the parallel dispatch.
-If the user chooses **No**: execute all tasks sequentially in the main context window using the standard per-task loop instead. Do not dispatch any `Agent` tool calls.
-
-**Worktree permission patch (required before first dispatch, reverted after last worker-cleanup):**
-
-Subagents run in a fresh permission context and do not inherit the Lead Agent's session approvals. Without pre-approved paths, subagents will be blocked when they attempt to `Edit`/`Write` files in their worktree.
-
-Before dispatching any subagent, patch `.claude/settings.json` in the **target repo** (not `~/.claude/settings.json`):
-
-1. Read the file — if it does not exist, treat its current content as `{}`.
-2. Merge the following entries into the `permissions.allow` array (do not overwrite unrelated keys):
-   ```json
-   "Edit(.agents/tasks/**)",
-   "Write(.agents/tasks/**)",
-   "Bash(cd .agents/tasks/** *)"
-   ```
-3. Write the file back. Tell the user: *"Adding temporary worktree permissions to .claude/settings.json so subagents can edit their worktree paths. These will be removed after integration completes."*
-
-After **all** `worker-cleanup` calls have completed, revert:
-
-1. Remove only the three entries added above from `permissions.allow`. If the array is now empty, remove it. If `permissions` is now empty, remove it. If the file was created from scratch (it did not exist before), delete it entirely.
-2. Tell the user: *"Restored .claude/settings.json — temporary worktree permissions removed."*
+@template.skills.${model.platform()}.permission-consent(model = model)
 
 ### Per-task command sequence (run by the Lead Agent, not the subagent)
 
@@ -328,7 +307,7 @@ For tasks **without** `<depends-on>`:
 ```
 1. ${model.cliBin()} claim --plan {N} --task {id}
 2. WORKTREE=$(${model.cliBin()} worker-init --plan {N} --task {id})   # captures absolute worktree path
-3. Agent tool call — fill {absolute-worktree-path} with $WORKTREE — see Worker Instruction Block below
+@template.skills.${model.platform()}.agent-dispatch-independent(model = model)
 4. ${model.cliBin()} worker-finish --plan {N} --task {id}             # captures diff, commits, records events
 5. ${model.cliBin()} worker-cleanup --plan {N} --task {id}            # removes worktree dir, keeps branch
 ```
@@ -338,12 +317,12 @@ For tasks **with** `<depends-on>` (run after parent batch is complete):
 1. ${model.cliBin()} claim --plan {N} --task {id}
 2. BASE=$(${model.cliBin()} worker-base --plan {N} --task {id})       # resolve parent commit SHA
 3. WORKTREE=$(${model.cliBin()} worker-init --plan {N} --task {id} --base "$BASE")
-4. Agent tool call — fill {absolute-worktree-path} with $WORKTREE — see Worker Instruction Block below
+@template.skills.${model.platform()}.agent-dispatch-dependent(model = model)
 5. ${model.cliBin()} worker-finish --plan {N} --task {id}
 6. ${model.cliBin()} worker-cleanup --plan {N} --task {id}
 ```
 
-**`$WORKTREE` is required input for the Agent call.** Never dispatch a worker without capturing this value first — the worker has no other way to know where its files are.
+@template.skills.${model.platform()}.agent-instruction(model = model) 
 
 `worker-finish` aborts loudly if the subagent made any git commits inside the worktree (a contract violation). `worker-cleanup` removes the `.agents/tasks/{id}` directory but intentionally keeps the `agent-work/{id}` branch — that branch is the only input `integrate` needs. The disappearance of `.agents/tasks/{id}` before `integrate` runs is expected and correct.
 
@@ -396,16 +375,7 @@ ${model.cliBin()} ledger-watch --plan {N} --repo $(git rev-parse --show-toplevel
 
 `ledger-watch` blocks until a `RESOLVER_REQUESTED` event appears in `.agents/ledger.jsonl`, prints its full JSON payload to stdout, and exits 0. It creates the ledger file if it does not yet exist, so it is safe to arm before `integrate` has started. Exit 1 means it timed out (default 30 minutes) without seeing an event.
 
-**Step 2 — run integrate in the background** (Bash tool with `run_in_background: true`):
-
-```bash
-${model.cliBin()} integrate \
-  --plan {N} \
-  --task-branch $(git rev-parse --abbrev-ref HEAD) \
-  --verify-cmd "{your-test-command}"
-```
-
-You will be notified when integrate finishes. While it runs, watch for Monitor events.
+@template.skills.${model.platform()}.background-execution(model = model)
 
 **When Monitor fires with a `RESOLVER_REQUESTED` line:**
 1. Parse the JSON blob from the ledger entry — it contains `payload` (the resolver prompt) and `metadata` fields including `worktree` and `task_id`.
