@@ -405,7 +405,7 @@ You will be notified when integrate finishes. While it runs, watch for Monitor e
 
 **When Monitor fires with a `RESOLVER_REQUESTED` line:**
 1. Parse the JSON blob from the ledger entry — it contains `payload` (the resolver prompt) and `metadata` fields including `worktree` and `task_id`.
-2. Perform an `Agent` tool call: `subagent_type: general-purpose`, prompt = `payload`, working directory = `metadata.worktree`. **Do not pass `isolation: worktree`.**
+2. Perform an `Agent` tool call: `subagent_type: general-purpose`, prompt = `payload`, `cwd` = `metadata.worktree`. **Do not pass `isolation: worktree`.** The `cwd` parameter pins the resolver agent's working directory to the integration worktree — omitting it causes the agent to write files into the main repo instead.
 3. After the Agent call returns, signal integrate to continue:
    ```bash
    ${model.cliBin()} ledger-resolver-complete --plan {N} --task {metadata.task_id} --repo $(git rev-parse --show-toplevel)
