@@ -129,7 +129,7 @@
                   <outputDirectory>${build.outputDir}/commands</outputDirectory>
                   <resources>
                     <resource>
-                      <directory>${project.basedir}/src/main/resources/gemini-extension/commands</directory>
+                      <directory>${project.basedir}/src/main/resources/gemini-extension/gemini/commands</directory>
                       <filtering>false</filtering>
                     </resource>
                   </resources>
@@ -213,7 +213,7 @@
                   <outputDirectory>${build.outputDir}/commands</outputDirectory>
                   <resources>
                     <resource>
-                      <directory>${project.basedir}/src/main/resources/gemini-extension/commands</directory>
+                      <directory>${project.basedir}/src/main/resources/gemini-extension/gemini-dev/commands</directory>
                       <filtering>false</filtering>
                     </resource>
                   </resources>
