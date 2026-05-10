@@ -4,7 +4,7 @@
     <plan-version>plan-36-v10</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>in-review</status>
         <created>2026-05-07</created>
     </metadata>
     <tasks>
@@ -99,7 +99,7 @@
         <task>
             <id>9</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>E2E manual verification run</name>
             <commit></commit>
             <created-from>plan-36-v5</created-from>
@@ -293,6 +293,11 @@
         <update>
             <timestamp>2026-05-07T07:14:24.503Z</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-10T17:31:37.851+05:30</timestamp>
+            <message>Implemented atomic XML writes, retry mechanism for reads, and automatic XML commits in IntegrateCommand. All tasks are now agent-coded or closed.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>

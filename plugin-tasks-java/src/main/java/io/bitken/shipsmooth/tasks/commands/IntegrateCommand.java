@@ -221,6 +221,20 @@ public class IntegrateCommand implements Callable<Integer> {
         }
         xmlService.writePlanTasks(planTasks, xmlFile);
 
+        // Stage and commit the XML change on the task branch
+        try {
+            runGit(repoRoot.toFile(), "git", "add", xmlFile.getPath());
+            // Check if there are actually changes to commit (to avoid error)
+            String status = captureGit(repoRoot.toFile(), "git", "status", "--porcelain", xmlFile.getPath()).trim();
+            if (!status.isEmpty()) {
+                runGit(repoRoot.toFile(), "git", "commit", "-m",
+                        "chore(plan-" + plan + "): update task commit SHAs after integration");
+                System.out.println("integrate: committed updated SHAs to " + xmlFile.getPath());
+            }
+        } catch (IOException e) {
+            System.err.println("Warning: could not commit " + xmlFile.getPath() + ": " + e.getMessage());
+        }
+
         // Delete agent-work/* branches (only those that were actually merged)
         for (Map.Entry<Integer, String> entry : taskAgentBranch.entrySet()) {
             try {

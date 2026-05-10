@@ -63,7 +63,7 @@ public class InitCommand implements Callable<Integer> {
         StringBuilder updated = new StringBuilder(content);
         if (!content.isEmpty() && !content.endsWith("\n")) updated.append('\n');
         boolean changed = false;
-        for (String entry : new String[]{".agents/tasks/*", ".agents/integration/*", "!.agents/ledger.jsonl", "!.agents/objects/"}) {
+        for (String entry : new String[]{".agents/tasks/*", ".agents/integration/*", "!.agents/objects/", "!.agents/ledger.jsonl"}) {
             if (content.lines().noneMatch(l -> l.trim().equals(entry))) {
                 updated.append(entry).append('\n');
                 changed = true;

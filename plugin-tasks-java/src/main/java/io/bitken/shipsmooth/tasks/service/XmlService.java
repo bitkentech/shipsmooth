@@ -34,16 +34,45 @@ public class XmlService {
     }
 
     public PlanTasks readPlanTasks(File file) throws JAXBException {
-        JAXBContext context = JAXBContext.newInstance(PlanTasks.class);
-        Unmarshaller unmarshaller = context.createUnmarshaller();
-        return (PlanTasks) unmarshaller.unmarshal(file);
+        int retries = 5;
+        while (retries > 0) {
+            try {
+                JAXBContext context = JAXBContext.newInstance(PlanTasks.class);
+                Unmarshaller unmarshaller = context.createUnmarshaller();
+                return (PlanTasks) unmarshaller.unmarshal(file);
+            } catch (JAXBException e) {
+                retries--;
+                if (retries == 0) throw e;
+                try {
+                    //noinspection BusyWait
+                    Thread.sleep(100);
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                }
+            }
+        }
+        throw new JAXBException("Failed to read XML after retries: " + file.getAbsolutePath());
     }
 
     public void writePlanTasks(PlanTasks planTasks, File file) throws JAXBException {
+        File tempFile = new File(file.getAbsolutePath() + ".tmp");
         JAXBContext context = JAXBContext.newInstance(PlanTasks.class);
         Marshaller marshaller = context.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-        marshaller.marshal(planTasks, file);
+        marshaller.marshal(planTasks, tempFile);
+        try {
+            java.nio.file.Files.move(tempFile.toPath(), file.toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        } catch (java.io.IOException e) {
+            throw new JAXBException("Failed to move temp XML file: " + e.getMessage(), e);
+        } finally {
+            if (tempFile.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                tempFile.delete();
+            }
+        }
     }
 
     public List<Task> parseTasksFromPlan(String markdown) {

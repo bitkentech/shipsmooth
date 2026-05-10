@@ -62,6 +62,11 @@ public class LedgerWatchCommand implements Callable<Integer> {
 
             for (int i = seenCount; i < allEvents.size(); i++) {
                 Event ev = allEvents.get(i);
+                if (ev.eventType() == EventType.INTEGRATION_COMPLETE || ev.eventType() == EventType.INTEGRATION_FAILURE) {
+                    System.err.println("ledger-watch: integrate finished (" + ev.eventType() + "), exiting.");
+                    return 0; // Integration finished, so we gracefully exit without a payload.
+                }
+
                 if (ev.eventType() == EventType.RESOLVER_REQUESTED) {
                     // Skip if a RESOLVER_COMPLETE for the same task already exists after this request
                     boolean alreadyResolved = allEvents.stream().anyMatch(e ->
