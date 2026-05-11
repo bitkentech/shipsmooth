@@ -1,8 +1,9 @@
-@import io.bitken.shipsmooth.resources.PluginModel
-@param PluginModel model
-@if(!model.skillFrontmatter().isEmpty())${model.skillFrontmatter()}@endif
+---
+name: start-dev
+description: Use when starting any task — applies the shipsmooth agent coding workflow (dev build).
+---
 
-# ${model.skillName()} — Agent Coding Workflow
+# start-dev — Agent Coding Workflow
 
 ## When to apply this skill
 Apply this skill whenever you are:
@@ -33,7 +34,7 @@ This workflow supports two task tracking modes. Choose one at the start of each 
 
 Throughout this skill, instructions marked `[Linear]` apply only in Linear mode; instructions marked `[Local]` apply only in Local mode. Unmarked instructions apply to both.
 
-`[Local]` Script invocations use `${model.cliBin()} <subcommand>`. All scripts read/write `.agents/plans/plan-{N}-tasks.xml` relative to the repo root.
+`[Local]` Script invocations use `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks <subcommand>`. All scripts read/write `.agents/plans/plan-{N}-tasks.xml` relative to the repo root.
 
 ---
 
@@ -104,12 +105,12 @@ pre-push:
           PLAN=$(git diff --name-only HEAD~1 HEAD | grep '^\.agents/plans/' | head -1)
           PLAN_ID=$(echo "$PLAN" | grep -oP 'plan-\d+')
           # Find next version number
-          LATEST=$(git tag -l "${"${"}PLAN_ID}-v*" | sort -V | tail -1)
+          LATEST=$(git tag -l "${PLAN_ID}-v*" | sort -V | tail -1)
           if [ -z "$LATEST" ]; then
-            NEXT="${"${"}PLAN_ID}-v1"
+            NEXT="${PLAN_ID}-v1"
           else
             N=$(echo "$LATEST" | grep -oP '\d+$')
-            NEXT="${"${"}PLAN_ID}-v$((N+1))"
+            NEXT="${PLAN_ID}-v$((N+1))"
           fi
           git tag "$NEXT"
           git push origin "$NEXT"
@@ -182,7 +183,7 @@ Use this hash (not the tag name) in Linear links — it is immutable and survive
    ```
 7. **Create Task Tracking Infrastructure:**
    - `[Linear]` Create the `[agent]` Linear project. Create Linear issues from the **risk-sorted** plan tasks. Each issue description must include the **Risk Level** ($L/M/H$) and the tag-based GitHub URL of the specific plan version that generated it.
-   - `[Local]` Run `${model.cliBin()} init --plan {N} --tasks-from .agents/plans/plan-{N}.md` to generate `.agents/plans/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI. The format uses child elements, not attributes.** The CLI requires task headings in the form `### Task N: Name [Risk]` where `N` is a positive integer — alphanumeric IDs (e.g. `01-A`) are not supported. To express a dependency between tasks, add a `*Depends-on: P[,Q...]*` line anywhere in the task body before the next heading (e.g. `*Depends-on: 1,3*`). The CLI parses this line and writes `<depends-on>` into the XML automatically.
+   - `[Local]` Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks init --plan {N} --tasks-from .agents/plans/plan-{N}.md` to generate `.agents/plans/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI. The format uses child elements, not attributes.** The CLI requires task headings in the form `### Task N: Name [Risk]` where `N` is a positive integer — alphanumeric IDs (e.g. `01-A`) are not supported. To express a dependency between tasks, add a `*Depends-on: P[,Q...]*` line anywhere in the task body before the next heading (e.g. `*Depends-on: 1,3*`). The CLI parses this line and writes `<depends-on>` into the XML automatically.
    - Organise tasks as **thin vertical slices** in both modes.
 8. **Final Review & Go-ahead:**
    - `[Linear]` **Stop.** Post to the Linear project that the risk-sorted plan is ready for review.
@@ -205,7 +206,7 @@ All task commits go on this branch. The `t/` prefix stands for "task" (covers fe
 
 **Before writing any code**, confirm the test coverage threshold with the human (default: 95%). Record the agreed value before proceeding.
 
-`[Local]` All `${model.cliBin()}` mutations also append one event to `.agents/ledger.jsonl` (content-addressed blobs in `.agents/objects/`). The XML remains the human-readable source of truth; the ledger is the machine-readable execution trace and the foundation for future parallel execution. Inspect with `${model.cliBin()} ledger list` or `${model.cliBin()} ledger verify`.
+`[Local]` All `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks` mutations also append one event to `.agents/ledger.jsonl` (content-addressed blobs in `.agents/objects/`). The XML remains the human-readable source of truth; the ledger is the machine-readable execution trace and the foundation for future parallel execution. Inspect with `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger list` or `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger verify`.
 
 ### Preamble: integration tests (once, before any task)
 
@@ -230,7 +231,7 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
 - Implement just enough to prove the approach works. Focus on the core complexity.
 - Commit as `draft(N): de-risk [task name]`.
 - `[Linear]` Post a comment on the Linear issue notifying the human the draft is ready.
-- `[Local]` Run `${model.cliBin()} update-status --plan {N} --task {id} --status de-risked` and `${model.cliBin()} add-comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
+- `[Local]` Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks update-status --plan {N} --task {id} --status de-risked` and `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks add-comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
 - **Wait for explicit approval of the approach.**
 
 ##### Step B: Hardening (Quality Phase)
@@ -248,7 +249,7 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
   ```
   This creates a stable rollback point. A human reviewing the PR can check out this commit to inspect each task in isolation.
 - `[Linear]` Mark the Linear issue **Agent Coded**.
-- `[Local]` Run `${model.cliBin()} update-status --plan {N} --task {id} --status agent-coded` and `${model.cliBin()} set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`.
+- `[Local]` Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks update-status --plan {N} --task {id} --status agent-coded` and `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`.
 
 #### Low risk tasks — Single-pass (current behavior)
 
@@ -266,7 +267,7 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
    git push origin t/{issue-id}-{short-description}
    ```
    - `[Linear]` Mark the Linear issue **Agent Coded**. No draft review needed.
-   - `[Local]` Run `${model.cliBin()} update-status --plan {N} --task {id} --status agent-coded` and `${model.cliBin()} set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`. No draft review needed.
+   - `[Local]` Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks update-status --plan {N} --task {id} --status agent-coded` and `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`. No draft review needed.
 
 ---
 
@@ -282,7 +283,7 @@ The Lead Agent **may** delegate tasks to coding subagents instead of implementin
 
 Tasks may carry a `<depends-on>` field in the XML (comma-separated parent task IDs). Before dispatching such a task:
 
-1. Verify the parent task's `COMMIT_RECORDED` ledger event exists: `${model.cliBin()} worker-base --plan {N} --task {id}` — this prints the parent's commit SHA or exits 1 if the parent hasn't finished yet.
+1. Verify the parent task's `COMMIT_RECORDED` ledger event exists: `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-base --plan {N} --task {id}` — this prints the parent's commit SHA or exits 1 if the parent hasn't finished yet.
 2. Pass that SHA as `--base` to `worker-init` so the worktree starts from the parent's commit, not repo HEAD.
 
 A task with `<depends-on>` **must not** be dispatched in the same parallel batch as its parents — wait for the parent batch to complete first.
@@ -297,52 +298,53 @@ Before launching any subagents, ask the user:
 > 1. Yes, go ahead
 > 2. No, don't use subagents"
 
-@if("gemini".equals(model.platform()))
-@template.skills.gemini.permission-consent(model = model)
-@else
-@template.skills.claude.permission-consent(model = model)
-@endif
+
+
+If the user chooses **Yes**: proceed with the parallel dispatch.
+If the user chooses **No**: execute all tasks sequentially in the main context window using the standard per-task loop instead. Do not dispatch any `invoke_agent` tool calls.
+
+
 
 ### Per-task command sequence (run by the Lead Agent, not the subagent)
 
 For tasks **without** `<depends-on>`:
 ```
-1. ${model.cliBin()} claim --plan {N} --task {id}
-2. WORKTREE=$(${model.cliBin()} worker-init --plan {N} --task {id})   # captures absolute worktree path
-@if("gemini".equals(model.platform()))
-@template.skills.gemini.agent-dispatch-independent(model = model)
-@else
-@template.skills.claude.agent-dispatch-independent(model = model)
-@endif
-4. ${model.cliBin()} worker-finish --plan {N} --task {id}             # captures diff, commits, records events
-5. ${model.cliBin()} worker-cleanup --plan {N} --task {id}            # removes worktree dir, keeps branch
+1. /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks claim --plan {N} --task {id}
+2. WORKTREE=$(/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-init --plan {N} --task {id})   # captures absolute worktree path
+
+
+3. `invoke_agent` tool call — invoke `generalist` subagent, fill {absolute-worktree-path} with $WORKTREE — see Worker Instruction Block below
+
+
+4. /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-finish --plan {N} --task {id}             # captures diff, commits, records events
+5. /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-cleanup --plan {N} --task {id}            # removes worktree dir, keeps branch
 ```
 
 For tasks **with** `<depends-on>` (run after parent batch is complete):
 ```
-1. ${model.cliBin()} claim --plan {N} --task {id}
-2. BASE=$(${model.cliBin()} worker-base --plan {N} --task {id})       # resolve parent commit SHA
-3. WORKTREE=$(${model.cliBin()} worker-init --plan {N} --task {id} --base "$BASE")
-@if("gemini".equals(model.platform()))
-@template.skills.gemini.agent-dispatch-dependent(model = model)
-@else
-@template.skills.claude.agent-dispatch-dependent(model = model)
-@endif
-5. ${model.cliBin()} worker-finish --plan {N} --task {id}
-6. ${model.cliBin()} worker-cleanup --plan {N} --task {id}
+1. /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks claim --plan {N} --task {id}
+2. BASE=$(/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-base --plan {N} --task {id})       # resolve parent commit SHA
+3. WORKTREE=$(/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-init --plan {N} --task {id} --base "$BASE")
+
+
+4. `invoke_agent` tool call — invoke `generalist` subagent, fill {absolute-worktree-path} with $WORKTREE — see Worker Instruction Block below
+
+
+5. /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-finish --plan {N} --task {id}
+6. /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-cleanup --plan {N} --task {id}
 ```
 
-@if("gemini".equals(model.platform()))
-@template.skills.gemini.agent-instruction(model = model)
-@else
-@template.skills.claude.agent-instruction(model = model)
-@endif 
+
+
+**`$WORKTREE` is required input for the `invoke_agent` call.** Never dispatch a worker without capturing this value first — the worker has no other way to know where its files are.
+
+ 
 
 `worker-finish` aborts loudly if the subagent made any git commits inside the worktree (a contract violation). `worker-cleanup` removes the `.agents/tasks/{id}` directory but intentionally keeps the `agent-work/{id}` branch — that branch is the only input `integrate` needs. The disappearance of `.agents/tasks/{id}` before `integrate` runs is expected and correct.
 
 ### Integration step (mandatory after all worker-cleanup calls)
 
-**When to run:** once every task in the batch has status `agent-coded` (confirmed via `${model.cliBin()} show --plan {N}`) and their `agent-work/{id}` branches exist (confirmed via `git branch -l 'agent-work/*'`).
+**When to run:** once every task in the batch has status `agent-coded` (confirmed via `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks show --plan {N}`) and their `agent-work/{id}` branches exist (confirmed via `git branch -l 'agent-work/*'`).
 
 **Before running integrate — probe the verify command:**
 
@@ -384,27 +386,36 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 Use the Monitor tool with this command:
 ```bash
-${model.cliBin()} ledger-watch --plan {N} --repo $(git rev-parse --show-toplevel)
+/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger-watch --plan {N} --repo $(git rev-parse --show-toplevel)
 ```
 
 `ledger-watch` blocks until a `RESOLVER_REQUESTED` event appears in `.agents/ledger.jsonl`, prints its full JSON payload to stdout, and exits 0. It creates the ledger file if it does not yet exist, so it is safe to arm before `integrate` has started. Exit 1 means it timed out (default 30 minutes) without seeing an event.
 
-@if("gemini".equals(model.platform()))
-@template.skills.gemini.background-execution(model = model)
-@else
-@template.skills.claude.background-execution(model = model)
-@endif
+
+
+**Step 2 — run integrate in the background** (`run_shell_command` tool with `is_background: true`):
+
+```bash
+/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks integrate \
+  --plan {N} \
+  --task-branch $(git rev-parse --abbrev-ref HEAD) \
+  --verify-cmd "{your-test-command}"
+```
+
+You will be notified when integrate finishes. While it runs, watch for Monitor events. *Note: You can use the `read_background_output` tool with the returned PID to inspect stdout/stderr if needed.*
+
+
 
 **When Monitor fires with a `RESOLVER_REQUESTED` line:**
 1. Parse the JSON blob from the ledger entry — it contains `payload` (the resolver prompt) and `metadata` fields including `worktree` and `task_id`.
-@if("gemini".equals(model.platform()))
-@template.skills.gemini.agent-resolver-call(model = model)
-@else
-@template.skills.claude.agent-resolver-call(model = model)
-@endif
+
+
+2. Perform an `invoke_agent` tool call: `agent_name: generalist`, prompt = `payload`, `cwd` = `metadata.worktree` (if supported, otherwise ensure instructions restrict file edits to the worktree directory).
+
+
 3. After the Agent call returns, signal integrate to continue:
    ```bash
-   ${model.cliBin()} ledger-resolver-complete --plan {N} --task {metadata.task_id} --repo $(git rev-parse --show-toplevel)
+   /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger-resolver-complete --plan {N} --task {metadata.task_id} --repo $(git rev-parse --show-toplevel)
    ```
 4. **Arm Monitor again (Cycle N+1)** — make a new Monitor tool call with the same command above before waiting for the next event. Monitor has exited; you must re-arm it for each additional resolver cycle.
 
@@ -434,9 +445,9 @@ git push
 
 If `git reset --hard` was run before `integrate` and the ledger no longer contains `COMMIT_RECORDED` events for the tasks, `integrate` will find nothing to merge. To recover:
 
-1. Detect the problem: `${model.cliBin()} ledger list` — if no `COMMIT_RECORDED` events appear for your tasks, the ledger was wiped.
+1. Detect the problem: `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger list` — if no `COMMIT_RECORDED` events appear for your tasks, the ledger was wiped.
 2. For each affected task, find its commit SHA on the `agent-work/{id}` branch: `git rev-parse agent-work/{id}`.
-3. Reconstruct the ledger event: `${model.cliBin()} ledger-record-commit --plan {N} --task {id} --commit {sha} --branch agent-work/{id}`
+3. Reconstruct the ledger event: `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger-record-commit --plan {N} --task {id} --commit {sha} --branch agent-work/{id}`
 4. Repeat for all affected tasks, then re-run `integrate` normally.
 
 Note: this recovery path requires the `agent-work/{id}` branches to still exist. If they were also deleted, restore them from the known commit SHAs via `git branch agent-work/{id} {sha}` before step 3.
@@ -456,7 +467,7 @@ The Lead Agent pastes this verbatim into the agent tool call's prompt, filling i
 >
 > **If any tool call is denied by the permission system**, stop immediately and report: `WORKER BLOCKED: <tool> was denied — grant permission to proceed.` Do not retry the denied tool, do not attempt workarounds.
 >
-> **You are forbidden from running any git command.** No `git commit`, `git add`, `git checkout`, `git branch`, `git push`, `git worktree`, `git stash`, `git reset`. The Lead Agent handles all git operations via `${model.cliBin()}` after you exit. If you run any git command, the lifecycle will detect it and abort the task.
+> **You are forbidden from running any git command.** No `git commit`, `git add`, `git checkout`, `git branch`, `git push`, `git worktree`, `git stash`, `git reset`. The Lead Agent handles all git operations via `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks` after you exit. If you run any git command, the lifecycle will detect it and abort the task.
 >
 > **Task scope** (from `.agents/plans/plan-{N}.md`):
 >
@@ -470,10 +481,10 @@ The Lead Agent pastes this verbatim into the agent tool call's prompt, filling i
 
 - **Minor deviation** (task split, reorder, clarification):
   - `[Linear]` Update the Linear issue(s), add a deviation comment explaining why, continue.
-  - `[Local]` Run `${model.cliBin()} add-deviation --plan {N} --task {id} --type minor --message "..."`, continue.
+  - `[Local]` Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks add-deviation --plan {N} --task {id} --type minor --message "..."`, continue.
 - **Major deviation** (fundamental plan problem, architecture issue, blocked): Stop immediately.
   - `[Linear]` Post a Linear project update. Set project health to **"At Risk"**.
-  - `[Local]` Run `${model.cliBin()} project-update --plan {N} --blocked --message "..."`.
+  - `[Local]` Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks project-update --plan {N} --blocked --message "..."`.
   - Wait for the human to revise the plan file, commit, push, and give a new go-ahead.
 
 Never autonomously modify the `.agents/plans/` file during execution. If a plan change is needed, surface it and wait.
@@ -488,11 +499,11 @@ git tag plan-07-complete
 git push origin plan-07-complete
 ```
 - `[Linear]` Close all Linear issues in the `[agent]` project. Mark `[agent]` project complete and archive it. Update the permanent backlog feature issue to reflect delivery (link to completing PR, note what was delivered).
-- `[Local]` Run `${model.cliBin()} project-update --plan {N} --status complete --message "Plan complete."`. Commit the final XML state. Update the permanent backlog feature issue (if tracked externally) or note delivery in the plan file.
+- `[Local]` Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks project-update --plan {N} --status complete --message "Plan complete."`. Commit the final XML state. Update the permanent backlog feature issue (if tracked externally) or note delivery in the plan file.
 
 ### Completion with Loose Ends
 - `[Linear]` Label unresolved issues `needs-triage`. Set `[agent]` project to **"In Review"**. Post a project update listing each open issue and why it's unresolved. Wait for human to review: they will promote worthy issues to the permanent backlog or discard them. Human marks the project complete and archives it.
-- `[Local]` Run `${model.cliBin()} update-status --plan {N} --task {id} --status needs-triage` for each unresolved task. Run `${model.cliBin()} project-update --plan {N} --status in-review --message "..."`. Commit the XML. Wait for human to review.
+- `[Local]` Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks update-status --plan {N} --task {id} --status needs-triage` for each unresolved task. Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks project-update --plan {N} --status in-review --message "..."`. Commit the XML. Wait for human to review.
 
 ### Abandonment
 - Human commits a plan file deletion with a commit message referencing the superseding plan number
@@ -503,7 +514,7 @@ git push origin plan-07-complete
   ```
 - **Do not delete any earlier tags** (`plan-07-v1`, `plan-07-v2`, etc.) — they are the audit trail
 - `[Linear]` Surface all open tasks for human triage. Migrate worthy tasks to the permanent backlog with a note: "Partial delivery — see plan-07-abandoned, superseded by plan-{M}". Archive the `[agent]` project with a closing note referencing the deletion commit hash and the superseding plan.
-- `[Local]` Run `${model.cliBin()} project-update --plan {N} --status abandoned --message "Superseded by plan-{M}."`. Commit the final XML state.
+- `[Local]` Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks project-update --plan {N} --status abandoned --message "Superseded by plan-{M}."`. Commit the final XML state.
 
 ---
 
