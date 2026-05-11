@@ -2,6 +2,7 @@ package io.bitken.shipsmooth.tasks.commands;
 
 import io.bitken.shipsmooth.tasks.TasksCli;
 import io.bitken.shipsmooth.tasks.integration.IntegrationLedger;
+import io.bitken.shipsmooth.tasks.integration.Resolver;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
@@ -168,9 +169,69 @@ public class IntegrateCommandTest {
         assertNotNull(task2Integrated, "PATCH_INTEGRATED for task 2 should appear after --force run");
     }
 
+    /**
+     * When the resolver leaves conflict markers in a file, integrate should NOT stage those
+     * files — it should log a warning and continue to the next attempt.
+     *
+     * Setup:
+     *   - Two agent-work branches that both modify shared.txt to different content (causes conflict).
+     *   - A no-op resolver that does not remove conflict markers.
+     *
+     * Expected: integrate exits 1 (max attempts reached), and no [resolved] commit was created
+     * on the integration branch (because staging was skipped each time).
+     */
+    @Test
+    void resolverLeavingConflictMarkers_doesNotStageBrokenContent() throws Exception {
+        Files.writeString(mdFile.toPath(),
+                "### Task 4: Edit shared [Low]\n\n" +
+                "### Task 5: Also edit shared [Low]\n");
+        XmlService xmlService = new XmlService();
+        List<XmlService.Task> tasks = List.of(
+                new XmlService.Task(4, "Edit shared", "low"),
+                new XmlService.Task(5, "Also edit shared", "low")
+        );
+        PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
+        xmlService.writePlanTasks(planTasks, xmlFile);
+
+        // Both branches touch shared.txt with conflicting content
+        createAgentWorkBranchWithContent("4", "shared.txt", "version-from-task-4");
+        createAgentWorkBranchWithContent("5", "shared.txt", "version-from-task-5");
+
+        LedgerService ledger = new LedgerService(repoRoot);
+        recordCommitEvent(ledger, "4", "agent-work/4");
+        recordCommitEvent(ledger, "5", "agent-work/5");
+
+        // A resolver that does nothing (leaves conflict markers in place)
+        Resolver noOpResolver = (dir, ctx) -> {};
+
+        IntegrateCommand cmd = new IntegrateCommand();
+        cmd.setResolverFactory((taskId, integrationAbs) -> noOpResolver);
+
+        CommandLine cli = new CommandLine(cmd);
+        int exit = cli.execute(
+                "--plan", String.valueOf(PLAN_NUM),
+                "--task-branch", currentBranch(),
+                "--verify-cmd", "echo ok",
+                "--max-llm-iterations", "1",
+                "--max-total-failures", "1"
+        );
+
+        assertEquals(1, exit, "integrate should fail when resolver leaves conflict markers");
+
+        // No [resolved] commit should exist on the integration branch — staging was skipped
+        String log = git(repoRoot.toFile(), "log", "--oneline", INTEGRATION_BRANCH).trim();
+        assertFalse(log.contains("[resolved]"),
+                "No [resolved] commit should be present when resolver left conflict markers");
+    }
+
     // --- helpers ---
 
     private void createAgentWorkBranch(String taskId, String fileName, String content)
+            throws IOException, InterruptedException {
+        createAgentWorkBranchWithContent(taskId, fileName, content);
+    }
+
+    private void createAgentWorkBranchWithContent(String taskId, String fileName, String content)
             throws IOException, InterruptedException {
         String branchName = "agent-work/" + taskId;
         String headSha = git(repoRoot.toFile(), "rev-parse", "HEAD").trim();
@@ -209,10 +270,11 @@ public class IntegrateCommandTest {
         // Delete integration branch
         deleteGitBranch(INTEGRATION_BRANCH);
         // Delete agent-work branches used in tests
-        deleteGitBranch("agent-work/2");
-        deleteGitBranch("agent-work/3");
+        for (String id : List.of("2", "3", "4", "5")) {
+            deleteGitBranch("agent-work/" + id);
+        }
         // Delete temp worktrees
-        for (String id : List.of("2", "3")) {
+        for (String id : List.of("2", "3", "4", "5")) {
             String wtRel = ".agents/tmp/test-worker-" + id;
             Path wt = repoRoot.resolve(wtRel);
             if (wt.toFile().isDirectory()) {

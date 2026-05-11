@@ -15,6 +15,7 @@ import picocli.CommandLine.Option;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -23,6 +24,11 @@ import java.util.concurrent.TimeUnit;
 
 @Command(name = "integrate", description = "Integrate parallel agent-work/* branches into the task branch.")
 public class IntegrateCommand implements Callable<Integer> {
+
+    @FunctionalInterface
+    interface ResolverFactory {
+        Resolver create(int taskId, String integrationAbs);
+    }
 
     @Option(names = "--plan", required = true)
     private int plan;
@@ -41,6 +47,12 @@ public class IntegrateCommand implements Callable<Integer> {
 
     @Option(names = "--force", description = "Delete existing integration worktree/branch and start fresh.")
     private boolean force;
+
+    private ResolverFactory resolverFactory;
+
+    void setResolverFactory(ResolverFactory factory) {
+        this.resolverFactory = factory;
+    }
 
     @Override
     public Integer call() throws Exception {
@@ -195,9 +207,10 @@ public class IntegrateCommand implements Callable<Integer> {
                 System.out.println("integrate: task " + taskId + " already integrated — skipping.");
                 continue;
             }
-            // Fresh runner per task so the ledger poll is keyed to the correct task id
-            Resolver resolver = new SubagentResolver(
-                    new LedgerSubagentRunner(ledger, integrationAbs, taskId), integrationAbs);
+            ResolverFactory factory = resolverFactory != null ? resolverFactory
+                    : (tid, absPath) -> new SubagentResolver(
+                            new LedgerSubagentRunner(ledger, absPath, tid), absPath);
+            Resolver resolver = factory.create(taskId, integrationAbs);
 
             String agentWorkSha = captureGit(repoRoot.toFile(), "git", "rev-parse", agentBranch).trim();
             String presMergeSha = captureGit(integrationDir, "git", "rev-parse", "HEAD").trim();
@@ -335,6 +348,26 @@ public class IntegrateCommand implements Callable<Integer> {
                     diffText, conflictedFiles, verifyError);
 
             resolver.resolve(integrationDir, ctx);
+
+            // Check that resolver actually removed conflict markers before staging
+            if (conflictedFiles != null && !conflictedFiles.isEmpty()) {
+                boolean markersRemain = false;
+                for (String relPath : conflictedFiles) {
+                    File f = new File(integrationDir, relPath);
+                    if (f.exists()) {
+                        String content = Files.readString(f.toPath(), StandardCharsets.UTF_8);
+                        if (content.contains("<<<<<<<")) {
+                            System.err.println("integrate: resolver did not remove conflict markers in "
+                                    + relPath + " (attempt " + attempt + ")");
+                            markersRemain = true;
+                        }
+                    }
+                }
+                if (markersRemain) {
+                    if (attempt == maxLlmIterations) break;
+                    continue;
+                }
+            }
 
             // Stage and commit resolver's changes
             runGit(integrationDir, "git", "add", "-A");
