@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>36</plan>
-    <plan-version>plan-36-v13</plan-version>
+    <plan-version>plan-36-v14</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>in-review</status>
@@ -377,26 +377,50 @@
         <task>
             <id>34</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>PromptBuilder -- resolver pre-flight and absolute-path enforcement</name>
-            <commit></commit>
+            <commit>6d0e138</commit>
             <created-from>plan-36-v13</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on></depends-on>
+            <depends-on/>
         </task>
         <task>
             <id>35</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>IntegrateCommand -- post-resolver conflict-marker check</name>
-            <commit></commit>
+            <commit>357398e</commit>
             <created-from>plan-36-v13</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on></depends-on>
+            <depends-on/>
+        </task>
+        <task>
+            <id>36</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Add ledger-record-patch-integrated recovery subcommand</name>
+            <commit></commit>
+            <created-from>plan-36-v14</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on/>
+        </task>
+        <task>
+            <id>37</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>SKILL -- fix stale-resolver recovery path to use ledger-record-patch-integrated</name>
+            <commit></commit>
+            <created-from>plan-36-v14</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>36</depends-on>
         </task>
     </tasks>
     <project-updates>

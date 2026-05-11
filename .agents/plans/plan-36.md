@@ -779,6 +779,56 @@ Files: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`, `build/skills/start-
 
 ---
 
+### Task 36: Add `ledger-record-patch-integrated` recovery subcommand [Low]
+
+E2E testing revealed that when `integrate` dies mid-resolver (session ends while waiting for `RESOLVER_COMPLETE`), there is no way to record a `PATCH_INTEGRATED` event for the manually-resolved task so that a subsequent `integrate` re-run can skip it.
+
+**Why plain `PATCH_INTEGRATED` works here (verified):** `recordIntegrationPlan` is only called inside `if (!worktreePresent)`. In the recovery scenario the worktree is still present, so re-running integrate does **not** write a new `INTEGRATION_PLAN` event — `lastPlanEventIndex` stays at its prior value, and the recovery `PATCH_INTEGRATED` remains visible to the resume check.
+
+**New subcommand `ledger-record-patch-integrated`** (recovery-only, analogous to `ledger-record-commit`):
+
+```
+Options:
+  --plan N            plan number
+  --task T            task ID
+  --commit SHA        integration branch commit SHA (the manual commit made in the worktree)
+  --agent-work-sha SHA  tip SHA of the agent-work/{T} branch (from git rev-parse)
+```
+
+Writes a `PATCH_INTEGRATED` event to the ledger identical in structure to what `IntegrationLedger.recordPatchIntegrated()` writes, with an extra metadata field `recovery=true` to distinguish it in audit logs.
+
+Add a unit test: call the subcommand, then verify a `PATCH_INTEGRATED` event with `recovery=true` appears in the ledger for the given task.
+
+Files:
+- `plugin-tasks-java/.../tasks/commands/LedgerRecordPatchIntegratedCommand.java` (new)
+- `plugin-tasks-java/.../tasks/TasksCli.java` (register new subcommand)
+- `plugin-tasks-java/.../tasks/ledger/EventType.java` (no change needed)
+- test file alongside other ledger command tests
+
+---
+
+### Task 37: SKILL — fix stale-resolver recovery path to use `ledger-record-patch-integrated` [Low]
+
+The current decision tree in the session-resume pre-flight (Task 33) is wrong for the stale `RESOLVER_REQUESTED` case. It says: dispatch resolver → call `ledger-resolver-complete` → re-run `integrate`. But `ledger-resolver-complete` is a signal to a *running* integrate process — calling it when integrate is dead is a no-op, and re-running integrate without a `PATCH_INTEGRATED` event for the resolved task will attempt to merge that task again from scratch.
+
+**Fix the decision tree bullet for stale `RESOLVER_REQUESTED`:**
+
+Replace:
+> If found: dispatch resolver, call `ledger-resolver-complete`, then re-arm Monitor and re-run `integrate`.
+
+With the correct 5-step recovery:
+1. Read the `RESOLVER_REQUESTED` payload from the ledger (use `ledger list` to find the event index, then read the blob from `.agents/objects/`).
+2. Dispatch a resolver `Agent` call with that payload — it fixes the conflict markers in the integration worktree.
+3. Manually commit in the worktree: `cd .agents/integration/plan-{N} && git add -A && git commit -m "task({T}): {name} [resolved]"`.
+4. Record the integration: `{cli} ledger-record-patch-integrated --plan {N} --task {T} --commit $(git rev-parse HEAD) --agent-work-sha $(git rev-parse agent-work/{T})` — run from the **repo root**, not the worktree.
+5. Re-run `integrate` (background + Monitor) — the resume logic will see the `PATCH_INTEGRATED` event and skip the resolved task, continuing from the next one.
+
+Files: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 36*
+
+---
+
 ## Phase 4 preview (not in scope)
 
 - Order replanning when a task fails (try a different position before giving up).
