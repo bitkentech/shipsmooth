@@ -204,7 +204,21 @@ ${model.cliBin()} show --plan {N}
 
 # 3. Confirm no stray worktrees or background jobs remain
 git worktree list
+
+# 4. Check for a stale integration worktree from a prior session
+git worktree list | grep "integration/plan-{N}"
 ```
+
+**If an `integration/plan-{N}` worktree is found and integrate is not running**, use this decision tree:
+
+- **A stale `RESOLVER_REQUESTED` exists in the ledger with no matching `RESOLVER_COMPLETE`:**
+  Check with: `${model.cliBin()} ledger list | grep RESOLVER_REQUESTED`. If found, dispatch the resolver agent for that event's payload, then call `${model.cliBin()} ledger-resolver-complete --plan {N} --task {task_id} --repo $(git rev-parse --show-toplevel)`. Then re-arm Monitor and re-run `integrate` — the resume logic will automatically skip already-integrated tasks.
+
+- **No pending resolver, but the integration branch is ahead of the task branch:**
+  The prior session completed integration. Just fast-forward: `git merge --ff-only integration/plan-{N}` then `git push`. You're done.
+
+- **No pending resolver and integration branch is NOT ahead of the task branch (stale from an aborted run):**
+  Safe to remove: `git worktree remove --force .agents/integration/plan-{N}`. Then re-run `integrate` — it will detect the existing branch and resume from the last `PATCH_INTEGRATED` event, or use `--force` to start completely fresh.
 
 Only proceed once you know which tasks are done and which are next.
 
