@@ -829,6 +829,34 @@ Files: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
 
 ---
 
+### Task 38: SKILL — add repo-root guard to all `ledger-record-patch-integrated` instructions [Low]
+
+E2E testing of plan-11 revealed that when the agent's shell cwd drifts into the integration worktree (`.agents/integration/plan-{N}/`), the shipsmooth CLI resolves `.agents/` relative to that worktree root instead of the repo root — silently writing recovery events to a second, isolated ledger. The existing instruction already says "run from the **repo root**" but that's insufficient; a hard prefix is needed.
+
+**Fix:** In every place the SKILL mentions `ledger-record-patch-integrated` (the stale-RESOLVER_REQUESTED recovery path and the same-SHA recovery path), replace the bare command with an explicit absolute-path prefix:
+
+```bash
+cd $(git rev-parse --show-toplevel) && runtime-0.2.0/bin/shipsmooth-tasks ledger-record-patch-integrated ...
+```
+
+Also fix the `--commit` SHA in the same-SHA recovery bullet: the current instruction uses `$(git -C .agents/integration/plan-{N} rev-parse HEAD)` which gives the integration branch tip — but in the same-SHA case each task's individual commit SHA is needed. Since the task branch and integration branch are at the same commit, `$(git rev-parse HEAD)` from the repo root is correct only if there's one task. For multiple tasks, the agent must look up each task's commit from the ledger (`PATCH_EMITTED` or `COMMIT_RECORDED` events) rather than using HEAD.
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+---
+
+### Task 39: SKILL — stop Monitor immediately when integrate exits 0 [Low]
+
+E2E testing revealed that `ledger-watch` (used by Monitor) blocks indefinitely waiting for a `RESOLVER_REQUESTED` event. When integrate completes cleanly with no conflicts, no such event is ever written — Monitor hangs until manually stopped.
+
+**Fix:** Add an explicit instruction in the "Running integrate" section: as soon as the background-complete notification for integrate arrives and the exit code is 0, immediately stop the Monitor tool call (via TaskStop or equivalent). Do not wait for Monitor to time out.
+
+The `ledger-watch` command already exits early on `INTEGRATION_COMPLETE` or `INTEGRATION_FAILURE` events (it reads those as terminal signals), but this early-exit only fires if Monitor is still active when those events are written. If the agent is slow to re-arm Monitor or doesn't re-arm at all after the final resolver cycle, the terminal event is missed and Monitor hangs. The explicit "stop Monitor on integrate exit 0" instruction is the reliable fix regardless.
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+---
+
 ## Phase 4 preview (not in scope)
 
 - Order replanning when a task fails (try a different position before giving up).

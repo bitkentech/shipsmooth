@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>36</plan>
-    <plan-version>plan-36-v14</plan-version>
+    <plan-version>plan-36-v15</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>in-review</status>
@@ -421,6 +421,30 @@
             <comments/>
             <deviations/>
             <depends-on>36</depends-on>
+        </task>
+        <task>
+            <id>38</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>SKILL -- add repo-root guard to ledger-record-patch-integrated instructions</name>
+            <commit></commit>
+            <created-from>plan-36-v15</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on/>
+        </task>
+        <task>
+            <id>39</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>SKILL -- stop Monitor immediately when integrate exits 0</name>
+            <commit></commit>
+            <created-from>plan-36-v15</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on/>
         </task>
     </tasks>
     <project-updates>
