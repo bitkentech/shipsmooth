@@ -401,9 +401,9 @@
         <task>
             <id>36</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add ledger-record-patch-integrated recovery subcommand</name>
-            <commit></commit>
+            <commit>b151285</commit>
             <created-from>plan-36-v14</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -413,9 +413,9 @@
         <task>
             <id>37</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>SKILL -- fix stale-resolver recovery path to use ledger-record-patch-integrated</name>
-            <commit></commit>
+            <commit>ca773d9</commit>
             <created-from>plan-36-v14</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
