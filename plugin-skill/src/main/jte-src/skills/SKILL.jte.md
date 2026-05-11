@@ -212,7 +212,12 @@ git worktree list | grep "integration/plan-{N}"
 **If an `integration/plan-{N}` worktree is found and integrate is not running**, use this decision tree:
 
 - **A stale `RESOLVER_REQUESTED` exists in the ledger with no matching `RESOLVER_COMPLETE`:**
-  Check with: `${model.cliBin()} ledger list | grep RESOLVER_REQUESTED`. If found, dispatch the resolver agent for that event's payload, then call `${model.cliBin()} ledger-resolver-complete --plan {N} --task {task_id} --repo $(git rev-parse --show-toplevel)`. Then re-arm Monitor and re-run `integrate` — the resume logic will automatically skip already-integrated tasks.
+  Check with: `${model.cliBin()} ledger list | grep RESOLVER_REQUESTED`. If found, integrate is dead and `ledger-resolver-complete` has no process to unblock — do **not** call it. Instead use this 5-step manual recovery:
+  1. Read the payload: find the event index in `${model.cliBin()} ledger list`, then read the blob from `.agents/objects/<prefix>/<rest>` (the blob SHA is in the event's payload field).
+  2. Dispatch a resolver `Agent` call with that payload — it fixes the conflict markers in the integration worktree.
+  3. Commit in the worktree: `cd .agents/integration/plan-{N} && git add -A && git commit -m "task({task_id}): {name} [resolved]"`.
+  4. Record the integration from the **repo root**: `${model.cliBin()} ledger-record-patch-integrated --plan {N} --task {task_id} --commit $(git -C .agents/integration/plan-{N} rev-parse HEAD) --agent-work-sha $(git rev-parse agent-work/{task_id})`.
+  5. Re-run `integrate` (background + Monitor) — the resume logic sees the `PATCH_INTEGRATED` event and skips the resolved task, continuing from the next one. **Note:** re-running integrate does not write a new `INTEGRATION_PLAN` event when the worktree is still present, so the recovery event remains visible to the resume check.
 
 - **No pending resolver, but the integration branch is ahead of the task branch:**
   The prior session completed integration. Just fast-forward: `git merge --ff-only integration/plan-{N}` then `git push`. You're done.
