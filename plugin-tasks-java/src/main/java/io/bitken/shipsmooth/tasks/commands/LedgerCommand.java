@@ -29,10 +29,17 @@ public class LedgerCommand implements Runnable {
         @Option(names = "--type", description = "Filter by event type.")
         private String type;
 
+        @Option(names = "--count", description = "Print total event count as a plain integer and exit.")
+        private boolean count;
+
         @Override
         public Integer call() throws Exception {
             LedgerService ledger = new LedgerService(Paths.get("."));
             List<String> hashes = ledger.readHashes();
+            if (count) {
+                System.out.println(hashes.size());
+                return 0;
+            }
             for (int i = 0; i < hashes.size(); i++) {
                 String hash = hashes.get(i);
                 Event ev = ledger.readEvent(hash);
