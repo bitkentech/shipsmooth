@@ -193,6 +193,23 @@ Use this hash (not the tag name) in Linear links — it is immutable and survive
 
 ## Phase 2 — Execute
 
+**Session-resume pre-flight `[Local]`** — If you are picking up a plan that was started in a previous session, run these checks before doing anything else:
+
+```bash
+# 1. Confirm the XML task file exists (must not be missing)
+ls .agents/plans/plan-{N}-tasks.xml   # if absent, run: ${model.cliBin()} init --plan {N} --tasks-from .agents/plans/plan-{N}.md
+
+# 2. Review current task state
+${model.cliBin()} show --plan {N}
+
+# 3. Confirm no stray worktrees or background jobs remain
+git worktree list
+```
+
+Only proceed once you know which tasks are done and which are next.
+
+---
+
 **Step 0: Create a branch**
 
 Create and push a branch named after the primary Linear issue for this plan:
@@ -366,6 +383,8 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 **Verify scope:** The `--verify-cmd` you pass to `integrate` is the baseline. For each task's merge step, the integration agent will narrow the command to tests relevant to that task before running the full baseline. If `--verify-cmd` runs tests for features not yet integrated (e.g. YAML tests when only XML has landed), the narrowed command avoids spurious resolver cycles. The resolver prompt instructs the LLM to apply this narrowing — you do not need to pre-scope the command at plan-write time.
 
 **Running integrate:**
+
+**Never use `tail -f`, `sleep`, or polling loops to wait for integrate.** These are either blocked by the harness or leave orphaned background processes. The correct pattern is: arm Monitor (Step 1), then launch integrate in the background (Step 2). You will be notified by Monitor when a resolver cycle is needed and by the Bash background-complete notification when integrate finishes.
 
 `integrate` coordinates with the Lead Agent via the ledger: when a conflict or verify failure occurs it writes a `RESOLVER_REQUESTED` event to `.agents/ledger.jsonl` and polls for a `RESOLVER_COMPLETE` event.
 
