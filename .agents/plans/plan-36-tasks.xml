@@ -425,7 +425,7 @@
         <task>
             <id>38</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>SKILL -- add repo-root guard to ledger-record-patch-integrated instructions</name>
             <commit></commit>
             <created-from>plan-36-v15</created-from>
@@ -437,7 +437,7 @@
         <task>
             <id>39</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>SKILL -- stop Monitor immediately when integrate exits 0</name>
             <commit></commit>
             <created-from>plan-36-v15</created-from>

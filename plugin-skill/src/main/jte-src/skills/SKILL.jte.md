@@ -216,7 +216,7 @@ git worktree list | grep "integration/plan-{N}"
   1. Read the payload: find the event index in `${model.cliBin()} ledger list`, then read the blob from `.agents/objects/<prefix>/<rest>` (the blob SHA is in the event's payload field).
   2. Dispatch a resolver `Agent` call with that payload — it fixes the conflict markers in the integration worktree.
   3. Commit in the worktree: `cd .agents/integration/plan-{N} && git add -A && git commit -m "task({task_id}): {name} [resolved]"`.
-  4. Record the integration from the **repo root**: `${model.cliBin()} ledger-record-patch-integrated --plan {N} --task {task_id} --commit $(git -C .agents/integration/plan-{N} rev-parse HEAD) --agent-work-sha $(git rev-parse agent-work/{task_id})`.
+  4. Record the integration from the **repo root**: `cd $(git rev-parse --show-toplevel) && ${model.cliBin()} ledger-record-patch-integrated --plan {N} --task {task_id} --commit $(git -C .agents/integration/plan-{N} rev-parse HEAD) --agent-work-sha $(git rev-parse agent-work/{task_id})`.
   5. Re-run `integrate` (background + Monitor) — the resume logic sees the `PATCH_INTEGRATED` event and skips the resolved task, continuing from the next one. **Note:** re-running integrate does not write a new `INTEGRATION_PLAN` event when the worktree is still present, so the recovery event remains visible to the resume check.
 
 - **No pending resolver, but the integration branch is ahead of the task branch:**
@@ -228,7 +228,7 @@ git worktree list | grep "integration/plan-{N}"
   git rev-parse integration/plan-{N}
   git rev-parse HEAD  # task branch
   ```
-  - **Same SHA (fast-forward already happened, no `PATCH_INTEGRATED` recorded):** The prior session resolved and committed but crashed before writing the ledger event. For each task with a commit on the integration branch but no `PATCH_INTEGRATED` in the ledger, record it: `${model.cliBin()} ledger-record-patch-integrated --plan {N} --task {task_id} --commit $(git -C .agents/integration/plan-{N} rev-parse HEAD) --agent-work-sha $(git rev-parse agent-work/{task_id})`. Then re-run `integrate` to finalize (XML update, branch cleanup, `INTEGRATION_COMPLETE`).
+  - **Same SHA (fast-forward already happened, no `PATCH_INTEGRATED` recorded):** The prior session resolved and committed but crashed before writing the ledger event. For each task with a commit on the integration branch but no `PATCH_INTEGRATED` in the ledger, look up that task's individual commit SHA from the ledger (`PATCH_EMITTED` or `COMMIT_RECORDED` events) and record it: `cd $(git rev-parse --show-toplevel) && ${model.cliBin()} ledger-record-patch-integrated --plan {N} --task {task_id} --commit {task_commit_sha} --agent-work-sha $(git rev-parse agent-work/{task_id})`. Do not use `$(git rev-parse HEAD)` — that is only correct for a single-task plan; for multiple tasks each has its own commit SHA. Then re-run `integrate` to finalize (XML update, branch cleanup, `INTEGRATION_COMPLETE`).
   - **Genuinely behind (aborted before useful work):** Safe to remove: `git worktree remove --force .agents/integration/plan-{N}`. Then re-run `integrate` — it will detect the existing branch and resume from the last `PATCH_INTEGRATED` event, or use `--force` to start completely fresh.
 
 Only proceed once you know which tasks are done and which are next.
@@ -455,6 +455,10 @@ Then arm Monitor, passing `--after $LEDGER_SEQ`:
 @template.skills.claude.resolver-complete-cmd(model = model)
 @endif
 4. **Arm Monitor again (Cycle N+1)** — make a new Monitor tool call with the same command above (same `--after $LEDGER_SEQ` value) before waiting for the next event. Monitor has exited; you must re-arm it for each additional resolver cycle.
+
+@if(!"gemini".equals(model.platform()))
+**When the Bash background-complete notification for `integrate` arrives with exit code 0:** stop the active Monitor tool call immediately (via TaskStop) — do not wait for it to time out. `ledger-watch` will eventually exit on its own when it sees the `INTEGRATION_COMPLETE` event, but only if Monitor was armed at that moment; if it was not re-armed yet, it will hang for the full 30-minute timeout. Stopping it explicitly on integrate exit-0 is the reliable fix.
+@endif
 
 Integrate will unblock within 500 ms of the `ledger-resolver-complete` call and continue to the next task.
 
