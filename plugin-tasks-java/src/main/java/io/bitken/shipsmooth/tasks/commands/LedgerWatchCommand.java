@@ -33,6 +33,9 @@ public class LedgerWatchCommand implements Callable<Integer> {
     @Option(names = "--timeout-seconds", description = "Give up after N seconds (default: 1800)")
     private long timeoutSeconds = 1800;
 
+    @Option(names = "--after", description = "Ignore events at indices 0..N-1 (snapshot count before integrate started)")
+    private int after = 0;
+
     private final ObjectMapper mapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
@@ -51,7 +54,7 @@ public class LedgerWatchCommand implements Callable<Integer> {
         }
 
         long deadline = System.currentTimeMillis() + timeoutSeconds * 1000;
-        int seenCount = 0;
+        int seenCount = after;
 
         while (System.currentTimeMillis() < deadline) {
             List<String> hashes = ledger.readHashes();

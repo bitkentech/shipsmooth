@@ -107,6 +107,45 @@ public class LedgerWatchCommandTest {
     }
 
     @Test
+    public void watchAfterSkipsStaleTerminalEvent() throws Exception {
+        LedgerService ledger = new LedgerService(tempDir);
+        ledger.ensureLedgerFile();
+
+        // Stale INTEGRATION_COMPLETE from a prior run at index 0
+        ledger.record(Event.system(EventType.INTEGRATION_COMPLETE, null, "prior run finished", null));
+
+        // Snapshot count (1) — this is what the Lead Agent passes as --after
+        int snapshot = 1;
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PrintStream savedOut = System.out;
+        System.setOut(new PrintStream(out));
+
+        ExecutorService exec = Executors.newSingleThreadExecutor();
+        try {
+            Future<Integer> future = exec.submit(() ->
+                    new CommandLine(new LedgerWatchCommand())
+                            .execute("--plan", "99", "--repo", tempDir.toString(),
+                                    "--after", String.valueOf(snapshot)));
+
+            // Should not fire on the stale INTEGRATION_COMPLETE
+            Thread.sleep(400);
+            assertFalse(future.isDone(), "ledger-watch should ignore stale events before --after index");
+
+            // New RESOLVER_REQUESTED at index >= snapshot — should fire
+            ledger.record(Event.forTask(EventType.RESOLVER_REQUESTED, "2", null,
+                    "resolve new conflict", Map.of("worktree", "/tmp/wt2", "attempt", "1")));
+
+            Integer exitCode = future.get(5, TimeUnit.SECONDS);
+            assertEquals(0, exitCode);
+            assertTrue(out.toString().contains("resolve new conflict"));
+        } finally {
+            System.setOut(savedOut);
+            exec.shutdownNow();
+        }
+    }
+
+    @Test
     public void watchExitsOneOnTimeout() throws Exception {
         LedgerService ledger = new LedgerService(tempDir);
         ledger.ensureLedgerFile();
