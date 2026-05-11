@@ -249,7 +249,10 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
   ```
   This creates a stable rollback point. A human reviewing the PR can check out this commit to inspect each task in isolation.
 - `[Linear]` Mark the Linear issue **Agent Coded**.
-- `[Local]` Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks update-status --plan {N} --task {id} --status agent-coded` and `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`.
+
+
+- `[Local]` Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks update-status --plan {N} --task {id} --status agent-coded`. Then run `git rev-parse HEAD` and use that SHA in: `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks set-commit --plan {N} --task {id} --commit {HEAD-SHA}`.
+
 
 #### Low risk tasks — Single-pass (current behavior)
 
@@ -267,7 +270,10 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
    git push origin t/{issue-id}-{short-description}
    ```
    - `[Linear]` Mark the Linear issue **Agent Coded**. No draft review needed.
-   - `[Local]` Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks update-status --plan {N} --task {id} --status agent-coded` and `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`. No draft review needed.
+
+
+   - `[Local]` Run `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks update-status --plan {N} --task {id} --status agent-coded`. Then run `git rev-parse HEAD` and use that SHA in: `/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks set-commit --plan {N} --task {id} --commit {HEAD-SHA}`. No draft review needed.
+
 
 ---
 
@@ -308,31 +314,32 @@ If the user chooses **No**: execute all tasks sequentially in the main context w
 ### Per-task command sequence (run by the Lead Agent, not the subagent)
 
 For tasks **without** `<depends-on>`:
+
+
 ```
 1. /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks claim --plan {N} --task {id}
-2. WORKTREE=$(/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-init --plan {N} --task {id})   # captures absolute worktree path
-
-
-3. `invoke_agent` tool call — invoke `generalist` subagent, fill {absolute-worktree-path} with $WORKTREE — see Worker Instruction Block below
-
-
+2. Run: /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-init --plan {N} --task {id}
+   Capture the printed path as WORKTREE.
+3. invoke_agent tool call — invoke generalist subagent, fill {absolute-worktree-path} with WORKTREE — see Worker Instruction Block below
 4. /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-finish --plan {N} --task {id}             # captures diff, commits, records events
 5. /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-cleanup --plan {N} --task {id}            # removes worktree dir, keeps branch
 ```
 
+
 For tasks **with** `<depends-on>` (run after parent batch is complete):
+
+
 ```
 1. /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks claim --plan {N} --task {id}
-2. BASE=$(/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-base --plan {N} --task {id})       # resolve parent commit SHA
-3. WORKTREE=$(/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-init --plan {N} --task {id} --base "$BASE")
-
-
-4. `invoke_agent` tool call — invoke `generalist` subagent, fill {absolute-worktree-path} with $WORKTREE — see Worker Instruction Block below
-
-
+2. Run: /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-base --plan {N} --task {id}
+   Capture the printed SHA as BASE.
+3. Run: /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-init --plan {N} --task {id} --base {BASE}
+   Capture the printed path as WORKTREE.
+4. invoke_agent tool call — invoke generalist subagent, fill {absolute-worktree-path} with WORKTREE — see Worker Instruction Block below
 5. /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-finish --plan {N} --task {id}
 6. /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks worker-cleanup --plan {N} --task {id}
 ```
+
 
 
 
@@ -360,11 +367,17 @@ If it fails for environment reasons (e.g. Docker not available), add the necessa
 
 **File overlap warning:** Before running `integrate`, check which tasks touch the same files:
 
+
+
+Run `git branch -l 'agent-work/*' --format '%(refname:short)'` to list agent-work branches. For each branch printed, run these two commands, substituting the branch name for `{branch}`:
 ```bash
-for branch in $(git branch -l 'agent-work/*' --format '%(refname:short)'); do
-  echo "=== $branch ==="; git diff --name-only $(git merge-base HEAD $branch)..$branch
-done
+git merge-base HEAD {branch}
 ```
+Capture the SHA printed (call it `{base-sha}`), then run:
+```bash
+git diff --name-only {base-sha}..{branch}
+```
+
 
 If two or more independent tasks (no `<depends-on>` between them) touch the same file, **expect a conflict** on that file. Brief the user before proceeding — the resolver will handle it, but manual resolution may be needed if the resolver exhausts its attempts.
 
@@ -384,10 +397,14 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 **Step 1 — arm Monitor (Cycle 1) before starting integrate** (so no event is missed in the startup window):
 
-Use the Monitor tool with this command:
+
+
+Use the `run_shell_command` tool (blocking) with this command:
 ```bash
-/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger-watch --plan {N} --repo $(git rev-parse --show-toplevel)
+/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger-watch --plan {N} --repo {repo-root}
 ```
+where `{repo-root}` is the absolute path to the repo root (run `pwd` from the repo root if unsure).
+
 
 `ledger-watch` blocks until a `RESOLVER_REQUESTED` event appears in `.agents/ledger.jsonl`, prints its full JSON payload to stdout, and exits 0. It creates the ledger file if it does not yet exist, so it is safe to arm before `integrate` has started. Exit 1 means it timed out (default 30 minutes) without seeing an event.
 
@@ -395,10 +412,16 @@ Use the Monitor tool with this command:
 
 **Step 2 — run integrate in the background** (`run_shell_command` tool with `is_background: true`):
 
+First, get the current branch name (run this as a normal blocking command):
+```bash
+git rev-parse --abbrev-ref HEAD
+```
+
+Then start integrate in the background, substituting the branch name you just captured for `{current-branch}`:
 ```bash
 /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks integrate \
   --plan {N} \
-  --task-branch $(git rev-parse --abbrev-ref HEAD) \
+  --task-branch {current-branch} \
   --verify-cmd "{your-test-command}"
 ```
 
@@ -413,10 +436,14 @@ You will be notified when integrate finishes. While it runs, watch for Monitor e
 2. Perform an `invoke_agent` tool call: `agent_name: generalist`, prompt = `payload`, `cwd` = `metadata.worktree` (if supported, otherwise ensure instructions restrict file edits to the worktree directory).
 
 
-3. After the Agent call returns, signal integrate to continue:
+
+
+3. After the `invoke_agent` call returns, signal integrate to continue:
    ```bash
-   /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger-resolver-complete --plan {N} --task {metadata.task_id} --repo $(git rev-parse --show-toplevel)
+   /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger-resolver-complete --plan {N} --task {metadata.task_id} --repo {repo-root}
    ```
+   where `{repo-root}` is the absolute path to the repo root.
+
 4. **Arm Monitor again (Cycle N+1)** — make a new Monitor tool call with the same command above before waiting for the next event. Monitor has exited; you must re-arm it for each additional resolver cycle.
 
 Integrate will unblock within 500 ms of the `ledger-resolver-complete` call and continue to the next task.

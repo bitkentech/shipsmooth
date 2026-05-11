@@ -1,0 +1,7 @@
+@param io.bitken.shipsmooth.resources.PluginModel model
+
+Use the `run_shell_command` tool (blocking) with this command:
+```bash
+${model.cliBin()} ledger-watch --plan {N} --repo {repo-root}
+```
+where `{repo-root}` is the absolute path to the repo root (run `pwd` from the repo root if unsure).

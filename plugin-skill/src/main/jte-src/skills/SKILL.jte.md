@@ -248,7 +248,11 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
   ```
   This creates a stable rollback point. A human reviewing the PR can check out this commit to inspect each task in isolation.
 - `[Linear]` Mark the Linear issue **Agent Coded**.
-- `[Local]` Run `${model.cliBin()} update-status --plan {N} --task {id} --status agent-coded` and `${model.cliBin()} set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`.
+@if("gemini".equals(model.platform()))
+@template.skills.gemini.set-commit-hardening(model = model)
+@else
+@template.skills.claude.set-commit-hardening(model = model)
+@endif
 
 #### Low risk tasks — Single-pass (current behavior)
 
@@ -266,7 +270,11 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
    git push origin t/{issue-id}-{short-description}
    ```
    - `[Linear]` Mark the Linear issue **Agent Coded**. No draft review needed.
-   - `[Local]` Run `${model.cliBin()} update-status --plan {N} --task {id} --status agent-coded` and `${model.cliBin()} set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`. No draft review needed.
+@if("gemini".equals(model.platform()))
+@template.skills.gemini.set-commit-low-risk(model = model)
+@else
+@template.skills.claude.set-commit-low-risk(model = model)
+@endif
 
 ---
 
@@ -306,31 +314,18 @@ Before launching any subagents, ask the user:
 ### Per-task command sequence (run by the Lead Agent, not the subagent)
 
 For tasks **without** `<depends-on>`:
-```
-1. ${model.cliBin()} claim --plan {N} --task {id}
-2. WORKTREE=$(${model.cliBin()} worker-init --plan {N} --task {id})   # captures absolute worktree path
 @if("gemini".equals(model.platform()))
-@template.skills.gemini.agent-dispatch-independent(model = model)
+@template.skills.gemini.task-command-sequence-independent(model = model)
 @else
-@template.skills.claude.agent-dispatch-independent(model = model)
+@template.skills.claude.task-command-sequence-independent(model = model)
 @endif
-4. ${model.cliBin()} worker-finish --plan {N} --task {id}             # captures diff, commits, records events
-5. ${model.cliBin()} worker-cleanup --plan {N} --task {id}            # removes worktree dir, keeps branch
-```
 
 For tasks **with** `<depends-on>` (run after parent batch is complete):
-```
-1. ${model.cliBin()} claim --plan {N} --task {id}
-2. BASE=$(${model.cliBin()} worker-base --plan {N} --task {id})       # resolve parent commit SHA
-3. WORKTREE=$(${model.cliBin()} worker-init --plan {N} --task {id} --base "$BASE")
 @if("gemini".equals(model.platform()))
-@template.skills.gemini.agent-dispatch-dependent(model = model)
+@template.skills.gemini.task-command-sequence-dependent(model = model)
 @else
-@template.skills.claude.agent-dispatch-dependent(model = model)
+@template.skills.claude.task-command-sequence-dependent(model = model)
 @endif
-5. ${model.cliBin()} worker-finish --plan {N} --task {id}
-6. ${model.cliBin()} worker-cleanup --plan {N} --task {id}
-```
 
 @if("gemini".equals(model.platform()))
 @template.skills.gemini.agent-instruction(model = model)
@@ -358,11 +353,11 @@ If it fails for environment reasons (e.g. Docker not available), add the necessa
 
 **File overlap warning:** Before running `integrate`, check which tasks touch the same files:
 
-```bash
-for branch in $(git branch -l 'agent-work/*' --format '%(refname:short)'); do
-  echo "=== $branch ==="; git diff --name-only $(git merge-base HEAD $branch)..$branch
-done
-```
+@if("gemini".equals(model.platform()))
+@template.skills.gemini.file-overlap-check(model = model)
+@else
+@template.skills.claude.file-overlap-check(model = model)
+@endif
 
 If two or more independent tasks (no `<depends-on>` between them) touch the same file, **expect a conflict** on that file. Brief the user before proceeding — the resolver will handle it, but manual resolution may be needed if the resolver exhausts its attempts.
 
@@ -382,10 +377,11 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 **Step 1 — arm Monitor (Cycle 1) before starting integrate** (so no event is missed in the startup window):
 
-Use the Monitor tool with this command:
-```bash
-${model.cliBin()} ledger-watch --plan {N} --repo $(git rev-parse --show-toplevel)
-```
+@if("gemini".equals(model.platform()))
+@template.skills.gemini.ledger-watch-cmd(model = model)
+@else
+@template.skills.claude.ledger-watch-cmd(model = model)
+@endif
 
 `ledger-watch` blocks until a `RESOLVER_REQUESTED` event appears in `.agents/ledger.jsonl`, prints its full JSON payload to stdout, and exits 0. It creates the ledger file if it does not yet exist, so it is safe to arm before `integrate` has started. Exit 1 means it timed out (default 30 minutes) without seeing an event.
 
@@ -402,10 +398,11 @@ ${model.cliBin()} ledger-watch --plan {N} --repo $(git rev-parse --show-toplevel
 @else
 @template.skills.claude.agent-resolver-call(model = model)
 @endif
-3. After the Agent call returns, signal integrate to continue:
-   ```bash
-   ${model.cliBin()} ledger-resolver-complete --plan {N} --task {metadata.task_id} --repo $(git rev-parse --show-toplevel)
-   ```
+@if("gemini".equals(model.platform()))
+@template.skills.gemini.resolver-complete-cmd(model = model)
+@else
+@template.skills.claude.resolver-complete-cmd(model = model)
+@endif
 4. **Arm Monitor again (Cycle N+1)** — make a new Monitor tool call with the same command above before waiting for the next event. Monitor has exited; you must re-arm it for each additional resolver cycle.
 
 Integrate will unblock within 500 ms of the `ledger-resolver-complete` call and continue to the next task.
