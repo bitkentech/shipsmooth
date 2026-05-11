@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>36</plan>
-    <plan-version>plan-36-v10</plan-version>
+    <plan-version>plan-36-v11</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>in-review</status>
@@ -287,6 +287,54 @@
             <comments/>
             <deviations/>
             <depends-on>24</depends-on>
+        </task>
+        <task>
+            <id>26</id>
+            <risk>low</risk>
+            <status>todo</status>
+            <name>Add --count flag to ledger list</name>
+            <commit></commit>
+            <created-from>plan-36-v11</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on></depends-on>
+        </task>
+        <task>
+            <id>27</id>
+            <risk>low</risk>
+            <status>todo</status>
+            <name>Add --after N to ledger-watch</name>
+            <commit></commit>
+            <created-from>plan-36-v11</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>26</depends-on>
+        </task>
+        <task>
+            <id>28</id>
+            <risk>low</risk>
+            <status>todo</status>
+            <name>Tests for --count and --after</name>
+            <commit></commit>
+            <created-from>plan-36-v11</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>26,27</depends-on>
+        </task>
+        <task>
+            <id>29</id>
+            <risk>low</risk>
+            <status>todo</status>
+            <name>SKILL -- snapshot event count before arming Monitor</name>
+            <commit></commit>
+            <created-from>plan-36-v11</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>27</depends-on>
         </task>
     </tasks>
     <project-updates>

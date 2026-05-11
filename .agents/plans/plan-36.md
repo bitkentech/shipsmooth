@@ -624,6 +624,57 @@ Files: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
 
 *Depends-on: 24*
 
+---
+
+## E2E Run 3 — bugs found (2026-05-11)
+
+### Bug 10 — `ledger-watch` fires on stale events from prior integration runs
+
+**Observed:** On a plan that had been integrated before, `ledger-watch` exited immediately on startup, printing an `INTEGRATION_COMPLETE` event from a previous run. The current run's `RESOLVER_REQUESTED` event was written later, with no Monitor active to catch it. The Lead Agent fell back to manual shell polling (`tail -f` + sleep loop), which the SKILL explicitly forbids.
+
+**Root cause:** `LedgerWatchCommand` initialises `seenCount = 0` unconditionally. On first poll it walks the full ledger from the beginning and exits on the first `INTEGRATION_COMPLETE` or `INTEGRATION_FAILURE` it finds — regardless of which run wrote it.
+
+**Fix (Tasks 26–28):** Add `--after <N>` to `ledger-watch` (N = 0-based event index; watch only events at index ≥ N). Add `--count` flag to `ledger list` so the Lead Agent can snapshot the current event count cross-platform before arming Monitor, then pass it as `--after`. Update SKILL to use the new flags.
+
+### Task 26: Add `--count` flag to `ledger list` [Low]
+
+Add a `--count` boolean flag to `LedgerCommand.ListCmd`. When present, print only the total event count as a plain integer (no table rows) and exit 0. All existing behaviour is unchanged when `--count` is absent.
+
+Files: `plugin-tasks-java/src/main/java/…/commands/LedgerCommand.java`
+
+### Task 27: Add `--after <N>` to `ledger-watch` [Low]
+
+Add an `--after <N>` option (default 0) to `LedgerWatchCommand`. Initialize `seenCount = after` instead of 0, so the command ignores all events at indices 0..N-1 (written before this integration run started).
+
+Files: `plugin-tasks-java/src/main/java/…/commands/LedgerWatchCommand.java`
+
+*Depends-on: 26*
+
+### Task 28: Tests for `--count` and `--after` [Low]
+
+1. `LedgerCommandTest`: assert `ledger list --count` prints the correct integer for 0, 1, and N events.
+2. `LedgerWatchCommandTest`: add a scenario where an `INTEGRATION_COMPLETE` event is already in the ledger at index 0, `--after 1` is passed, and the watcher correctly blocks until a new `RESOLVER_REQUESTED` appears at index ≥ 1 rather than exiting immediately.
+
+Files: `plugin-tasks-java/src/test/java/…/commands/LedgerCommandTest.java`, `plugin-tasks-java/src/test/java/…/commands/LedgerWatchCommandTest.java`
+
+*Depends-on: 26, 27*
+
+### Task 29: SKILL — snapshot event count before arming Monitor; pass as `--after` [Low]
+
+Before each `ledger-watch` invocation in the SKILL, add a step to capture the current event count:
+
+```bash
+LEDGER_SEQ=$(runtime-0.2.0/bin/shipsmooth-tasks ledger list --count)
+```
+
+Then pass `--after $LEDGER_SEQ` (Claude/bash) or the equivalent (Gemini) to every `ledger-watch` call. Update both the Claude and Gemini-dev SKILL variants.
+
+Files: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`, `build/skills/start-dev/SKILL.md`, `build-gemini-dev/skills/start-dev/SKILL.md`
+
+*Depends-on: 27*
+
+---
+
 ## Phase 4 preview (not in scope)
 
 - `--resume` from the last `PATCH_INTEGRATED` event.
