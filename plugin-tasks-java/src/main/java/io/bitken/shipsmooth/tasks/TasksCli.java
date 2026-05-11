@@ -24,6 +24,7 @@ import picocli.CommandLine.Command;
             WorkerBaseCommand.class,
             IntegrateCommand.class,
             LedgerRecordCommitCommand.class,
+            LedgerRecordPatchIntegratedCommand.class,
             LedgerResolverCompleteCommand.class,
             LedgerWatchCommand.class
         })
