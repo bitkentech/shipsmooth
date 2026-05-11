@@ -222,8 +222,14 @@ git worktree list | grep "integration/plan-{N}"
 - **No pending resolver, but the integration branch is ahead of the task branch:**
   The prior session completed integration. Just fast-forward: `git merge --ff-only integration/plan-{N}` then `git push`. You're done.
 
-- **No pending resolver and integration branch is NOT ahead of the task branch (stale from an aborted run):**
-  Safe to remove: `git worktree remove --force .agents/integration/plan-{N}`. Then re-run `integrate` — it will detect the existing branch and resume from the last `PATCH_INTEGRATED` event, or use `--force` to start completely fresh.
+- **No pending resolver and integration branch is NOT ahead of the task branch:**
+  First check whether the task branch was already fast-forwarded to the integration tip (both at the same SHA):
+  ```bash
+  git rev-parse integration/plan-{N}
+  git rev-parse HEAD  # task branch
+  ```
+  - **Same SHA (fast-forward already happened, no `PATCH_INTEGRATED` recorded):** The prior session resolved and committed but crashed before writing the ledger event. For each task with a commit on the integration branch but no `PATCH_INTEGRATED` in the ledger, record it: `${model.cliBin()} ledger-record-patch-integrated --plan {N} --task {task_id} --commit $(git -C .agents/integration/plan-{N} rev-parse HEAD) --agent-work-sha $(git rev-parse agent-work/{task_id})`. Then re-run `integrate` to finalize (XML update, branch cleanup, `INTEGRATION_COMPLETE`).
+  - **Genuinely behind (aborted before useful work):** Safe to remove: `git worktree remove --force .agents/integration/plan-{N}`. Then re-run `integrate` — it will detect the existing branch and resume from the last `PATCH_INTEGRATED` event, or use `--force` to start completely fresh.
 
 Only proceed once you know which tasks are done and which are next.
 
