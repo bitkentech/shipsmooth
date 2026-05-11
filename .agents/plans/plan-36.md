@@ -435,6 +435,42 @@ File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
 
 *Depends-on: 17*
 
+### Task 34: PromptBuilder — resolver pre-flight and absolute-path enforcement [Low]
+
+E2E testing of plan-36 revealed that resolver agents dispatched without a `cwd` parameter write files into the main repo working directory, not the integration worktree. The `Agent` tool has no `cwd` parameter, so the SKILL instruction to "pass `cwd = metadata.worktree`" is incorrect and must be replaced with prompt-level enforcement.
+
+**Fix in `PromptBuilder.java`:**
+
+1. Replace the instruction "every Bash call must begin with `cd {worktreePath} &&`" with a stronger pattern:
+   - Add an explicit **pre-flight check** as the first instruction: *"Run `ls {worktreePath}` as your very first action. If the directory is empty or does not exist, stop immediately with: `RESOLVER ABORT: worktree {worktreePath} is missing or empty.` Do not write any code."*
+   - Instruct the agent to use **absolute paths** for all Read/Edit/Write tool calls (not relative paths, not shell `cd` for file operations). Bash calls may still use `cd {worktreePath} &&` as a working-directory anchor for commands that require it (e.g. running tests), but file edits must use absolute paths.
+
+2. Remove the now-incorrect sentence about `cwd` being set externally.
+
+**Fix in `SKILL.jte.md`:**
+
+Remove the `cwd` parameter mention from the resolver `Agent` call instructions. Replace with: *"The resolver prompt includes the absolute worktree path and instructs the agent to use absolute paths for all file operations. No `cwd` parameter is needed or supported."*
+
+Files:
+- `plugin-tasks-java/.../tasks/integration/PromptBuilder.java`
+- `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+### Task 35: IntegrateCommand — post-resolver conflict-marker check [Low]
+
+After `resolver.resolve()` returns and before `git add -A`, `IntegrateCommand.invokeResolver()` should verify that the resolver actually removed the conflict markers. If any file in `conflictedFiles` still contains `<<<<<<<`, staging it would silently commit broken content, the verify would fail with a compile error, and the loop would repeat with no diagnostic.
+
+**Fix in `IntegrateCommand.invokeResolver()`:**
+
+After `resolver.resolve(integrationDir, ctx)` returns, and before `runGit(integrationDir, "git", "add", "-A")`:
+
+1. For each file in `conflictedFiles` (if non-null and non-empty), read the file content from `integrationDir` and check for the string `<<<<<<<`.
+2. If any conflicted file still contains conflict markers, log a clear warning per file: `"integrate: resolver did not remove conflict markers in {file} (attempt {attempt})"` and `continue` to the next attempt without staging or committing.
+3. Only if all conflicted files are clean, proceed with `git add -A` → commit → verify as before.
+
+This turns the silent "stage broken content → verify fails → loop" into "resolver didn't fix markers → skip staging → next attempt" — making the failure reason visible in the log.
+
+File: `plugin-tasks-java/.../tasks/commands/IntegrateCommand.java`
+
 ---
 
 ## Verification (manual, via dev build)

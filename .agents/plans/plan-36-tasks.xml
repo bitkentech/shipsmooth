@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>36</plan>
-    <plan-version>plan-36-v12</plan-version>
+    <plan-version>plan-36-v13</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>in-review</status>
@@ -373,6 +373,30 @@
             <comments/>
             <deviations/>
             <depends-on>30</depends-on>
+        </task>
+        <task>
+            <id>34</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>PromptBuilder -- resolver pre-flight and absolute-path enforcement</name>
+            <commit></commit>
+            <created-from>plan-36-v13</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on></depends-on>
+        </task>
+        <task>
+            <id>35</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>IntegrateCommand -- post-resolver conflict-marker check</name>
+            <commit></commit>
+            <created-from>plan-36-v13</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on></depends-on>
         </task>
     </tasks>
     <project-updates>
