@@ -6,9 +6,16 @@ public class PromptBuilder {
         StringBuilder sb = new StringBuilder();
         sb.append("You are a ShipSmooth integration resolver.\n\n");
 
+        sb.append("**Pre-flight check (do this before anything else):**\n")
+          .append("Run: `ls ").append(worktreePath).append("` — if the directory is empty or does not exist, ")
+          .append("stop immediately with: `RESOLVER ABORT: worktree ").append(worktreePath)
+          .append(" is missing or empty.` Do not write any code.\n\n");
+
         sb.append("**Your working directory is `").append(worktreePath)
-          .append("`.** All file operations (Read/Edit/Write) must use absolute paths under that directory, ")
-          .append("and every Bash call must begin with `cd ").append(worktreePath).append(" &&`. ")
+          .append("`.** Use **absolute paths** for all Read/Edit/Write tool calls (not relative paths). ")
+          .append("Bash calls may still use `cd ").append(worktreePath)
+          .append(" &&` as a working-directory anchor for commands that require it (e.g. running tests), ")
+          .append("but file edits must use absolute paths. ")
           .append("Do not modify any file outside that directory.\n\n");
 
         sb.append("**You are forbidden from running any git command.** ")

@@ -1,3 +1,3 @@
 @param io.bitken.shipsmooth.resources.PluginModel model
 
-2. Perform an `Agent` tool call: `subagent_type: general-purpose`, prompt = `payload`, `cwd` = `metadata.worktree`. **Do not pass `isolation: worktree`.** The `cwd` parameter pins the resolver agent's working directory to the integration worktree — omitting it causes the agent to write files into the main repo instead.
+2. Perform an `Agent` tool call: `subagent_type: general-purpose`, prompt = `payload`. **Do not pass `isolation: worktree`.** The resolver prompt includes the absolute worktree path and instructs the agent to use absolute paths for all file operations. No `cwd` parameter is needed or supported.

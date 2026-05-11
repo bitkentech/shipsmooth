@@ -31,4 +31,28 @@ public class PromptBuilderTest {
         assertTrue(prompt.contains("compilation failed"), "Prompt should include verify error output");
         assertTrue(prompt.contains("narrow"), "Prompt should still include scope guidance even with verify error");
     }
+
+    @Test
+    public void promptContainsPreFlightCheck() {
+        ResolverContext ctx = new ResolverContext(
+                5, "Fix merge conflict", "fix it", "abc123",
+                "diff text", List.of("Foo.java"), null);
+
+        String prompt = PromptBuilder.build("/some/worktree/path", ctx);
+
+        assertTrue(prompt.contains("ls /some/worktree/path"), "Prompt should include ls pre-flight command");
+        assertTrue(prompt.contains("RESOLVER ABORT"), "Prompt should mention RESOLVER ABORT on missing worktree");
+    }
+
+    @Test
+    public void promptInstructsAbsolutePathsForFileOps() {
+        ResolverContext ctx = new ResolverContext(
+                5, "Fix merge conflict", "fix it", "abc123",
+                "diff text", List.of("Foo.java"), null);
+
+        String prompt = PromptBuilder.build("/some/worktree/path", ctx);
+
+        assertTrue(prompt.contains("absolute paths"), "Prompt should instruct use of absolute paths for file operations");
+        assertFalse(prompt.contains("cwd"), "Prompt should not mention cwd as externally set");
+    }
 }
