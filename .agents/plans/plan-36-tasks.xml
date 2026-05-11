@@ -365,8 +365,9 @@
         <task>
             <id>33</id>
             <risk>low</risk>
+            <status>agent-coded</status>
             <name>SKILL -- session-resume pre-flight: check for stale integration worktrees</name>
-            <commit></commit>
+            <commit>af04a4fa238c8f40775e69afb2337d6b5ca51d99</commit>
             <created-from>plan-36-v12</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
