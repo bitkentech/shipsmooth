@@ -39,6 +39,9 @@ public class IntegrateCommand implements Callable<Integer> {
     @Option(names = "--max-total-failures")
     private int maxTotalFailures = IntegrationDefaults.MAX_TOTAL_FAILURES;
 
+    @Option(names = "--force", description = "Delete existing integration worktree/branch and start fresh.")
+    private boolean force;
+
     @Override
     public Integer call() throws Exception {
         Path repoRoot = Paths.get(".");
@@ -118,24 +121,67 @@ public class IntegrateCommand implements Callable<Integer> {
             return 1;
         }
 
-        // Create integration worktree
+        // Create or resume integration worktree
         String integrationBranch = "integration/plan-" + plan;
         String integrationRel = ".agents/integration/plan-" + plan;
         String integrationAbs = repoRoot.resolve(integrationRel).toAbsolutePath().toString();
 
-        if (git.worktreeExists(integrationRel)) {
-            System.err.println("integrate: integration worktree already exists at " + integrationRel
-                    + ". Remove it or delete branch " + integrationBranch + " before retrying.");
-            return 1;
+        // Find the last INTEGRATION_PLAN event for this plan — only PATCH_INTEGRATED events
+        // written after it belong to the most recent (possibly interrupted) integration run.
+        int lastPlanEventIndex = ledger.findLastEventIndex(
+                EventType.INTEGRATION_PLAN, Map.of("plan_id", String.valueOf(plan)));
+
+        // Collect tasks already integrated in a prior session (PATCH_INTEGRATED events after
+        // the last INTEGRATION_PLAN event for this plan).
+        Set<Integer> alreadyIntegrated = new HashSet<>();
+        if (lastPlanEventIndex >= 0) {
+            for (int id : order) {
+                if (ledger.findLastEventAfter(String.valueOf(id), EventType.PATCH_INTEGRATED,
+                        lastPlanEventIndex) != null) {
+                    alreadyIntegrated.add(id);
+                }
+            }
         }
 
-        // Fork integration branch from current task branch tip
-        git.addWorktreeAt(integrationRel, integrationBranch, taskBranch);
+        boolean worktreePresent = git.worktreeExists(integrationRel);
+        boolean branchPresent = branchExists(repoRoot.toFile(), integrationBranch);
+
+        if (worktreePresent || branchPresent) {
+            if (force) {
+                System.out.println("integrate: --force: removing existing integration worktree/branch.");
+                if (worktreePresent) {
+                    git.removeWorktreeKeepBranch(integrationRel);
+                }
+                if (branchPresent) {
+                    runGit(repoRoot.toFile(), "git", "branch", "-D", integrationBranch);
+                }
+                // Reset state: start fresh
+                alreadyIntegrated.clear();
+                worktreePresent = false;
+            } else if (!alreadyIntegrated.isEmpty()) {
+                System.out.println("integrate: resuming — tasks already integrated: " + alreadyIntegrated);
+                System.out.println("integrate: merge order: " + order);
+            } else {
+                // Worktree/branch exists but nothing recorded as integrated — cannot safely resume
+                System.err.println("integrate: integration worktree already exists at " + integrationRel
+                        + " with no recorded PATCH_INTEGRATED events."
+                        + " Use --force to start fresh or manually remove " + integrationBranch + ".");
+                return 1;
+            }
+        }
+
         File integrationDir = repoRoot.resolve(integrationRel).toFile();
 
-        iLedger.recordIntegrationPlan(order, integrationBranch);
-        System.out.println("integrate: created " + integrationBranch + " from " + taskBranch);
-        System.out.println("integrate: merge order: " + order);
+        if (!worktreePresent) {
+            // Fork integration branch from current task branch tip
+            git.addWorktreeAt(integrationRel, integrationBranch, taskBranch);
+            iLedger.recordIntegrationPlan(order, integrationBranch);
+            System.out.println("integrate: created " + integrationBranch + " from " + taskBranch);
+            System.out.println("integrate: merge order: " + order);
+        } else if (!integrationDir.isDirectory()) {
+            // Branch exists but worktree dir is gone — recreate worktree at existing branch tip
+            runGit(repoRoot.toFile(), "git", "worktree", "add", integrationRel, integrationBranch);
+        }
 
         int totalFailures = 0;
 
@@ -143,6 +189,10 @@ public class IntegrateCommand implements Callable<Integer> {
             String agentBranch = taskAgentBranch.get(taskId);
             if (agentBranch == null) {
                 System.out.println("integrate: task " + taskId + " was done directly on task branch — skipping.");
+                continue;
+            }
+            if (alreadyIntegrated.contains(taskId)) {
+                System.out.println("integrate: task " + taskId + " already integrated — skipping.");
                 continue;
             }
             // Fresh runner per task so the ledger poll is keyed to the correct task id

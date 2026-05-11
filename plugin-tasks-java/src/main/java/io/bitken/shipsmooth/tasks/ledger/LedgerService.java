@@ -91,6 +91,39 @@ public class LedgerService {
         return result;
     }
 
+    /**
+     * Returns the 0-based index of the last event whose type matches and whose metadata
+     * contains all entries in {@code metadataMatch}, or -1 if none found.
+     */
+    public int findLastEventIndex(EventType type, java.util.Map<String, String> metadataMatch)
+            throws IOException {
+        List<String> hashes = readHashes();
+        int result = -1;
+        for (int i = 0; i < hashes.size(); i++) {
+            Event ev = readEvent(hashes.get(i));
+            if (type == ev.eventType() && ev.metadata().entrySet().containsAll(metadataMatch.entrySet())) {
+                result = i;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns the most recent event of the given type for the given task whose ledger index
+     * is strictly greater than {@code afterIndex}, or null if none.
+     */
+    public Event findLastEventAfter(String taskId, EventType type, int afterIndex) throws IOException {
+        List<String> hashes = readHashes();
+        Event result = null;
+        for (int i = afterIndex + 1; i < hashes.size(); i++) {
+            Event ev = readEvent(hashes.get(i));
+            if (type == ev.eventType() && taskId.equals(ev.taskId())) {
+                result = ev;
+            }
+        }
+        return result;
+    }
+
     public List<Event> verifyLedger() throws IOException {
         List<String> hashes = readHashes();
         List<Event> timeline = new ArrayList<>(hashes.size());
