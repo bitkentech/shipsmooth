@@ -675,9 +675,76 @@ Files: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`, `build/skills/start-
 
 ---
 
+## E2E Run 4 — bugs found (2026-05-11)
+
+### Bug 11 — integrate has no resume capability; session death forces manual recovery
+
+**Observed (Plan 11 / todo-1):** A prior session ran `integrate`, successfully merged task 2 into `integration/plan-11`, then emitted a `RESOLVER_REQUESTED` event and died before the resolver ran. On session resume, the Lead Agent re-ran `integrate` from scratch. It immediately failed: "integration worktree already exists at `.agents/integration/plan-11`. Remove it or delete branch before retrying." The only options were: (a) blow away the integration branch (losing already-merged task 2) and restart, or (b) finish integration manually. The Lead Agent chose (b) and did it correctly by hand — but this required understanding internals that should be hidden.
+
+**Root cause:** `IntegrateCommand` refuses to start if the integration worktree or branch already exists. It has no code path to detect "I was partially through a run" and pick up where it left off.
+
+**Fix (Tasks 30–32):** Detect an existing integration branch at startup and, if its tip matches the expected `PATCH_INTEGRATED` ledger trail, resume from that point. Add a `--force` flag for the cases where the user explicitly wants a clean restart. Update SKILL to guide the Lead Agent on what to do when integrate fails with "worktree already exists".
+
+### Bug 12 — session-resume pre-flight does not check for stale integration worktrees
+
+**Observed:** The SKILL's session-resume pre-flight section lists three checks: XML file exists, task state (`show`), and stray worktrees (`git worktree list`). But it doesn't tell the Lead Agent what to do if an `integration/plan-{N}` worktree is found — specifically, that a stale RESOLVER_REQUESTED may be pending, or that re-running integrate will fail. The Lead Agent has to figure this out on its own.
+
+**Fix (Task 33):** Extend the SKILL session-resume section with an explicit check for existing `integration/plan-{N}` worktrees, and a decision tree: (a) if integrate is not running and a stale `RESOLVER_REQUESTED` event exists — handle the resolver, then signal `ledger-resolver-complete`, then re-arm and re-run integrate with `--force` or proceed manually; (b) if integrate finished (integration branch ahead of task branch) — just fast-forward and push; (c) if worktree exists but nothing is pending — safe to remove and retry.
+
+---
+
+### Task 30: Detect existing integration branch at `integrate` startup and resume from last `PATCH_INTEGRATED` [Medium]
+
+When `IntegrateCommand` starts, before creating a new integration worktree, check whether `integration/plan-{N}` already exists (branch and/or worktree). If it does, compare its current tip against the ledger's `PATCH_INTEGRATED` events to determine which tasks have already been merged. Resume from the first un-merged task rather than failing.
+
+- If the worktree exists but the branch is ahead of `PATCH_INTEGRATED` records: the tip commit was made manually or by a previous resolver. Treat the current tip as the resume point and continue with remaining tasks.
+- If the worktree is gone but the branch exists: recreate the worktree at the branch tip and resume.
+- If neither exists: create fresh (existing behaviour).
+
+Files: `plugin-tasks-java/src/main/java/…/commands/IntegrateCommand.java`
+
+### Task 31: Add `--force` flag to `integrate` to override resume and start fresh [Low]
+
+Add an `--force` boolean flag. When present, delete the existing integration worktree and branch (if any) and proceed with a clean run. Without `--force`, resume behaviour from Task 30 applies. Print a clear warning message when `--force` is used.
+
+Files: `plugin-tasks-java/src/main/java/…/commands/IntegrateCommand.java`
+
+*Depends-on: 30*
+
+### Task 32: Tests for integrate resume and --force [Low]
+
+1. Test that `integrate` on a plan where `integration/plan-N` already has task 2 merged (but not task 3) resumes from task 3 without touching task 2.
+2. Test that `integrate --force` deletes the existing integration branch and worktree and starts clean.
+3. Test that a stale `RESOLVER_REQUESTED` with no `RESOLVER_COMPLETE` does not block the next integrate run from resuming past that task's completed merge.
+
+Files: `plugin-tasks-java/src/test/java/…/commands/IntegrateCommandTest.java`
+
+*Depends-on: 30, 31*
+
+### Task 33: SKILL — session-resume pre-flight: check for stale integration worktrees [Low]
+
+Extend the "Session-resume pre-flight" section in the SKILL with a fourth check and a decision tree for the `integration/plan-{N}` worktree:
+
+```bash
+# 4. Check for stale integration worktree
+git worktree list | grep "integration/plan-{N}"
+```
+
+Decision tree to include in the SKILL prose:
+- **Integration worktree found, integrate not running:**
+  - Check ledger for a `RESOLVER_REQUESTED` with no matching `RESOLVER_COMPLETE`. If found: dispatch resolver, call `ledger-resolver-complete`, then re-arm Monitor and re-run `integrate` (resume will apply automatically per Task 30).
+  - If no pending resolver: check if integration branch is ahead of task branch. If yes → fast-forward and push. If no → remove worktree/branch and re-run `integrate`.
+- **Integration worktree found, integrate is running:** let it finish; watch for Monitor events as normal.
+- **No integration worktree found:** proceed with normal integration setup.
+
+Files: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`, `build/skills/start-dev/SKILL.md`
+
+*Depends-on: 30*
+
+---
+
 ## Phase 4 preview (not in scope)
 
-- `--resume` from the last `PATCH_INTEGRATED` event.
 - Order replanning when a task fails (try a different position before giving up).
 - Promoting integration into a SubagentStop hook so it runs without an explicit Lead Agent command.
 - Coverage-threshold checks during integrate (currently human-review only).
