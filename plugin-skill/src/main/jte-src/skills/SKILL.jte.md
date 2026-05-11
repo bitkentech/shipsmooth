@@ -396,6 +396,13 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 **Step 1 — arm Monitor (Cycle 1) before starting integrate** (so no event is missed in the startup window):
 
+First, snapshot the current event count so `ledger-watch` ignores stale events from prior runs:
+```bash
+LEDGER_SEQ=$(${model.cliBin()} ledger list --count)
+```
+
+Then arm Monitor, passing `--after $LEDGER_SEQ`:
+
 @if("gemini".equals(model.platform()))
 @template.skills.gemini.ledger-watch-cmd(model = model)
 @else
@@ -422,7 +429,7 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 @else
 @template.skills.claude.resolver-complete-cmd(model = model)
 @endif
-4. **Arm Monitor again (Cycle N+1)** — make a new Monitor tool call with the same command above before waiting for the next event. Monitor has exited; you must re-arm it for each additional resolver cycle.
+4. **Arm Monitor again (Cycle N+1)** — make a new Monitor tool call with the same command above (same `--after $LEDGER_SEQ` value) before waiting for the next event. Monitor has exited; you must re-arm it for each additional resolver cycle.
 
 Integrate will unblock within 500 ms of the `ledger-resolver-complete` call and continue to the next task.
 

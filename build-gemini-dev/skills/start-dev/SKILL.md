@@ -194,6 +194,23 @@ Use this hash (not the tag name) in Linear links — it is immutable and survive
 
 ## Phase 2 — Execute
 
+**Session-resume pre-flight `[Local]`** — If you are picking up a plan that was started in a previous session, run these checks before doing anything else:
+
+```bash
+# 1. Confirm the XML task file exists (must not be missing)
+ls .agents/plans/plan-{N}-tasks.xml   # if absent, run: /home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks init --plan {N} --tasks-from .agents/plans/plan-{N}.md
+
+# 2. Review current task state
+/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks show --plan {N}
+
+# 3. Confirm no stray worktrees or background jobs remain
+git worktree list
+```
+
+Only proceed once you know which tasks are done and which are next.
+
+---
+
 **Step 0: Create a branch**
 
 Create and push a branch named after the primary Linear issue for this plan:
@@ -387,6 +404,8 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 **Running integrate:**
 
+**Never use `tail -f`, `sleep`, or polling loops to wait for integrate.** These are either blocked by the harness or leave orphaned background processes. The correct pattern is: arm Monitor (Step 1), then launch integrate in the background (Step 2). You will be notified by Monitor when a resolver cycle is needed and by the Bash background-complete notification when integrate finishes.
+
 `integrate` coordinates with the Lead Agent via the ledger: when a conflict or verify failure occurs it writes a `RESOLVER_REQUESTED` event to `.agents/ledger.jsonl` and polls for a `RESOLVER_COMPLETE` event.
 
 **Critical:** `integrate` must be run with `run_in_background: true` in the Bash tool. If run as a blocking Bash call, the Lead Agent cannot act on Monitor events while waiting for the command to finish — integrate will time out waiting for `ledger-resolver-complete` that never comes.
@@ -397,11 +416,18 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 **Step 1 — arm Monitor (Cycle 1) before starting integrate** (so no event is missed in the startup window):
 
+First, snapshot the current event count so `ledger-watch` ignores stale events from prior runs:
+```bash
+LEDGER_SEQ=$(/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger list --count)
+```
+
+Then arm Monitor, passing `--after $LEDGER_SEQ`:
+
 
 
 Use the `run_shell_command` tool (blocking) with this command:
 ```bash
-/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger-watch --plan {N} --repo {repo-root}
+/home/pramod/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger-watch --plan {N} --repo {repo-root} --after $LEDGER_SEQ
 ```
 where `{repo-root}` is the absolute path to the repo root (run `pwd` from the repo root if unsure).
 
@@ -444,7 +470,7 @@ You will be notified when integrate finishes. While it runs, watch for Monitor e
    ```
    where `{repo-root}` is the absolute path to the repo root.
 
-4. **Arm Monitor again (Cycle N+1)** — make a new Monitor tool call with the same command above before waiting for the next event. Monitor has exited; you must re-arm it for each additional resolver cycle.
+4. **Arm Monitor again (Cycle N+1)** — make a new Monitor tool call with the same command above (same `--after $LEDGER_SEQ` value) before waiting for the next event. Monitor has exited; you must re-arm it for each additional resolver cycle.
 
 Integrate will unblock within 500 ms of the `ledger-resolver-complete` call and continue to the next task.
 
