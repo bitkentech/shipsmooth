@@ -4,7 +4,7 @@
     <plan-version>plan-37-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-05-12</created>
     </metadata>
     <tasks>
@@ -101,6 +101,11 @@
         <update>
             <timestamp>2026-05-12T17:16:55.842+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-12T22:33:37.543+05:30</timestamp>
+            <message>Plan complete. Squash-merged to main as eb9b3e3.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
