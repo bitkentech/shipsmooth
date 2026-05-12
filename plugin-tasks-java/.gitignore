@@ -1,0 +1,5 @@
+.agents/tasks/*
+.agents/integration/*
+!.agents/objects/
+.agents/
+!.agents/ledger.jsonl

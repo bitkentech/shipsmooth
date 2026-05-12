@@ -1,0 +1,2 @@
+description = "Apply the shipsmooth-dev start-dev workflow."
+prompt = "Activate the shipsmooth-dev start-dev skill and apply it to the user's current task."

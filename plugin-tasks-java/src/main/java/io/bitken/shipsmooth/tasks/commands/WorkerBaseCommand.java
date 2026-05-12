@@ -46,8 +46,14 @@ public class WorkerBaseCommand implements Callable<Integer> {
                 System.err.println("worker-base: parent task " + parentId + " has no COMMIT_RECORDED event yet");
                 return 1;
             }
-            // payload of COMMIT_RECORDED is the commit SHA
-            latestSha = ev.payload();
+            // Prefer metadata.commit_sha (set by worker-finish and set-commit).
+            // Fall back to payload for events written before metadata was added.
+            String sha = ev.metadata().getOrDefault("commit_sha", ev.payload());
+            if (sha == null || sha.isBlank()) {
+                System.err.println("worker-base: parent task " + parentId + " COMMIT_RECORDED event has no commit SHA");
+                return 1;
+            }
+            latestSha = sha;
         }
 
         System.out.println(latestSha);

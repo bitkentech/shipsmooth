@@ -29,30 +29,75 @@ public class XmlService {
 
     private final ObjectFactory factory = new ObjectFactory();
 
-    public record Task(int id, String name, String risk) {}
+    public record Task(int id, String name, String risk, String dependsOn) {
+        public Task(int id, String name, String risk) { this(id, name, risk, ""); }
+    }
 
     public PlanTasks readPlanTasks(File file) throws JAXBException {
-        JAXBContext context = JAXBContext.newInstance(PlanTasks.class);
-        Unmarshaller unmarshaller = context.createUnmarshaller();
-        return (PlanTasks) unmarshaller.unmarshal(file);
+        int retries = 5;
+        while (retries > 0) {
+            try {
+                JAXBContext context = JAXBContext.newInstance(PlanTasks.class);
+                Unmarshaller unmarshaller = context.createUnmarshaller();
+                return (PlanTasks) unmarshaller.unmarshal(file);
+            } catch (JAXBException e) {
+                retries--;
+                if (retries == 0) throw e;
+                try {
+                    //noinspection BusyWait
+                    Thread.sleep(100);
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                }
+            }
+        }
+        throw new JAXBException("Failed to read XML after retries: " + file.getAbsolutePath());
     }
 
     public void writePlanTasks(PlanTasks planTasks, File file) throws JAXBException {
+        File tempFile = new File(file.getAbsolutePath() + ".tmp");
         JAXBContext context = JAXBContext.newInstance(PlanTasks.class);
         Marshaller marshaller = context.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-        marshaller.marshal(planTasks, file);
+        marshaller.marshal(planTasks, tempFile);
+        try {
+            java.nio.file.Files.move(tempFile.toPath(), file.toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        } catch (java.io.IOException e) {
+            throw new JAXBException("Failed to move temp XML file: " + e.getMessage(), e);
+        } finally {
+            if (tempFile.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                tempFile.delete();
+            }
+        }
     }
 
     public List<Task> parseTasksFromPlan(String markdown) {
         List<Task> tasks = new ArrayList<>();
-        Pattern pattern = Pattern.compile("^###\\s+Task\\s+(\\d+):\\s+(.+?)(?:\\s+\\[(High|Medium|Low)\\])?\\s*$", Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(markdown);
+        Pattern headingPattern = Pattern.compile(
+                "^###\\s+Task\\s+(\\d+):\\s+(.+?)(?:\\s+\\[(High|Medium|Low)\\])?\\s*$",
+                Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+        // Matches an optional "*Depends-on: 1,2,3*" line anywhere after the heading (within ~20 lines)
+        Pattern dependsOnPattern = Pattern.compile(
+                "^\\*Depends-on:\\s*([\\d,\\s]+)\\*\\s*$",
+                Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+        Matcher matcher = headingPattern.matcher(markdown);
         while (matcher.find()) {
             int id = Integer.parseInt(matcher.group(1));
             String name = matcher.group(2).trim();
             String risk = matcher.group(3) != null ? matcher.group(3).toLowerCase() : "";
-            tasks.add(new Task(id, name, risk));
+            // Search the ~500 chars after the heading for a depends-on line
+            int searchEnd = Math.min(matcher.end() + 500, markdown.length());
+            // Stop at next task heading
+            Matcher nextHeading = headingPattern.matcher(markdown.substring(matcher.end(), searchEnd));
+            int regionEnd = nextHeading.find() ? matcher.end() + nextHeading.start() : searchEnd;
+            String region = markdown.substring(matcher.end(), regionEnd);
+            Matcher depMatcher = dependsOnPattern.matcher(region);
+            String dependsOn = depMatcher.find() ? depMatcher.group(1).replaceAll("\\s", "") : "";
+            tasks.add(new Task(id, name, risk, dependsOn));
         }
         return tasks;
     }
@@ -73,7 +118,7 @@ public class XmlService {
         return planVersion;
     }
 
-    public PlanTasks generatePlanTasks(int planNum, String planVersion, List<Task> tasks) throws DatatypeConfigurationException {
+    public PlanTasks generatePlanTasks(int planNum, String planVersion, List<Task> tasks) throws Exception {
         PlanTasks planTasks = factory.createPlanTasks();
         planTasks.setPlan(BigInteger.valueOf(planNum));
         planTasks.setPlanVersion(planVersion);
@@ -99,6 +144,11 @@ public class XmlService {
             tasksContainer.getTask().add(taskType);
         }
         planTasks.setTasks(tasksContainer);
+        for (Task t : tasks) {
+            if (t.dependsOn() != null && !t.dependsOn().isBlank()) {
+                setDependsOn(planTasks, t.id(), t.dependsOn());
+            }
+        }
 
         ProjectUpdatesContainerType updatesContainer = factory.createProjectUpdatesContainerType();
         UpdateType update = factory.createUpdateType();

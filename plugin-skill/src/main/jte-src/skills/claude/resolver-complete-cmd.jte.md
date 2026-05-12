@@ -1,0 +1,6 @@
+@param io.bitken.shipsmooth.resources.PluginModel model
+
+3. After the Agent call returns, signal integrate to continue:
+   ```bash
+   ${model.cliBin()} ledger-resolver-complete --plan {N} --task {metadata.task_id} --repo $(git rev-parse --show-toplevel)
+   ```

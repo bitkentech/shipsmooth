@@ -1,13 +1,15 @@
 package io.bitken.shipsmooth.tasks;
 
 import io.bitken.shipsmooth.tasks.commands.*;
+import io.bitken.shipsmooth.tasks.commands.IntegrateCommand;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @Command(name = "tasks", mixinStandardHelpOptions = true, version = "0.1.0",
-        description = "Task management CLI for shipsmooth.",
+        description = "CLI to manage tasks, subagents and ledger for shipsmooth",
         subcommands = {
             InitCommand.class,
+            // TODO: Implement an AddTask Command?
             UpdateStatusCommand.class,
             AddCommentCommand.class,
             AddDeviationCommand.class,
@@ -19,7 +21,12 @@ import picocli.CommandLine.Command;
             WorkerInitCommand.class,
             WorkerFinishCommand.class,
             WorkerCleanupCommand.class,
-            WorkerBaseCommand.class
+            WorkerBaseCommand.class,
+            IntegrateCommand.class,
+            LedgerRecordCommitCommand.class,
+            LedgerRecordPatchIntegratedCommand.class,
+            LedgerResolverCompleteCommand.class,
+            LedgerWatchCommand.class
         })
 public class TasksCli implements Runnable {
 

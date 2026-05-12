@@ -28,14 +28,21 @@ public class WorkerCleanupCommand implements Callable<Integer> {
         String worktreeRel = ".agents/tasks/" + task;
         String branch = "agent-work/" + task;
 
+        LedgerService ledger = new LedgerService(repoRoot);
+        ledger.ensureLedgerFile();
+
+        Event commitEvent = ledger.findLastEvent(task, EventType.COMMIT_RECORDED);
+        if (commitEvent == null) {
+            System.err.println("Error: no COMMIT_RECORDED event found for task " + task
+                    + ". Run worker-finish before worker-cleanup.");
+            return 1;
+        }
+
         if (!git.worktreeExists(worktreeRel)) {
             System.err.println("Warning: worktree " + worktreeRel + " not found, recording CLEANUP anyway.");
         } else {
             git.removeWorktreeKeepBranch(worktreeRel);
         }
-
-        LedgerService ledger = new LedgerService(repoRoot);
-        ledger.ensureLedgerFile();
         ledger.record(Event.forTask(EventType.CLEANUP, task, git.headSha(),
                 "worktree removed, branch retained", Map.of("branch", branch)));
 

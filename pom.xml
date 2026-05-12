@@ -35,12 +35,34 @@
         <plugin.skillName>start-dev</plugin.skillName>
         <plugin.description>Agent coding workflow (dev build)</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build</build.outputDir>
+        <plugin.hook.base>node "${CLAUDE_PLUGIN_ROOT}/dist/session-start.js"</plugin.hook.base>
         <shipsmooth.dist.path>\${CLAUDE_PLUGIN_DATA}/dist</shipsmooth.dist.path>
         <shipsmooth.cache.dir>~/.cache/shipsmooth-dev</shipsmooth.cache.dir>
         <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/plugin-tasks-java/target/jlink-image</shipsmooth.jlink.dir>
         <shipsmooth.cli.bin>~/.cache/shipsmooth-dev/runtime-@project.version@/bin/shipsmooth-tasks</shipsmooth.cli.bin>
         <skill.frontmatter></skill.frontmatter>
         <build.platform>claude</build.platform>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>gemini-dev</id>
+      <properties>
+        <build.platform>gemini</build.platform>
+
+        <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini-dev</build.outputDir>
+
+        <plugin.name>shipsmooth-dev</plugin.name>
+        <plugin.skillName>start-dev</plugin.skillName>
+        <plugin.description>Agent coding workflow (dev build)</plugin.description>
+        <plugin.hook.base>node "${extensionPath}/dist/session-start.js"</plugin.hook.base>
+
+        <shipsmooth.cache.dir.resolved>${user.home}/.cache/shipsmooth-dev</shipsmooth.cache.dir.resolved>
+        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/plugin-tasks-java/target/jlink-image</shipsmooth.jlink.dir>
+        <skill.frontmatter>---
+name: start-dev
+description: Use when starting any task — applies the shipsmooth agent coding workflow (dev build).
+---</skill.frontmatter>
       </properties>
     </profile>
 
@@ -68,12 +90,10 @@
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini</build.outputDir>
         <shipsmooth.dist.path>~/.cache/shipsmooth/dist</shipsmooth.dist.path>
         <build.platform>gemini</build.platform>
-        <skill.frontmatter>---
+<skill.frontmatter>---
 name: start
 description: Use when starting any task — applies the shipsmooth agent coding workflow.
----
-
-</skill.frontmatter>
+---</skill.frontmatter>
       </properties>
     </profile>
   </profiles>

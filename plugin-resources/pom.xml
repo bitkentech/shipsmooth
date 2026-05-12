@@ -76,6 +76,18 @@
     </profile>
 
     <profile>
+      <id>gemini-logic</id>
+      <activation>
+        <property>
+          <name>build.platform</name>
+          <value>gemini</value>
+        </property>
+      </activation>
+      <build>
+      </build>
+    </profile>
+
+    <profile>
       <id>gemini</id>
       <build>
         <plugins>
@@ -117,7 +129,7 @@
                   <outputDirectory>${build.outputDir}/commands</outputDirectory>
                   <resources>
                     <resource>
-                      <directory>${project.basedir}/src/main/resources/gemini-extension/commands</directory>
+                      <directory>${project.basedir}/src/main/resources/gemini-extension/gemini/commands</directory>
                       <filtering>false</filtering>
                     </resource>
                   </resources>
@@ -168,6 +180,83 @@
         </plugins>
       </build>
     </profile>
+    <profile>
+      <id>gemini-dev</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>3.3.1</version>
+            <executions>
+              <execution>
+                <id>copy-gemini-manifest-dev</id>
+                <phase>process-resources</phase>
+                <goals><goal>copy-resources</goal></goals>
+                <configuration>
+                  <outputDirectory>${build.outputDir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>${project.basedir}/src/main/resources/gemini-extension</directory>
+                      <filtering>true</filtering>
+                      <includes><include>gemini-extension.json</include></includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <execution>
+                <id>copy-commands-dev</id>
+                <phase>process-resources</phase>
+                <goals><goal>copy-resources</goal></goals>
+                <configuration>
+                  <outputDirectory>${build.outputDir}/commands</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>${project.basedir}/src/main/resources/gemini-extension/gemini-dev/commands</directory>
+                      <filtering>false</filtering>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <execution>
+                <id>copy-gemini-hooks-dev</id>
+                <phase>process-resources</phase>
+                <goals><goal>copy-resources</goal></goals>
+                <configuration>
+                  <outputDirectory>${build.outputDir}/hooks</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>${project.basedir}/src/main/resources/gemini-extension/hooks</directory>
+                      <filtering>false</filtering>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <execution>
+                <id>copy-gemini-readme-dev</id>
+                <phase>process-resources</phase>
+                <goals><goal>copy-resources</goal></goals>
+                <configuration>
+                  <outputDirectory>${build.outputDir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>${project.basedir}/src/main/resources/gemini-extension</directory>
+                      <filtering>false</filtering>
+                      <includes><include>README.md</include></includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+
   </profiles>
 
 </project>

@@ -5,12 +5,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Low-level git worktree operations lifted from agent-simulator's GitWorktreeService.
- * Spring-stripped; uses stderr for warnings.
+ * Low-level git worktree operations.
  */
 public class WorktreeService {
 
@@ -113,6 +114,57 @@ public class WorktreeService {
         try {
             run(worktreeDir, "git", "add", "-A");
             return capture(worktreeDir, "git", "diff", "--cached");
+        } finally {
+            gitGate.release();
+        }
+    }
+
+    /** Creates a worktree from a named ref (branch name or tag), not necessarily HEAD. */
+    public void addWorktreeAt(String relativePath, String branch, String baseRef)
+            throws IOException, InterruptedException {
+        gitGate.acquire();
+        try {
+            run(repoRoot.toFile(), "git", "worktree", "add", relativePath, "-b", branch, baseRef);
+        } finally {
+            gitGate.release();
+        }
+    }
+
+    /**
+     * Attempts git merge --squash of the named branch into worktreeDir.
+     * Does NOT commit — caller stages and commits after resolution.
+     * Returns clean=true on success; clean=false with conflicted file list on conflict.
+     */
+    public MergeResult mergeSquash(File worktreeDir, String branch)
+            throws IOException, InterruptedException {
+        gitGate.acquire();
+        try {
+            Process p = new ProcessBuilder("git", "merge", "--squash", branch)
+                    .directory(worktreeDir)
+                    .redirectErrorStream(true)
+                    .start();
+            p.getInputStream().readAllBytes(); // drain
+            p.waitFor(60, TimeUnit.SECONDS);
+            if (p.exitValue() == 0) {
+                return MergeResult.success();
+            }
+            // Enumerate unmerged files
+            String unmerged = capture(worktreeDir, "git", "diff", "--name-only", "--diff-filter=U");
+            List<String> files = Arrays.stream(unmerged.split("\n"))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toList();
+            return MergeResult.conflict(files);
+        } finally {
+            gitGate.release();
+        }
+    }
+
+    /** Hard-resets the worktree to the given SHA. Used for per-task rollback on give-up. */
+    public void resetHard(File worktreeDir, String sha) throws IOException, InterruptedException {
+        gitGate.acquire();
+        try {
+            run(worktreeDir, "git", "reset", "--hard", sha);
         } finally {
             gitGate.release();
         }

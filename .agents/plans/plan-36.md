@@ -242,6 +242,235 @@ Document the run in a short note under `.agents/notes/plan-36-e2e.md` (committed
 
 *Order rationale:* last; depends on the entire stack landing.
 
+### Task 10: Fix set-commit integration_mode for agent-work branches [Low]
+
+`SetCommitCommand` unconditionally writes `integration_mode=direct` even when `--branch agent-work/{id}` is passed. `IntegrateCommand` reads this field and skips any task with `integration_mode=direct`, so manual ledger recovery via `set-commit` silently breaks integration.
+
+**Fix:** in `SetCommitCommand.call()`, check if `branch` starts with `agent-work/`; if so, write `integration_mode=worktree`, otherwise `integration_mode=direct`.
+
+File: `plugin-tasks-java/.../tasks/commands/SetCommitCommand.java`
+
+### Task 11: Gitignore the ledger so git reset --hard cannot wipe it [Low]
+
+`.agents/ledger.jsonl` has a `!` negation in both `.gitignore` and `plugin-tasks-java/.gitignore`, making it git-tracked. A `git reset --hard` restores the committed state and destroys uncommitted events (e.g. `COMMIT_RECORDED` written by `worker-finish`). This leaves `integrate` with nothing to merge.
+
+**Fix:** remove the `!.agents/ledger.jsonl` negation from both `.gitignore` files so the ledger is never tracked or reset. The ledger is an append-only execution trace, not source of truth.
+
+Files: `.gitignore`, `plugin-tasks-java/.gitignore`
+
+### Task 12: Add ledger-record-commit recovery subcommand [Low]
+
+When the ledger is wiped and `worker-cleanup` has already removed `.agents/tasks/{id}`, there is no way to reconstruct a `COMMIT_RECORDED` event. The only fallback (`set-commit`) is broken by Bug 1 (now fixed by Task 10), but even after that fix, a dedicated recovery command is safer and more explicit.
+
+**Fix:** add `ledger-record-commit --plan {N} --task {id} --commit {sha} --branch agent-work/{id}` subcommand. It writes a `COMMIT_RECORDED` event with `integration_mode=worktree` directly to the ledger, bypassing XML. Register it in `TasksCli.java`.
+
+Files: `plugin-tasks-java/.../tasks/commands/LedgerRecordCommitCommand.java` (new), `plugin-tasks-java/.../tasks/TasksCli.java`
+
+### Task 13: SKILL — verify cmd -pl guidance + ledger recovery instructions [Low]
+
+Two SKILL gaps exposed by the E2E run:
+
+1. The "probe the verify command" block says to run it from repo root and add exclusion flags, but never says: **do not use `-pl` with an absolute path** — the integration worktree IS its own Maven root, so `-pl /abs/path` breaks inside it.
+2. There are no recovery instructions for the "ledger wiped, worktrees gone" scenario.
+
+**Fix:** in `SKILL.jte.md`, under the "Before running integrate — probe the verify command" block:
+- Add an explicit warning: *"Never use `-pl` with an absolute path. The integration worktree is its own Maven reactor root; relative `-pl` submodule references work, absolute ones do not."*
+- Add a **Recovery** subsection after the integration block covering: (a) how to detect a wiped ledger (`ledger list` shows no `COMMIT_RECORDED` events), (b) use `ledger-record-commit` per task to reconstruct, (c) re-run `integrate`.
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 12*
+
+### Task 14: Pre-approve worktree paths in target repo settings [Low]
+
+Subagents launched via the `Agent` tool run in a fresh permission context and do not inherit the Lead Agent's session approvals. When worker subagents attempt to `Edit`/`Write` files under `.agents/tasks/{id}/` in the target repo, they are blocked and must stop.
+
+**Fix:** update the SKILL's "User consent" block to instruct the Lead Agent to temporarily patch `.claude/settings.json` in the target repo before dispatching subagents, and revert it afterward. The patch:
+
+1. **Before dispatch:** read the existing `.claude/settings.json` (create it as `{}` if absent). Merge in the worktree permission entries — do not overwrite unrelated keys. Tell the user: *"Adding temporary worktree permissions to .claude/settings.json so subagents can edit their worktree paths. These will be removed after integration completes."*
+2. **After all `worker-cleanup` calls complete:** remove only the entries that were added (restore the file to its pre-patch state, or delete it if it was created from scratch). Tell the user: *"Restored .claude/settings.json — temporary worktree permissions removed."*
+
+The permissions to add:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Edit(.agents/tasks/**)",
+      "Write(.agents/tasks/**)",
+      "Bash(cd .agents/tasks/**)"
+    ]
+  }
+}
+```
+
+The SKILL must include:
+- The exact JSON snippet.
+- The read-merge-write pattern (not a blind overwrite).
+- The create-if-absent step.
+- The user-facing messages at both patch and restore points.
+- A note that this is scoped to the target repo's `.claude/settings.json`, not `~/.claude/settings.json`.
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+### Task 15: SKILL — integrate resolver via background Bash + Monitor [Low]
+
+The stdin/stdout resolver protocol requires the Lead Agent to watch a running process and write back mid-execution. This is incompatible with the blocking `Bash` tool: the command runs to completion before the Lead Agent can act, so `stdin` closes and the runner throws.
+
+**Fix:** update the SKILL's "Running integrate" block to use a named pipe + background process pattern:
+
+```bash
+# Create a named pipe for the Lead Agent to write responses into
+mkfifo .agents/tmp/integrate-stdin
+
+# Run integrate in background, feeding stdin from the pipe
+~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks integrate \
+  --plan {N} --task-branch $(git rev-parse --abbrev-ref HEAD) \
+  --verify-cmd "{your-test-command}" \
+  < .agents/tmp/integrate-stdin \
+  > .agents/tmp/integrate-stdout.log 2>&1 &
+INTEGRATE_PID=$!
+
+# Open the write end of the pipe (keeps it open so integrate doesn't get EOF)
+exec 3>.agents/tmp/integrate-stdin
+```
+
+Then use `Monitor` to watch `.agents/tmp/integrate-stdout.log` for the `spawn-resolver` JSON line:
+
+```bash
+tail -f .agents/tmp/integrate-stdout.log | grep --line-buffered "spawn-resolver"
+```
+
+When Monitor fires with a `spawn-resolver` line: parse the `prompt` and `worktree` fields, perform the `Agent` tool call, then write the continue reply to the pipe:
+
+```bash
+echo '{"action":"continue"}' >&3
+```
+
+When `integrate` exits (Monitor sees no more output, or `wait $INTEGRATE_PID` completes), close the pipe and clean up:
+
+```bash
+exec 3>&-
+rm -f .agents/tmp/integrate-stdin
+```
+
+The SKILL must include the full snippet verbatim (with `{N}` and `{your-test-command}` as fill-in slots), and note that `.agents/tmp/` must exist (it is gitignored by default in shipsmooth-managed repos).
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 14*
+
+*Note: Task 15's named-pipe approach is Linux/macOS only. Superseded by Tasks 16–18 which use the ledger as the coordination channel instead — portable across all platforms and automatically audited.*
+
+### Task 16: Add RESOLVER_REQUESTED and RESOLVER_COMPLETE EventTypes [Low]
+
+Add two entries to `EventType.java`:
+- `RESOLVER_REQUESTED` — emitted by `integrate` when it needs the Lead Agent to spawn a resolver subagent. Payload: the full resolver prompt string. Metadata: `task_id`, `worktree`, `attempt`.
+- `RESOLVER_COMPLETE` — emitted by the Lead Agent (via CLI) after the resolver subagent returns. Metadata: `task_id`.
+
+File: `plugin-tasks-java/.../tasks/ledger/EventType.java`
+
+### Task 17: Replace StdinStdoutSubagentRunner with LedgerSubagentRunner + ledger-resolver-complete subcommand [Medium]
+
+Replace the stdin/stdout blocking protocol with a ledger-poll protocol. No named pipes, no fd manipulation — pure file append, works on all platforms.
+
+**`LedgerSubagentRunner`** (replaces `StdinStdoutSubagentRunner`):
+- `run(String prompt)`: writes a `RESOLVER_REQUESTED` event to the ledger (payload = prompt, metadata includes `worktree`, `attempt` counter, `task_id`).
+- Then polls `ledger.findLastEvent(taskId, RESOLVER_COMPLETE)` in a loop (100 ms sleep) until a matching event appears or `CONTINUE_TIMEOUT_MINUTES` (30) elapses.
+- On timeout: throws `IllegalStateException` with a message explaining the Lead Agent must run `ledger-resolver-complete`.
+
+`StdinStdoutSubagentRunner` can be deleted or kept as dead code — delete it.
+
+**`LedgerResolverCompleteCommand`** (new CLI subcommand `ledger-resolver-complete`):
+- Options: `--plan {N}`, `--task {id}`.
+- Writes a `RESOLVER_COMPLETE` event to the ledger with `task_id` in metadata.
+- Prints: `Resolver complete recorded for task {id}`.
+- Register in `TasksCli.java`.
+
+`IntegrateCommand` must pass `plan` and `taskId` into `LedgerSubagentRunner` so it can key the poll on the correct task.
+
+Files:
+- `plugin-tasks-java/.../tasks/integration/LedgerSubagentRunner.java` (new)
+- `plugin-tasks-java/.../tasks/integration/StdinStdoutSubagentRunner.java` (delete)
+- `plugin-tasks-java/.../tasks/commands/LedgerResolverCompleteCommand.java` (new)
+- `plugin-tasks-java/.../tasks/TasksCli.java`
+- `plugin-tasks-java/.../tasks/commands/IntegrateCommand.java`
+
+*Depends-on: 16*
+
+### Task 18: SKILL — rewrite integrate protocol to use ledger + Monitor [Low]
+
+Replace the named-pipe block in Task 15 with the ledger-based protocol. No background process management needed — `integrate` can run as a normal blocking `Bash` call because it no longer blocks on stdin.
+
+**Updated "Running integrate" SKILL block:**
+
+Run integrate normally (blocking):
+```bash
+${model.cliBin()} integrate \
+  --plan {N} \
+  --task-branch $(git rev-parse --abbrev-ref HEAD) \
+  --verify-cmd "{your-test-command}"
+```
+
+But first, arm a Monitor **before** running integrate, to watch for `RESOLVER_REQUESTED` events in the ledger:
+
+```bash
+tail -f .agents/ledger.jsonl | grep --line-buffered "RESOLVER_REQUESTED"
+```
+
+When Monitor fires with a `RESOLVER_REQUESTED` line:
+1. Parse the JSON: extract `payload` (the prompt) and `metadata.worktree`.
+2. Extract `metadata.task_id`.
+3. Perform an `Agent` tool call: `subagent_type: general-purpose`, prompt from `payload`, working directory = `metadata.worktree`. **Do not pass `isolation: worktree`.**
+4. After the Agent call returns, run: `${model.cliBin()} ledger-resolver-complete --plan {N} --task {metadata.task_id}`
+5. Resume watching Monitor for the next event.
+
+When `integrate` exits (the blocking Bash call returns), stop the Monitor.
+
+On success: apply the fast-forward as printed by integrate. On failure: report task id and integration branch to the human.
+
+The SKILL must note: arm Monitor **before** starting integrate so no event is missed in the window between process start and Monitor attach.
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 17*
+
+### Task 34: PromptBuilder — resolver pre-flight and absolute-path enforcement [Low]
+
+E2E testing of plan-36 revealed that resolver agents dispatched without a `cwd` parameter write files into the main repo working directory, not the integration worktree. The `Agent` tool has no `cwd` parameter, so the SKILL instruction to "pass `cwd = metadata.worktree`" is incorrect and must be replaced with prompt-level enforcement.
+
+**Fix in `PromptBuilder.java`:**
+
+1. Replace the instruction "every Bash call must begin with `cd {worktreePath} &&`" with a stronger pattern:
+   - Add an explicit **pre-flight check** as the first instruction: *"Run `ls {worktreePath}` as your very first action. If the directory is empty or does not exist, stop immediately with: `RESOLVER ABORT: worktree {worktreePath} is missing or empty.` Do not write any code."*
+   - Instruct the agent to use **absolute paths** for all Read/Edit/Write tool calls (not relative paths, not shell `cd` for file operations). Bash calls may still use `cd {worktreePath} &&` as a working-directory anchor for commands that require it (e.g. running tests), but file edits must use absolute paths.
+
+2. Remove the now-incorrect sentence about `cwd` being set externally.
+
+**Fix in `SKILL.jte.md`:**
+
+Remove the `cwd` parameter mention from the resolver `Agent` call instructions. Replace with: *"The resolver prompt includes the absolute worktree path and instructs the agent to use absolute paths for all file operations. No `cwd` parameter is needed or supported."*
+
+Files:
+- `plugin-tasks-java/.../tasks/integration/PromptBuilder.java`
+- `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+### Task 35: IntegrateCommand — post-resolver conflict-marker check [Low]
+
+After `resolver.resolve()` returns and before `git add -A`, `IntegrateCommand.invokeResolver()` should verify that the resolver actually removed the conflict markers. If any file in `conflictedFiles` still contains `<<<<<<<`, staging it would silently commit broken content, the verify would fail with a compile error, and the loop would repeat with no diagnostic.
+
+**Fix in `IntegrateCommand.invokeResolver()`:**
+
+After `resolver.resolve(integrationDir, ctx)` returns, and before `runGit(integrationDir, "git", "add", "-A")`:
+
+1. For each file in `conflictedFiles` (if non-null and non-empty), read the file content from `integrationDir` and check for the string `<<<<<<<`.
+2. If any conflicted file still contains conflict markers, log a clear warning per file: `"integrate: resolver did not remove conflict markers in {file} (attempt {attempt})"` and `continue` to the next attempt without staging or committing.
+3. Only if all conflicted files are clean, proceed with `git add -A` → commit → verify as before.
+
+This turns the silent "stage broken content → verify fails → loop" into "resolver didn't fix markers → skip staging → next attempt" — making the failure reason visible in the log.
+
+File: `plugin-tasks-java/.../tasks/commands/IntegrateCommand.java`
+
 ---
 
 ## Verification (manual, via dev build)
@@ -256,9 +485,380 @@ Build the CLI and run against a scratch scenario:
 
 ---
 
+### Task 19: SKILL — Monitor is single-shot; add re-arm loop [Low]
+
+The Monitor tool emits one batch of output and exits — it does not stay running indefinitely after the first event fires. The SKILL's step 4 says "Resume watching Monitor for the next `RESOLVER_REQUESTED` event", but the Monitor tool itself has exited by then. The Lead Agent must make a new Monitor tool call for each resolver cycle.
+
+**Fix:** rewrite the Monitor instruction in `SKILL.jte.md` to make this explicit:
+- Label the Monitor call "**Cycle N — arm Monitor**" (where N increments each cycle).
+- After step 4 ("resume watching Monitor"), clarify: *"Arm Monitor again (a new Monitor tool call) before waiting for the next event — Monitor is single-shot and exits after emitting."*
+- Add a note: *"There is one Monitor call per resolver cycle. N cycles = N Monitor tool calls."*
+
+The instruction block currently says "Step 1 — arm Monitor before starting integrate". That label implies it is a one-time setup. Change it to "**Before each resolver cycle — arm Monitor**" (or similar) so it is clear the call repeats.
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 18*
+
+### Task 20: SKILL — handle ledger non-existent at Monitor arm time [Low]
+
+`tail -f .agents/ledger.jsonl` exits immediately (exit 1) if the file does not exist. When the Lead Agent arms Monitor before `integrate` has started (as instructed), the ledger may not yet exist — `integrate` creates it on first write. The Monitor exits before `integrate` writes anything, so the first `RESOLVER_REQUESTED` event is missed.
+
+**Fix:** prepend `touch .agents/ledger.jsonl &&` to the Monitor command so the file exists before `tail -f` opens it:
+
+```bash
+touch .agents/ledger.jsonl && tail -f .agents/ledger.jsonl | while IFS= read -r sha; do
+  dir=$(echo "$sha" | cut -c1-2)
+  rest=$(echo "$sha" | cut -c3-)
+  f=".agents/objects/$dir/$rest"
+  [ -f "$f" ] && grep -q "RESOLVER_REQUESTED" "$f" && cat "$f"
+done
+```
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 18*
+
+## Bugs found during plan-11 E2E runs (2026-05-06)
+
+Six issues surfaced during two E2E runs against plan-11 (XML/YAML TaskStore backends). Tracked as Tasks 10–15.
+
+### Bug 1 — `set-commit --branch agent-work/*` always writes `integration_mode=direct`
+
+`SetCommitCommand` unconditionally writes `integration_mode=direct` to the ledger even when `--branch agent-work/{id}` is passed. `IntegrateCommand` reads this field and skips any task with `integration_mode=direct`. Result: manually recovering a wiped ledger via `set-commit` causes `integrate` to silently skip those tasks.
+
+**Fix:** when `--branch` starts with `agent-work/`, write `integration_mode=worktree` instead.
+
+### Bug 2 — Ledger wiped by `git reset --hard`
+
+`.agents/ledger.jsonl` is git-tracked (`!.agents/ledger.jsonl` in `.gitignore`). A `git reset --hard` restores it to the committed state, destroying any uncommitted events (e.g. `COMMIT_RECORDED` events written by `worker-finish` after the last commit). This leaves `integrate` with no `COMMIT_RECORDED` events and nothing to merge.
+
+**Fix:** gitignore the ledger (remove the `!` negation) so it is never reset. The ledger is an append-only execution trace, not source of truth — it should survive resets.
+
+### Bug 3 — `worker-finish` requires worktree to reconstruct ledger
+
+If the ledger is wiped and `worker-cleanup` has already removed `.agents/tasks/{id}`, there is no way to re-run `worker-finish` to reconstruct the `COMMIT_RECORDED` event. The only recovery is manual `set-commit` calls, which are broken by Bug 1.
+
+**Fix:** add a `ledger-record-commit --plan {N} --task {id} --commit {sha} --branch agent-work/{id}` subcommand for emergency recovery that writes a proper `COMMIT_RECORDED` event with `integration_mode=worktree`.
+
+### Bug 4 — Verify command `-pl` flag breaks inside integration worktree
+
+The integration worktree (`.agents/integration/plan-{N}/`) is itself the Maven project root. Passing `-pl /path/to/repo` to `mvn` inside this worktree fails because `-pl` is relative to the reactor root, not an absolute override. The resolver cannot fix this — it is a configuration error.
+
+**Fix (SKILL):** document that the verify command must work when invoked from the integration worktree root. Never use `-pl` with an absolute path. Recommend testing the verify command from `.agents/integration/plan-{N}/` before the first `integrate` call (the integration worktree must be created first, or test from repo root without `-pl`).
+
+## Bugs found during plan-36 E2E run (2026-05-07)
+
+Two issues surfaced during the E2E run (Task 9) against plan-11 (XML/YAML TaskStore). Tracked as Tasks 19–20. A third and fourth were found in the plan-11 E2E run on 2026-05-07, tracked as Tasks 21–22. Issue 4 (verify scope) is tracked as Task 23.
+
+### Bug 5 — Monitor is single-shot; must be re-armed each resolver cycle
+
+The Monitor tool emits output and then exits — it does not remain open. The SKILL step 4 says "resume watching Monitor" but does not clarify that this requires a new Monitor tool call. During the E2E run, three separate Monitor tool calls were needed across the session because each one exited after firing.
+
+**Fix (Task 19):** update SKILL to explicitly label each Monitor call as per-cycle and state that re-arming = a new Monitor tool call.
+
+### Bug 6 — `tail -f` on ledger exits if file doesn't exist yet
+
+When Monitor is armed before `integrate` has started, `.agents/ledger.jsonl` may not yet exist. `tail -f` on a non-existent file exits immediately (exit 1), causing the Monitor to exit before `integrate` writes the first `RESOLVER_REQUESTED` event. The Lead Agent misses that first event.
+
+**Fix (Task 20):** prepend `touch .agents/ledger.jsonl &&` to the Monitor command so the file always exists before `tail -f` opens it.
+
+### Bug 7 — Monitor command exits early on non-matching lines due to `grep -q && cat` shell pattern
+
+During the plan-11 E2E run, the Monitor command exited immediately with status failed (code 1) rather than staying alive to catch events. The root cause: `[ -f "$f" ] && grep -q "RESOLVER_REQUESTED" "$f" && cat "$f"` — when `grep -q` finds no match it exits 1, which propagates out of `&&` as the while loop body's exit code. On some shells this kills the pipeline or causes `while` to exit early.
+
+**Fix (Task 21):** replace the `&&`-chain with `if/then/fi` so the loop body always returns 0 regardless of whether the line matched:
+```bash
+if [ -f "$f" ] && grep -q "RESOLVER_REQUESTED" "$f"; then cat "$f"; fi
+```
+
+### Task 21: SKILL — fix Monitor loop exit on non-matching lines [Low]
+
+Replace the `&&`-chain in the Monitor command with `if/then/fi` so the `while` loop body always exits 0, keeping the pipeline alive when an incoming ledger line does not contain `RESOLVER_REQUESTED`.
+
+Files: `build/skills/start-dev/SKILL.md`, `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 20*
+
+### Bug 8 — Monitor command shell pipeline is fragile and non-portable
+
+Even after Tasks 20–21, the Monitor command is a multi-stage shell pipeline (`touch && tail -f | while read ... | grep | cat`). It is brittle across shells, non-testable, and fails in obscure ways in different execution environments (as shown by the plan-11 E2E run requiring manual polling workarounds). The right fix is to move the ledger-watching logic into the Java CLI as a `ledger-watch` subcommand that blocks until a `RESOLVER_REQUESTED` event appears and prints the JSON payload, then exits. The Monitor tool then runs a single CLI call — no shell pipeline at all.
+
+**Fix (Task 22):** implement `shipsmooth-tasks ledger-watch --plan N` in Java. Write a JUnit test. Update SKILL to use it.
+
+### Task 22: Implement `ledger-watch` subcommand in Java [Medium]
+
+Add a `ledger-watch` subcommand to the `shipsmooth-tasks` CLI. It blocks, reading `.agents/ledger.jsonl` from the end (following appends), and exits with the full JSON payload printed to stdout as soon as it sees a `RESOLVER_REQUESTED` event. Exit 0 on success, exit 1 if the ledger file is unreadable after a configurable timeout.
+
+Write a JUnit test that:
+1. Creates a temp ledger file.
+2. Starts `ledger-watch` in a background thread.
+3. Appends non-matching events — verifies it keeps blocking.
+4. Appends a `RESOLVER_REQUESTED` event — verifies it unblocks and prints the correct JSON.
+
+Update the Monitor command in SKILL (both `SKILL.jte.md` and `build/skills/start-dev/SKILL.md`) from the shell pipeline to:
+```bash
+~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks ledger-watch --plan {N}
+```
+
+Files: `plugin-tasks-java/src/main/java/…/LedgerWatchCommand.java`, `plugin-tasks-java/src/test/java/…/LedgerWatchCommandTest.java`, `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`, `build/skills/start-dev/SKILL.md`
+
+*Depends-on: 21*
+
+### Bug 9 — verify command during integration is too broad, causing spurious resolver cycles
+
+During the plan-11 E2E run, the `<verify-cmd>` ran the full `TaskStoreTest` suite, which tests both XML and YAML formats. When Task 2 (XML) was merged first, the YAML tests were red — triggering a resolver cycle to add YAML proactively, even though Task 3 hadn't been integrated yet. The resolver had to do Task 3's work early to satisfy the verify command.
+
+The right fix is not to hard-code a narrower verify command at plan-write time (the plan author can't know the integration order in advance). Instead, the integration agent — which is LLM-driven and has the task description, patch diff, and full test output — should reason about scope and pick a narrower verify invocation for each task's merge step. The SKILL should give it a guideline to do so, and the resolver prompt in `IntegrateCommand` should include this instruction.
+
+**Fix (Task 23):** add a SKILL guideline and update the `IntegrateCommand` resolver prompt to instruct the LLM to scope the verify command to the task under integration.
+
+### Task 23: Scope verify command to task under integration [Medium]
+
+Two changes:
+
+**1. SKILL prose (both files):** Add a note under the "Running integrate" section:
+
+> **Verify scope:** The `--verify-cmd` you pass to `integrate` is the baseline. For each task's merge step, the integration agent will narrow the command to tests relevant to that task before running the full baseline. If `--verify-cmd` runs tests for features not yet integrated (e.g. YAML tests when only XML has landed), the narrowed command avoids spurious resolver cycles.
+
+**2. `IntegrateCommand` resolver prompt:** After the existing conflict context, add:
+
+> Before running the verify command, consider whether it can be narrowed to tests directly exercising this task's changes. If the full verify command tests features not yet present in the integration branch, run a scoped subset first (e.g. `-Dtest=Foo` or `pytest tests/test_foo.py`). Only run the full verify command once the scoped tests pass.
+
+Files: `plugin-tasks-java/src/main/java/…/IntegrateCommand.java`, `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`, `build/skills/start-dev/SKILL.md`
+
+*Depends-on: 7*
+
+### Task 24: Platform-Specific JTE Partials Structure [Low]
+
+The SKILL prose currently contains Claude-specific instructions for background execution, agent dispatch, and permission handling. To support Gemini CLI natively, we will use JTE partials based on the `model.platform()`.
+
+**Action:**
+1. Create `plugin-skill/src/main/jte-src/skills/claude/` and `plugin-skill/src/main/jte-src/skills/gemini/` directories.
+2. Create `background-execution.jte.md` in both directories:
+   - **Claude:** Keeps the existing blocking `Bash` tool with `run_in_background: true` instruction.
+   - **Gemini:** Instructs to use the `run_shell_command` tool with `is_background: true` and notes that `read_background_output` can be used to check stdout.
+3. Create `agent-dispatch.jte.md` in both directories:
+   - **Claude:** Keeps the existing `Agent` tool instructions.
+   - **Gemini:** Instructs to use the `invoke_agent` tool, calling the `generalist` subagent, and passing the worktree path in the prompt.
+4. Create `permission-consent.jte.md` in both directories:
+   - **Claude:** Keeps the existing `.claude/settings.json` patching instructions.
+   - **Gemini:** Omits the `.claude/settings.json` patching instructions entirely.
+
+*Depends-on: 23*
+
+### Task 25: Refactor SKILL.jte.md to use JTE dynamic includes [Low]
+
+Refactor the main `SKILL.jte.md` template to replace the hardcoded Claude instructions with dynamic template calls using `@template.call(...)` based on the `model.platform()`.
+
+**Action:**
+1. In the "User consent" section, replace the Claude-specific `.claude/settings.json` patching instructions with a dynamic include pointing to the `permission-consent.jte.md` partial.
+2. In the "Per-task command sequence" section, replace the `Agent` tool call line with a dynamic include pointing to the `agent-dispatch.jte.md` partial.
+3. In the "Integration step" -> "Running integrate" section, replace the `Bash` tool background instruction with a dynamic include pointing to the `background-execution.jte.md` partial.
+
+Files: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 24*
+
+---
+
+## E2E Run 3 — bugs found (2026-05-11)
+
+### Bug 10 — `ledger-watch` fires on stale events from prior integration runs
+
+**Observed:** On a plan that had been integrated before, `ledger-watch` exited immediately on startup, printing an `INTEGRATION_COMPLETE` event from a previous run. The current run's `RESOLVER_REQUESTED` event was written later, with no Monitor active to catch it. The Lead Agent fell back to manual shell polling (`tail -f` + sleep loop), which the SKILL explicitly forbids.
+
+**Root cause:** `LedgerWatchCommand` initialises `seenCount = 0` unconditionally. On first poll it walks the full ledger from the beginning and exits on the first `INTEGRATION_COMPLETE` or `INTEGRATION_FAILURE` it finds — regardless of which run wrote it.
+
+**Fix (Tasks 26–28):** Add `--after <N>` to `ledger-watch` (N = 0-based event index; watch only events at index ≥ N). Add `--count` flag to `ledger list` so the Lead Agent can snapshot the current event count cross-platform before arming Monitor, then pass it as `--after`. Update SKILL to use the new flags.
+
+### Task 26: Add `--count` flag to `ledger list` [Low]
+
+Add a `--count` boolean flag to `LedgerCommand.ListCmd`. When present, print only the total event count as a plain integer (no table rows) and exit 0. All existing behaviour is unchanged when `--count` is absent.
+
+Files: `plugin-tasks-java/src/main/java/…/commands/LedgerCommand.java`
+
+### Task 27: Add `--after <N>` to `ledger-watch` [Low]
+
+Add an `--after <N>` option (default 0) to `LedgerWatchCommand`. Initialize `seenCount = after` instead of 0, so the command ignores all events at indices 0..N-1 (written before this integration run started).
+
+Files: `plugin-tasks-java/src/main/java/…/commands/LedgerWatchCommand.java`
+
+*Depends-on: 26*
+
+### Task 28: Tests for `--count` and `--after` [Low]
+
+1. `LedgerCommandTest`: assert `ledger list --count` prints the correct integer for 0, 1, and N events.
+2. `LedgerWatchCommandTest`: add a scenario where an `INTEGRATION_COMPLETE` event is already in the ledger at index 0, `--after 1` is passed, and the watcher correctly blocks until a new `RESOLVER_REQUESTED` appears at index ≥ 1 rather than exiting immediately.
+
+Files: `plugin-tasks-java/src/test/java/…/commands/LedgerCommandTest.java`, `plugin-tasks-java/src/test/java/…/commands/LedgerWatchCommandTest.java`
+
+*Depends-on: 26, 27*
+
+### Task 29: SKILL — snapshot event count before arming Monitor; pass as `--after` [Low]
+
+Before each `ledger-watch` invocation in the SKILL, add a step to capture the current event count:
+
+```bash
+LEDGER_SEQ=$(runtime-0.2.0/bin/shipsmooth-tasks ledger list --count)
+```
+
+Then pass `--after $LEDGER_SEQ` (Claude/bash) or the equivalent (Gemini) to every `ledger-watch` call. Update both the Claude and Gemini-dev SKILL variants.
+
+Files: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`, `build/skills/start-dev/SKILL.md`, `build-gemini-dev/skills/start-dev/SKILL.md`
+
+*Depends-on: 27*
+
+---
+
+## E2E Run 4 — bugs found (2026-05-11)
+
+### Bug 11 — integrate has no resume capability; session death forces manual recovery
+
+**Observed (Plan 11 / todo-1):** A prior session ran `integrate`, successfully merged task 2 into `integration/plan-11`, then emitted a `RESOLVER_REQUESTED` event and died before the resolver ran. On session resume, the Lead Agent re-ran `integrate` from scratch. It immediately failed: "integration worktree already exists at `.agents/integration/plan-11`. Remove it or delete branch before retrying." The only options were: (a) blow away the integration branch (losing already-merged task 2) and restart, or (b) finish integration manually. The Lead Agent chose (b) and did it correctly by hand — but this required understanding internals that should be hidden.
+
+**Root cause:** `IntegrateCommand` refuses to start if the integration worktree or branch already exists. It has no code path to detect "I was partially through a run" and pick up where it left off.
+
+**Fix (Tasks 30–32):** Detect an existing integration branch at startup and, if its tip matches the expected `PATCH_INTEGRATED` ledger trail, resume from that point. Add a `--force` flag for the cases where the user explicitly wants a clean restart. Update SKILL to guide the Lead Agent on what to do when integrate fails with "worktree already exists".
+
+### Bug 12 — session-resume pre-flight does not check for stale integration worktrees
+
+**Observed:** The SKILL's session-resume pre-flight section lists three checks: XML file exists, task state (`show`), and stray worktrees (`git worktree list`). But it doesn't tell the Lead Agent what to do if an `integration/plan-{N}` worktree is found — specifically, that a stale RESOLVER_REQUESTED may be pending, or that re-running integrate will fail. The Lead Agent has to figure this out on its own.
+
+**Fix (Task 33):** Extend the SKILL session-resume section with an explicit check for existing `integration/plan-{N}` worktrees, and a decision tree: (a) if integrate is not running and a stale `RESOLVER_REQUESTED` event exists — handle the resolver, then signal `ledger-resolver-complete`, then re-arm and re-run integrate with `--force` or proceed manually; (b) if integrate finished (integration branch ahead of task branch) — just fast-forward and push; (c) if worktree exists but nothing is pending — safe to remove and retry.
+
+---
+
+### Task 30: Detect existing integration branch at `integrate` startup and resume from last `PATCH_INTEGRATED` [Medium]
+
+When `IntegrateCommand` starts, before creating a new integration worktree, check whether `integration/plan-{N}` already exists (branch and/or worktree). If it does, compare its current tip against the ledger's `PATCH_INTEGRATED` events to determine which tasks have already been merged. Resume from the first un-merged task rather than failing.
+
+- If the worktree exists but the branch is ahead of `PATCH_INTEGRATED` records: the tip commit was made manually or by a previous resolver. Treat the current tip as the resume point and continue with remaining tasks.
+- If the worktree is gone but the branch exists: recreate the worktree at the branch tip and resume.
+- If neither exists: create fresh (existing behaviour).
+
+Files: `plugin-tasks-java/src/main/java/…/commands/IntegrateCommand.java`
+
+### Task 31: Add `--force` flag to `integrate` to override resume and start fresh [Low]
+
+Add an `--force` boolean flag. When present, delete the existing integration worktree and branch (if any) and proceed with a clean run. Without `--force`, resume behaviour from Task 30 applies. Print a clear warning message when `--force` is used.
+
+Files: `plugin-tasks-java/src/main/java/…/commands/IntegrateCommand.java`
+
+*Depends-on: 30*
+
+### Task 32: Tests for integrate resume and --force [Low]
+
+1. Test that `integrate` on a plan where `integration/plan-N` already has task 2 merged (but not task 3) resumes from task 3 without touching task 2.
+2. Test that `integrate --force` deletes the existing integration branch and worktree and starts clean.
+3. Test that a stale `RESOLVER_REQUESTED` with no `RESOLVER_COMPLETE` does not block the next integrate run from resuming past that task's completed merge.
+
+Files: `plugin-tasks-java/src/test/java/…/commands/IntegrateCommandTest.java`
+
+*Depends-on: 30, 31*
+
+### Task 33: SKILL — session-resume pre-flight: check for stale integration worktrees [Low]
+
+Extend the "Session-resume pre-flight" section in the SKILL with a fourth check and a decision tree for the `integration/plan-{N}` worktree:
+
+```bash
+# 4. Check for stale integration worktree
+git worktree list | grep "integration/plan-{N}"
+```
+
+Decision tree to include in the SKILL prose:
+- **Integration worktree found, integrate not running:**
+  - Check ledger for a `RESOLVER_REQUESTED` with no matching `RESOLVER_COMPLETE`. If found: dispatch resolver, call `ledger-resolver-complete`, then re-arm Monitor and re-run `integrate` (resume will apply automatically per Task 30).
+  - If no pending resolver: check if integration branch is ahead of task branch. If yes → fast-forward and push. If no → remove worktree/branch and re-run `integrate`.
+- **Integration worktree found, integrate is running:** let it finish; watch for Monitor events as normal.
+- **No integration worktree found:** proceed with normal integration setup.
+
+Files: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`, `build/skills/start-dev/SKILL.md`
+
+*Depends-on: 30*
+
+---
+
+### Task 36: Add `ledger-record-patch-integrated` recovery subcommand [Low]
+
+E2E testing revealed that when `integrate` dies mid-resolver (session ends while waiting for `RESOLVER_COMPLETE`), there is no way to record a `PATCH_INTEGRATED` event for the manually-resolved task so that a subsequent `integrate` re-run can skip it.
+
+**Why plain `PATCH_INTEGRATED` works here (verified):** `recordIntegrationPlan` is only called inside `if (!worktreePresent)`. In the recovery scenario the worktree is still present, so re-running integrate does **not** write a new `INTEGRATION_PLAN` event — `lastPlanEventIndex` stays at its prior value, and the recovery `PATCH_INTEGRATED` remains visible to the resume check.
+
+**New subcommand `ledger-record-patch-integrated`** (recovery-only, analogous to `ledger-record-commit`):
+
+```
+Options:
+  --plan N            plan number
+  --task T            task ID
+  --commit SHA        integration branch commit SHA (the manual commit made in the worktree)
+  --agent-work-sha SHA  tip SHA of the agent-work/{T} branch (from git rev-parse)
+```
+
+Writes a `PATCH_INTEGRATED` event to the ledger identical in structure to what `IntegrationLedger.recordPatchIntegrated()` writes, with an extra metadata field `recovery=true` to distinguish it in audit logs.
+
+Add a unit test: call the subcommand, then verify a `PATCH_INTEGRATED` event with `recovery=true` appears in the ledger for the given task.
+
+Files:
+- `plugin-tasks-java/.../tasks/commands/LedgerRecordPatchIntegratedCommand.java` (new)
+- `plugin-tasks-java/.../tasks/TasksCli.java` (register new subcommand)
+- `plugin-tasks-java/.../tasks/ledger/EventType.java` (no change needed)
+- test file alongside other ledger command tests
+
+---
+
+### Task 37: SKILL — fix stale-resolver recovery path to use `ledger-record-patch-integrated` [Low]
+
+The current decision tree in the session-resume pre-flight (Task 33) is wrong for the stale `RESOLVER_REQUESTED` case. It says: dispatch resolver → call `ledger-resolver-complete` → re-run `integrate`. But `ledger-resolver-complete` is a signal to a *running* integrate process — calling it when integrate is dead is a no-op, and re-running integrate without a `PATCH_INTEGRATED` event for the resolved task will attempt to merge that task again from scratch.
+
+**Fix the decision tree bullet for stale `RESOLVER_REQUESTED`:**
+
+Replace:
+> If found: dispatch resolver, call `ledger-resolver-complete`, then re-arm Monitor and re-run `integrate`.
+
+With the correct 5-step recovery:
+1. Read the `RESOLVER_REQUESTED` payload from the ledger (use `ledger list` to find the event index, then read the blob from `.agents/objects/`).
+2. Dispatch a resolver `Agent` call with that payload — it fixes the conflict markers in the integration worktree.
+3. Manually commit in the worktree: `cd .agents/integration/plan-{N} && git add -A && git commit -m "task({T}): {name} [resolved]"`.
+4. Record the integration: `{cli} ledger-record-patch-integrated --plan {N} --task {T} --commit $(git rev-parse HEAD) --agent-work-sha $(git rev-parse agent-work/{T})` — run from the **repo root**, not the worktree.
+5. Re-run `integrate` (background + Monitor) — the resume logic will see the `PATCH_INTEGRATED` event and skip the resolved task, continuing from the next one.
+
+Files: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+*Depends-on: 36*
+
+---
+
+### Task 38: SKILL — add repo-root guard to all `ledger-record-patch-integrated` instructions [Low]
+
+E2E testing of plan-11 revealed that when the agent's shell cwd drifts into the integration worktree (`.agents/integration/plan-{N}/`), the shipsmooth CLI resolves `.agents/` relative to that worktree root instead of the repo root — silently writing recovery events to a second, isolated ledger. The existing instruction already says "run from the **repo root**" but that's insufficient; a hard prefix is needed.
+
+**Fix:** In every place the SKILL mentions `ledger-record-patch-integrated` (the stale-RESOLVER_REQUESTED recovery path and the same-SHA recovery path), replace the bare command with an explicit absolute-path prefix:
+
+```bash
+cd $(git rev-parse --show-toplevel) && runtime-0.2.0/bin/shipsmooth-tasks ledger-record-patch-integrated ...
+```
+
+Also fix the `--commit` SHA in the same-SHA recovery bullet: the current instruction uses `$(git -C .agents/integration/plan-{N} rev-parse HEAD)` which gives the integration branch tip — but in the same-SHA case each task's individual commit SHA is needed. Since the task branch and integration branch are at the same commit, `$(git rev-parse HEAD)` from the repo root is correct only if there's one task. For multiple tasks, the agent must look up each task's commit from the ledger (`PATCH_EMITTED` or `COMMIT_RECORDED` events) rather than using HEAD.
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+---
+
+### Task 39: SKILL — stop Monitor immediately when integrate exits 0 [Low]
+
+E2E testing revealed that `ledger-watch` (used by Monitor) blocks indefinitely waiting for a `RESOLVER_REQUESTED` event. When integrate completes cleanly with no conflicts, no such event is ever written — Monitor hangs until manually stopped.
+
+**Fix:** Add an explicit instruction in the "Running integrate" section: as soon as the background-complete notification for integrate arrives and the exit code is 0, immediately stop the Monitor tool call (via TaskStop or equivalent). Do not wait for Monitor to time out.
+
+The `ledger-watch` command already exits early on `INTEGRATION_COMPLETE` or `INTEGRATION_FAILURE` events (it reads those as terminal signals), but this early-exit only fires if Monitor is still active when those events are written. If the agent is slow to re-arm Monitor or doesn't re-arm at all after the final resolver cycle, the terminal event is missed and Monitor hangs. The explicit "stop Monitor on integrate exit 0" instruction is the reliable fix regardless.
+
+File: `plugin-skill/src/main/jte-src/skills/SKILL.jte.md`
+
+---
+
 ## Phase 4 preview (not in scope)
 
-- `--resume` from the last `PATCH_INTEGRATED` event.
 - Order replanning when a task fails (try a different position before giving up).
 - Promoting integration into a SubagentStop hook so it runs without an explicit Lead Agent command.
 - Coverage-threshold checks during integrate (currently human-review only).

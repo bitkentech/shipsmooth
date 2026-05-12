@@ -95,6 +95,39 @@ public class LedgerCommandTest {
     }
 
     @Test
+    public void ledgerListCountPrintsInteger() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PrintStream original = System.out;
+        System.setOut(new PrintStream(out));
+        try {
+            int exit = new CommandLine(new LedgerCommand()).execute("list", "--count");
+            assertEquals(0, exit);
+            String output = out.toString().trim();
+            int count = Integer.parseInt(output);
+            assertTrue(count >= 1, "Count should be at least 1 (setUp recorded an event)");
+        } finally {
+            System.setOut(original);
+        }
+    }
+
+    @Test
+    public void ledgerListCountIgnoresFilters() {
+        // --count with --task filter still prints just the total count, not filtered count
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PrintStream original = System.out;
+        System.setOut(new PrintStream(out));
+        try {
+            int exit = new CommandLine(new LedgerCommand()).execute("list", "--count", "--task", "42");
+            assertEquals(0, exit);
+            String output = out.toString().trim();
+            // Must be parseable as integer and print nothing else
+            assertDoesNotThrow(() -> Integer.parseInt(output));
+        } finally {
+            System.setOut(original);
+        }
+    }
+
+    @Test
     public void ledgerReadAcceptsShaPrefix() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         PrintStream original = System.out;

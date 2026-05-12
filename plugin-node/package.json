@@ -1,6 +1,6 @@
 {
   "name": "@plugin.name@",
-  "version": "0.1.0",
+  "version": "@project.version@",
   "description": "shipsmooth plugin scripts",
   "private": true,
   "dependencies": {

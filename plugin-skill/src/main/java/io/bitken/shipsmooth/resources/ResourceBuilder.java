@@ -23,7 +23,8 @@ public class ResourceBuilder {
         String cacheDir       = System.getProperty("shipsmooth.cache.dir.resolved", "");
         String platform       = System.getProperty("build.platform", "claude");
         String jlinkDir       = System.getProperty("shipsmooth.jlink.dir", "");
-        String cliBin         = cacheDir + "/runtime-" + pluginVersion + "/bin/shipsmooth-tasks";
+        String runtimeRelPath = "runtime-" + pluginVersion + "/bin/shipsmooth-tasks";
+        String cliBin         = cacheDir.isEmpty() ? runtimeRelPath : cacheDir + "/" + runtimeRelPath;
 
         PluginModel model = new PluginModel(
             pluginName, pluginVersion, pluginDesc,
@@ -58,7 +59,7 @@ public class ResourceBuilder {
     }
 
     static void writeHooksJson(ObjectMapper mapper, PluginModel model, Path outputFile) throws IOException {
-        String command = "node \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"";
+        String command = System.getProperty("plugin.hook.command", "node \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"");
 
         ObjectNode hook = mapper.createObjectNode()
             .put("type", "command")
