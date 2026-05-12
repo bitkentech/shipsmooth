@@ -84,8 +84,8 @@ public class InitCommandLedgerTest {
             String content = Files.readString(gitignore);
             assertEquals(1, content.lines().filter(l -> l.trim().equals(".agents/tasks/*")).count());
             assertEquals(1, content.lines().filter(l -> l.trim().equals(".agents/integration/*")).count());
-            assertEquals(1, content.lines().filter(l -> l.trim().equals("!.agents/ledger.jsonl")).count());
-            assertEquals(1, content.lines().filter(l -> l.trim().equals("!.agents/objects/")).count());
+            assertEquals(1, content.lines().filter(l -> l.trim().equals(".agents/ledger.jsonl")).count());
+            assertEquals(1, content.lines().filter(l -> l.trim().equals(".agents/objects/")).count());
         } finally {
             // Restore .gitignore to its original state
             if (originalContent == null) {

@@ -27,12 +27,36 @@ public class WorktreeService {
     }
 
     public String headSha() throws IOException, InterruptedException {
-        return capture(repoRoot.toFile(), "git", "rev-parse", "HEAD").trim();
+        return headSha(repoRoot.toFile());
+    }
+
+    /** HEAD SHA of the given worktree directory (use this when querying an integration worktree). */
+    public String headSha(File worktreeDir) throws IOException, InterruptedException {
+        return capture(worktreeDir, "git", "rev-parse", "HEAD").trim();
     }
 
     /** Returns the HEAD SHA of the named branch, resolving it in the repo. */
     public String branchSha(String branch) throws IOException, InterruptedException {
         return capture(repoRoot.toFile(), "git", "rev-parse", branch).trim();
+    }
+
+    public boolean branchExists(String branch) throws IOException, InterruptedException {
+        Process p = new ProcessBuilder("git", "rev-parse", "--verify", branch)
+                .directory(repoRoot.toFile())
+                .redirectErrorStream(true)
+                .start();
+        p.getInputStream().readAllBytes();
+        p.waitFor(10, TimeUnit.SECONDS);
+        return p.exitValue() == 0;
+    }
+
+    public void deleteBranch(String branch) throws IOException, InterruptedException {
+        gitGate.acquire();
+        try {
+            run(repoRoot.toFile(), "git", "branch", "-D", branch);
+        } finally {
+            gitGate.release();
+        }
     }
 
     public void addWorktree(String relativePath, String branch) throws IOException, InterruptedException {

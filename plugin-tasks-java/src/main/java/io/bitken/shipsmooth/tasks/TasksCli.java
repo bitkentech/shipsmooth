@@ -5,6 +5,9 @@ import io.bitken.shipsmooth.tasks.commands.IntegrateCommand;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
+// As of plan-37, WorkerInitCommand, WorkerFinishCommand, and IntegrateCommand
+// route their orchestration through io.bitken.shipsmooth.tasks.workflow.WorkflowService.
+// Other commands still call domain services directly; further migration is future work.
 @Command(name = "tasks", mixinStandardHelpOptions = true, version = "0.1.0",
         description = "CLI to manage tasks, subagents and ledger for shipsmooth",
         subcommands = {

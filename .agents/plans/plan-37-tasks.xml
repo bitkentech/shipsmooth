@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>37</plan>
+    <plan-version>plan-37-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>active</status>
+        <created>2026-05-12</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Workflow package skeleton</name>
+            <commit>4dd77ec0061725ec28f6212b69cb5b4545661a8b</commit>
+            <created-from>plan-37-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-05-12T17:27:50.100+05:30</timestamp>
+                    <message>Phase-2 preamble committed green rather than red. Plan-37 is a structural refactor (service-layer extraction) with no new observable behavior; integration tests of worker-init/worker-finish were already green against the existing thick commands. Tests retained as behavioral-equivalence guard for tasks 2-5.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Migrate worker-init</name>
+            <commit>65299e6</commit>
+            <created-from>plan-37-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-05-12T18:15:55.670+05:30</timestamp>
+                    <message>De-risk draft ready for review (commit 65299e6). WorkflowService.initializeWorker implemented; WorkerInitCommand reduced to thin shell. 69 tests pass; workflow package coverage 93% — hardening pass will lift to 95% and address the catch-Exception path.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-05-12T18:18:34.474+05:30</timestamp>
+                    <message>Order deviation: de-risking tasks 2, 3, 4 first, then a single combined hardening pass. Rationale: structural refactor with cross-cutting concerns (exception model, wiring pattern, test style) shared across all three migrations. Seeing the full shape of WorkflowService before hardening lets us harden consistently. Task 2 left in de-risked state until tasks 3 and 4 de-risk passes complete.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Migrate worker-finish + Transaction helper</name>
+            <commit>ab1b58f</commit>
+            <created-from>plan-37-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-05-12T18:25:46.175+05:30</timestamp>
+                    <message>De-risk draft ready (commit ab1b58f81af7277c66cf2cefae0990eb00174640). 72 tests pass. Transactional-failure path tests deferred to combined hardening.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Migrate integrate to runIntegration</name>
+            <commit>de07266</commit>
+            <created-from>plan-37-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-05-12T19:07:07.078+05:30</timestamp>
+                    <message>De-risk draft ready (commit de072669c9881688f52729bafe41afe540881003). IntegrateCommand 494 -&gt; 60 lines. 73 tests pass. Process-execution helpers moved verbatim; splitting deferred to hardening.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-05-12T20:41:47.098+05:30</timestamp>
+                    <message>Hardening 2 (IFactory / single-service wiring) deferred. WorkflowServiceImpl is cheap to construct and holds no per-call state; the three command call sites use a one-line idiom. Adding IFactory would either break every existing per-command test (which constructs commands via no-arg new) or introduce setter-injection that adds surface area without solving a measured problem. Defer until a future plan needs cross-command state or a real DI motivation.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Delete duplicated logic from migrated commands</name>
+            <commit>52272f4fa5aad785ae13e93b9555d32ad1078e3d</commit>
+            <created-from>plan-37-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-12T17:16:55.842+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
