@@ -1,1 +1,0 @@
-{"event_type":"COMMENT_ADDED","timestamp":"2026-05-05T11:52:23.099172642Z","task_id":"6","payload":"De-risk draft ready: IntegrateCommand compiles, orchestration loop + ledger spine implemented. Skipped XML commit rewrite and branch GC.","metadata":{}}

@@ -1,1 +1,0 @@
-{"event_type":"COMMENT_ADDED","timestamp":"2026-05-05T11:52:25.475331743Z","task_id":"7","payload":"De-risk draft ready: StdinStdoutSubagentRunner + SubagentResolver wired into IntegrateCommand. Resolver invoked on conflict or verify failure, up to --max-llm-iterations.","metadata":{}}
