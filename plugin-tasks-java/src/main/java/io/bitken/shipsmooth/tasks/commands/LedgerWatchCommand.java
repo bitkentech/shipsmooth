@@ -8,14 +8,15 @@ import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
-import picocli.CommandLine.ParseResult;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
-public class LedgerWatchCommand {
+public class LedgerWatchCommand implements Callable<Integer> {
 
     static final long POLL_INTERVAL_MS = 300;
 
@@ -24,10 +25,26 @@ public class LedgerWatchCommand {
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         .enable(SerializationFeature.INDENT_OUTPUT);
 
-    public LedgerWatchCommand() {
+    private CommandSpec spec;
+
+    public CommandSpec getSpec() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.usageMessage().description("Block until a RESOLVER_REQUESTED ledger event appears, then print it.");
+        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--repo").description("Repo root (default: current directory)").type(String.class).build());
+        spec.addOption(OptionSpec.builder("--timeout-seconds").defaultValue("1800").description("Give up after N seconds (default: 1800)").type(long.class).build());
+        spec.addOption(OptionSpec.builder("--after").defaultValue("0").description("Ignore events at indices 0..N-1").type(int.class).build());
+        return spec;
     }
 
-    public int execute(int plan, String repo, long timeoutSeconds, int after) throws Exception {
+    @Override
+    public Integer call() throws Exception {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        String repo = pr.matchedOptionValue("repo", null);
+        long timeoutSeconds = pr.matchedOptionValue("timeout-seconds", 1800L);
+        int after = pr.matchedOptionValue("after", 0);
+
         Path repoRoot = repo != null ? Paths.get(repo) : Paths.get(".");
         LedgerService ledger = new LedgerService(repoRoot);
         Path ledgerPath = ledger.ledgerPath();
@@ -42,7 +59,7 @@ public class LedgerWatchCommand {
 
         while (System.currentTimeMillis() < deadline) {
             List<String> hashes = ledger.readHashes();
-            List<Event> allEvents = new java.util.ArrayList<>(hashes.size());
+            List<Event> allEvents = new ArrayList<>(hashes.size());
             for (String h : hashes) allEvents.add(ledger.readEvent(h));
 
             for (int i = seenCount; i < allEvents.size(); i++) {
@@ -68,42 +85,5 @@ public class LedgerWatchCommand {
 
         System.err.printf("ledger-watch: timed out after %d seconds waiting for RESOLVER_REQUESTED event.%n", timeoutSeconds);
         return 1;
-    }
-
-    public static CommandSpec getSpec() {
-        CommandSpec spec = CommandSpec.create();
-        spec.usageMessage().description("Block until a RESOLVER_REQUESTED ledger event appears, then print it.");
-
-        spec.addOption(OptionSpec.builder("--plan")
-            .required(true)
-            .type(int.class).build());
-
-        spec.addOption(OptionSpec.builder("--repo")
-            .description("Repo root (default: current directory)")
-            .type(String.class).build());
-
-        spec.addOption(OptionSpec.builder("--timeout-seconds")
-            .defaultValue("1800")
-            .description("Give up after N seconds (default: 1800)")
-            .type(long.class).build());
-
-        spec.addOption(OptionSpec.builder("--after")
-            .defaultValue("0")
-            .description("Ignore events at indices 0..N-1")
-            .type(int.class).build());
-
-        return spec;
-    }
-
-    public static int run(ParseResult pr) {
-        int plan = pr.matchedOption("plan").getValue();
-        String repo = pr.matchedOptionValue("repo", null);
-        long timeoutSeconds = pr.matchedOptionValue("timeout-seconds", 1800L);
-        int after = pr.matchedOptionValue("after", 0);
-        try {
-            return new LedgerWatchCommand().execute(plan, repo, timeoutSeconds, after);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }

@@ -8,18 +8,30 @@ import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
-import picocli.CommandLine.ParseResult;
 
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
-public class ClaimCommand {
+public class ClaimCommand implements Callable<Integer> {
 
-    public ClaimCommand() {
+    private CommandSpec spec;
+
+    public CommandSpec getSpec() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.usageMessage().description("Claim a task for subagent execution and record AGENT_START.");
+        spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
+        spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID").type(String.class).build());
+        return spec;
     }
 
-    public int execute(int plan, String task) throws Exception {
+    @Override
+    public Integer call() throws Exception {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        String task = pr.matchedOption("task").getValue();
+
         var repoRoot = Paths.get(".");
         File xmlFile = new File(".agents/plans/plan-" + plan + "-tasks.xml");
 
@@ -43,35 +55,5 @@ public class ClaimCommand {
 
         System.out.println("Task " + task + " claimed.");
         return 0;
-    }
-
-    public static CommandSpec getSpec() {
-        CommandSpec spec = CommandSpec.create();
-        spec.usageMessage().description("Claim a task for subagent execution and record AGENT_START.");
-        spec.addOption(
-            OptionSpec.builder("--plan")
-                .paramLabel("PLAN_NUMBER")
-                .required(true)
-                .description("Plan number")
-                .type(int.class).build()
-        );
-        spec.addOption(
-            OptionSpec.builder("--task")
-                .paramLabel("TASK_ID")
-                .required(true)
-                .description("Task ID")
-                .type(String.class).build()
-        );
-        return spec;
-    }
-
-    public static int run(ParseResult pr) {
-        int plan = pr.matchedOption("plan").getValue();
-        String task = pr.matchedOption("task").getValue();
-        try {
-            return new ClaimCommand().execute(plan, task);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }

@@ -6,17 +6,29 @@ import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
-import picocli.CommandLine.ParseResult;
 
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
-public class WorkerCleanupCommand {
+public class WorkerCleanupCommand implements Callable<Integer> {
 
-    public WorkerCleanupCommand() {
+    private CommandSpec spec;
+
+    public CommandSpec getSpec() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.usageMessage().description("Remove the worktree for a task, keeping the branch ref.");
+        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());
+        return spec;
     }
 
-    public int execute(int plan, String task) throws Exception {
+    @Override
+    public Integer call() throws Exception {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        String task = pr.matchedOption("task").getValue();
+
         var repoRoot = Paths.get(".");
         WorktreeService git = new WorktreeService(repoRoot);
 
@@ -43,30 +55,5 @@ public class WorkerCleanupCommand {
 
         System.out.println("Worktree for task " + task + " cleaned up. Branch " + branch + " retained.");
         return 0;
-    }
-
-    public static CommandSpec getSpec() {
-        CommandSpec spec = CommandSpec.create();
-        spec.usageMessage().description("Remove the worktree for a task, keeping the branch ref.");
-
-        spec.addOption(OptionSpec.builder("--plan")
-            .required(true)
-            .type(int.class).build());
-
-        spec.addOption(OptionSpec.builder("--task")
-            .required(true)
-            .type(String.class).build());
-
-        return spec;
-    }
-
-    public static int run(ParseResult pr) {
-        int plan = pr.matchedOption("plan").getValue();
-        String task = pr.matchedOption("task").getValue();
-        try {
-            return new WorkerCleanupCommand().execute(plan, task);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }

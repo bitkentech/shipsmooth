@@ -7,18 +7,30 @@ import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
-import picocli.CommandLine.ParseResult;
 
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.Callable;
 
-public class WorkerBaseCommand {
+public class WorkerBaseCommand implements Callable<Integer> {
 
-    public WorkerBaseCommand() {
+    private CommandSpec spec;
+
+    public CommandSpec getSpec() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.usageMessage().description("Print the base commit SHA for a dependent task (from parent's COMMIT_RECORDED event).");
+        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());
+        return spec;
     }
 
-    public int execute(int plan, String task) throws Exception {
+    @Override
+    public Integer call() throws Exception {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        String task = pr.matchedOption("task").getValue();
+
         var repoRoot = Paths.get(".");
         XmlService xmlService = new XmlService();
         File xmlFile = new File(".agents/plans/plan-" + plan + "-tasks.xml");
@@ -51,30 +63,5 @@ public class WorkerBaseCommand {
 
         System.out.println(latestSha);
         return 0;
-    }
-
-    public static CommandSpec getSpec() {
-        CommandSpec spec = CommandSpec.create();
-        spec.usageMessage().description("Print the base commit SHA for a dependent task (from parent's COMMIT_RECORDED event).");
-
-        spec.addOption(OptionSpec.builder("--plan")
-            .required(true)
-            .type(int.class).build());
-
-        spec.addOption(OptionSpec.builder("--task")
-            .required(true)
-            .type(String.class).build());
-
-        return spec;
-    }
-
-    public static int run(ParseResult pr) {
-        int plan = pr.matchedOption("plan").getValue();
-        String task = pr.matchedOption("task").getValue();
-        try {
-            return new WorkerBaseCommand().execute(plan, task);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }

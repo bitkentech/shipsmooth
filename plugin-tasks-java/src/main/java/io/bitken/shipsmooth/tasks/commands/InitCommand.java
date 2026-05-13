@@ -7,19 +7,32 @@ import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
-import picocli.CommandLine.ParseResult;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.Callable;
 
-public class InitCommand {
+public class InitCommand implements Callable<Integer> {
 
-    public InitCommand() {
+    private CommandSpec spec;
+
+    public CommandSpec getSpec() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.usageMessage().description("Initialize task tracking XML for a plan");
+        spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
+        spec.addOption(OptionSpec.builder("--tasks-from").paramLabel("<Path to Markdown file>").required(true).description("Path to the plan markdown file").type(String.class).build());
+        return spec;
     }
 
-    public int execute(int plan, String tasksFrom) throws Exception {
+    @Override
+    public Integer call() throws Exception {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        String tasksFrom = pr.matchedOption("tasks-from").getValue();
+
         XmlService service = new XmlService();
         Path markdownPath = Paths.get(tasksFrom);
         if (!Files.exists(markdownPath)) {
@@ -40,36 +53,6 @@ public class InitCommand {
         ensureGitignore(Paths.get("."));
         recordTaskRegistrations(tasks, planVersion);
         return 0;
-    }
-
-    public static CommandSpec getSpec() {
-        CommandSpec spec = CommandSpec.create();
-        spec.usageMessage().description("Initialize task tracking XML for a plan");
-        spec.addOption(
-            OptionSpec.builder("--plan")
-                .paramLabel("PLAN_NUMBER")
-                .required(true)
-                .description("Plan number")
-                .type(int.class).build()
-        );
-        spec.addOption(
-            OptionSpec.builder("--tasks-from")
-                .paramLabel("<Path to Markdown file>")
-                .required(true)
-                .description("Path to the plan markdown file")
-                .type(String.class).build()
-        );
-        return spec;
-    }
-
-    public static int run(ParseResult pr) {
-        int plan = pr.matchedOption("plan").getValue();
-        String tasksFrom = pr.matchedOption("tasks-from").getValue();
-      try {
-        return new InitCommand().execute(plan, tasksFrom);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
     }
 
     private void bootstrapAgentsLayout(Path repoRoot) throws Exception {

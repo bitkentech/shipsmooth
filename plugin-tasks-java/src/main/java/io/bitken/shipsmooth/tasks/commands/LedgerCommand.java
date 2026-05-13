@@ -1,33 +1,57 @@
 package io.bitken.shipsmooth.tasks.commands;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Model.PositionalParamSpec;
-import picocli.CommandLine.ParseResult;
 
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.Callable;
 
-public class LedgerCommand {
+public class LedgerCommand implements Callable<Integer> {
 
-    public static CommandSpec getSpec() {
-        CommandSpec spec = CommandSpec.create();
+    private CommandSpec spec;
+
+    public CommandSpec getSpec() {
+        spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Inspect the append-only task ledger.");
-        spec.addSubcommand("list", ListCmd.getSpec());
-        spec.addSubcommand("verify", VerifyCmd.getSpec());
-        spec.addSubcommand("read", ReadCmd.getSpec());
+        spec.addSubcommand("list", new ListCmd().getSpec());
+        spec.addSubcommand("verify", new VerifyCmd().getSpec());
+        spec.addSubcommand("read", new ReadCmd().getSpec());
         return spec;
     }
 
-    public static int run(ParseResult pr) {
+    @Override
+    public Integer call() {
         System.err.println("Usage: ledger <list|verify|read>");
         return 0;
     }
 
-    public static class ListCmd {
-        public int execute(String taskId, String type, boolean count) throws Exception {
+    public static class ListCmd implements Callable<Integer> {
+
+        private CommandSpec spec;
+
+        public CommandSpec getSpec() {
+            spec = CommandSpec.wrapWithoutInspection(this);
+            spec.usageMessage().description("List ledger entries.");
+            spec.addOption(OptionSpec.builder("--task").description("Filter by task ID.").type(String.class).build());
+            spec.addOption(OptionSpec.builder("--type").description("Filter by event type.").type(String.class).build());
+            spec.addOption(OptionSpec.builder("--count").description("Print total event count as a plain integer and exit.").type(boolean.class).build());
+            return spec;
+        }
+
+        @Override
+        public Integer call() throws Exception {
+            var pr = spec.commandLine().getParseResult();
+            String taskId = pr.matchedOptionValue("task", null);
+            String type = pr.matchedOptionValue("type", null);
+            boolean count = pr.hasMatchedOption("count");
+
             LedgerService ledger = new LedgerService(Paths.get("."));
             List<String> hashes = ledger.readHashes();
             if (count) {
@@ -48,30 +72,20 @@ public class LedgerCommand {
             }
             return 0;
         }
+    }
 
-        public static CommandSpec getSpec() {
-            CommandSpec spec = CommandSpec.create();
-            spec.usageMessage().description("List ledger entries.");
-            spec.addOption(OptionSpec.builder("--task").description("Filter by task ID.").type(String.class).build());
-            spec.addOption(OptionSpec.builder("--type").description("Filter by event type.").type(String.class).build());
-            spec.addOption(OptionSpec.builder("--count").description("Print total event count as a plain integer and exit.").type(boolean.class).build());
+    public static class VerifyCmd implements Callable<Integer> {
+
+        private CommandSpec spec;
+
+        public CommandSpec getSpec() {
+            spec = CommandSpec.wrapWithoutInspection(this);
+            spec.usageMessage().description("Verify ledger integrity by reconstructing the full timeline.");
             return spec;
         }
 
-        public static int run(ParseResult pr) {
-            String taskId = pr.matchedOptionValue("task", null);
-            String type = pr.matchedOptionValue("type", null);
-            boolean count = pr.hasMatchedOption("count");
-            try {
-                return new ListCmd().execute(taskId, type, count);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    public static class VerifyCmd {
-        public int execute() throws Exception {
+        @Override
+        public Integer call() throws Exception {
             LedgerService ledger = new LedgerService(Paths.get("."));
             try {
                 List<Event> timeline = ledger.verifyLedger();
@@ -82,43 +96,14 @@ public class LedgerCommand {
                 return 1;
             }
         }
-
-        public static CommandSpec getSpec() {
-            CommandSpec spec = CommandSpec.create();
-            spec.usageMessage().description("Verify ledger integrity by reconstructing the full timeline.");
-            return spec;
-        }
-
-        public static int run(ParseResult pr) {
-            try {
-                return new VerifyCmd().execute();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 
-    public static class ReadCmd {
-        public int execute(String sha) throws Exception {
-            LedgerService ledger = new LedgerService(Paths.get("."));
-            Event ev;
-            try {
-                ev = ledger.readEvent(sha);
-            } catch (java.io.IOException e) {
-                System.err.printf("ERROR: '%s' not found in ledger object store (.agents/objects/).%n", sha);
-                System.err.println("       Git commit SHAs live in .git/ — use 'worker-base' to resolve a task's recorded commit SHA.");
-                return 1;
-            }
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper()
-                .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
-                .disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
-            System.out.println(mapper.writeValueAsString(ev));
-            return 0;
-        }
+    public static class ReadCmd implements Callable<Integer> {
 
-        public static CommandSpec getSpec() {
-            CommandSpec spec = CommandSpec.create();
+        private CommandSpec spec;
+
+        public CommandSpec getSpec() {
+            spec = CommandSpec.wrapWithoutInspection(this);
             spec.usageMessage().description("Print the JSON event blob for a given SHA.");
             spec.addPositional(PositionalParamSpec.builder()
                 .index("0")
@@ -128,13 +113,26 @@ public class LedgerCommand {
             return spec;
         }
 
-        public static int run(ParseResult pr) {
+        @Override
+        public Integer call() throws Exception {
+            var pr = spec.commandLine().getParseResult();
             String sha = pr.matchedPositional(0).getValue();
+
+            LedgerService ledger = new LedgerService(Paths.get("."));
+            Event ev;
             try {
-                return new ReadCmd().execute(sha);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+                ev = ledger.readEvent(sha);
+            } catch (java.io.IOException e) {
+                System.err.printf("ERROR: '%s' not found in ledger object store (.agents/objects/).%n", sha);
+                System.err.println("       Git commit SHAs live in .git/ — use 'worker-base' to resolve a task's recorded commit SHA.");
+                return 1;
             }
+            ObjectMapper mapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .enable(SerializationFeature.INDENT_OUTPUT);
+            System.out.println(mapper.writeValueAsString(ev));
+            return 0;
         }
     }
 }

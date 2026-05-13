@@ -7,17 +7,33 @@ import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
-import picocli.CommandLine.ParseResult;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.concurrent.Callable;
 
-public class ProjectUpdateCommand {
+public class ProjectUpdateCommand implements Callable<Integer> {
 
-    public ProjectUpdateCommand() {
+    private CommandSpec spec;
+
+    public CommandSpec getSpec() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.usageMessage().description("Add a project update.");
+        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--status").type(String.class).build());
+        spec.addOption(OptionSpec.builder("--blocked").type(Boolean.class).build());
+        spec.addOption(OptionSpec.builder("--message").type(String.class).build());
+        return spec;
     }
 
-    public int execute(int plan, String status, Boolean blocked, String message) throws Exception {
+    @Override
+    public Integer call() throws Exception {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        String status = pr.matchedOptionValue("status", null);
+        Boolean blocked = pr.matchedOptionValue("blocked", null);
+        String message = pr.matchedOptionValue("message", null);
+
         XmlService service = new XmlService();
         File file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
         PlanTasks planTasks = service.readPlanTasks(file);
@@ -36,37 +52,5 @@ public class ProjectUpdateCommand {
             System.err.println("Warning: ledger record failed (XML mutation preserved): " + e.getMessage());
         }
         return 0;
-    }
-
-    public static CommandSpec getSpec() {
-        CommandSpec spec = CommandSpec.create();
-        spec.usageMessage().description("Add a project update.");
-
-        spec.addOption(OptionSpec.builder("--plan")
-            .required(true)
-            .type(int.class).build());
-
-        spec.addOption(OptionSpec.builder("--status")
-            .type(String.class).build());
-
-        spec.addOption(OptionSpec.builder("--blocked")
-            .type(Boolean.class).build());
-
-        spec.addOption(OptionSpec.builder("--message")
-            .type(String.class).build());
-
-        return spec;
-    }
-
-    public static int run(ParseResult pr) {
-        int plan = pr.matchedOption("plan").getValue();
-        String status = pr.matchedOptionValue("status", null);
-        Boolean blocked = pr.matchedOptionValue("blocked", null);
-        String message = pr.matchedOptionValue("message", null);
-        try {
-            return new ProjectUpdateCommand().execute(plan, status, blocked, message);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }
