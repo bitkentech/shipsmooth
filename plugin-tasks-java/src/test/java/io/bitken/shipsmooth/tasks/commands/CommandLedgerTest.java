@@ -56,7 +56,7 @@ public class CommandLedgerTest {
 
     @Test
     public void updateStatusRecordsStatusUpdatedEvent() throws Exception {
-        new CommandLine(new UpdateStatusCommand())
+        new CommandLine(new UpdateStatusCommand().getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "in-progress");
 
         List<String> hashes = ledger.readHashes();
@@ -69,7 +69,7 @@ public class CommandLedgerTest {
 
     @Test
     public void addCommentRecordsCommentAddedEvent() throws Exception {
-        new CommandLine(new AddCommentCommand())
+        new CommandLine(new AddCommentCommand().getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "draft ready");
 
         List<String> hashes = ledger.readHashes();
@@ -81,7 +81,7 @@ public class CommandLedgerTest {
 
     @Test
     public void addDeviationRecordsDeviationAddedEvent() throws Exception {
-        new CommandLine(new AddDeviationCommand())
+        new CommandLine(new AddDeviationCommand().getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--type", "minor", "--message", "split task");
 
         List<String> hashes = ledger.readHashes();
@@ -93,7 +93,7 @@ public class CommandLedgerTest {
 
     @Test
     public void setCommitRecordsCommitRecordedEvent() throws Exception {
-        new CommandLine(new SetCommitCommand())
+        new CommandLine(new SetCommitCommand().getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--commit", "deadbeef");
 
         List<String> hashes = ledger.readHashes();
@@ -106,7 +106,7 @@ public class CommandLedgerTest {
 
     @Test
     public void projectUpdateRecordsProjectUpdateEvent() throws Exception {
-        new CommandLine(new ProjectUpdateCommand())
+        new CommandLine(new ProjectUpdateCommand().getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--status", "in-review", "--message", "all tasks done");
 
         List<String> hashes = ledger.readHashes();

@@ -18,7 +18,7 @@ public class LedgerRecordPatchIntegratedCommandTest {
         LedgerService ledger = new LedgerService(Paths.get("."));
         ledger.ensureLedgerFile();
 
-        int exit = new CommandLine(new TasksCli()).execute(
+        int exit = new TasksCli().execute(
                 "ledger-record-patch-integrated",
                 "--plan", "993",
                 "--task", "7",

@@ -65,7 +65,7 @@ public class WorkerDependencyIntegrationTest {
 
     @Test
     void dependentTask_inheritsParentCommit() throws Exception {
-        CommandLine cli = new CommandLine(new TasksCli());
+        TasksCli cli = new TasksCli();
         LedgerService ledger = new LedgerService(repoRoot);
         int beforeCount = ledger.readHashes().size();
 

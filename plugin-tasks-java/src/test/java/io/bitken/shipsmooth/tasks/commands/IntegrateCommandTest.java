@@ -109,7 +109,7 @@ public class IntegrateCommandTest {
 
         // At this point: integration branch exists with task 2, but not task 3.
         // Running integrate should resume from task 3.
-        int exit = new CommandLine(new TasksCli()).execute(
+        int exit = new TasksCli().execute(
                 "integrate",
                 "--plan", String.valueOf(PLAN_NUM),
                 "--task-branch", currentBranch(),
@@ -155,7 +155,7 @@ public class IntegrateCommandTest {
         git(repoRoot.toFile(), "worktree", "add", INTEGRATION_REL, "-b", INTEGRATION_BRANCH, headSha);
 
         // Without --force this would fail; with --force it should succeed
-        int exit = new CommandLine(new TasksCli()).execute(
+        int exit = new TasksCli().execute(
                 "integrate",
                 "--plan", String.valueOf(PLAN_NUM),
                 "--task-branch", currentBranch(),
@@ -207,7 +207,7 @@ public class IntegrateCommandTest {
         IntegrateCommand cmd = new IntegrateCommand();
         cmd.setResolverFactory((taskId, integrationAbs) -> noOpResolver);
 
-        CommandLine cli = new CommandLine(cmd);
+        CommandLine cli = new CommandLine(cmd.getSpec());
         int exit = cli.execute(
                 "--plan", String.valueOf(PLAN_NUM),
                 "--task-branch", currentBranch(),

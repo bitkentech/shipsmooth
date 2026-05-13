@@ -38,7 +38,7 @@ public class InitCommandLedgerTest {
 
     @Test
     public void initCreatesObjectsDirAndLedgerFile() throws Exception {
-        int exit = new CommandLine(new InitCommand())
+        int exit = new CommandLine(new InitCommand().getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
         assertEquals(0, exit);
 
@@ -52,7 +52,7 @@ public class InitCommandLedgerTest {
         ledger.ensureLedgerFile();
         int before = ledger.readHashes().size();
 
-        new CommandLine(new InitCommand())
+        new CommandLine(new InitCommand().getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
 
         List<String> hashes = ledger.readHashes();
@@ -75,10 +75,10 @@ public class InitCommandLedgerTest {
 
         try {
             // Run twice — entries must not be duplicated
-            new CommandLine(new InitCommand())
+            new CommandLine(new InitCommand().getSpec())
                     .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
             xmlFile.delete();
-            new CommandLine(new InitCommand())
+            new CommandLine(new InitCommand().getSpec())
                     .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
 
             String content = Files.readString(gitignore);
