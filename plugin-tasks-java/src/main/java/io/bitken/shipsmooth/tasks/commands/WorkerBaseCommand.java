@@ -13,12 +13,13 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class WorkerBaseCommand implements Callable<Integer> {
+public class WorkerBaseCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public WorkerBaseCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("worker-base");
         spec.usageMessage().description("Print the base commit SHA for a dependent task (from parent's COMMIT_RECORDED event).");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());

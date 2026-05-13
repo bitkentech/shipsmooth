@@ -10,12 +10,13 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class LedgerRecordCommitCommand implements Callable<Integer> {
+public class LedgerRecordCommitCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public LedgerRecordCommitCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("ledger-record-commit");
         spec.usageMessage().description("Write a COMMIT_RECORDED event directly to the ledger (recovery use only).");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());

@@ -11,13 +11,14 @@ import picocli.CommandLine.Model.OptionSpec;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-public class IntegrateCommand implements Callable<Integer> {
+public class IntegrateCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
     private IntegrationOptions.ResolverFactory resolverFactory;
 
     public IntegrateCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("integrate");
         spec.usageMessage().description("Integrate parallel agent-work/* branches into the task branch.");
         spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         spec.addOption(OptionSpec.builder("--task-branch").paramLabel("BRANCH").description("Task branch name").type(String.class).build());

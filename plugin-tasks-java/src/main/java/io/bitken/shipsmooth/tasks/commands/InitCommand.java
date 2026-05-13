@@ -15,12 +15,13 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class InitCommand implements Callable<Integer> {
+public class InitCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public InitCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("init");
         spec.usageMessage().description("Initialize task tracking XML for a plan");
         spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         spec.addOption(OptionSpec.builder("--tasks-from").paramLabel("<Path to Markdown file>").required(true).description("Path to the plan markdown file").type(String.class).build());

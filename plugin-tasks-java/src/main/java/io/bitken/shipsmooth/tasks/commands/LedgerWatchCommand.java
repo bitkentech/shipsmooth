@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class LedgerWatchCommand implements Callable<Integer> {
+public class LedgerWatchCommand implements Callable<Integer>, HasSpec {
 
     static final long POLL_INTERVAL_MS = 300;
 
@@ -29,6 +29,7 @@ public class LedgerWatchCommand implements Callable<Integer> {
 
     public LedgerWatchCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("ledger-watch");
         spec.usageMessage().description("Block until a RESOLVER_REQUESTED ledger event appears, then print it.");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--repo").description("Repo root (default: current directory)").type(String.class).build());

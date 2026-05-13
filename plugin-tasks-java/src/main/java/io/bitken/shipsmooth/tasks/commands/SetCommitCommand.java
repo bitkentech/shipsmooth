@@ -13,12 +13,13 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class SetCommitCommand implements Callable<Integer> {
+public class SetCommitCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public SetCommitCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("set-commit");
         spec.usageMessage().description("Set the commit hash for a task.");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());

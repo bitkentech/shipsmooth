@@ -12,12 +12,13 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-public class ProjectUpdateCommand implements Callable<Integer> {
+public class ProjectUpdateCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public ProjectUpdateCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("project-update");
         spec.usageMessage().description("Add a project update.");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--status").type(String.class).build());

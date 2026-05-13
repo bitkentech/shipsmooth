@@ -12,12 +12,13 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-public class AddDeviationCommand implements Callable<Integer> {
+public class AddDeviationCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public AddDeviationCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("add-deviation");
         spec.usageMessage().description("Add a deviation to a task.");
         spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID (integer)").type(int.class).build());

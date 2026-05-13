@@ -11,12 +11,13 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class WorkerCleanupCommand implements Callable<Integer> {
+public class WorkerCleanupCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public WorkerCleanupCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("worker-cleanup");
         spec.usageMessage().description("Remove the worktree for a task, keeping the branch ref.");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());

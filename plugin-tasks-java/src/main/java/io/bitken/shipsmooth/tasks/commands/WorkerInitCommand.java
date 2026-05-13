@@ -9,12 +9,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-public class WorkerInitCommand implements Callable<Integer> {
+public class WorkerInitCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public WorkerInitCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("worker-init");
         spec.usageMessage().description("Create a git worktree for a subagent task.");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());

@@ -13,12 +13,13 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class LedgerCommand implements Callable<Integer> {
+public class LedgerCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public LedgerCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("ledger");
         spec.usageMessage().description("Inspect the append-only task ledger.");
         spec.addSubcommand("list", new ListCmd().getSpec());
         spec.addSubcommand("verify", new VerifyCmd().getSpec());
@@ -35,12 +36,13 @@ public class LedgerCommand implements Callable<Integer> {
         return 0;
     }
 
-    public static class ListCmd implements Callable<Integer> {
+    public static class ListCmd implements Callable<Integer>, HasSpec {
 
         private final CommandSpec spec;
 
         public ListCmd() {
             spec = CommandSpec.wrapWithoutInspection(this);
+            spec.name("list");
             spec.usageMessage().description("List ledger entries.");
             spec.addOption(OptionSpec.builder("--task").description("Filter by task ID.").type(String.class).build());
             spec.addOption(OptionSpec.builder("--type").description("Filter by event type.").type(String.class).build());
@@ -80,12 +82,13 @@ public class LedgerCommand implements Callable<Integer> {
         }
     }
 
-    public static class VerifyCmd implements Callable<Integer> {
+    public static class VerifyCmd implements Callable<Integer>, HasSpec {
 
         private final CommandSpec spec;
 
         public VerifyCmd() {
             spec = CommandSpec.wrapWithoutInspection(this);
+            spec.name("verify");
             spec.usageMessage().description("Verify ledger integrity by reconstructing the full timeline.");
         }
 
@@ -107,12 +110,13 @@ public class LedgerCommand implements Callable<Integer> {
         }
     }
 
-    public static class ReadCmd implements Callable<Integer> {
+    public static class ReadCmd implements Callable<Integer>, HasSpec {
 
         private final CommandSpec spec;
 
         public ReadCmd() {
             spec = CommandSpec.wrapWithoutInspection(this);
+            spec.name("read");
             spec.usageMessage().description("Print the JSON event blob for a given SHA.");
             spec.addPositional(PositionalParamSpec.builder()
                 .index("0")

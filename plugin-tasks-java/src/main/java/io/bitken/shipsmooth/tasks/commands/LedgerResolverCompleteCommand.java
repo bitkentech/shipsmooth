@@ -10,12 +10,13 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class LedgerResolverCompleteCommand implements Callable<Integer> {
+public class LedgerResolverCompleteCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public LedgerResolverCompleteCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("ledger-resolver-complete");
         spec.usageMessage().description("Signal that the Lead Agent's resolver subagent has finished (unblocks integrate).");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());

@@ -8,12 +8,13 @@ import picocli.CommandLine.Model.OptionSpec;
 import java.io.File;
 import java.util.concurrent.Callable;
 
-public class ShowCommand implements Callable<Integer> {
+public class ShowCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public ShowCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("show");
         spec.usageMessage().description("Show plan tasks.");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
     }

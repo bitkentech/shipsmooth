@@ -14,12 +14,13 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class ClaimCommand implements Callable<Integer> {
+public class ClaimCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public ClaimCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("claim");
         spec.usageMessage().description("Claim a task for subagent execution and record AGENT_START.");
         spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID").type(String.class).build());

@@ -8,12 +8,13 @@ import picocli.CommandLine.Model.OptionSpec;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-public class WorkerFinishCommand implements Callable<Integer> {
+public class WorkerFinishCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public WorkerFinishCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("worker-finish");
         spec.usageMessage().description("Capture subagent diff, commit on worktree branch, record ledger events.");
         spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID").type(String.class).build());
