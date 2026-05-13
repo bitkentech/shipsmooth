@@ -21,9 +21,11 @@ public class LedgerCommand implements Callable<Integer>, HasSpec {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("ledger");
         spec.usageMessage().description("Inspect the append-only task ledger.");
-        spec.addSubcommand("list", new ListCmd().getSpec());
-        spec.addSubcommand("verify", new VerifyCmd().getSpec());
-        spec.addSubcommand("read", new ReadCmd().getSpec());
+
+        HasSpec[] subcommands = { new ListCmd(), new VerifyCmd(), new ReadCmd() };
+        for (HasSpec sub : subcommands) {
+            spec.addSubcommand(sub.getSpec().name(), sub.getSpec());
+        }
     }
 
     public CommandSpec getSpec() {
