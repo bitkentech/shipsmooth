@@ -5,25 +5,36 @@ import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
 
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-@Command(name = "worker-base", description = "Print the base commit SHA for a dependent task (from parent's COMMIT_RECORDED event).")
-public class WorkerBaseCommand implements Callable<Integer> {
+public class WorkerBaseCommand implements Callable<Integer>, HasSpec {
 
-    @Option(names = "--plan", required = true)
-    private int plan;
+    private final CommandSpec spec;
 
-    @Option(names = "--task", required = true)
-    private String task;
+    public WorkerBaseCommand() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("worker-base");
+        spec.usageMessage().description("Print the base commit SHA for a dependent task (from parent's COMMIT_RECORDED event).");
+        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
+        return spec;
+    }
 
     @Override
     public Integer call() throws Exception {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        String task = pr.matchedOption("task").getValue();
+
         var repoRoot = Paths.get(".");
         XmlService xmlService = new XmlService();
         File xmlFile = new File(".agents/plans/plan-" + plan + "-tasks.xml");
@@ -36,7 +47,7 @@ public class WorkerBaseCommand implements Callable<Integer> {
         }
 
         List<String> parentIds = List.of(dependsOn.split(",")).stream()
-                .map(String::trim).filter(s -> !s.isBlank()).toList();
+            .map(String::trim).filter(s -> !s.isBlank()).toList();
 
         LedgerService ledger = new LedgerService(repoRoot);
         String latestSha = null;
@@ -46,8 +57,6 @@ public class WorkerBaseCommand implements Callable<Integer> {
                 System.err.println("worker-base: parent task " + parentId + " has no COMMIT_RECORDED event yet");
                 return 1;
             }
-            // Prefer metadata.commit_sha (set by worker-finish and set-commit).
-            // Fall back to payload for events written before metadata was added.
             String sha = ev.metadata().getOrDefault("commit_sha", ev.payload());
             if (sha == null || sha.isBlank()) {
                 System.err.println("worker-base: parent task " + parentId + " COMMIT_RECORDED event has no commit SHA");

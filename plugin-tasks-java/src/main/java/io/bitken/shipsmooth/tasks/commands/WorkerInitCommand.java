@@ -2,29 +2,40 @@ package io.bitken.shipsmooth.tasks.commands;
 
 import io.bitken.shipsmooth.tasks.workflow.WorkflowException;
 import io.bitken.shipsmooth.tasks.workflow.WorkflowServiceImpl;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-@Command(name = "worker-init", description = "Create a git worktree for a subagent task.")
-public class WorkerInitCommand implements Callable<Integer> {
+public class WorkerInitCommand implements Callable<Integer>, HasSpec {
 
-    @Option(names = "--plan", required = true)
-    private int plan;
+    private final CommandSpec spec;
 
-    @Option(names = "--task", required = true)
-    private String task;
+    public WorkerInitCommand() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("worker-init");
+        spec.usageMessage().description("Create a git worktree for a subagent task.");
+        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());
+        spec.addOption(OptionSpec.builder("--base").description("Base commit SHA to branch from (defaults to HEAD)").type(String.class).build());
+    }
 
-    @Option(names = "--base", description = "Base commit SHA to branch from (defaults to HEAD)")
-    private String base;
+    public CommandSpec getSpec() {
+        return spec;
+    }
 
     @Override
     public Integer call() {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        String task = pr.matchedOption("task").getValue();
+        String base = pr.matchedOptionValue("base", null);
+
         WorkflowServiceImpl workflow = new WorkflowServiceImpl(Paths.get("."));
         try {
-            java.nio.file.Path worktreePath = workflow.initializeWorker(plan, task, base);
+            Path worktreePath = workflow.initializeWorker(plan, task, base);
             System.out.println(worktreePath);
             return 0;
         } catch (WorkflowException e) {

@@ -2,20 +2,32 @@ package io.bitken.shipsmooth.tasks.commands;
 
 import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
 import io.bitken.shipsmooth.tasks.service.XmlService;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
 
 import java.io.File;
 import java.util.concurrent.Callable;
 
-@Command(name = "show", description = "Show plan tasks.")
-public class ShowCommand implements Callable<Integer> {
+public class ShowCommand implements Callable<Integer>, HasSpec {
 
-    @Option(names = "--plan", required = true)
-    private int plan;
+    private final CommandSpec spec;
+
+    public ShowCommand() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("show");
+        spec.usageMessage().description("Show plan tasks.");
+        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+    }
+
+    public CommandSpec getSpec() {
+        return spec;
+    }
 
     @Override
     public Integer call() throws Exception {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+
         XmlService service = new XmlService();
         File file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
         PlanTasks planTasks = service.readPlanTasks(file);

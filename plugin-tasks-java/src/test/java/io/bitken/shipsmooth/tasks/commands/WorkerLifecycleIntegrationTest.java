@@ -81,7 +81,7 @@ public class WorkerLifecycleIntegrationTest {
         int snapshotIndex = (int) ledgerCountBefore - 1;
 
         // 1. worker-init creates worktree + WORKTREE_CREATED event.
-        int initExit = new CommandLine(new TasksCli()).execute(
+        int initExit = new TasksCli().execute(
                 "worker-init", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, initExit, "worker-init must exit 0");
 
@@ -99,7 +99,7 @@ public class WorkerLifecycleIntegrationTest {
         Files.writeString(created, "service-layer preamble\n");
 
         // 3. worker-finish captures diff, commits on the agent-work branch.
-        int finishExit = new CommandLine(new TasksCli()).execute(
+        int finishExit = new TasksCli().execute(
                 "worker-finish", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, finishExit, "worker-finish must exit 0 on happy path");
 
@@ -133,7 +133,7 @@ public class WorkerLifecycleIntegrationTest {
         LedgerService ledger = new LedgerService(repoRoot);
         int snapshotIndex = ledger.readHashes().size() - 1; // -1 == "from the beginning is OK; we only care about after this"
 
-        int initExit = new CommandLine(new TasksCli()).execute(
+        int initExit = new TasksCli().execute(
                 "worker-init", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, initExit);
 
@@ -145,7 +145,7 @@ public class WorkerLifecycleIntegrationTest {
         git(worktreeDir, "-c", "user.email=test@example.com",
                 "-c", "user.name=Test", "commit", "-m", "rogue commit");
 
-        int finishExit = new CommandLine(new TasksCli()).execute(
+        int finishExit = new TasksCli().execute(
                 "worker-finish", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertNotEquals(0, finishExit, "worker-finish must reject worktree with subagent commits");
 

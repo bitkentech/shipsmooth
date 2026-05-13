@@ -5,27 +5,37 @@ import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
 
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-@Command(name = "update-status", description = "Update the status of a task.")
-public class UpdateStatusCommand implements Callable<Integer> {
+public class UpdateStatusCommand implements Callable<Integer>, HasSpec {
 
-    @Option(names = "--plan", required = true)
-    private int plan;
+    private final CommandSpec spec;
 
-    @Option(names = "--task", required = true)
-    private int task;
+    public UpdateStatusCommand() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("update-status");
+        spec.usageMessage().description("Update the status of a task.");
+        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--status").required(true).type(String.class).build());
+    }
 
-    @Option(names = "--status", required = true)
-    private String status;
+    public CommandSpec getSpec() {
+        return spec;
+    }
 
     @Override
     public Integer call() throws Exception {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        int task = pr.matchedOption("task").getValue();
+        String status = pr.matchedOption("status").getValue();
+
         XmlService service = new XmlService();
         File file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
         PlanTasks planTasks = service.readPlanTasks(file);

@@ -39,7 +39,7 @@ public class LedgerWatchCommandTest {
         ExecutorService exec = Executors.newSingleThreadExecutor();
         try {
             Future<Integer> future = exec.submit(() ->
-                    new CommandLine(new LedgerWatchCommand())
+                    new CommandLine(new LedgerWatchCommand().getSpec())
                             .execute("--plan", "99", "--repo", tempDir.toString()));
 
             // Give watcher time to start and scan existing non-matching entries
@@ -86,7 +86,7 @@ public class LedgerWatchCommandTest {
         ExecutorService exec = Executors.newSingleThreadExecutor();
         try {
             Future<Integer> future = exec.submit(() ->
-                    new CommandLine(new LedgerWatchCommand())
+                    new CommandLine(new LedgerWatchCommand().getSpec())
                             .execute("--plan", "99", "--repo", tempDir.toString()));
 
             // Should not fire on the already-resolved request
@@ -124,7 +124,7 @@ public class LedgerWatchCommandTest {
         ExecutorService exec = Executors.newSingleThreadExecutor();
         try {
             Future<Integer> future = exec.submit(() ->
-                    new CommandLine(new LedgerWatchCommand())
+                    new CommandLine(new LedgerWatchCommand().getSpec())
                             .execute("--plan", "99", "--repo", tempDir.toString(),
                                     "--after", String.valueOf(snapshot)));
 
@@ -154,7 +154,7 @@ public class LedgerWatchCommandTest {
         PrintStream savedErr = System.err;
         System.setErr(new PrintStream(err));
         try {
-            int exit = new CommandLine(new LedgerWatchCommand())
+            int exit = new CommandLine(new LedgerWatchCommand().getSpec())
                     .execute("--plan", "99", "--repo", tempDir.toString(), "--timeout-seconds", "1");
             assertEquals(1, exit, "Should exit 1 on timeout");
             assertTrue(err.toString().contains("timed out"), "Should print timeout message");

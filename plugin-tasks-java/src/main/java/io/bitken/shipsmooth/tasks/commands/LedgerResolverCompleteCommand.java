@@ -3,36 +3,45 @@ package io.bitken.shipsmooth.tasks.commands;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
 
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-@Command(name = "ledger-resolver-complete",
-        description = "Signal that the Lead Agent's resolver subagent has finished (unblocks integrate).")
-public class LedgerResolverCompleteCommand implements Callable<Integer> {
+public class LedgerResolverCompleteCommand implements Callable<Integer>, HasSpec {
 
-    @Option(names = "--plan", required = true)
-    private int plan;
+    private final CommandSpec spec;
 
-    @Option(names = "--task", required = true)
-    private int task;
+    public LedgerResolverCompleteCommand() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("ledger-resolver-complete");
+        spec.usageMessage().description("Signal that the Lead Agent's resolver subagent has finished (unblocks integrate).");
+        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--repo").description("Repo root (default: current directory)").type(String.class).build());
+    }
 
-    @Option(names = "--repo", description = "Repo root (default: current directory)")
-    private String repo;
+    public CommandSpec getSpec() {
+        return spec;
+    }
 
     @Override
     public Integer call() throws Exception {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        int task = pr.matchedOption("task").getValue();
+        String repo = pr.matchedOptionValue("repo", null);
+
         LedgerService ledger = new LedgerService(repo != null ? Paths.get(repo) : Paths.get("."));
         ledger.ensureLedgerFile();
         ledger.record(Event.forTask(
-                EventType.RESOLVER_COMPLETE,
-                String.valueOf(task),
-                null,
-                null,
-                Map.of("task_id", String.valueOf(task))));
+            EventType.RESOLVER_COMPLETE,
+            String.valueOf(task),
+            null,
+            null,
+            Map.of("task_id", String.valueOf(task))));
         System.out.println("Resolver complete recorded for task " + task);
         return 0;
     }

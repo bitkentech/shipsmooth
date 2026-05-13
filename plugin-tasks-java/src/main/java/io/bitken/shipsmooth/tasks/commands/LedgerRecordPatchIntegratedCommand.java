@@ -3,43 +3,44 @@ package io.bitken.shipsmooth.tasks.commands;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
 
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-/**
- * Recovery command: manually records a PATCH_INTEGRATED event when integrate died
- * mid-resolver and the task was resolved by hand in the integration worktree.
- * The recovery=true metadata flag distinguishes these from normally-written events.
- */
-@Command(name = "ledger-record-patch-integrated",
-        description = "Write a PATCH_INTEGRATED event directly to the ledger (recovery use only).")
-public class LedgerRecordPatchIntegratedCommand implements Callable<Integer> {
+public class LedgerRecordPatchIntegratedCommand implements Callable<Integer>, HasSpec {
 
-    @Option(names = "--plan", required = true)
-    private int plan;
+    private final CommandSpec spec;
 
-    @Option(names = "--task", required = true)
-    private int task;
+    public LedgerRecordPatchIntegratedCommand() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("ledger-record-patch-integrated");
+        spec.usageMessage().description("Write a PATCH_INTEGRATED event directly to the ledger (recovery use only).");
+        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--commit").required(true).description("Integration branch commit SHA (the manual commit made in the worktree).").type(String.class).build());
+        spec.addOption(OptionSpec.builder("--agent-work-sha").required(true).description("Tip SHA of the agent-work/{task} branch.").type(String.class).build());
+    }
 
-    @Option(names = "--commit", required = true,
-            description = "Integration branch commit SHA (the manual commit made in the worktree).")
-    private String commit;
-
-    @Option(names = "--agent-work-sha", required = true,
-            description = "Tip SHA of the agent-work/{task} branch.")
-    private String agentWorkSha;
+    public CommandSpec getSpec() {
+        return spec;
+    }
 
     @Override
     public Integer call() throws Exception {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        int task = pr.matchedOption("task").getValue();
+        String commit = pr.matchedOption("commit").getValue();
+        String agentWorkSha = pr.matchedOption("agent-work-sha").getValue();
+
         LedgerService ledger = new LedgerService(Paths.get("."));
         ledger.ensureLedgerFile();
         ledger.record(Event.forTask(
-                EventType.PATCH_INTEGRATED, String.valueOf(task), null, commit,
-                Map.of("agent_work_sha", agentWorkSha, "recovery", "true")
+            EventType.PATCH_INTEGRATED, String.valueOf(task), null, commit,
+            Map.of("agent_work_sha", agentWorkSha, "recovery", "true")
         ));
         System.out.println("PATCH_INTEGRATED written for task " + task + " (recovery=true, commit=" + commit + ")");
         return 0;

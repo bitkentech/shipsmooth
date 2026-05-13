@@ -5,30 +5,39 @@ import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
 
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-@Command(name = "add-deviation", description = "Add a deviation to a task.")
-public class AddDeviationCommand implements Callable<Integer> {
+public class AddDeviationCommand implements Callable<Integer>, HasSpec {
 
-    @Option(names = "--plan", required = true)
-    private int plan;
+    private final CommandSpec spec;
 
-    @Option(names = "--task", required = true)
-    private int task;
+    public AddDeviationCommand() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("add-deviation");
+        spec.usageMessage().description("Add a deviation to a task.");
+        spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
+        spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID (integer)").type(int.class).build());
+        spec.addOption(OptionSpec.builder("--type").paramLabel("TYPE").required(true).description("Type of deviation").type(String.class).build());
+        spec.addOption(OptionSpec.builder("--message").paramLabel("MESSAGE").required(true).description("The deviation message").type(String.class).build());
+    }
 
-    @Option(names = "--type", required = true)
-    private String type;
-
-    @Option(names = "--message", required = true)
-    private String message;
+    public CommandSpec getSpec() {
+        return spec;
+    }
 
     @Override
     public Integer call() throws Exception {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        int task = pr.matchedOption("task").getValue();
+        String type = pr.matchedOption("type").getValue();
+        String message = pr.matchedOption("message").getValue();
+
         XmlService service = new XmlService();
         File file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
         PlanTasks planTasks = service.readPlanTasks(file);

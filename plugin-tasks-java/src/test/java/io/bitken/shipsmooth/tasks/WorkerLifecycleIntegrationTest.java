@@ -74,7 +74,7 @@ public class WorkerLifecycleIntegrationTest {
      */
     @Test
     void happyPath_workerLifecycleLeavesCommitAndBranch() throws Exception {
-        CommandLine cli = new CommandLine(new TasksCli());
+        TasksCli cli = new TasksCli();
         LedgerService ledger = new LedgerService(repoRoot);
         int beforeCount = ledger.readHashes().size();
 
@@ -147,7 +147,7 @@ public class WorkerLifecycleIntegrationTest {
      */
     @Test
     void workerFinish_abortsWhenSubagentCommitted() throws Exception {
-        CommandLine cli = new CommandLine(new TasksCli());
+        TasksCli cli = new TasksCli();
         LedgerService ledger = new LedgerService(repoRoot);
 
         cli.execute("claim", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);

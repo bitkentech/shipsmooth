@@ -5,8 +5,8 @@ import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -15,17 +15,28 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-@Command(name = "init", description = "Initialize task tracking XML for a plan.")
-public class InitCommand implements Callable<Integer> {
+public class InitCommand implements Callable<Integer>, HasSpec {
 
-    @Option(names = "--plan", required = true, description = "Plan number.")
-    private int plan;
+    private final CommandSpec spec;
 
-    @Option(names = "--tasks-from", required = true, description = "Path to the plan markdown file.")
-    private String tasksFrom;
+    public InitCommand() {
+        spec = CommandSpec.wrapWithoutInspection(this);
+        spec.name("init");
+        spec.usageMessage().description("Initialize task tracking XML for a plan");
+        spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
+        spec.addOption(OptionSpec.builder("--tasks-from").paramLabel("<Path to Markdown file>").required(true).description("Path to the plan markdown file").type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
+        return spec;
+    }
 
     @Override
     public Integer call() throws Exception {
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        String tasksFrom = pr.matchedOption("tasks-from").getValue();
+
         XmlService service = new XmlService();
         Path markdownPath = Paths.get(tasksFrom);
         if (!Files.exists(markdownPath)) {
@@ -45,7 +56,6 @@ public class InitCommand implements Callable<Integer> {
         bootstrapAgentsLayout(Paths.get("."));
         ensureGitignore(Paths.get("."));
         recordTaskRegistrations(tasks, planVersion);
-
         return 0;
     }
 
