@@ -16,13 +16,16 @@ import java.util.concurrent.Callable;
 
 public class ClaimCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public ClaimCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Claim a task for subagent execution and record AGENT_START.");
         spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID").type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

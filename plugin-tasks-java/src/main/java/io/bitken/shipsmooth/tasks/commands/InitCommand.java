@@ -17,13 +17,16 @@ import java.util.concurrent.Callable;
 
 public class InitCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public InitCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Initialize task tracking XML for a plan");
         spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         spec.addOption(OptionSpec.builder("--tasks-from").paramLabel("<Path to Markdown file>").required(true).description("Path to the plan markdown file").type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

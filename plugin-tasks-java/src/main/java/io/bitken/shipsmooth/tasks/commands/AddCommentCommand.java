@@ -14,14 +14,17 @@ import java.util.concurrent.Callable;
 
 public class AddCommentCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public AddCommentCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Add a comment to a task.");
         spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID (integer)").type(int.class).build());
         spec.addOption(OptionSpec.builder("--message").paramLabel("MESSAGE").required(true).description("The comment text").type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

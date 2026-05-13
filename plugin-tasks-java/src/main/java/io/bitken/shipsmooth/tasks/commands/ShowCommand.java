@@ -10,12 +10,15 @@ import java.util.concurrent.Callable;
 
 public class ShowCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public ShowCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Show plan tasks.");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

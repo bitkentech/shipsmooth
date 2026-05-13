@@ -10,13 +10,16 @@ import java.util.concurrent.Callable;
 
 public class WorkerFinishCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public WorkerFinishCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Capture subagent diff, commit on worktree branch, record ledger events.");
         spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID").type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

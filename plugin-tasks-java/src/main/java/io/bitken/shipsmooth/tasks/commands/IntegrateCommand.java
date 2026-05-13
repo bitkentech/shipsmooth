@@ -13,10 +13,10 @@ import java.util.concurrent.Callable;
 
 public class IntegrateCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
     private IntegrationOptions.ResolverFactory resolverFactory;
 
-    public CommandSpec getSpec() {
+    public IntegrateCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Integrate parallel agent-work/* branches into the task branch.");
         spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
@@ -25,6 +25,9 @@ public class IntegrateCommand implements Callable<Integer> {
         spec.addOption(OptionSpec.builder("--max-llm-iterations").paramLabel("COUNT").defaultValue(String.valueOf(IntegrationDefaults.MAX_LLM_ITERATIONS)).description("Maximum LLM iterations").type(int.class).build());
         spec.addOption(OptionSpec.builder("--max-total-failures").paramLabel("COUNT").defaultValue(String.valueOf(IntegrationDefaults.MAX_TOTAL_FAILURES)).description("Maximum total failures").type(int.class).build());
         spec.addOption(OptionSpec.builder("--force").description("Delete existing integration worktree/branch and start fresh.").type(boolean.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

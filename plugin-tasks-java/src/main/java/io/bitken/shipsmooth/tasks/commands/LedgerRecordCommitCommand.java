@@ -12,15 +12,18 @@ import java.util.concurrent.Callable;
 
 public class LedgerRecordCommitCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public LedgerRecordCommitCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Write a COMMIT_RECORDED event directly to the ledger (recovery use only).");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--commit").required(true).type(String.class).build());
         spec.addOption(OptionSpec.builder("--branch").required(true).description("Must start with agent-work/ to write integration_mode=worktree.").type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

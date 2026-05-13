@@ -11,14 +11,17 @@ import java.util.concurrent.Callable;
 
 public class WorkerInitCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public WorkerInitCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Create a git worktree for a subagent task.");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());
         spec.addOption(OptionSpec.builder("--base").description("Base commit SHA to branch from (defaults to HEAD)").type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

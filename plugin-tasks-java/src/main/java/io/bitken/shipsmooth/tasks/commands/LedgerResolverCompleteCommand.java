@@ -12,14 +12,17 @@ import java.util.concurrent.Callable;
 
 public class LedgerResolverCompleteCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public LedgerResolverCompleteCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Signal that the Lead Agent's resolver subagent has finished (unblocks integrate).");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--repo").description("Repo root (default: current directory)").type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

@@ -25,15 +25,18 @@ public class LedgerWatchCommand implements Callable<Integer> {
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         .enable(SerializationFeature.INDENT_OUTPUT);
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public LedgerWatchCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Block until a RESOLVER_REQUESTED ledger event appears, then print it.");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--repo").description("Repo root (default: current directory)").type(String.class).build());
         spec.addOption(OptionSpec.builder("--timeout-seconds").defaultValue("1800").description("Give up after N seconds (default: 1800)").type(long.class).build());
         spec.addOption(OptionSpec.builder("--after").defaultValue("0").description("Ignore events at indices 0..N-1").type(int.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

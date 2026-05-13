@@ -13,13 +13,16 @@ import java.util.concurrent.Callable;
 
 public class WorkerCleanupCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public WorkerCleanupCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Remove the worktree for a task, keeping the branch ref.");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

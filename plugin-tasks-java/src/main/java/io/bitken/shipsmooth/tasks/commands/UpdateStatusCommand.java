@@ -14,14 +14,17 @@ import java.util.concurrent.Callable;
 
 public class UpdateStatusCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public UpdateStatusCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Update the status of a task.");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--status").required(true).type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

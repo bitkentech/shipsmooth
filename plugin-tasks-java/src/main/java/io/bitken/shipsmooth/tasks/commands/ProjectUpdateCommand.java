@@ -14,15 +14,18 @@ import java.util.concurrent.Callable;
 
 public class ProjectUpdateCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public ProjectUpdateCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Add a project update.");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--status").type(String.class).build());
         spec.addOption(OptionSpec.builder("--blocked").type(Boolean.class).build());
         spec.addOption(OptionSpec.builder("--message").type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

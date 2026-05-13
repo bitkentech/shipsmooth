@@ -15,14 +15,17 @@ import java.util.concurrent.Callable;
 
 public class LedgerCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public LedgerCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Inspect the append-only task ledger.");
         spec.addSubcommand("list", new ListCmd().getSpec());
         spec.addSubcommand("verify", new VerifyCmd().getSpec());
         spec.addSubcommand("read", new ReadCmd().getSpec());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 
@@ -34,14 +37,17 @@ public class LedgerCommand implements Callable<Integer> {
 
     public static class ListCmd implements Callable<Integer> {
 
-        private CommandSpec spec;
+        private final CommandSpec spec;
 
-        public CommandSpec getSpec() {
+        public ListCmd() {
             spec = CommandSpec.wrapWithoutInspection(this);
             spec.usageMessage().description("List ledger entries.");
             spec.addOption(OptionSpec.builder("--task").description("Filter by task ID.").type(String.class).build());
             spec.addOption(OptionSpec.builder("--type").description("Filter by event type.").type(String.class).build());
             spec.addOption(OptionSpec.builder("--count").description("Print total event count as a plain integer and exit.").type(boolean.class).build());
+        }
+
+        public CommandSpec getSpec() {
             return spec;
         }
 
@@ -76,11 +82,14 @@ public class LedgerCommand implements Callable<Integer> {
 
     public static class VerifyCmd implements Callable<Integer> {
 
-        private CommandSpec spec;
+        private final CommandSpec spec;
 
-        public CommandSpec getSpec() {
+        public VerifyCmd() {
             spec = CommandSpec.wrapWithoutInspection(this);
             spec.usageMessage().description("Verify ledger integrity by reconstructing the full timeline.");
+        }
+
+        public CommandSpec getSpec() {
             return spec;
         }
 
@@ -100,9 +109,9 @@ public class LedgerCommand implements Callable<Integer> {
 
     public static class ReadCmd implements Callable<Integer> {
 
-        private CommandSpec spec;
+        private final CommandSpec spec;
 
-        public CommandSpec getSpec() {
+        public ReadCmd() {
             spec = CommandSpec.wrapWithoutInspection(this);
             spec.usageMessage().description("Print the JSON event blob for a given SHA.");
             spec.addPositional(PositionalParamSpec.builder()
@@ -110,6 +119,9 @@ public class LedgerCommand implements Callable<Integer> {
                 .description("SHA-1 of the event to read.")
                 .required(true)
                 .build());
+        }
+
+        public CommandSpec getSpec() {
             return spec;
         }
 

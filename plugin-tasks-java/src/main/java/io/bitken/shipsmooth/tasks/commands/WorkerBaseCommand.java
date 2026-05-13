@@ -15,13 +15,16 @@ import java.util.concurrent.Callable;
 
 public class WorkerBaseCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public WorkerBaseCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Print the base commit SHA for a dependent task (from parent's COMMIT_RECORDED event).");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

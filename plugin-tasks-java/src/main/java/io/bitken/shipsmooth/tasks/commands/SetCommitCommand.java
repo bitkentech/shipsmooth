@@ -15,15 +15,18 @@ import java.util.concurrent.Callable;
 
 public class SetCommitCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public SetCommitCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Set the commit hash for a task.");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--commit").required(true).type(String.class).build());
         spec.addOption(OptionSpec.builder("--branch").type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 

@@ -12,15 +12,18 @@ import java.util.concurrent.Callable;
 
 public class LedgerRecordPatchIntegratedCommand implements Callable<Integer> {
 
-    private CommandSpec spec;
+    private final CommandSpec spec;
 
-    public CommandSpec getSpec() {
+    public LedgerRecordPatchIntegratedCommand() {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.usageMessage().description("Write a PATCH_INTEGRATED event directly to the ledger (recovery use only).");
         spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
         spec.addOption(OptionSpec.builder("--commit").required(true).description("Integration branch commit SHA (the manual commit made in the worktree).").type(String.class).build());
         spec.addOption(OptionSpec.builder("--agent-work-sha").required(true).description("Tip SHA of the agent-work/{task} branch.").type(String.class).build());
+    }
+
+    public CommandSpec getSpec() {
         return spec;
     }
 
