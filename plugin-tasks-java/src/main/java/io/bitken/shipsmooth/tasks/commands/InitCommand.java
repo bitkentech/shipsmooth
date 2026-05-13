@@ -23,8 +23,16 @@ public class InitCommand implements Callable<Integer>, HasSpec {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("init");
         spec.usageMessage().description("Initialize task tracking XML for a plan");
-        spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
-        spec.addOption(OptionSpec.builder("--tasks-from").paramLabel("<Path to Markdown file>").required(true).description("Path to the plan markdown file").type(String.class).build());
+        spec.addOption(OptionSpec.builder("--plan").
+            paramLabel("PLAN_NUMBER").
+            required(true).description("Plan number").
+            type(int.class).
+            build());
+        spec.addOption(OptionSpec.builder("--tasks-from").
+            paramLabel("<Path to Markdown file>").
+            required(true).
+            description("Path to the plan markdown file").
+            type(String.class).build());
     }
 
     public CommandSpec getSpec() {
