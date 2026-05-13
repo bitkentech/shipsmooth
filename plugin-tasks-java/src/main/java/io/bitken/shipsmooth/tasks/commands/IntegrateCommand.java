@@ -5,50 +5,33 @@ import io.bitken.shipsmooth.tasks.workflow.IntegrationOptions;
 import io.bitken.shipsmooth.tasks.workflow.IntegrationResult;
 import io.bitken.shipsmooth.tasks.workflow.WorkflowException;
 import io.bitken.shipsmooth.tasks.workflow.WorkflowServiceImpl;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
+import picocli.CommandLine.ParseResult;
 
 import java.nio.file.Paths;
-import java.util.concurrent.Callable;
 
-@Command(name = "integrate", description = "Integrate parallel agent-work/* branches into the task branch.")
-public class IntegrateCommand implements Callable<Integer> {
-
-    @Option(names = "--plan", required = true)
-    private int plan;
-
-    @Option(names = "--task-branch")
-    private String taskBranch;
-
-    @Option(names = "--verify-cmd")
-    private String verifyCmd;
-
-    @Option(names = "--max-llm-iterations")
-    private int maxLlmIterations = IntegrationDefaults.MAX_LLM_ITERATIONS;
-
-    @Option(names = "--max-total-failures")
-    private int maxTotalFailures = IntegrationDefaults.MAX_TOTAL_FAILURES;
-
-    @Option(names = "--force", description = "Delete existing integration worktree/branch and start fresh.")
-    private boolean force;
+public class IntegrateCommand {
 
     private IntegrationOptions.ResolverFactory resolverFactory;
 
+    public IntegrateCommand() {
+    }
+
     /** Test seam: override the resolver implementation. */
-    void setResolverFactory(IntegrationOptions.ResolverFactory factory) {
+    public void setResolverFactory(IntegrationOptions.ResolverFactory factory) {
         this.resolverFactory = factory;
     }
 
-    @Override
-    public Integer call() {
+    public int execute(int plan, String taskBranch, String verifyCmd, int maxLlmIterations, int maxTotalFailures, boolean force) {
         WorkflowServiceImpl workflow = new WorkflowServiceImpl(Paths.get("."));
         IntegrationOptions opts = new IntegrationOptions()
-                .taskBranch(taskBranch)
-                .verifyCmd(verifyCmd)
-                .maxLlmIterations(maxLlmIterations)
-                .maxTotalFailures(maxTotalFailures)
-                .force(force)
-                .resolverFactory(resolverFactory);
+            .taskBranch(taskBranch)
+            .verifyCmd(verifyCmd)
+            .maxLlmIterations(maxLlmIterations)
+            .maxTotalFailures(maxTotalFailures)
+            .force(force)
+            .resolverFactory(resolverFactory);
         try {
             IntegrationResult result = workflow.runIntegration(plan, opts);
             return result.success() ? 0 : 1;
@@ -56,5 +39,55 @@ public class IntegrateCommand implements Callable<Integer> {
             System.err.println(e.getMessage());
             return e.exitCode();
         }
+    }
+
+    public static CommandSpec getSpec() {
+        CommandSpec spec = CommandSpec.create();
+        spec.usageMessage().description("Integrate parallel agent-work/* branches into the task branch.");
+
+        spec.addOption(OptionSpec.builder("--plan")
+            .paramLabel("PLAN_NUMBER")
+            .required(true)
+            .description("Plan number")
+            .type(int.class).build());
+
+        spec.addOption(OptionSpec.builder("--task-branch")
+            .paramLabel("BRANCH")
+            .description("Task branch name")
+            .type(String.class).build());
+
+        spec.addOption(OptionSpec.builder("--verify-cmd")
+            .paramLabel("COMMAND")
+            .description("Verification command")
+            .type(String.class).build());
+
+        spec.addOption(OptionSpec.builder("--max-llm-iterations")
+            .paramLabel("COUNT")
+            .defaultValue(String.valueOf(IntegrationDefaults.MAX_LLM_ITERATIONS))
+            .description("Maximum LLM iterations")
+            .type(int.class).build());
+
+        spec.addOption(OptionSpec.builder("--max-total-failures")
+            .paramLabel("COUNT")
+            .defaultValue(String.valueOf(IntegrationDefaults.MAX_TOTAL_FAILURES))
+            .description("Maximum total failures")
+            .type(int.class).build());
+
+        spec.addOption(OptionSpec.builder("--force")
+            .description("Delete existing integration worktree/branch and start fresh.")
+            .type(boolean.class).build());
+
+        return spec;
+    }
+
+    public static int run(ParseResult pr) {
+        int plan = pr.matchedOption("plan").getValue();
+        String taskBranch = pr.matchedOptionValue("task-branch", null);
+        String verifyCmd = pr.matchedOptionValue("verify-cmd", null);
+        int maxLlmIterations = pr.matchedOptionValue("max-llm-iterations", IntegrationDefaults.MAX_LLM_ITERATIONS);
+        int maxTotalFailures = pr.matchedOptionValue("max-total-failures", IntegrationDefaults.MAX_TOTAL_FAILURES);
+        boolean force = pr.hasMatchedOption("force");
+
+        return new IntegrateCommand().execute(plan, taskBranch, verifyCmd, maxLlmIterations, maxTotalFailures, force);
     }
 }

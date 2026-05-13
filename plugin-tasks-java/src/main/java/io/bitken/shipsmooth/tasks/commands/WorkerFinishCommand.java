@@ -2,23 +2,18 @@ package io.bitken.shipsmooth.tasks.commands;
 
 import io.bitken.shipsmooth.tasks.workflow.WorkflowException;
 import io.bitken.shipsmooth.tasks.workflow.WorkflowServiceImpl;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
+import picocli.CommandLine.ParseResult;
 
 import java.nio.file.Paths;
-import java.util.concurrent.Callable;
 
-@Command(name = "worker-finish", description = "Capture subagent diff, commit on worktree branch, record ledger events.")
-public class WorkerFinishCommand implements Callable<Integer> {
+public class WorkerFinishCommand {
 
-    @Option(names = "--plan", required = true)
-    private int plan;
+    public WorkerFinishCommand() {
+    }
 
-    @Option(names = "--task", required = true)
-    private String task;
-
-    @Override
-    public Integer call() {
+    public int execute(int plan, String task) {
         WorkflowServiceImpl workflow = new WorkflowServiceImpl(Paths.get("."));
         try {
             workflow.finalizeWorker(plan, task);
@@ -27,5 +22,31 @@ public class WorkerFinishCommand implements Callable<Integer> {
             return e.exitCode();
         }
         return 0;
+    }
+
+    public static CommandSpec getSpec() {
+        CommandSpec spec = CommandSpec.create();
+        spec.usageMessage().description("Capture subagent diff, commit on worktree branch, record ledger events.");
+        spec.addOption(
+            OptionSpec.builder("--plan")
+                .paramLabel("PLAN_NUMBER")
+                .required(true)
+                .description("Plan number")
+                .type(int.class).build()
+        );
+        spec.addOption(
+            OptionSpec.builder("--task")
+                .paramLabel("TASK_ID")
+                .required(true)
+                .description("Task ID")
+                .type(String.class).build()
+        );
+        return spec;
+    }
+
+    public static int run(ParseResult pr) {
+        int plan = pr.matchedOption("plan").getValue();
+        String task = pr.matchedOption("task").getValue();
+        return new WorkerFinishCommand().execute(plan, task);
     }
 }

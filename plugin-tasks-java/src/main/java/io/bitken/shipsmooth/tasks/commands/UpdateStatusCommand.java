@@ -5,27 +5,19 @@ import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
+import picocli.CommandLine.ParseResult;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.concurrent.Callable;
 
-@Command(name = "update-status", description = "Update the status of a task.")
-public class UpdateStatusCommand implements Callable<Integer> {
+public class UpdateStatusCommand {
 
-    @Option(names = "--plan", required = true)
-    private int plan;
+    public UpdateStatusCommand() {
+    }
 
-    @Option(names = "--task", required = true)
-    private int task;
-
-    @Option(names = "--status", required = true)
-    private String status;
-
-    @Override
-    public Integer call() throws Exception {
+    public int execute(int plan, int task, String status) throws Exception {
         XmlService service = new XmlService();
         File file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
         PlanTasks planTasks = service.readPlanTasks(file);
@@ -41,5 +33,36 @@ public class UpdateStatusCommand implements Callable<Integer> {
             System.err.println("Warning: ledger record failed (XML mutation preserved): " + e.getMessage());
         }
         return 0;
+    }
+
+    public static CommandSpec getSpec() {
+        CommandSpec spec = CommandSpec.create();
+        spec.name("update-status");
+        spec.usageMessage().description("Update the status of a task.");
+
+        spec.addOption(OptionSpec.builder("--plan")
+            .required(true)
+            .type(int.class).build());
+
+        spec.addOption(OptionSpec.builder("--task")
+            .required(true)
+            .type(int.class).build());
+
+        spec.addOption(OptionSpec.builder("--status")
+            .required(true)
+            .type(String.class).build());
+
+        return spec;
+    }
+
+    public static int run(ParseResult pr) {
+        int plan = pr.matchedOption("plan").getValue();
+        int task = pr.matchedOption("task").getValue();
+        String status = pr.matchedOption("status").getValue();
+        try {
+            return new UpdateStatusCommand().execute(plan, task, status);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -8,8 +8,6 @@ import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import picocli.CommandLine;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -23,6 +21,7 @@ public class TasksCliIntegrationTest {
     private final File planDir = new File(".agents/plans");
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
+    private TasksCli tasksCli;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -36,6 +35,7 @@ public class TasksCliIntegrationTest {
 
         LedgerService ledger = new LedgerService(Paths.get("."));
         ledger.ensureLedgerFile();
+        tasksCli = new TasksCli();
     }
 
     @AfterEach
@@ -45,9 +45,8 @@ public class TasksCliIntegrationTest {
     }
 
     @Test
-    public void cliHelpExitsZero() {
-        int exitCode = new CommandLine(new TasksCli()).execute("--help");
-        assertEquals(0, exitCode);
+    public void cliHelpRuns() {
+        assertEquals(0, tasksCli.execute(new String[]{"--help"}));
     }
 
     @Test
@@ -55,8 +54,7 @@ public class TasksCliIntegrationTest {
         LedgerService ledger = new LedgerService(Paths.get("."));
         int before = ledger.readHashes().size();
 
-        int exit = new CommandLine(new TasksCli())
-                .execute("update-status", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "agent-coded");
+        int exit = tasksCli.execute("update-status", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "agent-coded");
         assertEquals(0, exit);
 
         List<String> hashes = ledger.readHashes();
@@ -69,13 +67,13 @@ public class TasksCliIntegrationTest {
 
     @Test
     public void ledgerListViaCliExitsZero() throws Exception {
-        int exit = new CommandLine(new TasksCli()).execute("ledger", "list");
+        int exit = tasksCli.execute("ledger", "list");
         assertEquals(0, exit);
     }
 
     @Test
     public void ledgerVerifyViaCliExitsZero() throws Exception {
-        int exit = new CommandLine(new TasksCli()).execute("ledger", "verify");
+        int exit = tasksCli.execute("ledger", "verify");
         assertEquals(0, exit);
     }
 }

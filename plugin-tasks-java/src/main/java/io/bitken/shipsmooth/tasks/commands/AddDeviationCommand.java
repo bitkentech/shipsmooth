@@ -5,30 +5,19 @@ import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
+import picocli.CommandLine.ParseResult;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.concurrent.Callable;
 
-@Command(name = "add-deviation", description = "Add a deviation to a task.")
-public class AddDeviationCommand implements Callable<Integer> {
+public class AddDeviationCommand {
 
-    @Option(names = "--plan", required = true)
-    private int plan;
+    public AddDeviationCommand() {
+    }
 
-    @Option(names = "--task", required = true)
-    private int task;
-
-    @Option(names = "--type", required = true)
-    private String type;
-
-    @Option(names = "--message", required = true)
-    private String message;
-
-    @Override
-    public Integer call() throws Exception {
+    public int execute(int plan, int task, String type, String message) throws Exception {
         XmlService service = new XmlService();
         File file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
         PlanTasks planTasks = service.readPlanTasks(file);
@@ -44,5 +33,56 @@ public class AddDeviationCommand implements Callable<Integer> {
             System.err.println("Warning: ledger record failed (XML mutation preserved): " + e.getMessage());
         }
         return 0;
+    }
+
+    public static CommandSpec getSpec() {
+        CommandSpec spec = CommandSpec.create();
+        spec.usageMessage().description("Add a deviation to a task.");
+
+        spec.addOption(
+            OptionSpec.builder("--plan")
+                .paramLabel("PLAN_NUMBER")
+                .required(true)
+                .description("Plan number")
+                .type(int.class).build()
+        );
+
+        spec.addOption(
+            OptionSpec.builder("--task")
+                .paramLabel("TASK_ID")
+                .required(true)
+                .description("Task ID (integer)")
+                .type(int.class).build()
+        );
+
+        spec.addOption(
+            OptionSpec.builder("--type")
+                .paramLabel("TYPE")
+                .required(true)
+                .description("Type of deviation")
+                .type(String.class).build()
+        );
+
+        spec.addOption(
+            OptionSpec.builder("--message")
+                .paramLabel("MESSAGE")
+                .required(true)
+                .description("The deviation message")
+                .type(String.class).build()
+        );
+
+        return spec;
+    }
+
+    public static int run(ParseResult pr) {
+        int plan = pr.matchedOption("plan").getValue();
+        int task = pr.matchedOption("task").getValue();
+        String type = pr.matchedOption("type").getValue();
+        String message = pr.matchedOption("message").getValue();
+        try {
+            return new AddDeviationCommand().execute(plan, task, type, message);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
