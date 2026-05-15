@@ -3,6 +3,7 @@ package io.bitken.shipsmooth.tasks.commands;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
+import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -13,15 +14,18 @@ import java.util.concurrent.Callable;
 public class LedgerRecordPatchIntegratedCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
+    private final LedgerService ledger;
 
-    public LedgerRecordPatchIntegratedCommand() {
-        spec = CommandSpec.wrapWithoutInspection(this);
-        spec.name("ledger-record-patch-integrated");
-        spec.usageMessage().description("Write a PATCH_INTEGRATED event directly to the ledger (recovery use only).");
-        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
-        spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
-        spec.addOption(OptionSpec.builder("--commit").required(true).description("Integration branch commit SHA (the manual commit made in the worktree).").type(String.class).build());
-        spec.addOption(OptionSpec.builder("--agent-work-sha").required(true).description("Tip SHA of the agent-work/{task} branch.").type(String.class).build());
+    @Inject
+    public LedgerRecordPatchIntegratedCommand(LedgerService ledger) {
+        this.ledger = ledger;
+        this.spec = CommandSpec.wrapWithoutInspection(this);
+        this.spec.name("ledger-record-patch-integrated");
+        this.spec.usageMessage().description("Write a PATCH_INTEGRATED event directly to the ledger (recovery use only).");
+        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        this.spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
+        this.spec.addOption(OptionSpec.builder("--commit").required(true).description("Integration branch commit SHA (the manual commit made in the worktree).").type(String.class).build());
+        this.spec.addOption(OptionSpec.builder("--agent-work-sha").required(true).description("Tip SHA of the agent-work/{task} branch.").type(String.class).build());
     }
 
     public CommandSpec getSpec() {
@@ -33,10 +37,9 @@ public class LedgerRecordPatchIntegratedCommand implements Callable<Integer>, Ha
         var pr = spec.commandLine().getParseResult();
         int plan = pr.matchedOption("plan").getValue();
         int task = pr.matchedOption("task").getValue();
-        String commit = pr.matchedOption("commit").getValue();
-        String agentWorkSha = pr.matchedOption("agent-work-sha").getValue();
+        var commit = (String) pr.matchedOption("commit").getValue();
+        var agentWorkSha = (String) pr.matchedOption("agent-work-sha").getValue();
 
-        LedgerService ledger = new LedgerService(Paths.get("."));
         ledger.ensureLedgerFile();
         ledger.record(Event.forTask(
             EventType.PATCH_INTEGRATED, String.valueOf(task), null, commit,

@@ -3,6 +3,7 @@ package io.bitken.shipsmooth.tasks.commands;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
+import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -13,15 +14,18 @@ import java.util.concurrent.Callable;
 public class LedgerRecordCommitCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
+    private final LedgerService ledger;
 
-    public LedgerRecordCommitCommand() {
-        spec = CommandSpec.wrapWithoutInspection(this);
-        spec.name("ledger-record-commit");
-        spec.usageMessage().description("Write a COMMIT_RECORDED event directly to the ledger (recovery use only).");
-        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
-        spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
-        spec.addOption(OptionSpec.builder("--commit").required(true).type(String.class).build());
-        spec.addOption(OptionSpec.builder("--branch").required(true).description("Must start with agent-work/ to write integration_mode=worktree.").type(String.class).build());
+    @Inject
+    public LedgerRecordCommitCommand(LedgerService ledger) {
+        this.spec = CommandSpec.wrapWithoutInspection(this);
+        this.ledger = ledger;
+        this.spec.name("ledger-record-commit");
+        this.spec.usageMessage().description("Write a COMMIT_RECORDED event directly to the ledger (recovery use only).");
+        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        this.spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
+        this.spec.addOption(OptionSpec.builder("--commit").required(true).type(String.class).build());
+        this.spec.addOption(OptionSpec.builder("--branch").required(true).description("Must start with agent-work/ to write integration_mode=worktree.").type(String.class).build());
     }
 
     public CommandSpec getSpec() {
@@ -31,18 +35,17 @@ public class LedgerRecordCommitCommand implements Callable<Integer>, HasSpec {
     @Override
     public Integer call() throws Exception {
         var pr = spec.commandLine().getParseResult();
-        int plan = pr.matchedOption("plan").getValue();
-        int task = pr.matchedOption("task").getValue();
-        String commit = pr.matchedOption("commit").getValue();
-        String branch = pr.matchedOption("branch").getValue();
+        var plan = (int) pr.matchedOption("plan").getValue();
+        var task = (int) pr.matchedOption("task").getValue();
+        var commit = (String) pr.matchedOption("commit").getValue();
+        var branch = (String) pr.matchedOption("branch").getValue();
 
-        String integrationMode = branch.startsWith("agent-work/") ? "worktree" : "direct";
-        Map<String, String> meta = Map.of(
+        var integrationMode = branch.startsWith("agent-work/") ? "worktree" : "direct";
+        var meta = Map.of(
             "branch", branch,
             "commit_sha", commit,
             "integration_mode", integrationMode
         );
-        LedgerService ledger = new LedgerService(Paths.get("."));
         ledger.ensureLedgerFile();
         ledger.record(Event.forTask(EventType.COMMIT_RECORDED, String.valueOf(task), commit, commit, meta));
         System.out.println("COMMIT_RECORDED written for task " + task + " (integration_mode=" + integrationMode + ")");

@@ -1,7 +1,5 @@
 package io.bitken.shipsmooth.tasks.di;
 
-import io.bitken.shipsmooth.tasks.ledger.LedgerService;
-import io.bitken.shipsmooth.tasks.service.XmlService;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
@@ -12,24 +10,36 @@ public class AppComponentTest {
 
     @Test
     public void buildsComponentAndProvidesServices() {
-        AppComponent app = DaggerAppComponent.builder()
+        AppComponents app = DaggerAppComponents.builder()
                 .servicesModule(new ServicesModule(Paths.get(".")))
                 .build();
 
-        XmlService xml = app.xmlService();
-        LedgerService ledger = app.ledgerService();
-
-        assertNotNull(xml);
-        assertNotNull(ledger);
+        assertNotNull(app.xmlService());
+        assertNotNull(app.ledgerService());
+        assertNotNull(app.worktreeService());
+        assertNotNull(app.workflowService());
+        assertNotNull(app.workflowServiceImpl());
     }
 
     @Test
-    public void servicesAreSingletonsWithinComponent() {
-        AppComponent app = DaggerAppComponent.builder()
+    public void servicesAreSingletons() {
+        AppComponents app = DaggerAppComponents.builder()
                 .servicesModule(new ServicesModule(Paths.get(".")))
                 .build();
 
         assertSame(app.xmlService(), app.xmlService());
         assertSame(app.ledgerService(), app.ledgerService());
+        assertSame(app.worktreeService(), app.worktreeService());
+        assertSame(app.workflowService(), app.workflowService());
+        assertSame(app.workflowServiceImpl(), app.workflowServiceImpl());
+    }
+
+    @Test
+    public void workflowServiceIsSameInstanceAsWorkflowServiceImpl() {
+        AppComponents app = DaggerAppComponents.builder()
+                .servicesModule(new ServicesModule(Paths.get(".")))
+                .build();
+
+        assertSame(app.workflowServiceImpl(), app.workflowService());
     }
 }

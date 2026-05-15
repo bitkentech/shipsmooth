@@ -47,20 +47,20 @@ public class CommandsTest {
     @Test
     public void testInitCommand() {
         xmlFile.delete();
-        int exitCode = new CommandLine(new InitCommand().getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
+        int exitCode = new CommandLine(new InitCommand(xmlService, ledgerService).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
         assertEquals(0, exitCode);
         assertTrue(xmlFile.exists());
     }
 
     @Test
     public void testInitCommandFileNotFound() {
-        int exitCode = new CommandLine(new InitCommand().getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", "non-existent.md");
+        int exitCode = new CommandLine(new InitCommand(xmlService, ledgerService).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", "non-existent.md");
         assertEquals(1, exitCode);
     }
 
     @Test
     public void testUpdateStatusCommand() throws Exception {
-        int exitCode = new CommandLine(new UpdateStatusCommand().getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "in-progress");
+        int exitCode = new CommandLine(new UpdateStatusCommand(xmlService, ledgerService).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "in-progress");
         assertEquals(0, exitCode);
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
         assertEquals("in-progress", planTasks.getTasks().getTask().get(0).getStatus().value());
@@ -77,7 +77,7 @@ public class CommandsTest {
 
     @Test
     public void testAddDeviationCommand() throws Exception {
-        int exitCode = new CommandLine(new AddDeviationCommand().getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--type", "minor", "--message", "Test deviation");
+        int exitCode = new CommandLine(new AddDeviationCommand(xmlService, ledgerService).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--type", "minor", "--message", "Test deviation");
         assertEquals(0, exitCode);
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
         assertEquals(1, planTasks.getTasks().getTask().get(0).getDeviations().getDeviation().size());
@@ -87,7 +87,7 @@ public class CommandsTest {
 
     @Test
     public void testSetCommitCommand() throws Exception {
-        int exitCode = new CommandLine(new SetCommitCommand().getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--commit", "abcdef");
+        int exitCode = new CommandLine(new SetCommitCommand(xmlService, ledgerService).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--commit", "abcdef");
         assertEquals(0, exitCode);
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
         assertEquals("abcdef", planTasks.getTasks().getTask().get(0).getCommit());
@@ -95,7 +95,7 @@ public class CommandsTest {
 
     @Test
     public void testProjectUpdateCommand() throws Exception {
-        int exitCode = new CommandLine(new ProjectUpdateCommand().getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--status", "in-review", "--blocked", "--message", "Test update");
+        int exitCode = new CommandLine(new ProjectUpdateCommand(xmlService, ledgerService).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--status", "in-review", "--blocked", "--message", "Test update");
         assertEquals(0, exitCode);
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
         assertEquals("in-review", planTasks.getMetadata().getStatus().value());
@@ -111,7 +111,7 @@ public class CommandsTest {
         System.setOut(new PrintStream(out));
         
         try {
-            int exitCode = new CommandLine(new ShowCommand().getSpec()).execute("--plan", String.valueOf(PLAN_NUM));
+            int exitCode = new CommandLine(new ShowCommand(xmlService).getSpec()).execute("--plan", String.valueOf(PLAN_NUM));
             assertEquals(0, exitCode);
             String output = out.toString();
             assertTrue(output.contains("Plan " + PLAN_NUM));

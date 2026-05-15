@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
+import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Model.PositionalParamSpec;
@@ -16,15 +17,18 @@ import java.util.concurrent.Callable;
 public class LedgerCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
+    private final LedgerService ledgerService;
 
-    public LedgerCommand() {
-        spec = CommandSpec.wrapWithoutInspection(this);
-        spec.name("ledger");
-        spec.usageMessage().description("Inspect the append-only task ledger.");
+    @Inject
+    public LedgerCommand(LedgerService ledgerService) {
+        this.spec = CommandSpec.wrapWithoutInspection(this);
+        this.ledgerService = ledgerService;
+        this.spec.name("ledger");
+        this.spec.usageMessage().description("Inspect the append-only task ledger.");
 
-        HasSpec[] subcommands = { new ListCmd(), new VerifyCmd(), new ReadCmd() };
+        HasSpec[] subcommands = { new ListCmd(ledgerService), new VerifyCmd(ledgerService), new ReadCmd(ledgerService) };
         for (HasSpec sub : subcommands) {
-            spec.addSubcommand(sub.getSpec().name(), sub.getSpec());
+            this.spec.addSubcommand(sub.getSpec().name(), sub.getSpec());
         }
     }
 
@@ -41,8 +45,10 @@ public class LedgerCommand implements Callable<Integer>, HasSpec {
     public static class ListCmd implements Callable<Integer>, HasSpec {
 
         private final CommandSpec spec;
+        private final LedgerService ledgerService;
 
-        public ListCmd() {
+        public ListCmd(LedgerService ledgerService) {
+            this.ledgerService = ledgerService;
             spec = CommandSpec.wrapWithoutInspection(this);
             spec.name("list");
             spec.usageMessage().description("List ledger entries.");
@@ -60,21 +66,20 @@ public class LedgerCommand implements Callable<Integer>, HasSpec {
             var pr = spec.commandLine().getParseResult();
             String taskId = pr.matchedOptionValue("task", null);
             String type = pr.matchedOptionValue("type", null);
-            boolean count = pr.hasMatchedOption("count");
+            var count = pr.hasMatchedOption("count");
 
-            LedgerService ledger = new LedgerService(Paths.get("."));
-            List<String> hashes = ledger.readHashes();
+            var hashes = ledgerService.readHashes();
             if (count) {
                 System.out.println(hashes.size());
                 return 0;
             }
             for (int i = 0; i < hashes.size(); i++) {
-                String hash = hashes.get(i);
-                Event ev = ledger.readEvent(hash);
+                var hash = hashes.get(i);
+                var ev = ledgerService.readEvent(hash);
                 if (taskId != null && !taskId.equals(ev.taskId())) continue;
                 if (type != null && !type.equalsIgnoreCase(ev.eventType().name())) continue;
-                String taskLabel = ev.taskId() != null ? ev.taskId() : "<system>";
-                String summary = ev.payload() != null
+                var taskLabel = ev.taskId() != null ? ev.taskId() : "<system>";
+                var summary = ev.payload() != null
                     ? ev.payload().lines().findFirst().orElse("")
                     : (ev.baseCommitSha() != null ? "commit=" + ev.baseCommitSha().substring(0, Math.min(8, ev.baseCommitSha().length())) : "");
                 System.out.printf("[%03d] %s %s | %s | %s | %s%n",
@@ -87,8 +92,10 @@ public class LedgerCommand implements Callable<Integer>, HasSpec {
     public static class VerifyCmd implements Callable<Integer>, HasSpec {
 
         private final CommandSpec spec;
+        private final LedgerService ledgerService;
 
-        public VerifyCmd() {
+        public VerifyCmd(LedgerService ledgerService) {
+            this.ledgerService = ledgerService;
             spec = CommandSpec.wrapWithoutInspection(this);
             spec.name("verify");
             spec.usageMessage().description("Verify ledger integrity by reconstructing the full timeline.");
@@ -100,9 +107,8 @@ public class LedgerCommand implements Callable<Integer>, HasSpec {
 
         @Override
         public Integer call() throws Exception {
-            LedgerService ledger = new LedgerService(Paths.get("."));
             try {
-                List<Event> timeline = ledger.verifyLedger();
+                var timeline = ledgerService.verifyLedger();
                 System.out.println("OK: " + timeline.size() + " entries verified.");
                 return 0;
             } catch (Exception e) {
@@ -115,8 +121,10 @@ public class LedgerCommand implements Callable<Integer>, HasSpec {
     public static class ReadCmd implements Callable<Integer>, HasSpec {
 
         private final CommandSpec spec;
+        private final LedgerService ledgerService;
 
-        public ReadCmd() {
+        public ReadCmd(LedgerService ledgerService) {
+            this.ledgerService = ledgerService;
             spec = CommandSpec.wrapWithoutInspection(this);
             spec.name("read");
             spec.usageMessage().description("Print the JSON event blob for a given SHA.");
@@ -134,18 +142,17 @@ public class LedgerCommand implements Callable<Integer>, HasSpec {
         @Override
         public Integer call() throws Exception {
             var pr = spec.commandLine().getParseResult();
-            String sha = pr.matchedPositional(0).getValue();
+            var sha = pr.matchedPositional(0).getValue().toString();
 
-            LedgerService ledger = new LedgerService(Paths.get("."));
             Event ev;
             try {
-                ev = ledger.readEvent(sha);
+                ev = ledgerService.readEvent(sha);
             } catch (java.io.IOException e) {
                 System.err.printf("ERROR: '%s' not found in ledger object store (.agents/objects/).%n", sha);
                 System.err.println("       Git commit SHAs live in .git/ — use 'worker-base' to resolve a task's recorded commit SHA.");
                 return 1;
             }
-            ObjectMapper mapper = new ObjectMapper()
+            var mapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .enable(SerializationFeature.INDENT_OUTPUT);

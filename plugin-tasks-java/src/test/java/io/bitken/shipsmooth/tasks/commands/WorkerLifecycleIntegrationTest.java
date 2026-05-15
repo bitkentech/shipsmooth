@@ -1,6 +1,9 @@
 package io.bitken.shipsmooth.tasks.commands;
 
 import io.bitken.shipsmooth.tasks.TasksCli;
+import io.bitken.shipsmooth.tasks.di.AppComponents;
+import io.bitken.shipsmooth.tasks.di.DaggerAppComponents;
+import io.bitken.shipsmooth.tasks.di.ServicesModule;
 import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
@@ -9,7 +12,6 @@ import io.bitken.shipsmooth.tasks.service.XmlService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import picocli.CommandLine;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +44,9 @@ public class WorkerLifecycleIntegrationTest {
     private static final String BRANCH = "agent-work/" + TASK_ID;
 
     private final Path repoRoot = Paths.get(".");
+    private final AppComponents app = DaggerAppComponents.builder()
+            .servicesModule(new ServicesModule(repoRoot))
+            .build();
     private final File planDir = new File(".agents/plans");
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
@@ -81,7 +86,7 @@ public class WorkerLifecycleIntegrationTest {
         int snapshotIndex = (int) ledgerCountBefore - 1;
 
         // 1. worker-init creates worktree + WORKTREE_CREATED event.
-        int initExit = new TasksCli().execute(
+        int initExit = new TasksCli(app).execute(
                 "worker-init", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, initExit, "worker-init must exit 0");
 
@@ -99,7 +104,7 @@ public class WorkerLifecycleIntegrationTest {
         Files.writeString(created, "service-layer preamble\n");
 
         // 3. worker-finish captures diff, commits on the agent-work branch.
-        int finishExit = new TasksCli().execute(
+        int finishExit = new TasksCli(app).execute(
                 "worker-finish", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, finishExit, "worker-finish must exit 0 on happy path");
 
@@ -133,7 +138,7 @@ public class WorkerLifecycleIntegrationTest {
         LedgerService ledger = new LedgerService(repoRoot);
         int snapshotIndex = ledger.readHashes().size() - 1; // -1 == "from the beginning is OK; we only care about after this"
 
-        int initExit = new TasksCli().execute(
+        int initExit = new TasksCli(app).execute(
                 "worker-init", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, initExit);
 
@@ -145,7 +150,7 @@ public class WorkerLifecycleIntegrationTest {
         git(worktreeDir, "-c", "user.email=test@example.com",
                 "-c", "user.name=Test", "commit", "-m", "rogue commit");
 
-        int finishExit = new TasksCli().execute(
+        int finishExit = new TasksCli(app).execute(
                 "worker-finish", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertNotEquals(0, finishExit, "worker-finish must reject worktree with subagent commits");
 

@@ -4,6 +4,7 @@ import io.bitken.shipsmooth.tasks.git.WorktreeService;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
+import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -14,13 +15,18 @@ import java.util.concurrent.Callable;
 public class WorkerCleanupCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
+    private final WorktreeService git;
+    private final LedgerService ledger;
 
-    public WorkerCleanupCommand() {
-        spec = CommandSpec.wrapWithoutInspection(this);
-        spec.name("worker-cleanup");
-        spec.usageMessage().description("Remove the worktree for a task, keeping the branch ref.");
-        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
-        spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());
+    @Inject
+    public WorkerCleanupCommand(WorktreeService git, LedgerService ledger) {
+        this.spec = CommandSpec.wrapWithoutInspection(this);
+        this.spec.name("worker-cleanup");
+        this.spec.usageMessage().description("Remove the worktree for a task, keeping the branch ref.");
+        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        this.spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());
+        this.git = git;
+        this.ledger = ledger;
     }
 
     public CommandSpec getSpec() {
@@ -33,16 +39,12 @@ public class WorkerCleanupCommand implements Callable<Integer>, HasSpec {
         int plan = pr.matchedOption("plan").getValue();
         String task = pr.matchedOption("task").getValue();
 
-        var repoRoot = Paths.get(".");
-        WorktreeService git = new WorktreeService(repoRoot);
+        var worktreeRel = ".agents/tasks/" + task;
+        var branch = "agent-work/" + task;
 
-        String worktreeRel = ".agents/tasks/" + task;
-        String branch = "agent-work/" + task;
-
-        LedgerService ledger = new LedgerService(repoRoot);
         ledger.ensureLedgerFile();
 
-        Event commitEvent = ledger.findLastEvent(task, EventType.COMMIT_RECORDED);
+        var commitEvent = ledger.findLastEvent(task, EventType.COMMIT_RECORDED);
         if (commitEvent == null) {
             System.err.println("Error: no COMMIT_RECORDED event found for task " + task
                 + ". Run worker-finish before worker-cleanup.");

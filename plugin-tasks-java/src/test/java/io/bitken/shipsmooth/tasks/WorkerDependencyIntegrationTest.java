@@ -1,5 +1,8 @@
 package io.bitken.shipsmooth.tasks;
 
+import io.bitken.shipsmooth.tasks.di.AppComponents;
+import io.bitken.shipsmooth.tasks.di.DaggerAppComponents;
+import io.bitken.shipsmooth.tasks.di.ServicesModule;
 import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
@@ -8,7 +11,6 @@ import io.bitken.shipsmooth.tasks.service.XmlService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import picocli.CommandLine;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +36,9 @@ public class WorkerDependencyIntegrationTest {
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile  = new File(planDir, "plan-" + PLAN_NUM + ".md");
     private final Path repoRoot = Paths.get(".");
+    private final AppComponents app = DaggerAppComponents.builder()
+            .servicesModule(new ServicesModule(repoRoot))
+            .build();
 
     @BeforeEach
     void setUp() throws Exception {
@@ -65,7 +70,7 @@ public class WorkerDependencyIntegrationTest {
 
     @Test
     void dependentTask_inheritsParentCommit() throws Exception {
-        TasksCli cli = new TasksCli();
+        TasksCli cli = new TasksCli(app);
         LedgerService ledger = new LedgerService(repoRoot);
         int beforeCount = ledger.readHashes().size();
 

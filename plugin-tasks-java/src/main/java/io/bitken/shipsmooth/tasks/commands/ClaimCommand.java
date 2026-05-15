@@ -6,6 +6,7 @@ import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
+import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -17,13 +18,20 @@ import java.util.concurrent.Callable;
 public class ClaimCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
+    private final XmlService xmlService;
+    private final WorktreeService git;
+    private final LedgerService ledger;
 
-    public ClaimCommand() {
-        spec = CommandSpec.wrapWithoutInspection(this);
-        spec.name("claim");
-        spec.usageMessage().description("Claim a task for subagent execution and record AGENT_START.");
-        spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
-        spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID").type(String.class).build());
+    @Inject
+    public ClaimCommand(XmlService xmlService, WorktreeService git, LedgerService ledger) {
+        this.spec = CommandSpec.wrapWithoutInspection(this);
+        this.spec.name("claim");
+        this.spec.usageMessage().description("Claim a task for subagent execution and record AGENT_START.");
+        this.spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
+        this.spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID").type(String.class).build());
+        this.xmlService = xmlService;
+        this.git = git;
+        this.ledger = ledger;
     }
 
     public CommandSpec getSpec() {
@@ -37,9 +45,8 @@ public class ClaimCommand implements Callable<Integer>, HasSpec {
         String task = pr.matchedOption("task").getValue();
 
         var repoRoot = Paths.get(".");
-        File xmlFile = new File(".agents/plans/plan-" + plan + "-tasks.xml");
+        var xmlFile = new File(".agents/plans/plan-" + plan + "-tasks.xml");
 
-        XmlService xmlService = new XmlService();
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
 
         boolean taskExists = planTasks.getTasks().getTask().stream()
@@ -49,10 +56,8 @@ public class ClaimCommand implements Callable<Integer>, HasSpec {
             return 1;
         }
 
-        WorktreeService git = new WorktreeService(repoRoot);
         String headSha = git.headSha();
 
-        LedgerService ledger = new LedgerService(repoRoot);
         ledger.ensureLedgerFile();
         ledger.record(Event.forTask(EventType.AGENT_START, task, headSha,
             "task claimed for subagent execution", Map.of("plan", String.valueOf(plan))));

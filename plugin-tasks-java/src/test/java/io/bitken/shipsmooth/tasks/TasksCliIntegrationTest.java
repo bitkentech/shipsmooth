@@ -1,5 +1,8 @@
 package io.bitken.shipsmooth.tasks;
 
+import io.bitken.shipsmooth.tasks.di.AppComponents;
+import io.bitken.shipsmooth.tasks.di.DaggerAppComponents;
+import io.bitken.shipsmooth.tasks.di.ServicesModule;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
@@ -21,6 +24,9 @@ public class TasksCliIntegrationTest {
     private final File planDir = new File(".agents/plans");
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
+    private final AppComponents app = DaggerAppComponents.builder()
+            .servicesModule(new ServicesModule(Paths.get(".")))
+            .build();
     private TasksCli tasksCli;
 
     @BeforeEach
@@ -35,7 +41,7 @@ public class TasksCliIntegrationTest {
 
         LedgerService ledger = new LedgerService(Paths.get("."));
         ledger.ensureLedgerFile();
-        tasksCli = new TasksCli();
+        tasksCli = new TasksCli(app);
     }
 
     @AfterEach

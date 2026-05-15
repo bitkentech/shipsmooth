@@ -5,6 +5,7 @@ import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
+import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -15,14 +16,19 @@ import java.util.concurrent.Callable;
 public class UpdateStatusCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
+    private final XmlService xmlService;
+    private final LedgerService ledgerService;
 
-    public UpdateStatusCommand() {
-        spec = CommandSpec.wrapWithoutInspection(this);
-        spec.name("update-status");
-        spec.usageMessage().description("Update the status of a task.");
-        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
-        spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
-        spec.addOption(OptionSpec.builder("--status").required(true).type(String.class).build());
+    @Inject
+    public UpdateStatusCommand(XmlService xmlService, LedgerService ledgerService) {
+        this.spec = CommandSpec.wrapWithoutInspection(this);
+        this.spec.name("update-status");
+        this.spec.usageMessage().description("Update the status of a task.");
+        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        this.spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
+        this.spec.addOption(OptionSpec.builder("--status").required(true).type(String.class).build());
+        this.xmlService = xmlService;
+        this.ledgerService = ledgerService;
     }
 
     public CommandSpec getSpec() {
@@ -36,17 +42,15 @@ public class UpdateStatusCommand implements Callable<Integer>, HasSpec {
         int task = pr.matchedOption("task").getValue();
         String status = pr.matchedOption("status").getValue();
 
-        XmlService service = new XmlService();
-        File file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
-        PlanTasks planTasks = service.readPlanTasks(file);
-        service.updateTaskStatus(planTasks, task, status);
-        service.writePlanTasks(planTasks, file);
+        var file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
+        var planTasks = xmlService.readPlanTasks(file);
+        xmlService.updateTaskStatus(planTasks, task, status);
+        xmlService.writePlanTasks(planTasks, file);
         System.out.println("Task " + task + " status set to \"" + status + "\"");
 
         try {
-            LedgerService ledger = new LedgerService(Paths.get("."));
-            ledger.ensureLedgerFile();
-            ledger.record(Event.forTask(EventType.STATUS_UPDATED, String.valueOf(task), null, "status=" + status, null));
+            ledgerService.ensureLedgerFile();
+            ledgerService.record(Event.forTask(EventType.STATUS_UPDATED, String.valueOf(task), null, "status=" + status, null));
         } catch (Exception e) {
             System.err.println("Warning: ledger record failed (XML mutation preserved): " + e.getMessage());
         }

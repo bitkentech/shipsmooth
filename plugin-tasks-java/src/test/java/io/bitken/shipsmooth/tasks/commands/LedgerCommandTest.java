@@ -31,7 +31,7 @@ public class LedgerCommandTest {
         PrintStream original = System.out;
         System.setOut(new PrintStream(out));
         try {
-            int exit = new CommandLine(new LedgerCommand().getSpec()).execute("list");
+            int exit = new CommandLine(new LedgerCommand(ledger).getSpec()).execute("list");
             assertEquals(0, exit);
             String output = out.toString();
             assertTrue(output.contains(recordedSha.substring(0, 8)), "Expected sha8 in list output");
@@ -47,7 +47,7 @@ public class LedgerCommandTest {
         PrintStream original = System.out;
         System.setOut(new PrintStream(out));
         try {
-            int exit = new CommandLine(new LedgerCommand().getSpec()).execute("list", "--task", "42");
+            int exit = new CommandLine(new LedgerCommand(ledger).getSpec()).execute("list", "--task", "42");
             assertEquals(0, exit);
             String output = out.toString();
             assertTrue(output.contains("COMMENT_ADDED"));
@@ -58,7 +58,7 @@ public class LedgerCommandTest {
 
     @Test
     public void ledgerVerifyExitsZero() {
-        int exit = new CommandLine(new LedgerCommand().getSpec()).execute("verify");
+        int exit = new CommandLine(new LedgerCommand(ledger).getSpec()).execute("verify");
         assertEquals(0, exit);
     }
 
@@ -68,7 +68,7 @@ public class LedgerCommandTest {
         PrintStream original = System.out;
         System.setOut(new PrintStream(out));
         try {
-            int exit = new CommandLine(new LedgerCommand().getSpec()).execute("read", recordedSha);
+            int exit = new CommandLine(new LedgerCommand(ledger).getSpec()).execute("read", recordedSha);
             assertEquals(0, exit);
             String output = out.toString();
             assertTrue(output.contains("COMMENT_ADDED"));
@@ -84,7 +84,7 @@ public class LedgerCommandTest {
         PrintStream originalErr = System.err;
         System.setErr(new PrintStream(err));
         try {
-            int exit = new CommandLine(new LedgerCommand().getSpec()).execute("read", "73fbd39585a74a3e70e6620699b48d2ea31dc5ed");
+            int exit = new CommandLine(new LedgerCommand(ledger).getSpec()).execute("read", "73fbd39585a74a3e70e6620699b48d2ea31dc5ed");
             assertEquals(1, exit);
             String errOutput = err.toString();
             assertTrue(errOutput.contains("not found in ledger object store"), "Expected helpful error message");
@@ -100,7 +100,7 @@ public class LedgerCommandTest {
         PrintStream original = System.out;
         System.setOut(new PrintStream(out));
         try {
-            int exit = new CommandLine(new LedgerCommand().getSpec()).execute("list", "--count");
+            int exit = new CommandLine(new LedgerCommand(ledger).getSpec()).execute("list", "--count");
             assertEquals(0, exit);
             String output = out.toString().trim();
             int count = Integer.parseInt(output);
@@ -117,7 +117,7 @@ public class LedgerCommandTest {
         PrintStream original = System.out;
         System.setOut(new PrintStream(out));
         try {
-            int exit = new CommandLine(new LedgerCommand().getSpec()).execute("list", "--count", "--task", "42");
+            int exit = new CommandLine(new LedgerCommand(ledger).getSpec()).execute("list", "--count", "--task", "42");
             assertEquals(0, exit);
             String output = out.toString().trim();
             // Must be parseable as integer and print nothing else
@@ -133,7 +133,7 @@ public class LedgerCommandTest {
         PrintStream original = System.out;
         System.setOut(new PrintStream(out));
         try {
-            int exit = new CommandLine(new LedgerCommand().getSpec()).execute("read", recordedSha.substring(0, 8));
+            int exit = new CommandLine(new LedgerCommand(ledger).getSpec()).execute("read", recordedSha.substring(0, 8));
             assertEquals(0, exit);
             String output = out.toString();
             assertTrue(output.contains("COMMENT_ADDED"));

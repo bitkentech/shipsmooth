@@ -5,6 +5,7 @@ import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
+import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -15,15 +16,21 @@ import java.util.concurrent.Callable;
 public class ProjectUpdateCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
+    private final XmlService xmlService;
+    private final LedgerService ledgerService;
 
-    public ProjectUpdateCommand() {
-        spec = CommandSpec.wrapWithoutInspection(this);
-        spec.name("project-update");
-        spec.usageMessage().description("Add a project update.");
-        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
-        spec.addOption(OptionSpec.builder("--status").type(String.class).build());
-        spec.addOption(OptionSpec.builder("--blocked").type(Boolean.class).build());
-        spec.addOption(OptionSpec.builder("--message").type(String.class).build());
+    @Inject
+    public ProjectUpdateCommand(XmlService xmlService, LedgerService ledgerService) {
+        this.spec = CommandSpec.wrapWithoutInspection(this);
+        this.xmlService = xmlService;
+        this.ledgerService = ledgerService;
+
+        this.spec.name("project-update");
+        this.spec.usageMessage().description("Add a project update.");
+        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        this.spec.addOption(OptionSpec.builder("--status").type(String.class).build());
+        this.spec.addOption(OptionSpec.builder("--blocked").type(Boolean.class).build());
+        this.spec.addOption(OptionSpec.builder("--message").type(String.class).build());
     }
 
     public CommandSpec getSpec() {
@@ -38,20 +45,18 @@ public class ProjectUpdateCommand implements Callable<Integer>, HasSpec {
         Boolean blocked = pr.matchedOptionValue("blocked", null);
         String message = pr.matchedOptionValue("message", null);
 
-        XmlService service = new XmlService();
-        File file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
-        PlanTasks planTasks = service.readPlanTasks(file);
-        service.projectUpdate(planTasks, status, blocked, message);
-        service.writePlanTasks(planTasks, file);
+        var file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
+        var planTasks = xmlService.readPlanTasks(file);
+        xmlService.projectUpdate(planTasks, status, blocked, message);
+        xmlService.writePlanTasks(planTasks, file);
         System.out.println("Project update added.");
 
         try {
-            LedgerService ledger = new LedgerService(Paths.get("."));
-            ledger.ensureLedgerFile();
-            String payload = (status != null ? "status=" + status : "") +
+            ledgerService.ensureLedgerFile();
+            var payload = (status != null ? "status=" + status : "") +
                 (Boolean.TRUE.equals(blocked) ? " blocked=true" : "") +
                 (message != null ? " " + message : "");
-            ledger.record(Event.system(EventType.PROJECT_UPDATE, null, payload.strip(), null));
+            ledgerService.record(Event.system(EventType.PROJECT_UPDATE, null, payload.strip(), null));
         } catch (Exception e) {
             System.err.println("Warning: ledger record failed (XML mutation preserved): " + e.getMessage());
         }

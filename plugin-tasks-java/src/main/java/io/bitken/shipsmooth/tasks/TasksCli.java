@@ -1,9 +1,14 @@
 package io.bitken.shipsmooth.tasks;
 
 import io.bitken.shipsmooth.tasks.commands.*;
-import io.bitken.shipsmooth.tasks.di.AppComponent;
-import io.bitken.shipsmooth.tasks.di.DaggerAppComponent;
+import io.bitken.shipsmooth.tasks.di.AppComponents;
+import io.bitken.shipsmooth.tasks.di.DaggerAppComponents;
 import io.bitken.shipsmooth.tasks.di.ServicesModule;
+import io.bitken.shipsmooth.tasks.git.WorktreeService;
+import io.bitken.shipsmooth.tasks.ledger.LedgerService;
+import io.bitken.shipsmooth.tasks.service.XmlService;
+import io.bitken.shipsmooth.tasks.workflow.WorkflowService;
+import io.bitken.shipsmooth.tasks.workflow.WorkflowServiceImpl;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -15,12 +20,17 @@ import java.util.concurrent.Callable;
 public class TasksCli {
 
     private final CommandLine cmd;
-    private final IntegrateCommand integrateCommand = new IntegrateCommand();
-    private final AppComponent app = DaggerAppComponent.builder()
-        .servicesModule(new ServicesModule(Paths.get(".")))
-        .build();
+    private final IntegrateCommand integrateCmd;
 
-    public TasksCli() {
+    public TasksCli(AppComponents app) {
+        XmlService xml = app.xmlService();
+        LedgerService ledger = app.ledgerService();
+        WorktreeService worktree = app.worktreeService();
+        WorkflowService workflow = app.workflowService();
+        WorkflowServiceImpl workflowImpl = app.workflowServiceImpl();
+
+        integrateCmd = new IntegrateCommand(workflow);
+
         CommandSpec spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("tasks");
         spec.usageMessage().description("CLI to manage tasks, subagents and ledger for shipsmooth");
@@ -34,24 +44,24 @@ public class TasksCli {
         }));
 
         Callable<?>[] commands = {
-            new InitCommand(),
-            app.addCommentCommand(),
-            new AddDeviationCommand(),
-            new ClaimCommand(),
-            integrateCommand,
-            new LedgerCommand(),
-            new LedgerRecordCommitCommand(),
-            new LedgerRecordPatchIntegratedCommand(),
-            new LedgerResolverCompleteCommand(),
+            new InitCommand(xml, ledger),
+            new AddCommentCommand(xml, ledger),
+            new AddDeviationCommand(xml, ledger),
+            new ClaimCommand(xml, worktree, ledger),
+            integrateCmd,
+            new LedgerCommand(ledger),
+            new LedgerRecordCommitCommand(ledger),
+            new LedgerRecordPatchIntegratedCommand(ledger),
+            new LedgerResolverCompleteCommand(ledger),
             new LedgerWatchCommand(),
-            new ProjectUpdateCommand(),
-            new SetCommitCommand(),
-            new ShowCommand(),
-            new UpdateStatusCommand(),
-            new WorkerBaseCommand(),
-            new WorkerCleanupCommand(),
-            new WorkerFinishCommand(),
-            new WorkerInitCommand(),
+            new ProjectUpdateCommand(xml, ledger),
+            new SetCommitCommand(xml, ledger),
+            new ShowCommand(xml),
+            new UpdateStatusCommand(xml, ledger),
+            new WorkerBaseCommand(xml, ledger),
+            new WorkerCleanupCommand(worktree, ledger),
+            new WorkerFinishCommand(workflowImpl),
+            new WorkerInitCommand(workflow),
         };
 
         for (Callable<?> command : commands) {
@@ -64,7 +74,7 @@ public class TasksCli {
 
     /** Test seam for integration command. */
     public IntegrateCommand integrateCommand() {
-        return integrateCommand;
+        return integrateCmd;
     }
 
     public int execute(String... args) {
@@ -72,7 +82,11 @@ public class TasksCli {
     }
 
     public static void main(String[] args) {
-        int exitCode = new TasksCli().execute(args);
+        AppComponents app = DaggerAppComponents.builder()
+            .servicesModule(new ServicesModule(Paths.get(".")))
+            .build();
+
+        int exitCode = new TasksCli(app).execute(args);
         System.exit(exitCode);
     }
 }

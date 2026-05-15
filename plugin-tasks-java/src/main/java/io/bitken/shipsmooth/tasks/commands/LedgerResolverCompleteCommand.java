@@ -3,6 +3,7 @@ package io.bitken.shipsmooth.tasks.commands;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
+import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -13,14 +14,17 @@ import java.util.concurrent.Callable;
 public class LedgerResolverCompleteCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
+    private final LedgerService ledgerService;
 
-    public LedgerResolverCompleteCommand() {
-        spec = CommandSpec.wrapWithoutInspection(this);
-        spec.name("ledger-resolver-complete");
-        spec.usageMessage().description("Signal that the Lead Agent's resolver subagent has finished (unblocks integrate).");
-        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
-        spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
-        spec.addOption(OptionSpec.builder("--repo").description("Repo root (default: current directory)").type(String.class).build());
+    @Inject
+    public LedgerResolverCompleteCommand(LedgerService ledgerService) {
+        this.spec = CommandSpec.wrapWithoutInspection(this);
+        this.ledgerService = ledgerService;
+        this.spec.name("ledger-resolver-complete");
+        this.spec.usageMessage().description("Signal that the Lead Agent's resolver subagent has finished (unblocks integrate).");
+        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        this.spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
+        this.spec.addOption(OptionSpec.builder("--repo").description("Repo root (default: current directory)").type(String.class).build());
     }
 
     public CommandSpec getSpec() {
@@ -30,11 +34,11 @@ public class LedgerResolverCompleteCommand implements Callable<Integer>, HasSpec
     @Override
     public Integer call() throws Exception {
         var pr = spec.commandLine().getParseResult();
-        int plan = pr.matchedOption("plan").getValue();
-        int task = pr.matchedOption("task").getValue();
-        String repo = pr.matchedOptionValue("repo", null);
+        var plan = (int) pr.matchedOption("plan").getValue();
+        var task = (int) pr.matchedOption("task").getValue();
+        var repo = (String) pr.matchedOptionValue("repo", null);
 
-        LedgerService ledger = new LedgerService(repo != null ? Paths.get(repo) : Paths.get("."));
+        var ledger = repo != null ? new LedgerService(Paths.get(repo)) : this.ledgerService;
         ledger.ensureLedgerFile();
         ledger.record(Event.forTask(
             EventType.RESOLVER_COMPLETE,

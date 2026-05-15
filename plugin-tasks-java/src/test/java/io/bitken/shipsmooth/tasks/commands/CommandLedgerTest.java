@@ -56,7 +56,7 @@ public class CommandLedgerTest {
 
     @Test
     public void updateStatusRecordsStatusUpdatedEvent() throws Exception {
-        new CommandLine(new UpdateStatusCommand().getSpec())
+        new CommandLine(new UpdateStatusCommand(xmlService, ledger).getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "in-progress");
 
         List<String> hashes = ledger.readHashes();
@@ -81,7 +81,7 @@ public class CommandLedgerTest {
 
     @Test
     public void addDeviationRecordsDeviationAddedEvent() throws Exception {
-        new CommandLine(new AddDeviationCommand().getSpec())
+        new CommandLine(new AddDeviationCommand(xmlService, ledger).getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--type", "minor", "--message", "split task");
 
         List<String> hashes = ledger.readHashes();
@@ -93,7 +93,7 @@ public class CommandLedgerTest {
 
     @Test
     public void setCommitRecordsCommitRecordedEvent() throws Exception {
-        new CommandLine(new SetCommitCommand().getSpec())
+        new CommandLine(new SetCommitCommand(xmlService, ledger).getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--commit", "deadbeef");
 
         List<String> hashes = ledger.readHashes();
@@ -106,7 +106,7 @@ public class CommandLedgerTest {
 
     @Test
     public void projectUpdateRecordsProjectUpdateEvent() throws Exception {
-        new CommandLine(new ProjectUpdateCommand().getSpec())
+        new CommandLine(new ProjectUpdateCommand(xmlService, ledger).getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--status", "in-review", "--message", "all tasks done");
 
         List<String> hashes = ledger.readHashes();

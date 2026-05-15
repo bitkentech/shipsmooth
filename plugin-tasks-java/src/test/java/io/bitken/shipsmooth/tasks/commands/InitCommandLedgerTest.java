@@ -3,6 +3,7 @@ package io.bitken.shipsmooth.tasks.commands;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
+import io.bitken.shipsmooth.tasks.service.XmlService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
@@ -21,9 +22,12 @@ public class InitCommandLedgerTest {
     private final File planDir = new File(".agents/plans");
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
+    private final XmlService xmlService = new XmlService();
+    private LedgerService ledgerService;
 
     @BeforeEach
     public void setUp() throws Exception {
+        ledgerService = new LedgerService(Paths.get("."));
         planDir.mkdirs();
         Files.writeString(mdFile.toPath(),
                 "### Task 1: Alpha task [High]\n### Task 2: Beta task [Low]\n");
@@ -38,7 +42,7 @@ public class InitCommandLedgerTest {
 
     @Test
     public void initCreatesObjectsDirAndLedgerFile() throws Exception {
-        int exit = new CommandLine(new InitCommand().getSpec())
+        int exit = new CommandLine(new InitCommand(xmlService, ledgerService).getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
         assertEquals(0, exit);
 
@@ -52,7 +56,7 @@ public class InitCommandLedgerTest {
         ledger.ensureLedgerFile();
         int before = ledger.readHashes().size();
 
-        new CommandLine(new InitCommand().getSpec())
+        new CommandLine(new InitCommand(xmlService, ledgerService).getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
 
         List<String> hashes = ledger.readHashes();
@@ -75,10 +79,10 @@ public class InitCommandLedgerTest {
 
         try {
             // Run twice — entries must not be duplicated
-            new CommandLine(new InitCommand().getSpec())
+            new CommandLine(new InitCommand(xmlService, ledgerService).getSpec())
                     .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
             xmlFile.delete();
-            new CommandLine(new InitCommand().getSpec())
+            new CommandLine(new InitCommand(xmlService, ledgerService).getSpec())
                     .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
 
             String content = Files.readString(gitignore);

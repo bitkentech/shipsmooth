@@ -1,6 +1,9 @@
 package io.bitken.shipsmooth.tasks.commands;
 
 import io.bitken.shipsmooth.tasks.TasksCli;
+import io.bitken.shipsmooth.tasks.di.AppComponents;
+import io.bitken.shipsmooth.tasks.di.DaggerAppComponents;
+import io.bitken.shipsmooth.tasks.di.ServicesModule;
 import io.bitken.shipsmooth.tasks.integration.IntegrationLedger;
 import io.bitken.shipsmooth.tasks.integration.Resolver;
 import io.bitken.shipsmooth.tasks.ledger.Event;
@@ -36,6 +39,9 @@ public class IntegrateCommandTest {
     private static final String INTEGRATION_REL = ".agents/integration/plan-" + PLAN_NUM;
 
     private final Path repoRoot = Paths.get(".");
+    private final AppComponents app = DaggerAppComponents.builder()
+            .servicesModule(new ServicesModule(repoRoot))
+            .build();
     private final File planDir = new File(".agents/plans");
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
@@ -109,7 +115,7 @@ public class IntegrateCommandTest {
 
         // At this point: integration branch exists with task 2, but not task 3.
         // Running integrate should resume from task 3.
-        int exit = new TasksCli().execute(
+        int exit = new TasksCli(app).execute(
                 "integrate",
                 "--plan", String.valueOf(PLAN_NUM),
                 "--task-branch", currentBranch(),
@@ -155,7 +161,7 @@ public class IntegrateCommandTest {
         git(repoRoot.toFile(), "worktree", "add", INTEGRATION_REL, "-b", INTEGRATION_BRANCH, headSha);
 
         // Without --force this would fail; with --force it should succeed
-        int exit = new TasksCli().execute(
+        int exit = new TasksCli(app).execute(
                 "integrate",
                 "--plan", String.valueOf(PLAN_NUM),
                 "--task-branch", currentBranch(),
@@ -204,7 +210,7 @@ public class IntegrateCommandTest {
         // A resolver that does nothing (leaves conflict markers in place)
         Resolver noOpResolver = (dir, ctx) -> {};
 
-        IntegrateCommand cmd = new IntegrateCommand();
+        IntegrateCommand cmd = new IntegrateCommand(new io.bitken.shipsmooth.tasks.workflow.WorkflowServiceImpl(repoRoot));
         cmd.setResolverFactory((taskId, integrationAbs) -> noOpResolver);
 
         CommandLine cli = new CommandLine(cmd.getSpec());

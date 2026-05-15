@@ -1,11 +1,13 @@
 package io.bitken.shipsmooth.tasks.commands;
 
 import io.bitken.shipsmooth.tasks.TasksCli;
+import io.bitken.shipsmooth.tasks.di.AppComponents;
+import io.bitken.shipsmooth.tasks.di.DaggerAppComponents;
+import io.bitken.shipsmooth.tasks.di.ServicesModule;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import org.junit.jupiter.api.Test;
-import picocli.CommandLine;
 
 import java.nio.file.Paths;
 
@@ -13,12 +15,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class LedgerRecordPatchIntegratedCommandTest {
 
+    private final AppComponents app = DaggerAppComponents.builder()
+            .servicesModule(new ServicesModule(Paths.get(".")))
+            .build();
+
     @Test
     void writesPatchIntegratedEventWithRecoveryFlag() throws Exception {
         LedgerService ledger = new LedgerService(Paths.get("."));
         ledger.ensureLedgerFile();
 
-        int exit = new TasksCli().execute(
+        int exit = new TasksCli(app).execute(
                 "ledger-record-patch-integrated",
                 "--plan", "993",
                 "--task", "7",
