@@ -1,5 +1,6 @@
 build/
 build-gemini/
+build-gemini-dev/
 plugin-node/node_modules/
 plugin-node/dist/
 dist-test/
