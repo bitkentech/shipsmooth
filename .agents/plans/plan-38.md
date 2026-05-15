@@ -307,7 +307,7 @@ production code yet referencing Dagger.
 
 Create `io.bitken.shipsmooth.tasks.di.ServicesModule` with `@Provides` methods
 for `Path repoRoot`, `XmlService`, and `LedgerService`. Create
-`io.bitken.shipsmooth.tasks.di.AppComponent` as a `@Component` interface with
+`io.bitken.shipsmooth.tasks.di.AppComponents` as a `@Component` interface with
 no command accessors yet. Add `opens io.bitken.shipsmooth.tasks.di to dagger;`
 to `module-info.java`. Verify `mvn compile` generates `DaggerAppComponent`.
 

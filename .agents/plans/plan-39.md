@@ -1,6 +1,6 @@
 # Plan 39 — Migrate remaining commands to Dagger DI
 
-**Status:** in-progress
+**Status:** closed
 **Branch:** `t/plan-39-di-remaining-commands`
 **Tracking mode:** Local (`.agents/plans/plan-39-tasks.xml`).
 
