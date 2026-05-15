@@ -13,3 +13,7 @@ plugin-tasks-java/target/
 .agents/integration/*
 .agents/objects/
 .agents/ledger.jsonl
+**/.vscode/settings.json
+model/*.tlc
+model/*.out
+model/states/

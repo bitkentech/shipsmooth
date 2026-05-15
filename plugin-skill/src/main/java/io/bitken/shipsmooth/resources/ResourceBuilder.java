@@ -35,8 +35,27 @@ public class ResourceBuilder {
 
         Path skillDir = Path.of(buildOutputDir, "skills", skillName);
         Files.createDirectories(skillDir);
-        renderTo(engine, "skills/SKILL.jte", model, skillDir.resolve("SKILL.md"));
+        renderTo(engine, "skills/start/SKILL.jte", model, skillDir.resolve("SKILL.md"));
         System.out.println("Rendered SKILL.md to " + skillDir.toAbsolutePath());
+
+        // Second skill: the TLA-checked-ledger variant. Name and frontmatter are
+        // derived from the primary skill (start -> experimental-start-tla, start-dev -> experimental-start-tla-dev).
+        String tlaSkillName = skillName.endsWith("-dev")
+            ? "experimental-" + skillName.substring(0, skillName.length() - "-dev".length()) + "-tla-dev"
+            : "experimental-" + skillName + "-tla";
+        String tlaFrontmatter = frontmatter.isEmpty() ? "" : """
+            ---
+            name: %s
+            description: Use when starting any task — applies the shipsmooth agent coding workflow with a TLA-checked content-addressed ledger.
+            ---""".formatted(tlaSkillName);
+        PluginModel tlaModel = new PluginModel(
+            pluginName, pluginVersion, pluginDesc,
+            tlaSkillName, cliBin, tlaFrontmatter, cacheDir, platform, jlinkDir
+        );
+        Path tlaSkillDir = Path.of(buildOutputDir, "skills", tlaSkillName);
+        Files.createDirectories(tlaSkillDir);
+        renderTo(engine, "skills/experimental/start-tla/SKILL.jte", tlaModel, tlaSkillDir.resolve("SKILL.md"));
+        System.out.println("Rendered SKILL.md to " + tlaSkillDir.toAbsolutePath());
 
         ObjectMapper mapper = new ObjectMapper();
 
