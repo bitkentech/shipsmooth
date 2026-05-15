@@ -290,6 +290,53 @@ already 1 → 2 → 3 → 4 with 2 depending on 1, 3 on 2, 4 on 3.
 
 ---
 
+## 3a. Tasks (risk-sorted)
+
+### Task 1: Add Dagger dependency and verify codegen [Medium]
+
+Add `com.google.dagger:dagger:2.59.2` to `plugin-tasks-java/pom.xml`. Configure
+`maven-compiler-plugin` to run `dagger-compiler` as an annotation processor.
+Add `requires dagger;` and (likely) `requires jakarta.inject;` to
+`module-info.java`. Verify `mvn compile` produces sources under
+`target/generated-sources/annotations/` and `mvn test` still passes with no
+production code yet referencing Dagger.
+
+### Task 2: Create di package with ServicesModule and AppComponent [Low]
+
+*Depends-on: 1*
+
+Create `io.bitken.shipsmooth.tasks.di.ServicesModule` with `@Provides` methods
+for `Path repoRoot`, `XmlService`, and `LedgerService`. Create
+`io.bitken.shipsmooth.tasks.di.AppComponent` as a `@Component` interface with
+no command accessors yet. Add `opens io.bitken.shipsmooth.tasks.di to dagger;`
+to `module-info.java`. Verify `mvn compile` generates `DaggerAppComponent`.
+
+### Task 3: Migrate AddCommentCommand to constructor injection [Medium]
+
+*Depends-on: 2*
+
+Add `@Inject` constructor to `AddCommentCommand` taking `XmlService` and
+`LedgerService`. Remove the inline `new XmlService()` and `new
+LedgerService(Paths.get("."))` from `call()`. Add an `addCommentCommand()`
+accessor to `AppComponent`. Update `TasksCli` to build a Dagger component once
+and obtain `AddCommentCommand` via `app.addCommentCommand()` (other 16
+commands remain unchanged). Behaviour must be byte-for-byte identical: same
+stdout, stderr, exit code, XML mutation, ledger event.
+
+### Task 4: Update AddCommentCommand tests for constructor injection [Low]
+
+*Depends-on: 3*
+
+Find tests in `CommandsTest` and `CommandLedgerTest` (and any other test
+sources) that construct `AddCommentCommand` directly with `new
+AddCommentCommand()`. Update them to pass services explicitly: `new
+AddCommentCommand(new XmlService(), new LedgerService(tmpDir))`. Tests that
+construct via `TasksCli` need no change. Do not introduce Dagger imports in
+test sources. Coverage for `AddCommentCommand` must meet the agreed
+threshold.
+
+---
+
 ## 4. Test plan
 
 **Integration test (preamble, before any task):**
