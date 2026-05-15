@@ -69,7 +69,7 @@ public class CommandLedgerTest {
 
     @Test
     public void addCommentRecordsCommentAddedEvent() throws Exception {
-        new CommandLine(new AddCommentCommand().getSpec())
+        new CommandLine(new AddCommentCommand(xmlService, ledger).getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "draft ready");
 
         List<String> hashes = ledger.readHashes();

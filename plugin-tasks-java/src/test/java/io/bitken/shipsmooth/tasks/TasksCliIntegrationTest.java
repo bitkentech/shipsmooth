@@ -76,4 +76,25 @@ public class TasksCliIntegrationTest {
         int exit = tasksCli.execute("ledger", "verify");
         assertEquals(0, exit);
     }
+
+    @Test
+    public void addCommentViaCliMutatesXmlAndRecordsLedgerEntry() throws Exception {
+        LedgerService ledger = new LedgerService(Paths.get("."));
+        int before = ledger.readHashes().size();
+
+        int exit = tasksCli.execute("add-comment", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "via TasksCli");
+        assertEquals(0, exit);
+
+        XmlService xmlService = new XmlService();
+        PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
+        var comments = planTasks.getTasks().getTask().get(0).getComments().getComment();
+        assertEquals(1, comments.size());
+        assertEquals("via TasksCli", comments.get(0).getMessage());
+
+        List<String> hashes = ledger.readHashes();
+        assertEquals(before + 1, hashes.size());
+        Event ev = ledger.readEvent(hashes.get(hashes.size() - 1));
+        assertEquals(EventType.COMMENT_ADDED, ev.eventType());
+        assertEquals("1", ev.taskId());
+    }
 }

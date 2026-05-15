@@ -1,7 +1,10 @@
 package io.bitken.shipsmooth.tasks.commands;
 
 import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
+import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
+
+import java.nio.file.Paths;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,9 +25,11 @@ public class CommandsTest {
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
     private final XmlService xmlService = new XmlService();
+    private LedgerService ledgerService;
 
     @BeforeEach
     public void setUp() throws Exception {
+        ledgerService = new LedgerService(Paths.get("."));
         planDir.mkdirs();
         Files.writeString(mdFile.toPath(), "### Task 1: Test task [High]\n");
         
@@ -63,7 +68,7 @@ public class CommandsTest {
 
     @Test
     public void testAddCommentCommand() throws Exception {
-        int exitCode = new CommandLine(new AddCommentCommand().getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "Test comment");
+        int exitCode = new CommandLine(new AddCommentCommand(xmlService, ledgerService).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "Test comment");
         assertEquals(0, exitCode);
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
         assertEquals(1, planTasks.getTasks().getTask().get(0).getComments().getComment().size());

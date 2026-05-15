@@ -5,18 +5,23 @@ import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
+import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 public class AddCommentCommand implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
+    private final XmlService xmlService;
+    private final LedgerService ledgerService;
 
-    public AddCommentCommand() {
+    @Inject
+    public AddCommentCommand(XmlService xmlService, LedgerService ledgerService) {
+        this.xmlService = xmlService;
+        this.ledgerService = ledgerService;
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("add-comment");
         spec.usageMessage().description("Add a comment to a task.");
@@ -36,17 +41,15 @@ public class AddCommentCommand implements Callable<Integer>, HasSpec {
         int task = pr.matchedOption("task").getValue();
         String message = pr.matchedOption("message").getValue();
 
-        XmlService service = new XmlService();
         File file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
-        PlanTasks planTasks = service.readPlanTasks(file);
-        service.addComment(planTasks, task, message);
-        service.writePlanTasks(planTasks, file);
+        PlanTasks planTasks = xmlService.readPlanTasks(file);
+        xmlService.addComment(planTasks, task, message);
+        xmlService.writePlanTasks(planTasks, file);
         System.out.println("Comment added to task " + task);
 
         try {
-            LedgerService ledger = new LedgerService(Paths.get("."));
-            ledger.ensureLedgerFile();
-            ledger.record(Event.forTask(EventType.COMMENT_ADDED, String.valueOf(task), null, message, null));
+            ledgerService.ensureLedgerFile();
+            ledgerService.record(Event.forTask(EventType.COMMENT_ADDED, String.valueOf(task), null, message, null));
         } catch (Exception e) {
             System.err.println("Warning: ledger record failed (XML mutation preserved): " + e.getMessage());
         }

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>38</plan>
+    <plan-version>plan-38-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>closed</status>
+        <created>2026-05-15</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>medium</risk>
+            <status>finished</status>
+            <name>Add Dagger dependency and verify codegen</name>
+            <commit>f68e05798307bbc3a643b0fccd08538de6074b30</commit>
+            <created-from>plan-38-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>finished</status>
+            <name>Create di package with ServicesModule and AppComponent</name>
+            <commit>6d4805f790feca8d6ff5669443f0bff2741128f1</commit>
+            <created-from>plan-38-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>finished</status>
+            <name>Migrate AddCommentCommand to constructor injection</name>
+            <commit>eae8ae2480d157e58195332722228ac21867dee2</commit>
+            <created-from>plan-38-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-05-15T15:18:31.158+05:30</timestamp>
+                    <message>De-risk draft ready for review at b94f970785323c0299c5f3180a42de4fac05ddf0. End-to-end TasksCliIntegrationTest covers the Dagger-wired AddCommentCommand path. All 81 tests green.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>finished</status>
+            <name>Update AddCommentCommand tests for constructor injection</name>
+            <commit>eae8ae2480d157e58195332722228ac21867dee2</commit>
+            <created-from>plan-38-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-15T14:34:50.490+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-15T00:00:00.000+05:30</timestamp>
+            <message>All 4 tasks finished. Squash-merged to main. Plan closed.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

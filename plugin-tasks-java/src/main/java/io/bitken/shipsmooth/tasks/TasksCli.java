@@ -1,17 +1,24 @@
 package io.bitken.shipsmooth.tasks;
 
 import io.bitken.shipsmooth.tasks.commands.*;
+import io.bitken.shipsmooth.tasks.di.AppComponent;
+import io.bitken.shipsmooth.tasks.di.DaggerAppComponent;
+import io.bitken.shipsmooth.tasks.di.ServicesModule;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
 import io.bitken.shipsmooth.tasks.commands.HasSpec;
 
+import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 public class TasksCli {
 
     private final CommandLine cmd;
     private final IntegrateCommand integrateCommand = new IntegrateCommand();
+    private final AppComponent app = DaggerAppComponent.builder()
+        .servicesModule(new ServicesModule(Paths.get(".")))
+        .build();
 
     public TasksCli() {
         CommandSpec spec = CommandSpec.wrapWithoutInspection(this);
@@ -28,7 +35,7 @@ public class TasksCli {
 
         Callable<?>[] commands = {
             new InitCommand(),
-            new AddCommentCommand(),
+            app.addCommentCommand(),
             new AddDeviationCommand(),
             new ClaimCommand(),
             integrateCommand,
