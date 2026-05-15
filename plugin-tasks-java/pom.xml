@@ -189,17 +189,64 @@
             <id>jlink</id>
             <!-- TODO: Add jdep based dynamic detection here? -->
             <properties>
-                <jlink.runtime.module.path>${project.build.directory}/${project.artifactId}-${project.version}.jar:${settings.localRepository}/info/picocli/picocli/${picocli.version}/picocli-${picocli.version}.jar:${settings.localRepository}/jakarta/xml/bind/jakarta.xml.bind-api/${jakarta.xml.bind-api.version}/jakarta.xml.bind-api-${jakarta.xml.bind-api.version}.jar:${settings.localRepository}/jakarta/activation/jakarta.activation-api/2.1.3/jakarta.activation-api-2.1.3.jar:${settings.localRepository}/org/glassfish/jaxb/jaxb-runtime/${jaxb-runtime.version}/jaxb-runtime-${jaxb-runtime.version}.jar:${settings.localRepository}/org/glassfish/jaxb/jaxb-core/${jaxb-runtime.version}/jaxb-core-${jaxb-runtime.version}.jar:${settings.localRepository}/org/eclipse/angus/angus-activation/2.0.2/angus-activation-2.0.2.jar:${settings.localRepository}/org/glassfish/jaxb/txw2/${jaxb-runtime.version}/txw2-${jaxb-runtime.version}.jar:${settings.localRepository}/com/sun/istack/istack-commons-runtime/4.1.2/istack-commons-runtime-4.1.2.jar:${settings.localRepository}/com/fasterxml/jackson/core/jackson-databind/${jackson-databind.version}/jackson-databind-${jackson-databind.version}.jar:${settings.localRepository}/com/fasterxml/jackson/core/jackson-core/${jackson-databind.version}/jackson-core-${jackson-databind.version}.jar:${settings.localRepository}/com/fasterxml/jackson/core/jackson-annotations/${jackson-databind.version}/jackson-annotations-${jackson-databind.version}.jar:${settings.localRepository}/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/${jackson-databind.version}/jackson-datatype-jsr310-${jackson-databind.version}.jar:${settings.localRepository}/com/google/dagger/dagger/${dagger.version}/dagger-${dagger.version}.jar:${settings.localRepository}/jakarta/inject/jakarta.inject-api/${jakarta.inject-api.version}/jakarta.inject-api-${jakarta.inject-api.version}.jar</jlink.runtime.module.path>
+                <jlink.runtime.module.path>${project.build.directory}/${project.artifactId}-${project.version}.jar:${settings.localRepository}/info/picocli/picocli/${picocli.version}/picocli-${picocli.version}.jar:${settings.localRepository}/jakarta/xml/bind/jakarta.xml.bind-api/${jakarta.xml.bind-api.version}/jakarta.xml.bind-api-${jakarta.xml.bind-api.version}.jar:${settings.localRepository}/jakarta/activation/jakarta.activation-api/2.1.3/jakarta.activation-api-2.1.3.jar:${settings.localRepository}/org/glassfish/jaxb/jaxb-runtime/${jaxb-runtime.version}/jaxb-runtime-${jaxb-runtime.version}.jar:${settings.localRepository}/org/glassfish/jaxb/jaxb-core/${jaxb-runtime.version}/jaxb-core-${jaxb-runtime.version}.jar:${settings.localRepository}/org/eclipse/angus/angus-activation/2.0.2/angus-activation-2.0.2.jar:${settings.localRepository}/org/glassfish/jaxb/txw2/${jaxb-runtime.version}/txw2-${jaxb-runtime.version}.jar:${settings.localRepository}/com/sun/istack/istack-commons-runtime/4.1.2/istack-commons-runtime-4.1.2.jar:${settings.localRepository}/com/fasterxml/jackson/core/jackson-databind/${jackson-databind.version}/jackson-databind-${jackson-databind.version}.jar:${settings.localRepository}/com/fasterxml/jackson/core/jackson-core/${jackson-databind.version}/jackson-core-${jackson-databind.version}.jar:${settings.localRepository}/com/fasterxml/jackson/core/jackson-annotations/${jackson-databind.version}/jackson-annotations-${jackson-databind.version}.jar:${settings.localRepository}/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/${jackson-databind.version}/jackson-datatype-jsr310-${jackson-databind.version}.jar:${settings.localRepository}/jakarta/inject/jakarta.inject-api/${jakarta.inject-api.version}/jakarta.inject-api-${jakarta.inject-api.version}.jar</jlink.runtime.module.path>
                 <jlink.module.path>${jlink.runtime.module.path}:${jlink.jdk.home}/jmods</jlink.module.path>
             </properties>
             <build>
                 <plugins>
+                    <!-- Shade dagger (automatic module, incompatible with jlink) into the JAR -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <version>3.6.0</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals><goal>shade</goal></goals>
+                                <configuration>
+                                    <createDependencyReducedPom>false</createDependencyReducedPom>
+                                    <artifactSet>
+                                        <includes>
+                                            <include>com.google.dagger:dagger</include>
+                                            <include>javax.inject:javax.inject</include>
+                                        </includes>
+                                    </artifactSet>
+                                    <filters>
+                                        <filter>
+                                            <artifact>*:*</artifact>
+                                            <excludes>
+                                                <exclude>META-INF/*.SF</exclude>
+                                                <exclude>META-INF/*.DSA</exclude>
+                                                <exclude>META-INF/*.RSA</exclude>
+                                            </excludes>
+                                        </filter>
+                                    </filters>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <!-- Task 1 + 4: version check and image build via antrun (avoids exec-maven-plugin classpath injection) -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
                         <version>${maven-antrun-plugin.version}</version>
                         <executions>
+                            <!-- Re-inject module-info.class stripped by Shade (hardcoded in DefaultShader.isExcludedEntry) -->
+                            <execution>
+                                <id>restore-module-info</id>
+                                <phase>package</phase>
+                                <goals><goal>run</goal></goals>
+                                <configuration>
+                                    <target>
+                                        <exec executable="${jlink.jdk.home}/bin/jar" failonerror="true"
+                                              dir="${project.build.directory}/classes">
+                                            <arg value="--update"/>
+                                            <arg value="--file=${project.build.directory}/${project.artifactId}-${project.version}.jar"/>
+                                            <arg value="module-info.class"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
                             <execution>
                                 <id>jlink-version-check</id>
                                 <phase>validate</phase>
