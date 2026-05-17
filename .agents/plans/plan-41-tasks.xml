@@ -3,7 +3,7 @@
     <plan>41</plan>
     <plan-version>plan-41-v1</plan-version>
     <metadata>
-        <backlog-issue></backlog-issue>
+        <backlog-issue>local: experimental-gate-java</backlog-issue>
         <status>active</status>
         <created>2026-05-17</created>
     </metadata>
