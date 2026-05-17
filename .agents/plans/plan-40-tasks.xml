@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>40</plan>
+    <plan-version>plan-40-v1</plan-version>
+    <metadata>
+        <backlog-issue>local: experimental-gate</backlog-issue>
+        <status>active</status>
+        <created>2026-05-17</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Extract base workflow into JTE partial (no content change)</name>
+            <commit></commit>
+            <created-from>plan-40-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Add `--enable-experimental` gate to TasksCli</name>
+            <commit></commit>
+            <created-from>plan-40-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Extract parallel section into partial; create experimental-start-parallel skill</name>
+            <commit></commit>
+            <created-from>plan-40-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Verify gemini-dev and prod profiles still build</name>
+            <commit></commit>
+            <created-from>plan-40-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-17T15:57:42.637+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
