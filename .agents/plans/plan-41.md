@@ -1,7 +1,7 @@
 # Plan 41 — Feature-flag gate for experimental CLI commands
 
 **Status:** open
-**Version:** v2 (FeatureFlags interface + conditional registration; no IExecutionStrategy)
+**Version:** v3 (also hide --enable-experimental from --help in prod builds)
 **Branch:** `t/plan-41-experimental-gate`
 **Tracking mode:** Local (`.agents/plans/plan-41-tasks.xml`).
 **Depends on:** plan-40 (parallel-execution skill split, merged to main as 60ff636).
@@ -28,6 +28,12 @@ This plan adds the **hard gate**:
 4. With the flag, `shipsmooth-tasks --enable-experimental --help` lists
    the experimental subcommands; `shipsmooth-tasks --enable-experimental
    integrate ...` runs the command.
+5. **Prod-build hiding:** in `-Pprod` / `-Pgemini` builds, the
+   `--enable-experimental` option itself is hidden from `--help` output.
+   The option is still parseable if someone types it (so the conditional
+   registration logic is identical across builds), but it does not appear
+   in help. In `-Pdev` / `-Pgemini-dev` builds the option is visible in
+   `--help` as normal.
 
 After the gate is in place, the CLI examples in
 `_partials/parallel-execution.jte.md` are rewritten to include
@@ -129,6 +135,49 @@ After the gate is in place, `parallel-execution.jte.md` gets every
 A matching integration-test assertion confirms the rendered
 `experimental-start-parallel-dev/SKILL.md` contains the flag.
 
+### Prod-build hiding via Maven-filtered constant
+
+A single compile-time constant `Build.EXPERIMENTAL_BUILD` controls whether
+`--enable-experimental` is documented in `--help`:
+
+`plugin-tasks-java/src/main/java-templates/io/bitken/shipsmooth/tasks/Build.java`
+(new, Maven-filtered):
+
+```java
+package io.bitken.shipsmooth.tasks;
+public final class Build {
+    public static final boolean EXPERIMENTAL_BUILD = ${experimental.enabled};
+    private Build() {}
+}
+```
+
+The picocli `@Option` references it directly:
+
+```java
+@CommandLine.Option(
+    names = "--enable-experimental",
+    description = "Enable experimental subcommands.",
+    hidden = !Build.EXPERIMENTAL_BUILD)
+boolean enableExperimental;
+```
+
+`hidden` accepts a compile-time constant expression. Because
+`EXPERIMENTAL_BUILD` is a `static final boolean`, javac inlines the value
+into the annotation at compile time. The bytecode of `TasksCli` in a prod
+build literally carries `hidden = true` for this option.
+
+Maven profile additions to the **root** `pom.xml`:
+- `dev` profile: `<experimental.enabled>true</experimental.enabled>`.
+- `gemini-dev` profile: `<experimental.enabled>true</experimental.enabled>`.
+- `prod` profile: `<experimental.enabled>false</experimental.enabled>`.
+- `gemini` profile: `<experimental.enabled>false</experimental.enabled>`.
+
+`plugin-tasks-java/pom.xml` adds `templating-maven-plugin` (1.0.0) to
+filter `src/main/java-templates/` into `target/generated-sources/java-templates/`
+during `generate-sources`. `build-helper-maven-plugin` (already in use for
+the JTE-generated sources in `plugin-skill`) adds the generated directory
+as an additional source root.
+
 ---
 
 ## 3. Tasks
@@ -148,13 +197,33 @@ A matching integration-test assertion confirms the rendered
      existing `HasSpec` / `Callable`).
    - Override `isExperimental()` to return `true`.
 
-3. **Refactor `TasksCli`** at
+3. **Add Maven-filtered build constant.**
+
+   - Root `pom.xml`: in each profile's `<properties>`, add
+     `<experimental.enabled>true</experimental.enabled>` (for `dev` and
+     `gemini-dev`) or `<experimental.enabled>false</experimental.enabled>`
+     (for `prod` and `gemini`).
+   - Create
+     `plugin-tasks-java/src/main/java-templates/io/bitken/shipsmooth/tasks/Build.java`
+     with the template shown in Design Notes.
+   - In `plugin-tasks-java/pom.xml`, add the `templating-maven-plugin`
+     binding so `java-templates/` is filtered into
+     `target/generated-sources/java-templates/` during `generate-sources`,
+     and add the generated directory as a source root via
+     `build-helper-maven-plugin:add-source`.
+   - Smoke-check: run `mvn -P dev -pl plugin-tasks-java compile`; confirm
+     `target/generated-sources/java-templates/.../Build.java` exists and
+     contains `EXPERIMENTAL_BUILD = true`. Repeat with `-P prod` and
+     confirm `false`.
+
+4. **Refactor `TasksCli`** at
    `plugin-tasks-java/src/main/java/io/bitken/shipsmooth/tasks/TasksCli.java`:
 
    - Add a top-level option to the existing mixin:
      ```java
      @CommandLine.Option(names = "--enable-experimental",
-         description = "Enable experimental subcommands.")
+         description = "Enable experimental subcommands.",
+         hidden = !Build.EXPERIMENTAL_BUILD)
      boolean enableExperimental;
      ```
    - In the constructor, partition the existing command list into
@@ -165,7 +234,7 @@ A matching integration-test assertion confirms the rendered
    - Add a constant
      `private static final String ENABLE_EXPERIMENTAL_FLAG = "--enable-experimental";`.
 
-4. **Implement `execute(String... args)` with probe parse:**
+5. **Implement `execute(String... args)` with probe parse:**
 
    ```java
    public int execute(String... args) {
@@ -186,11 +255,11 @@ A matching integration-test assertion confirms the rendered
    The probe is a real picocli parse against the same root spec; the
    lenient flags allow it to succeed even with unknown subcommand names.
 
-5. **No `IExecutionStrategy`.** Picocli's default execution handles
+6. **No `IExecutionStrategy`.** Picocli's default execution handles
    normal subcommand dispatch; its native "unmatched argument" error
    handles the refusal case for unregistered experimental subcommands.
 
-6. **Write `plugin-tasks-java/src/test/java/io/bitken/shipsmooth/tasks/TasksCliTest.java`** (new) covering:
+7. **Write `plugin-tasks-java/src/test/java/io/bitken/shipsmooth/tasks/TasksCliTest.java`** (new) covering:
 
    1. `new TasksCli(app).execute("integrate", "--help")` → exit 2.
       Stderr contains "unmatched" (picocli's native wording — confirm
@@ -206,8 +275,17 @@ A matching integration-test assertion confirms the rendered
       (non-experimental command works without flag).
    6. `new TasksCli(app).execute("integrate", "--enable-experimental")` →
       exit 2 (flag after subcommand is misplaced; native error).
+   7. **Prod-build help visibility.** The test runs under whichever Maven
+      profile is active (`dev` by default). Assert that
+      `new TasksCli(app).execute("--help")` stdout **contains**
+      `--enable-experimental` when `Build.EXPERIMENTAL_BUILD == true`,
+      and **does not contain** `--enable-experimental` when
+      `Build.EXPERIMENTAL_BUILD == false`. Use a conditional in the test
+      keyed on the constant — same test class works under all profiles.
 
-Run `mvn -pl plugin-tasks-java test` — all green.
+Run `mvn -pl plugin-tasks-java test` — all green under `-P dev`.
+Run `mvn -P prod -pl plugin-tasks-java test` and confirm the
+prod-visibility branch of test 7 fires correctly.
 
 ### Task 2: Update parallel-execution partial to pass --enable-experimental [Medium]
 
@@ -235,18 +313,29 @@ Run `mvn -pl plugin-skill test` — all green.
 
 *Depends-on: 1,2*
 
-Build the jlink image and exercise the gate with the real binary:
+Build the jlink image and exercise the gate with the real binary, in both
+`-P dev` and `-P prod`:
 
 ```bash
-mvn -pl plugin-tasks-java -am -Pjlink package
+# Dev build
+mvn -P dev,jlink -pl plugin-tasks-java -am package
 ~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks --help
-  # → no experimental commands listed
+  # → no experimental commands listed; --enable-experimental IS listed
 ~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks integrate --help
   # → exit 2, picocli's "unmatched argument" error
 ~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks --enable-experimental --help
   # → all 10 experimental commands listed
 ~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks --enable-experimental integrate --help
   # → integrate's usage prints
+
+# Prod build
+mvn -P prod,jlink -pl plugin-tasks-java -am package
+<prod-runtime-path>/shipsmooth-tasks --help
+  # → no experimental commands listed; --enable-experimental is NOT listed
+<prod-runtime-path>/shipsmooth-tasks --enable-experimental --help
+  # → --help output still doesn't mention the flag (it's hidden), but the
+  # flag IS parsed and the experimental commands ARE listed in output.
+  # This is the "still parseable in prod" behaviour from Design Notes §5.
 ```
 
 Spot-check the rendered `build/skills/experimental-start-parallel-dev/SKILL.md`:
