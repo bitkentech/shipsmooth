@@ -1,9 +1,10 @@
 # Plan 41 — Feature-flag gate for experimental CLI commands
 
-**Status:** draft (not yet committed)
-**Branch:** `t/plan-41-experimental-gate` (to be created)
+**Status:** open
+**Version:** v1
+**Branch:** `t/plan-41-experimental-gate`
 **Tracking mode:** Local (`.agents/plans/plan-41-tasks.xml`).
-**Depends on:** plan-40 (parallel-execution skill split must be merged first).
+**Depends on:** plan-40 (parallel-execution skill split, merged to main as 60ff636).
 
 ---
 

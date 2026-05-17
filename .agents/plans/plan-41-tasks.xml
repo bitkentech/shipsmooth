@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>41</plan>
+    <plan-version>plan-41-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>active</status>
+        <created>2026-05-17</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Add `--enable-experimental` gate to TasksCli</name>
+            <commit></commit>
+            <created-from>plan-41-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Update parallel-execution partial to pass --enable-experimental</name>
+            <commit></commit>
+            <created-from>plan-41-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>End-to-end verification with the freshly built CLI</name>
+            <commit></commit>
+            <created-from>plan-41-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-17T18:02:03.762+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
