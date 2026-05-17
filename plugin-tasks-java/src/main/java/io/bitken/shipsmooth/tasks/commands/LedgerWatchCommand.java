@@ -17,7 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class LedgerWatchCommand implements Callable<Integer>, HasSpec {
+public class LedgerWatchCommand implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
+    @Override public boolean isExperimental() { return true; }
 
     static final long POLL_INTERVAL_MS = 300;
 

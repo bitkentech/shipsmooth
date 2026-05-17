@@ -10,7 +10,7 @@ If `git worktree list` shows an `integration/plan-{N}` worktree from a prior ses
   1. Read the payload: find the event index in `${model.cliBin()} ledger list`, then read the blob from `.agents/objects/<prefix>/<rest>` (the blob SHA is in the event's payload field).
   2. Dispatch a resolver `Agent` call with that payload — it fixes the conflict markers in the integration worktree.
   3. Commit in the worktree: `cd .agents/integration/plan-{N} && git add -A && git commit -m "task({task_id}): {name} [resolved]"`.
-  4. Record the integration from the **repo root**: `cd $(git rev-parse --show-toplevel) && ${model.cliBin()} ledger-record-patch-integrated --plan {N} --task {task_id} --commit $(git -C .agents/integration/plan-{N} rev-parse HEAD) --agent-work-sha $(git rev-parse agent-work/{task_id})`.
+  4. Record the integration from the **repo root**: `cd $(git rev-parse --show-toplevel) && ${model.cliBin()} --enable-experimental ledger-record-patch-integrated --plan {N} --task {task_id} --commit $(git -C .agents/integration/plan-{N} rev-parse HEAD) --agent-work-sha $(git rev-parse agent-work/{task_id})`.
   5. Re-run `integrate` (background + Monitor) — the resume logic sees the `PATCH_INTEGRATED` event and skips the resolved task, continuing from the next one. **Note:** re-running integrate does not write a new `INTEGRATION_PLAN` event when the worktree is still present, so the recovery event remains visible to the resume check.
 
 - **No pending resolver, but the integration branch is ahead of the task branch:**
@@ -31,7 +31,7 @@ The Lead Agent **may** delegate tasks to coding subagents instead of implementin
 
 Tasks may carry a `<depends-on>` field in the XML (comma-separated parent task IDs). Before dispatching such a task:
 
-1. Verify the parent task's `COMMIT_RECORDED` ledger event exists: `${model.cliBin()} worker-base --plan {N} --task {id}` — this prints the parent's commit SHA or exits 1 if the parent hasn't finished yet.
+1. Verify the parent task's `COMMIT_RECORDED` ledger event exists: `${model.cliBin()} --enable-experimental worker-base --plan {N} --task {id}` — this prints the parent's commit SHA or exits 1 if the parent hasn't finished yet.
 2. Pass that SHA as `--base` to `worker-init` so the worktree starts from the parent's commit, not repo HEAD.
 
 A task with `<depends-on>` **must not** be dispatched in the same parallel batch as its parents — wait for the parent batch to complete first.
@@ -187,7 +187,7 @@ If `git reset --hard` was run before `integrate` and the ledger no longer contai
 
 1. Detect the problem: `${model.cliBin()} ledger list` — if no `COMMIT_RECORDED` events appear for your tasks, the ledger was wiped.
 2. For each affected task, find its commit SHA on the `agent-work/{id}` branch: `git rev-parse agent-work/{id}`.
-3. Reconstruct the ledger event: `${model.cliBin()} ledger-record-commit --plan {N} --task {id} --commit {sha} --branch agent-work/{id}`
+3. Reconstruct the ledger event: `${model.cliBin()} --enable-experimental ledger-record-commit --plan {N} --task {id} --commit {sha} --branch agent-work/{id}`
 4. Repeat for all affected tasks, then re-run `integrate` normally.
 
 Note: this recovery path requires the `agent-work/{id}` branches to still exist. If they were also deleted, restore them from the known commit SHAs via `git branch agent-work/{id} {sha}` before step 3.

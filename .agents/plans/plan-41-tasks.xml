@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>41</plan>
+    <plan-version>plan-41-v3</plan-version>
+    <metadata>
+        <backlog-issue>local: experimental-gate-java</backlog-issue>
+        <status>complete</status>
+        <created>2026-05-17</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Add `--enable-experimental` gate to TasksCli</name>
+            <commit>e09b6c9f59945abb95db85c1343f4a79f84b5c38</commit>
+            <created-from>plan-41-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-05-17T21:59:42.453+05:30</timestamp>
+                    <message>De-risk draft ready for review (commit 4a99b24). Probe-parse + conditional registration proven working: all 7 TasksCliIntegrationTest cases green including experimental gate. Maven-filtered Build.EXPERIMENTAL_BUILD and worker test updates deferred to hardening pass.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Update parallel-execution partial to pass --enable-experimental</name>
+            <commit>e218a7ac4aeba07a0ed5964be12f2fe8851d295f</commit>
+            <created-from>plan-41-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>End-to-end verification with the freshly built CLI</name>
+            <commit>e218a7ac4aeba07a0ed5964be12f2fe8851d295f</commit>
+            <created-from>plan-41-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-05-17T22:52:42.145+05:30</timestamp>
+                    <message>E2E verification passed on jlink builds.
+Dev build (-P dev,jlink): --help shows --enable-experimental and hides experimental commands; --enable-experimental --help lists all 10; without flag 'integrate --plan 1' exits 2 (Missing required subcommand); with flag, integrate runs (exit 1 on missing context, not a gate issue).
+Prod build (-P prod,jlink): --help omits --enable-experimental entirely (hidden=true via Build.EXPERIMENTAL_BUILD inline constant); --enable-experimental --help still parses the flag and lists all 10 experimental commands.
+Rendered build/skills/experimental-start-parallel-dev/SKILL.md contains 15 '--enable-experimental' occurrences; rendered start-dev/SKILL.md contains 0 (base skill clean of experimental references).</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-17T18:02:03.762+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-17T23:01:22.012+05:30</timestamp>
+            <message>Plan 41 complete. --enable-experimental gate landed; experimental subcommands hidden by default in both dev and prod builds; parallel-execution skill rendered with the flag.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

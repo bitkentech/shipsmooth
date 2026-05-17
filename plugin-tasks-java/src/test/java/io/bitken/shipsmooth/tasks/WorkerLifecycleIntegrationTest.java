@@ -85,10 +85,10 @@ public class WorkerLifecycleIntegrationTest {
 
         int exit;
 
-        exit = cli.execute("claim", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        exit = cli.execute("--enable-experimental", "claim","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, exit, "claim should exit 0");
 
-        exit = cli.execute("worker-init", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        exit = cli.execute("--enable-experimental", "worker-init","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, exit, "worker-init should exit 0");
 
         Path worktreePath = repoRoot.resolve(".agents/tasks/" + TASK_ID).toAbsolutePath();
@@ -97,10 +97,10 @@ public class WorkerLifecycleIntegrationTest {
         // Simulate subagent editing files inside the worktree (no git operations).
         Files.writeString(worktreePath.resolve("output.txt"), "subagent output");
 
-        exit = cli.execute("worker-finish", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        exit = cli.execute("--enable-experimental", "worker-finish","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, exit, "worker-finish should exit 0");
 
-        exit = cli.execute("worker-cleanup", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        exit = cli.execute("--enable-experimental", "worker-cleanup","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, exit, "worker-cleanup should exit 0");
 
         // --- assertions ---
@@ -155,8 +155,8 @@ public class WorkerLifecycleIntegrationTest {
         TasksCli cli = new TasksCli(app);
         LedgerService ledger = new LedgerService(repoRoot);
 
-        cli.execute("claim", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
-        cli.execute("worker-init", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        cli.execute("--enable-experimental", "claim","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        cli.execute("--enable-experimental", "worker-init","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
 
         Path worktreePath = repoRoot.resolve(".agents/tasks/" + TASK_ID).toAbsolutePath();
         assertTrue(worktreePath.toFile().isDirectory(), "worktree should exist");
@@ -168,7 +168,7 @@ public class WorkerLifecycleIntegrationTest {
 
         int beforeCount = ledger.readHashes().size();
 
-        int exit = cli.execute("worker-finish", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        int exit = cli.execute("--enable-experimental", "worker-finish","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertNotEquals(0, exit, "worker-finish should exit non-zero when subagent committed");
 
         int afterCount = ledger.readHashes().size();

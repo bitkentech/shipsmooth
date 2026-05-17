@@ -15,7 +15,8 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class ClaimCommand implements Callable<Integer>, HasSpec {
+public class ClaimCommand implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
+    @Override public boolean isExperimental() { return true; }
 
     private final CommandSpec spec;
     private final XmlService xmlService;

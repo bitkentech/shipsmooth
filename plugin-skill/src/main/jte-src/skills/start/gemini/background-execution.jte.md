@@ -9,7 +9,7 @@ git rev-parse --abbrev-ref HEAD
 
 Then start integrate in the background, substituting the branch name you just captured for `{current-branch}`:
 ```bash
-${model.cliBin()} integrate \
+${model.cliBin()} --enable-experimental integrate \
   --plan {N} \
   --task-branch {current-branch} \
   --verify-cmd "{your-test-command}"

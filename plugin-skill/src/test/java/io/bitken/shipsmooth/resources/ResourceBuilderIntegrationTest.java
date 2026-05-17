@@ -127,7 +127,8 @@ class ResourceBuilderIntegrationTest {
             "experimental parallel skill should include the base workflow content");
         assertTrue(content.contains("## Parallel Execution Protocol"),
             "experimental parallel skill should include the parallel section");
-        // Note: the --enable-experimental flag in CLI invocations is added in plan-41.
+        assertTrue(content.contains("--enable-experimental"),
+            "experimental parallel skill should call the CLI with --enable-experimental");
     }
 
     private void setProdProps() {

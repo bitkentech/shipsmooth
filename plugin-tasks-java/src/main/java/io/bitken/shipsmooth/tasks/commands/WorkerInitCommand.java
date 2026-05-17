@@ -10,7 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-public class WorkerInitCommand implements Callable<Integer>, HasSpec {
+public class WorkerInitCommand implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
+    @Override public boolean isExperimental() { return true; }
 
     private final CommandSpec spec;
     private final WorkflowService workflow;

@@ -25,7 +25,7 @@ public class LedgerRecordPatchIntegratedCommandTest {
         ledger.ensureLedgerFile();
 
         int exit = new TasksCli(app).execute(
-                "ledger-record-patch-integrated",
+                "--enable-experimental", "ledger-record-patch-integrated",
                 "--plan", "993",
                 "--task", "7",
                 "--commit", "abc1234",

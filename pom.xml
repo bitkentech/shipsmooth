@@ -42,6 +42,7 @@
         <shipsmooth.cli.bin>~/.cache/shipsmooth-dev/runtime-@project.version@/bin/shipsmooth-tasks</shipsmooth.cli.bin>
         <skill.frontmatter></skill.frontmatter>
         <build.platform>claude</build.platform>
+        <experimental.enabled>true</experimental.enabled>
       </properties>
     </profile>
 
@@ -63,6 +64,7 @@
 name: start-dev
 description: Use when starting any task — applies the shipsmooth agent coding workflow (dev build).
 ---</skill.frontmatter>
+        <experimental.enabled>true</experimental.enabled>
       </properties>
     </profile>
 
@@ -79,6 +81,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
         <shipsmooth.cli.bin>~/.cache/shipsmooth/runtime-@project.version@/bin/shipsmooth-tasks</shipsmooth.cli.bin>
         <skill.frontmatter></skill.frontmatter>
         <build.platform>claude</build.platform>
+        <experimental.enabled>false</experimental.enabled>
       </properties>
     </profile>
     <profile>
@@ -94,6 +97,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
 name: start
 description: Use when starting any task — applies the shipsmooth agent coding workflow.
 ---</skill.frontmatter>
+        <experimental.enabled>false</experimental.enabled>
       </properties>
     </profile>
   </profiles>

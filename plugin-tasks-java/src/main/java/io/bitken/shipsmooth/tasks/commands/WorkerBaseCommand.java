@@ -14,7 +14,8 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class WorkerBaseCommand implements Callable<Integer>, HasSpec {
+public class WorkerBaseCommand implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
+    @Override public boolean isExperimental() { return true; }
 
     private final CommandSpec spec;
     private final XmlService xmlService;

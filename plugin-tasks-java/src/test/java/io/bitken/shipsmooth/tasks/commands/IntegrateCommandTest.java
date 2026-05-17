@@ -116,7 +116,7 @@ public class IntegrateCommandTest {
         // At this point: integration branch exists with task 2, but not task 3.
         // Running integrate should resume from task 3.
         int exit = new TasksCli(app).execute(
-                "integrate",
+                "--enable-experimental", "integrate",
                 "--plan", String.valueOf(PLAN_NUM),
                 "--task-branch", currentBranch(),
                 "--verify-cmd", "echo ok"
@@ -162,7 +162,7 @@ public class IntegrateCommandTest {
 
         // Without --force this would fail; with --force it should succeed
         int exit = new TasksCli(app).execute(
-                "integrate",
+                "--enable-experimental", "integrate",
                 "--plan", String.valueOf(PLAN_NUM),
                 "--task-branch", currentBranch(),
                 "--verify-cmd", "echo ok",

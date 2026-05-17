@@ -84,6 +84,34 @@ public class TasksCliIntegrationTest {
     }
 
     @Test
+    public void experimentalSubcommandRefusedWithoutFlag() {
+        // Without --enable-experimental, picocli should reject 'integrate' as
+        // an unmatched argument (exit code 2, picocli's standard "unknown"
+        // exit code). Today this passes accidentally because integrate's
+        // sub-spec rejects --help; after plan-41 it passes because integrate
+        // is not registered at all.
+        int exit = tasksCli.execute("integrate", "--plan", "1");
+        assertEquals(2, exit,
+            "experimental subcommand 'integrate' must be refused (exit 2) without --enable-experimental");
+    }
+
+    @Test
+    public void experimentalSubcommandRunsWithFlag() {
+        // With --enable-experimental, picocli should successfully parse
+        // 'integrate'. We pass --help to short-circuit before integrate's
+        // actual side effects. (After plan-41, integrate's sub-spec needs
+        // its own --help support OR we rely on picocli's standard help mixin
+        // being applied to it.) For now, just assert that the top-level
+        // parse accepts the subcommand name without complaining.
+        int exit = tasksCli.execute("--enable-experimental", "integrate", "--plan", "0");
+        // 'integrate' should at least be recognised as a subcommand; the
+        // command itself may return non-zero from --plan 0, but a return of
+        // 2 (unmatched argument) means the flag isn't working.
+        assertNotEquals(2, exit,
+            "experimental subcommand 'integrate' must be recognised when --enable-experimental is set");
+    }
+
+    @Test
     public void addCommentViaCliMutatesXmlAndRecordsLedgerEntry() throws Exception {
         LedgerService ledger = new LedgerService(Paths.get("."));
         int before = ledger.readHashes().size();

@@ -75,15 +75,15 @@ public class WorkerDependencyIntegrationTest {
         int beforeCount = ledger.readHashes().size();
 
         // --- Task 1: full lifecycle ---
-        assertEquals(0, cli.execute("claim", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_1));
-        assertEquals(0, cli.execute("worker-init", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_1));
+        assertEquals(0, cli.execute("--enable-experimental", "claim","--plan", String.valueOf(PLAN_NUM), "--task", TASK_1));
+        assertEquals(0, cli.execute("--enable-experimental", "worker-init","--plan", String.valueOf(PLAN_NUM), "--task", TASK_1));
 
         Path wt1 = repoRoot.resolve(".agents/tasks/" + TASK_1).toAbsolutePath();
         assertTrue(wt1.toFile().isDirectory());
         Files.writeString(wt1.resolve("output-1.txt"), "task 1 output");
 
-        assertEquals(0, cli.execute("worker-finish", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_1));
-        assertEquals(0, cli.execute("worker-cleanup", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_1));
+        assertEquals(0, cli.execute("--enable-experimental", "worker-finish","--plan", String.valueOf(PLAN_NUM), "--task", TASK_1));
+        assertEquals(0, cli.execute("--enable-experimental", "worker-cleanup","--plan", String.valueOf(PLAN_NUM), "--task", TASK_1));
 
         // Resolve parent commit SHA from ledger (same logic as worker-base command)
         List<String> hashes = ledger.readHashes();
@@ -96,8 +96,8 @@ public class WorkerDependencyIntegrationTest {
         assertFalse(task1CommitSha.isBlank(), "task 1 commit SHA must not be blank");
 
         // --- Task 2: init with --base pointing to task 1's commit ---
-        assertEquals(0, cli.execute("claim", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_2));
-        assertEquals(0, cli.execute("worker-init", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_2,
+        assertEquals(0, cli.execute("--enable-experimental", "claim","--plan", String.valueOf(PLAN_NUM), "--task", TASK_2));
+        assertEquals(0, cli.execute("--enable-experimental", "worker-init","--plan", String.valueOf(PLAN_NUM), "--task", TASK_2,
                 "--base", task1CommitSha));
 
         Path wt2 = repoRoot.resolve(".agents/tasks/" + TASK_2).toAbsolutePath();
@@ -109,8 +109,8 @@ public class WorkerDependencyIntegrationTest {
 
         Files.writeString(wt2.resolve("output-2.txt"), "task 2 output");
 
-        assertEquals(0, cli.execute("worker-finish", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_2));
-        assertEquals(0, cli.execute("worker-cleanup", "--plan", String.valueOf(PLAN_NUM), "--task", TASK_2));
+        assertEquals(0, cli.execute("--enable-experimental", "worker-finish","--plan", String.valueOf(PLAN_NUM), "--task", TASK_2));
+        assertEquals(0, cli.execute("--enable-experimental", "worker-cleanup","--plan", String.valueOf(PLAN_NUM), "--task", TASK_2));
 
         // --- assertions ---
         assertFalse(wt1.toFile().exists(), "task 1 worktree should be gone");

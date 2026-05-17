@@ -11,7 +11,8 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class LedgerResolverCompleteCommand implements Callable<Integer>, HasSpec {
+public class LedgerResolverCompleteCommand implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
+    @Override public boolean isExperimental() { return true; }
 
     private final CommandSpec spec;
     private final LedgerService ledgerService;
