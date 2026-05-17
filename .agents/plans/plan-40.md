@@ -1,6 +1,7 @@
 # Plan 40 — Gate parallel-execution features behind `--enable-experimental`
 
 **Status:** open
+**Version:** v2 (re-ordered Tasks 2 and 3 so JTE skill split lands before the picocli gate)
 **Branch:** `t/plan-40-enable-experimental-gate`
 **Tracking mode:** Local (`.agents/plans/plan-40-tasks.xml`).
 
@@ -135,9 +136,57 @@ that is **byte-identical** (modulo possible trailing-newline differences) to
 the pre-refactor output. Capture the pre-refactor file before this task and
 diff after.
 
-### Task 2: Add `--enable-experimental` gate to TasksCli [High]
+### Task 2: Extract parallel section into partial; create experimental-start-parallel skill [High]
 
 *Depends-on: 1*
+
+1. Move lines `## Parallel Execution Protocol (optional)` through end of
+   `### Worker Instruction Block` and its trailing horizontal rule out of
+   `_partials/base-workflow.jte.md` into a new
+   `_partials/parallel-execution.jte.md` (with `@param PluginModel model`).
+2. Move the Phase 2 session-resume "integrate recovery" block (the bulleted
+   list under "**If an `integration/plan-{N}` worktree is found...**") from
+   `base-workflow.jte.md` into the top of `parallel-execution.jte.md` under a
+   new `### Session-resume recovery` heading.
+3. Create `skills/experimental/start-parallel/SKILL.jte.md`:
+   ```
+   @import io.bitken.shipsmooth.resources.PluginModel
+   @param PluginModel model
+   @if(!model.skillFrontmatter().isEmpty())${model.skillFrontmatter()}@endif
+
+   # ${model.skillName()} — Agent Coding Workflow (Parallel Execution)
+
+   @template.skills._partials.base-workflow(model = model)
+   @template.skills._partials.parallel-execution(model = model)
+   ```
+4. Edit `plugin-skill/src/main/java/io/bitken/shipsmooth/resources/ResourceBuilder.java`
+   to add a third render block (mirrors the TLA block at lines 41–58). Derive
+   skill name: `start` → `experimental-start-parallel`,
+   `start-dev` → `experimental-start-parallel-dev`. Frontmatter pattern
+   identical to TLA's derivation with description rewritten to mention the
+   parallel-execution variant.
+5. Update
+   `plugin-skill/src/test/java/io/bitken/shipsmooth/resources/ResourceBuilderIntegrationTest.java`
+   to assert:
+   - `start-dev/SKILL.md` no longer contains the string
+     `## Parallel Execution Protocol`.
+   - `experimental-start-parallel-dev/SKILL.md` contains both
+     `## Core Invariants` (base) and `## Parallel Execution Protocol`
+     (parallel).
+   - `experimental-start-tla-dev/SKILL.md` still renders and contains
+     `## Core Invariants` (unchanged).
+
+Note: CLI invocations in `parallel-execution.jte.md` do **not** yet include
+`--enable-experimental` — that's added in Task 3 when the gate exists. After
+Task 2 lands, the experimental commands are still runnable; they're just not
+documented in `start-dev`.
+
+Run `mvn -P dev -pl plugin-skill compile` — all green, all three skills
+appear under `build/skills/`.
+
+### Task 3: Add `--enable-experimental` gate to TasksCli [High]
+
+*Depends-on: 2*
 
 Edit `plugin-tasks-java/src/main/java/io/bitken/shipsmooth/tasks/TasksCli.java`:
 
@@ -162,6 +211,11 @@ Edit `plugin-tasks-java/src/main/java/io/bitken/shipsmooth/tasks/TasksCli.java`:
      subcommands (so `--help` lists them), then delegate to
      `new CommandLine.RunLast().execute(parseResult)`.
 
+After the gate is in place, edit
+`plugin-skill/src/main/jte-src/skills/_partials/parallel-execution.jte.md` to
+prefix every experimental CLI invocation with `--enable-experimental` (e.g.
+`${model.cliBin()} --enable-experimental integrate --plan {N} ...`).
+
 Write `plugin-tasks-java/src/test/java/io/bitken/shipsmooth/tasks/TasksCliTest.java`
 (new) covering:
 
@@ -176,63 +230,20 @@ Write `plugin-tasks-java/src/test/java/io/bitken/shipsmooth/tasks/TasksCliTest.j
 5. `new TasksCli(app).execute("show", "--help")` → exit 0 (non-experimental
    command still works without flag).
 
-Run `mvn -pl plugin-tasks-java test` — all green.
-
-### Task 3: Extract parallel section into partial; create experimental-start-parallel skill [High]
-
-*Depends-on: 1,2*
-
-1. Move lines `## Parallel Execution Protocol (optional)` through end of
-   `### Worker Instruction Block` and its trailing horizontal rule out of
-   `_partials/base-workflow.jte.md` into a new
-   `_partials/parallel-execution.jte.md` (with `@param PluginModel model`).
-2. Move the Phase 2 session-resume "integrate recovery" block (the bulleted
-   list under "**If an `integration/plan-{N}` worktree is found...**") from
-   `base-workflow.jte.md` into the top of `parallel-execution.jte.md` under a
-   new `### Session-resume recovery` heading.
-3. In `parallel-execution.jte.md`, prefix every experimental CLI invocation
-   with `--enable-experimental` (e.g.
-   `${model.cliBin()} --enable-experimental integrate --plan {N} ...`).
-4. Create `skills/experimental/start-parallel/SKILL.jte.md`:
-   ```
-   @import io.bitken.shipsmooth.resources.PluginModel
-   @param PluginModel model
-   @if(!model.skillFrontmatter().isEmpty())${model.skillFrontmatter()}@endif
-
-   # ${model.skillName()} — Agent Coding Workflow (Parallel Execution)
-
-   @template.skills._partials.base-workflow(model = model)
-   @template.skills._partials.parallel-execution(model = model)
-   ```
-5. Edit `plugin-skill/src/main/java/io/bitken/shipsmooth/resources/ResourceBuilder.java`
-   to add a third render block (mirrors the TLA block at lines 41–58). Derive
-   skill name: `start` → `experimental-start-parallel`,
-   `start-dev` → `experimental-start-parallel-dev`. Frontmatter pattern
-   identical to TLA's derivation with description rewritten to mention the
-   parallel-execution variant.
-6. Update
-   `plugin-skill/src/test/java/io/bitken/shipsmooth/resources/ResourceBuilderIntegrationTest.java`
-   to assert:
-   - `start-dev/SKILL.md` no longer contains the string
-     `## Parallel Execution Protocol`.
-   - `experimental-start-parallel-dev/SKILL.md` contains both
-     `## Core Invariants` (base) and `## Parallel Execution Protocol`
-     (parallel).
-   - `experimental-start-tla-dev/SKILL.md` still renders and contains
-     `## Core Invariants` (unchanged).
-
-Run `mvn -P dev clean install` — all green, all three skills appear under
-`build/skills/`.
+Run `mvn -pl plugin-tasks-java test` and `mvn -pl plugin-skill test` — all
+green. The integration test assertion on `--enable-experimental` in
+`experimental-start-parallel-dev/SKILL.md` now passes.
 
 ### Task 4: Verify gemini-dev and prod profiles still build [Low]
 
 *Depends-on: 3*
 
-Run, in this order, with `mvn clean install` between each:
-- `mvn -P dev clean install` → `build/skills/{start-dev, experimental-start-parallel-dev, experimental-start-tla-dev}`
-- `mvn -P gemini-dev clean install` → `build-gemini-dev/skills/{start-dev, experimental-start-parallel-dev, experimental-start-tla-dev}`
-- `mvn -P prod clean install` → `build/skills/{start, experimental-start-parallel, experimental-start-tla}`
-- `mvn -P gemini clean install` → `build-gemini/skills/{start, experimental-start-parallel, experimental-start-tla}`
+Run, in this order, with `mvn -P <profile> -pl plugin-skill compile` (skill
+verification only; `package` is required only for the jlink image):
+- `mvn -P dev -pl plugin-skill compile` → `build/skills/{start-dev, experimental-start-parallel-dev, experimental-start-tla-dev}`
+- `mvn -P gemini-dev -pl plugin-skill compile` → `build-gemini-dev/skills/{start-dev, experimental-start-parallel-dev, experimental-start-tla-dev}`
+- `mvn -P prod -pl plugin-skill compile` → `build/skills/{start, experimental-start-parallel, experimental-start-tla}`
+- `mvn -P gemini -pl plugin-skill compile` → `build-gemini/skills/{start, experimental-start-parallel, experimental-start-tla}`
 
 Spot-check one rendered file per profile: confirm `${model.cliBin()}` is
 correctly substituted and the `--enable-experimental` flag appears on every

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>40</plan>
-    <plan-version>plan-40-v1</plan-version>
+    <plan-version>plan-40-v2</plan-version>
     <metadata>
         <backlog-issue>local: experimental-gate</backlog-issue>
         <status>active</status>
@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Extract base workflow into JTE partial (no content change)</name>
-            <commit></commit>
+            <commit>3d7131c69a297cf6d09d02075b76a4443e27099e</commit>
             <created-from>plan-40-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -23,9 +23,9 @@
             <id>2</id>
             <risk>high</risk>
             <status>pending</status>
-            <name>Add `--enable-experimental` gate to TasksCli</name>
+            <name>Extract parallel section into partial; create experimental-start-parallel skill</name>
             <commit></commit>
-            <created-from>plan-40-v1</created-from>
+            <created-from>plan-40-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -35,13 +35,13 @@
             <id>3</id>
             <risk>high</risk>
             <status>pending</status>
-            <name>Extract parallel section into partial; create experimental-start-parallel skill</name>
+            <name>Add `--enable-experimental` gate to TasksCli</name>
             <commit></commit>
-            <created-from>plan-40-v1</created-from>
+            <created-from>plan-40-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>1,2</depends-on>
+            <depends-on>2</depends-on>
         </task>
         <task>
             <id>4</id>
