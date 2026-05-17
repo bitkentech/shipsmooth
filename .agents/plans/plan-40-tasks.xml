@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>40</plan>
-    <plan-version>plan-40-v2</plan-version>
+    <plan-version>plan-40-v3</plan-version>
     <metadata>
         <backlog-issue>local: experimental-gate</backlog-issue>
         <status>active</status>
@@ -22,9 +22,9 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Extract parallel section into partial; create experimental-start-parallel skill</name>
-            <commit></commit>
+            <commit>22aaf85acd4d197a40c28db43916f3c6479f3145</commit>
             <created-from>plan-40-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -33,27 +33,15 @@
         </task>
         <task>
             <id>3</id>
-            <risk>high</risk>
-            <status>pending</status>
-            <name>Add `--enable-experimental` gate to TasksCli</name>
-            <commit></commit>
-            <created-from>plan-40-v2</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-            <depends-on>2</depends-on>
-        </task>
-        <task>
-            <id>4</id>
             <risk>low</risk>
             <status>pending</status>
             <name>Verify gemini-dev and prod profiles still build</name>
             <commit></commit>
             <created-from>plan-40-v1</created-from>
-            <closed-at-version></closed-at-version>
+            <closed-at-version>plan-40-v3</closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>3</depends-on>
+            <depends-on>2</depends-on>
         </task>
     </tasks>
     <project-updates>

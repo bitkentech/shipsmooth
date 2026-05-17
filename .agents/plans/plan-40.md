@@ -1,7 +1,7 @@
 # Plan 40 — Gate parallel-execution features behind `--enable-experimental`
 
 **Status:** open
-**Version:** v2 (re-ordered Tasks 2 and 3 so JTE skill split lands before the picocli gate)
+**Version:** v3 (scope reduced — picocli gate moved to plan-41)
 **Branch:** `t/plan-40-enable-experimental-gate`
 **Tracking mode:** Local (`.agents/plans/plan-40-tasks.xml`).
 
@@ -16,53 +16,38 @@ ledger-coordination commands (`claim`, `worker-init`, `worker-finish`,
 `ledger-record-patch-integrated`) unconditionally, and the matching workflow is
 documented in the main `start`/`start-dev` SKILL.md.
 
-These features are still experimental. The goal of this plan is:
+These features are still experimental. This plan does the **template /
+skill-restructuring half** of that work; the **Java CLI gate** is deferred to
+plan-41.
 
-1. Keep the experimental command classes in the JAR (single build artifact —
-   useful for catching regressions of the experimental code against existing
-   prod code) but **hide them and refuse to run them** in normal invocations.
-2. Add a top-level `--enable-experimental` flag on `shipsmooth-tasks` that
-   unlocks them. **Hard gate:** without the flag, picocli reports
-   "Unknown command".
-3. Move the Parallel Execution Protocol documentation out of `start-dev`
+Scope of this plan (v3):
+
+1. Move the Parallel Execution Protocol documentation out of `start-dev`
    SKILL.md into a new skill `experimental-start-parallel-dev` (and
    `experimental-start-parallel` in prod profiles) so the agent only sees
    parallel-execution instructions when that skill is explicitly engaged.
-4. The TLA variant (`experimental-start-tla(-dev)`) remains sequential and
+2. The TLA variant (`experimental-start-tla(-dev)`) remains sequential and
    unchanged — it stays an experimental skill but does not gain any parallel
    content.
+3. The base `start-dev` skill contains **zero references** to experimental
+   features (no pointers, no fallback notes). An agent on the base skill
+   that encounters an integration worktree from a prior session will fail
+   to find recovery instructions — that is the intended behaviour.
 
 Refactoring SKILL.md sources to share content uses **JTE `@template` includes**
 so the common base workflow lives in one partial and both `start[-dev]` and
 `experimental-start-parallel[-dev]` render from it.
 
+**Deferred to plan-41:** the `--enable-experimental` top-level flag on
+`shipsmooth-tasks`, the picocli `IExecutionStrategy` that hides and refuses
+experimental subcommands, and the corresponding rewrite of CLI invocations
+in `parallel-execution.jte.md` to prefix every command with the flag. Until
+plan-41 lands, the experimental commands remain runnable; they're just no
+longer documented in `start-dev`.
+
 ---
 
 ## 2. Design notes
-
-### Java gate (picocli)
-
-`TasksCli` registers all commands unconditionally in the `CommandSpec` but
-marks the 10 experimental subcommands `hidden(true)`. A custom
-`IExecutionStrategy` runs before `RunLast`:
-
-- If the selected subcommand is in `EXPERIMENTAL_COMMANDS` and the top-level
-  `--enable-experimental` option is absent → print `Unknown command: <name>`
-  to stderr, exit code 2 (matches picocli's normal unknown-command behaviour
-  as closely as possible).
-- If `--enable-experimental` is set → flip all experimental subcommands to
-  `hidden(false)` so `--help` lists them, then delegate to `RunLast`.
-
-The 10 experimental commands:
-`ClaimCommand`, `WorkerInitCommand`, `WorkerFinishCommand`,
-`WorkerCleanupCommand`, `WorkerBaseCommand`, `IntegrateCommand`,
-`LedgerWatchCommand`, `LedgerResolverCompleteCommand`,
-`LedgerRecordCommitCommand`, `LedgerRecordPatchIntegratedCommand`.
-
-Non-experimental (unaffected): `InitCommand`, `ShowCommand`,
-`UpdateStatusCommand`, `AddCommentCommand`, `AddDeviationCommand`,
-`SetCommitCommand`, `ProjectUpdateCommand`, `LedgerCommand` (list/verify/read
-subcommands).
 
 ### SKILL.md restructuring (JTE)
 
@@ -176,67 +161,17 @@ diff after.
    - `experimental-start-tla-dev/SKILL.md` still renders and contains
      `## Core Invariants` (unchanged).
 
-Note: CLI invocations in `parallel-execution.jte.md` do **not** yet include
-`--enable-experimental` — that's added in Task 3 when the gate exists. After
-Task 2 lands, the experimental commands are still runnable; they're just not
-documented in `start-dev`.
+Note: CLI invocations in `parallel-execution.jte.md` do **not** include
+`--enable-experimental`. That's added in plan-41 when the picocli gate is
+introduced. Until plan-41 lands, the experimental commands remain runnable
+without any flag; they're just not documented in `start-dev`.
 
 Run `mvn -P dev -pl plugin-skill compile` — all green, all three skills
 appear under `build/skills/`.
 
-### Task 3: Add `--enable-experimental` gate to TasksCli [High]
+### Task 3: Verify gemini-dev and prod profiles still build [Low]
 
 *Depends-on: 2*
-
-Edit `plugin-tasks-java/src/main/java/io/bitken/shipsmooth/tasks/TasksCli.java`:
-
-1. Define `private static final Set<String> EXPERIMENTAL_COMMANDS = Set.of(
-   "claim", "worker-init", "worker-finish", "worker-cleanup", "worker-base",
-   "integrate", "ledger-watch", "ledger-resolver-complete",
-   "ledger-record-commit", "ledger-record-patch-integrated");`
-   (Subcommand names — confirm exact strings from each command's `getSpec()`
-   before committing.)
-2. Add top-level `@CommandLine.Option(names = "--enable-experimental")` boolean
-   into the existing mixin at lines 38–44.
-3. After `addSubcommand`, walk the spec and call `subSpec.usageMessage().hidden(true)`
-   for every name in `EXPERIMENTAL_COMMANDS`.
-4. Install a custom `IExecutionStrategy` on `cmd`:
-   - Walk `ParseResult.subcommand()` chain to find the deepest invoked
-     subcommand name (top-level if none).
-   - If that name is in `EXPERIMENTAL_COMMANDS` and the top-level
-     `--enable-experimental` flag is `false`:
-     - Print `Unknown command: <name>` to `cmd.getErr()`.
-     - Return exit code 2.
-   - If the flag is `true`, walk the spec and un-hide all experimental
-     subcommands (so `--help` lists them), then delegate to
-     `new CommandLine.RunLast().execute(parseResult)`.
-
-After the gate is in place, edit
-`plugin-skill/src/main/jte-src/skills/_partials/parallel-execution.jte.md` to
-prefix every experimental CLI invocation with `--enable-experimental` (e.g.
-`${model.cliBin()} --enable-experimental integrate --plan {N} ...`).
-
-Write `plugin-tasks-java/src/test/java/io/bitken/shipsmooth/tasks/TasksCliTest.java`
-(new) covering:
-
-1. `new TasksCli(app).execute("integrate", "--help")` → exit 2, stderr
-   contains `Unknown command: integrate`.
-2. `new TasksCli(app).execute("--enable-experimental", "integrate", "--help")`
-   → exit 0, stdout contains integrate's usage line.
-3. `new TasksCli(app).execute("--help")` → exit 0, stdout does **not**
-   contain "integrate" or any of the 10 experimental subcommand names.
-4. `new TasksCli(app).execute("--enable-experimental", "--help")` → exit 0,
-   stdout contains all 10 experimental subcommand names.
-5. `new TasksCli(app).execute("show", "--help")` → exit 0 (non-experimental
-   command still works without flag).
-
-Run `mvn -pl plugin-tasks-java test` and `mvn -pl plugin-skill test` — all
-green. The integration test assertion on `--enable-experimental` in
-`experimental-start-parallel-dev/SKILL.md` now passes.
-
-### Task 4: Verify gemini-dev and prod profiles still build [Low]
-
-*Depends-on: 3*
 
 Run, in this order, with `mvn -P <profile> -pl plugin-skill compile` (skill
 verification only; `package` is required only for the jlink image):
@@ -246,36 +181,27 @@ verification only; `package` is required only for the jlink image):
 - `mvn -P gemini -pl plugin-skill compile` → `build-gemini/skills/{start, experimental-start-parallel, experimental-start-tla}`
 
 Spot-check one rendered file per profile: confirm `${model.cliBin()}` is
-correctly substituted and the `--enable-experimental` flag appears on every
-experimental command invocation in the parallel skill.
+correctly substituted in the parallel skill.
 
 ---
 
 ## 4. Verification (end-to-end)
 
 ```bash
-# 1. Java gate
-mvn -pl plugin-tasks-java test
-# Then with a freshly jlinked runtime:
-~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks --help
-  # → exit 0, no experimental commands in list
-~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks integrate --help
-  # → exit 2, "Unknown command: integrate" on stderr
-~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks --enable-experimental --help
-  # → exit 0, all 10 experimental commands listed
-~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks --enable-experimental integrate --help
-  # → exit 0, integrate usage
-
-# 2. SKILL rendering — all four profiles
+# 1. SKILL rendering — all four profiles
 for P in dev gemini-dev prod gemini; do
-  mvn -P $P clean install -DskipTests
+  mvn -P $P -pl plugin-skill compile -DskipTests
 done
-# Confirm three skills per profile, content correctness:
-grep -L "Parallel Execution Protocol" build/skills/start-dev/SKILL.md           # found = good
-grep -l "Parallel Execution Protocol" build/skills/experimental-start-parallel-dev/SKILL.md  # found = good
-grep -l "Core Invariants" build/skills/experimental-start-tla-dev/SKILL.md                   # found = good
-grep -l "\-\-enable-experimental integrate" build/skills/experimental-start-parallel-dev/SKILL.md  # found = good
 
-# 3. All tests
-mvn clean test
+# 2. Content correctness:
+grep -c "Parallel Execution Protocol" build/skills/start-dev/SKILL.md                            # → 0
+grep -c "Parallel Execution Protocol" build/skills/experimental-start-parallel-dev/SKILL.md      # → 1
+grep -c "Core Invariants"             build/skills/experimental-start-parallel-dev/SKILL.md      # → 1
+grep -c "Core Invariants"             build/skills/experimental-start-tla-dev/SKILL.md           # → 1
+
+# 3. plugin-skill tests
+mvn -pl plugin-skill test
 ```
+
+The picocli `--enable-experimental` flag is **not** part of plan-40's
+verification. See plan-41 for that.
