@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>40</plan>
+    <plan-version>plan-40-v3</plan-version>
+    <metadata>
+        <backlog-issue>local: experimental-gate</backlog-issue>
+        <status>complete</status>
+        <created>2026-05-17</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Extract base workflow into JTE partial (no content change)</name>
+            <commit>3d7131c69a297cf6d09d02075b76a4443e27099e</commit>
+            <created-from>plan-40-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Extract parallel section into partial; create experimental-start-parallel skill</name>
+            <commit>22aaf85acd4d197a40c28db43916f3c6479f3145</commit>
+            <created-from>plan-40-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Verify gemini-dev and prod profiles still build</name>
+            <commit>2883a98</commit>
+            <created-from>plan-40-v1</created-from>
+            <closed-at-version>plan-40-v3</closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-05-17T17:44:20.945+05:30</timestamp>
+                    <message>Profile verification: all four profiles (dev, gemini-dev, prod, gemini) render three skills correctly. start-dev/start: 364-367 lines, 0 Parallel Execution Protocol matches. experimental-start-parallel-dev/-parallel: 626-633 lines, 1 Parallel Execution Protocol + 1 Core Invariants. Frontmatter correct on Gemini variants.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-17T15:57:42.637+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-17T17:44:55.225+05:30</timestamp>
+            <message>Plan complete. Template refactor (JTE partials) and skill split (experimental-start-parallel) shipped. picocli --enable-experimental gate deferred to plan-41.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

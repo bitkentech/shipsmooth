@@ -57,6 +57,24 @@ public class ResourceBuilder {
         renderTo(engine, "skills/experimental/start-tla/SKILL.jte", tlaModel, tlaSkillDir.resolve("SKILL.md"));
         System.out.println("Rendered SKILL.md to " + tlaSkillDir.toAbsolutePath());
 
+        // Third skill: the parallel-execution variant. Same naming derivation as TLA.
+        String parallelSkillName = skillName.endsWith("-dev")
+            ? "experimental-" + skillName.substring(0, skillName.length() - "-dev".length()) + "-parallel-dev"
+            : "experimental-" + skillName + "-parallel";
+        String parallelFrontmatter = frontmatter.isEmpty() ? "" : """
+            ---
+            name: %s
+            description: Use when starting any task — applies the shipsmooth agent coding workflow with parallel subagent execution and ledger-coordinated integration.
+            ---""".formatted(parallelSkillName);
+        PluginModel parallelModel = new PluginModel(
+            pluginName, pluginVersion, pluginDesc,
+            parallelSkillName, cliBin, parallelFrontmatter, cacheDir, platform, jlinkDir
+        );
+        Path parallelSkillDir = Path.of(buildOutputDir, "skills", parallelSkillName);
+        Files.createDirectories(parallelSkillDir);
+        renderTo(engine, "skills/experimental/start-parallel/SKILL.jte", parallelModel, parallelSkillDir.resolve("SKILL.md"));
+        System.out.println("Rendered SKILL.md to " + parallelSkillDir.toAbsolutePath());
+
         ObjectMapper mapper = new ObjectMapper();
 
         Path hooksDir = Path.of(buildOutputDir, "hooks");

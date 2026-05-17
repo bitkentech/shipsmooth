@@ -97,6 +97,39 @@ class ResourceBuilderIntegrationTest {
             "Heading should follow frontmatter");
     }
 
+    @Test
+    void parallelContentIsRemovedFromBaseSkill() throws Exception {
+        setDevProps();
+        ResourceBuilder.main(new String[]{});
+
+        Path baseSkill = tempDir.resolve("skills/start-dev/SKILL.md");
+        assertTrue(Files.exists(baseSkill), "base SKILL.md should be written");
+
+        String content = Files.readString(baseSkill);
+        assertFalse(content.contains("## Parallel Execution Protocol"),
+            "base start-dev skill must not contain the Parallel Execution Protocol section "
+                + "(it should live only in experimental-start-parallel-dev)");
+        assertFalse(content.contains("Worker Instruction Block"),
+            "base start-dev skill must not contain the Worker Instruction Block");
+    }
+
+    @Test
+    void experimentalParallelSkillIsRendered() throws Exception {
+        setDevProps();
+        ResourceBuilder.main(new String[]{});
+
+        Path parallelSkill = tempDir.resolve("skills/experimental-start-parallel-dev/SKILL.md");
+        assertTrue(Files.exists(parallelSkill),
+            "experimental-start-parallel-dev/SKILL.md should be rendered");
+
+        String content = Files.readString(parallelSkill);
+        assertTrue(content.contains("## Core Invariants"),
+            "experimental parallel skill should include the base workflow content");
+        assertTrue(content.contains("## Parallel Execution Protocol"),
+            "experimental parallel skill should include the parallel section");
+        // Note: the --enable-experimental flag in CLI invocations is added in plan-41.
+    }
+
     private void setProdProps() {
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("plugin.name", "shipsmooth");
