@@ -156,6 +156,10 @@
                   <key>plugin.hook.command</key>
                   <value>${plugin.hook.base}</value>
                 </systemProperty>
+                <systemProperty>
+                  <key>experimental.enabled</key>
+                  <value>${experimental.enabled}</value>
+                </systemProperty>
               </systemProperties>
             </configuration>
           </execution>

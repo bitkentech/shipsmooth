@@ -31,12 +31,27 @@ public class ResourceBuilder {
             skillName, cliBin, frontmatter, cacheDir, platform, jlinkDir
         );
 
+        boolean experimentalEnabled = Boolean.parseBoolean(System.getProperty("experimental.enabled", "false"));
+
         TemplateEngine engine = TemplateEngine.createPrecompiled(ContentType.Plain);
 
         Path skillDir = Path.of(buildOutputDir, "skills", skillName);
         Files.createDirectories(skillDir);
         renderTo(engine, "skills/start/SKILL.jte", model, skillDir.resolve("SKILL.md"));
         System.out.println("Rendered SKILL.md to " + skillDir.toAbsolutePath());
+
+        if (!experimentalEnabled) {
+            ObjectMapper mapper = new ObjectMapper();
+            Path hooksDir = Path.of(buildOutputDir, "hooks");
+            Files.createDirectories(hooksDir);
+            writeHooksJson(mapper, model, hooksDir.resolve("hooks.json"));
+            System.out.println("Written hooks.json to " + hooksDir.toAbsolutePath());
+            Path distDir = Path.of(buildOutputDir, "dist");
+            Files.createDirectories(distDir);
+            writeSessionStartConfig(mapper, model, distDir.resolve("session-start-config.json"));
+            System.out.println("Written session-start-config.json to " + distDir.toAbsolutePath());
+            return;
+        }
 
         // Second skill: the TLA-checked-ledger variant. Name and frontmatter are
         // derived from the primary skill (start -> experimental-start-tla, start-dev -> experimental-start-tla-dev).
