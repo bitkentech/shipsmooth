@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>42</plan>
-    <plan-version>plan-42-v2</plan-version>
+    <plan-version>plan-42-v3</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -17,14 +17,20 @@
             <created-from>plan-42-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-05-18T13:56:00.518+05:30</timestamp>
+                    <message>Deferred by user — existing release process verification skipped for now; will revisit before Task 5</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>2</id>
             <risk></risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Convert plugin-dist to jar and write PackageRuntime [Risk: Low]</name>
-            <commit></commit>
+            <commit>ede791a</commit>
             <created-from>plan-42-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -62,6 +68,18 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>Low</risk>
+            <status>pending</status>
+            <name>Make buildLauncher cross-platform [Risk: Low]</name>
+            <commit></commit>
+            <created-from>plan-42-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
         </task>
     </tasks>
     <project-updates>
