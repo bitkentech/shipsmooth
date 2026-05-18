@@ -18,3 +18,4 @@ plugin-tasks-java/target/
 model/*.tlc
 model/*.out
 model/states/
+.claude/settings.local.json
