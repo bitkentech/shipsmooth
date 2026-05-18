@@ -49,9 +49,9 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Fix cliBin to use XDG shell expression; add cross-reference comment</name>
-            <commit></commit>
+            <commit>9c107fb7800f7e5674a564b686df113d506fa299</commit>
             <created-from>plan-45-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
