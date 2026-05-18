@@ -76,6 +76,11 @@ public class PublishRelease {
         Path buildDir = repoRoot.resolve("build");
         if (Files.exists(buildDir)) deleteDirectory(buildDir);
 
+        runCommand(List.of("mvn", "-f", repoRoot.resolve("pom.xml").toString(),
+                "-pl", "plugin-tasks-java", "-am", "-Pjlink",
+                "-Dexperimental.enabled=false",
+                "package"), repoRoot);
+
         runCommand(List.of("mvn", "-f", repoRoot.resolve("pom.xml").toString(), "compile", "-Pprod", "-P!dev"), repoRoot);
 
         Path outputDir = repoRoot.resolve("plugin-dist/target/dist");
