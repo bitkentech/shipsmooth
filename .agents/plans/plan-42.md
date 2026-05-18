@@ -156,25 +156,8 @@ Add `<jdk.semeru.linux-x64>` property defaulting to `/opt/installers/jdk-semeru/
 - Delete `scripts/release.sh` and `scripts/package-tasks-java.sh` (or move to `plugin-devel/` as reference)
 - Update `DEVELOPMENT.md` if it references the old scripts
 
-### Task 6: Make buildLauncher cross-platform [Risk: Low]
-
-*Depends on: 2*
-
-`PackageRuntime.buildLauncher()` currently emits a `#!/bin/sh` launcher only. Add a Windows `.bat` launcher so the zip contains both:
-
-- `bin/shipsmooth-tasks` (sh, for Linux/Mac)
-- `bin/shipsmooth-tasks.bat` (batch, for Windows)
-
-Steps:
-- Add `buildLauncherBat()` method returning a `.bat` script that sets `INSTALL`, `SCC_DIR`, and invokes `runtime\bin\java.exe` with the same JVM flags
-- Write `bin/shipsmooth-tasks.bat` into the zip alongside the sh launcher
-- Update `PackageRuntimeTest` to assert both entries are present
-- Remove the `// TODO: make cross-platform` comment from `buildLauncher()`
-
-Note: this task produces the launcher scripts only. Actual Windows JDK packaging and `session-start.ts` platform detection are deferred to v0.3.1+.
-
 ## Out of scope
-- Mac/Windows packaging (v0.3.1+)
+- Mac/Windows packaging including cross-platform launcher (v0.3.1+)
 - Maven Mojo wrapping (future `plugin-mojo` module)
 - Gemini release path (`release-gemini.sh` unchanged)
 - Cross-platform `session-start.ts` URL selection (deferred; linux-x64 guard stays)

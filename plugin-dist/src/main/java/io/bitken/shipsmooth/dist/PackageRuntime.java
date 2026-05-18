@@ -84,7 +84,6 @@ public class PackageRuntime {
         }
     }
 
-    // TODO: make cross-platform — emit a .bat launcher for Windows (Task 6)
     private String buildLauncher() {
         return """
                 #!/bin/sh

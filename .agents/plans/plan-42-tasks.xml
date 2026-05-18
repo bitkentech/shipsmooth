@@ -69,18 +69,6 @@
             <comments/>
             <deviations/>
         </task>
-        <task>
-            <id>6</id>
-            <risk>Low</risk>
-            <status>pending</status>
-            <name>Make buildLauncher cross-platform [Risk: Low]</name>
-            <commit></commit>
-            <created-from>plan-42-v3</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-            <depends-on>2</depends-on>
-        </task>
     </tasks>
     <project-updates>
         <update>
