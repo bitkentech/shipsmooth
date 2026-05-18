@@ -127,40 +127,52 @@ gemini extensions uninstall shipsmooth
 
 ### Prerequisites
 
-- `jq` installed
 - `gh` (GitHub CLI) installed and authenticated
-- Working tree must be clean (no uncommitted changes)
+- IBM Semeru JDK at `/opt/installers/jdk-semeru/jdk-25.0.2+10` (override with `-Djdk.semeru.linux-x64=<path>`)
+- Working tree must be clean (no uncommitted changes on tracked files)
 
 ### Claude Code release
 
-Releases are published to the orphan `releases` branch and tagged as GitHub Releases. Users receive updates on their next `/plugin marketplace update`.
+Releases are orchestrated by `PublishRelease.java` in `plugin-dist`. It bumps the version, builds, packages the runtime zip, pushes to the `releases` branch, and creates a GitHub Release — all in one step.
 
 ```bash
-./scripts/release.sh <version>
+# Step 1: install modules into local Maven repo (required so plugin-dist can resolve siblings standalone)
+mvn install -pl plugin-dist -am -Pprod -P'!dev' -DskipTests
+
+# Step 2: run the release
+mvn exec:java@publish-release -pl plugin-dist \
+  -Dshipsmooth.release.version=<version> \
+  -Pprod -P'!dev'
+
 # Example:
-./scripts/release.sh 0.2.0
+mvn install -pl plugin-dist -am -Pprod -P'!dev' -DskipTests
+mvn exec:java@publish-release -pl plugin-dist -Dshipsmooth.release.version=0.3.2 -Pprod -P'!dev'
 ```
 
-The script:
-1. Cleans `build/` and runs `mvn process-resources -Pprod -P!dev`
-2. Stamps the version into `build/.claude-plugin/plugin.json`
-3. Checks out the orphan `releases` branch
-4. Replaces `dist/` with the new build output
-5. Commits, tags `v<version>`, and pushes both branch and tag
-6. Creates a GitHub Release via `gh release create`
-7. Returns to the original branch
+`PublishRelease` performs these steps:
+1. Asserts clean working tree and that tag `v<version>` does not exist
+2. Runs `mvn versions:set -DnewVersion=<version>` and commits all `pom.xml` files
+3. Builds the full plugin (`mvn compile -Pprod -P!dev`)
+4. Packages the runtime zip (`shipsmooth-tasks-<version>-linux-x64.zip`)
+5. Checks out the `releases` branch, replaces `dist/` with the new build output
+6. Commits, tags `v<version>`, pushes `releases` branch and tag
+7. Creates a GitHub Release and uploads the runtime zip as an asset
+8. Returns to the original branch
 
 Structure of the `releases` branch:
 ```
 dist/
-├── .claude-plugin/plugin.json   (version-stamped)
-├── hooks/
-├── scripts/
-├── skills/start/
+├── .claude-plugin/
+├── hooks/hooks.json
+├── dist/                  (compiled JS + session-start-config.json)
+├── scripts/tasks/
+├── skills/start/SKILL.md
 └── package.json
 ```
 
 The `releases` branch is an orphan — it shares no history with `main`.
+
+> **Note:** The two-step invocation (install then exec) is required because `exec:java@publish-release` runs `plugin-dist` outside the reactor. The `install` step puts the sibling module POMs into the local repo so Maven can resolve them. `plugin-dist` does not use any classes from siblings — the dependencies are ordering-only.
 
 ### Gemini CLI release
 
