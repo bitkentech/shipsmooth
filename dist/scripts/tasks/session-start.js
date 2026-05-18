@@ -46,7 +46,8 @@ function installRuntime(opts) {
         return;
     }
     const platform = opts.forcePlatform ?? detectPlatform();
-    if (platform !== 'linux-x64') {
+    const supportedPlatforms = ['linux-x64', 'darwin-x64'];
+    if (!supportedPlatforms.includes(platform)) {
         throw new Error(`shipsmooth: platform ${platform} is not yet supported`);
     }
     const jlinkDir = opts.jlinkDir;
@@ -56,7 +57,7 @@ function installRuntime(opts) {
         console.log(`shipsmooth: runtime ${version} installed at ${runtimeDir} from local build`);
     }
     else {
-        downloadAndInstall(version, runtimeDir);
+        downloadAndInstall(version, runtimeDir, platform);
         console.log(`shipsmooth: runtime ${version} installed at ${runtimeDir}`);
     }
 }
@@ -76,8 +77,8 @@ function detectPlatform() {
     const arch = archMap[process.arch] ?? process.arch;
     return `${plat}-${arch}`;
 }
-function downloadAndInstall(version, runtimeDir) {
-    const url = `https://github.com/bitkentech/shipsmooth/releases/download/v${version}/shipsmooth-tasks-${version}-linux-x64.zip`;
+function downloadAndInstall(version, runtimeDir, platform) {
+    const url = `https://github.com/bitkentech/shipsmooth/releases/download/v${version}/shipsmooth-tasks-${version}-${platform}.zip`;
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shipsmooth-'));
     const zipFile = path.join(tmp, 'runtime.zip');
     const extractDir = `${runtimeDir}.tmp`;
