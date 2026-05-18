@@ -39,9 +39,10 @@ public class PublishRelease {
         String mainSha = git("rev-parse", "--short", "HEAD").strip();
         System.out.println("Main SHA: " + mainSha);
 
+        buildAndPackage();
+
         git("checkout", "releases");
         try {
-            buildAndPackage();
             syncDistAndPublish(mainSha);
         } finally {
             git("checkout", originalBranch);
