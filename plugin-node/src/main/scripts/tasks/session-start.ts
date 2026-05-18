@@ -82,6 +82,7 @@ function expandHome(p: string): string {
   return p.startsWith('~/') ? path.join(os.homedir(), p.slice(2)) : p;
 }
 
+// If you change this logic, update the cliBin expression in plugin-skill/src/main/jte-src/skills/_partials/base-workflow.jte.md
 export function resolveCache(config: { cacheDir?: string }): string {
   if (config.cacheDir) return expandHome(config.cacheDir);
   const xdgCache = process.env['XDG_CACHE_HOME'] ?? path.join(os.homedir(), '.cache');

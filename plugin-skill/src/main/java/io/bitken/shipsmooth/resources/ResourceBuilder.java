@@ -21,11 +21,10 @@ public class ResourceBuilder {
         String skillName      = System.getProperty("plugin.skillName");
         String frontmatter    = System.getProperty("skill.frontmatter", "");
         String cacheDir       = System.getProperty("shipsmooth.cache.dir", "");
-        String cacheDirResolved = System.getProperty("shipsmooth.cache.dir.resolved", "");
         String platform       = System.getProperty("build.platform", "claude");
         String jlinkDir       = System.getProperty("shipsmooth.jlink.dir", "");
-        String runtimeRelPath = "runtime-" + pluginVersion + "/bin/shipsmooth-tasks";
-        String cliBin         = cacheDirResolved.isEmpty() ? runtimeRelPath : cacheDirResolved + "/" + runtimeRelPath;
+        // Shell expression mirrors resolveCache() in session-start.ts — keep in sync with base-workflow.jte.md
+        String cliBin         = "${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-" + pluginVersion + "/bin/shipsmooth-tasks";
 
         PluginModel model = new PluginModel(
             pluginName, pluginVersion, pluginDesc,

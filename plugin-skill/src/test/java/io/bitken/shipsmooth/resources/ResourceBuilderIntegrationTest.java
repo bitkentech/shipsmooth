@@ -40,8 +40,8 @@ class ResourceBuilderIntegrationTest {
             "Claude profile should contain heading");
         assertFalse(content.stripLeading().startsWith("---"),
             "Claude profile should not start with YAML frontmatter");
-        assertTrue(content.contains("/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks"),
-            "CLI bin path should be interpolated");
+        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.2.0/bin/shipsmooth-tasks"),
+            "CLI bin path should use XDG shell expression");
     }
 
     @Test
