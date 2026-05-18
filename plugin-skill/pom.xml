@@ -149,8 +149,8 @@
                   <value>${shipsmooth.jlink.dir}</value>
                 </systemProperty>
                 <systemProperty>
-                  <key>shipsmooth.cache.dir.resolved</key>
-                  <value>${shipsmooth.cache.dir.resolved}</value>
+                  <key>shipsmooth.cache.dir</key>
+                  <value>${shipsmooth.cache.dir}</value>
                 </systemProperty>
                 <systemProperty>
                   <key>plugin.hook.command</key>

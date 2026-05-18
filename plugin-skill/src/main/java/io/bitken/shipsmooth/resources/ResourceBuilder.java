@@ -20,11 +20,12 @@ public class ResourceBuilder {
         String pluginDesc     = System.getProperty("plugin.description");
         String skillName      = System.getProperty("plugin.skillName");
         String frontmatter    = System.getProperty("skill.frontmatter", "");
-        String cacheDir       = System.getProperty("shipsmooth.cache.dir.resolved", "");
+        String cacheDir       = System.getProperty("shipsmooth.cache.dir", "");
+        String cacheDirResolved = System.getProperty("shipsmooth.cache.dir.resolved", "");
         String platform       = System.getProperty("build.platform", "claude");
         String jlinkDir       = System.getProperty("shipsmooth.jlink.dir", "");
         String runtimeRelPath = "runtime-" + pluginVersion + "/bin/shipsmooth-tasks";
-        String cliBin         = cacheDir.isEmpty() ? runtimeRelPath : cacheDir + "/" + runtimeRelPath;
+        String cliBin         = cacheDirResolved.isEmpty() ? runtimeRelPath : cacheDirResolved + "/" + runtimeRelPath;
 
         PluginModel model = new PluginModel(
             pluginName, pluginVersion, pluginDesc,
@@ -129,8 +130,10 @@ public class ResourceBuilder {
 
     static void writeSessionStartConfig(ObjectMapper mapper, PluginModel model, Path outputFile) throws IOException {
         ObjectNode config = mapper.createObjectNode()
-            .put("version", model.pluginVersion())
-            .put("cacheDir", model.cacheDir());
+            .put("version", model.pluginVersion());
+        if (model.cacheDir() != null && !model.cacheDir().isBlank()) {
+            config.put("cacheDir", model.cacheDir());
+        }
         if (model.jlinkDir() != null && !model.jlinkDir().isBlank()) {
             config.put("jlinkDir", model.jlinkDir());
         }

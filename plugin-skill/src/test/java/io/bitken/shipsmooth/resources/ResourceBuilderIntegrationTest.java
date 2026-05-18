@@ -17,8 +17,9 @@ class ResourceBuilderIntegrationTest {
 
     private static final List<String> PROPS = List.of(
         "build.outputDir", "plugin.name", "plugin.version", "plugin.description",
-        "plugin.skillName", "skill.frontmatter", "shipsmooth.cache.dir.resolved",
-        "build.platform", "shipsmooth.jlink.dir", "experimental.enabled", "plugin.hook.command"
+        "plugin.skillName", "skill.frontmatter", "shipsmooth.cache.dir",
+        "shipsmooth.cache.dir.resolved", "build.platform", "shipsmooth.jlink.dir",
+        "experimental.enabled", "plugin.hook.command"
     );
 
     @AfterEach
@@ -39,7 +40,7 @@ class ResourceBuilderIntegrationTest {
             "Claude profile should contain heading");
         assertFalse(content.stripLeading().startsWith("---"),
             "Claude profile should not start with YAML frontmatter");
-        assertTrue(content.contains("~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks"),
+        assertTrue(content.contains("/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks"),
             "CLI bin path should be interpolated");
     }
 
@@ -93,7 +94,8 @@ class ResourceBuilderIntegrationTest {
         System.setProperty("plugin.description", "Agent coding workflow");
         System.setProperty("plugin.skillName", "start");
         System.setProperty("skill.frontmatter", frontmatter);
-        System.setProperty("shipsmooth.cache.dir.resolved", "~/.cache/shipsmooth");
+        System.setProperty("shipsmooth.cache.dir", "~/.cache/shipsmooth");
+        System.setProperty("shipsmooth.cache.dir.resolved", System.getProperty("user.home") + "/.cache/shipsmooth");
         System.setProperty("build.platform", "gemini");
         System.setProperty("shipsmooth.jlink.dir", "");
         System.setProperty("experimental.enabled", "false");
@@ -165,7 +167,8 @@ class ResourceBuilderIntegrationTest {
         System.setProperty("plugin.description", "Agent coding workflow");
         System.setProperty("plugin.skillName", "start");
         System.setProperty("skill.frontmatter", "");
-        System.setProperty("shipsmooth.cache.dir.resolved", "~/.cache/shipsmooth");
+        System.setProperty("shipsmooth.cache.dir", "");
+        System.setProperty("shipsmooth.cache.dir.resolved", System.getProperty("user.home") + "/.cache/shipsmooth");
         System.setProperty("build.platform", "claude");
         System.setProperty("shipsmooth.jlink.dir", "/dev/null");
         System.setProperty("experimental.enabled", "false");
@@ -178,7 +181,8 @@ class ResourceBuilderIntegrationTest {
         System.setProperty("plugin.description", "Agent coding workflow (dev build)");
         System.setProperty("plugin.skillName", "start-dev");
         System.setProperty("skill.frontmatter", "");
-        System.setProperty("shipsmooth.cache.dir.resolved", "~/.cache/shipsmooth-dev");
+        System.setProperty("shipsmooth.cache.dir", "~/.cache/shipsmooth-dev");
+        System.setProperty("shipsmooth.cache.dir.resolved", System.getProperty("user.home") + "/.cache/shipsmooth-dev");
         System.setProperty("build.platform", "claude");
         System.setProperty("shipsmooth.jlink.dir", "/some/jlink/path");
         System.setProperty("experimental.enabled", "true");
