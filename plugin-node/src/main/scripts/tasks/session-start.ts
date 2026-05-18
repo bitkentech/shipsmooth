@@ -82,12 +82,18 @@ function expandHome(p: string): string {
   return p.startsWith('~/') ? path.join(os.homedir(), p.slice(2)) : p;
 }
 
+export function resolveCache(config: { cacheDir?: string }): string {
+  if (config.cacheDir) return expandHome(config.cacheDir);
+  const xdgCache = process.env['XDG_CACHE_HOME'] ?? path.join(os.homedir(), '.cache');
+  return path.join(xdgCache, 'shipsmooth');
+}
+
 // CLI entrypoint — invoked by the hooks.json node -e bootstrap
 if (require.main === module) {
   const configPath = path.join(__dirname, 'session-start-config.json');
   const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
   const pluginRoot = process.env['CLAUDE_PLUGIN_ROOT'] ?? '';
-  const cacheDir = expandHome(config.cacheDir);
+  const cacheDir = resolveCache(config);
 
   try {
     installRuntime({ version: config.version, cacheDir, pluginRoot, jlinkDir: config.jlinkDir });
