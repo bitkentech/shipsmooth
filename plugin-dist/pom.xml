@@ -154,6 +154,59 @@
 
             </executions>
           </plugin>
+
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.3.0</version>
+            <executions>
+
+              <execution>
+                <id>package-runtime</id>
+                <goals><goal>java</goal></goals>
+                <configuration>
+                  <mainClass>io.bitken.shipsmooth.dist.PackageRuntime</mainClass>
+                  <arguments>
+                    <argument>linux-x64</argument>
+                    <argument>${jdk.semeru.linux-x64}</argument>
+                  </arguments>
+                  <systemProperties>
+                    <systemProperty>
+                      <key>shipsmooth.repo.root</key>
+                      <value>${maven.multiModuleProjectDirectory}</value>
+                    </systemProperty>
+                    <systemProperty>
+                      <key>project.version</key>
+                      <value>${project.version}</value>
+                    </systemProperty>
+                  </systemProperties>
+                </configuration>
+              </execution>
+
+              <execution>
+                <id>publish-release</id>
+                <goals><goal>java</goal></goals>
+                <configuration>
+                  <mainClass>io.bitken.shipsmooth.dist.PublishRelease</mainClass>
+                  <arguments>
+                    <argument>${shipsmooth.release.version}</argument>
+                  </arguments>
+                  <systemProperties>
+                    <systemProperty>
+                      <key>shipsmooth.repo.root</key>
+                      <value>${maven.multiModuleProjectDirectory}</value>
+                    </systemProperty>
+                    <systemProperty>
+                      <key>jdk.semeru.linux-x64</key>
+                      <value>${jdk.semeru.linux-x64}</value>
+                    </systemProperty>
+                  </systemProperties>
+                </configuration>
+              </execution>
+
+            </executions>
+          </plugin>
+
         </plugins>
       </build>
     </profile>
