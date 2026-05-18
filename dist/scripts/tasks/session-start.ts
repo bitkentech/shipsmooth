@@ -26,7 +26,7 @@ export function installRuntime(opts: InstallOptions): void {
   }
 
   const jlinkDir = opts.jlinkDir;
-  if (jlinkDir && fs.existsSync(jlinkDir)) {
+  if (jlinkDir && fs.existsSync(jlinkDir) && fs.statSync(jlinkDir).isDirectory()) {
     fs.cpSync(jlinkDir, runtimeDir, { recursive: true });
     fs.chmodSync(bin, 0o755);
     console.log(`shipsmooth: runtime ${version} installed at ${runtimeDir} from local build`);
