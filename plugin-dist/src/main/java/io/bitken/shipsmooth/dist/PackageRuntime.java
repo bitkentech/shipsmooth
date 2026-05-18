@@ -86,14 +86,16 @@ public class PackageRuntime {
 
     // TODO: make cross-platform — emit a .bat launcher for Windows (Task 6)
     private String buildLauncher() {
-        return "#!/bin/sh\n"
-                + "DIR=\"$(cd \"$(dirname \"$0\")\" && pwd)\"\n"
-                + "INSTALL=\"$(cd \"$DIR/..\" && pwd)\"\n"
-                + "SCC_DIR=\"${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth/scc\"\n"
-                + "mkdir -p \"$SCC_DIR\"\n"
-                + "exec \"$INSTALL/runtime/bin/java\" \\\n"
-                + "  -Xquickstart \\\n"
-                + "  -Xshareclasses:name=shipsmooth_v" + version + ",cacheDir=\"$SCC_DIR\",nonfatal \\\n"
-                + "  -m io.bitken.shipsmooth.tasks/io.bitken.shipsmooth.tasks.TasksCli \"$@\"\n";
+        return """
+                #!/bin/sh
+                DIR="$(cd "$(dirname "$0")" && pwd)"
+                INSTALL="$(cd "$DIR/.." && pwd)"
+                SCC_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth/scc"
+                mkdir -p "$SCC_DIR"
+                exec "$INSTALL/runtime/bin/java" \\
+                  -Xquickstart \\
+                  -Xshareclasses:name=shipsmooth_v%s,cacheDir="$SCC_DIR",nonfatal \\
+                  -m io.bitken.shipsmooth.tasks/io.bitken.shipsmooth.tasks.TasksCli "$@"
+                """.formatted(version);
     }
 }
