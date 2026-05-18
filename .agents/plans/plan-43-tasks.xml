@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>43</plan>
+    <plan-version>plan-43-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-05-18</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk></risk>
+            <status>agent-coded</status>
+            <name>Split jlink.jdk.home into exec + jmods properties [Risk: Low]</name>
+            <commit>a7ecf19001e0d31856d57b1cd3909202d8e29639</commit>
+            <created-from>plan-43-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk></risk>
+            <status>agent-coded</status>
+            <name>Add darwin-x64 jlink build execution to pom [Risk: Medium]</name>
+            <commit>a7ecf19001e0d31856d57b1cd3909202d8e29639</commit>
+            <created-from>plan-43-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk></risk>
+            <status>agent-coded</status>
+            <name>Update PublishRelease to package and upload darwin-x64 zip [Risk: Low]</name>
+            <commit>c3cc1d7de227013dccdfcb57136ec75ae19c5bb8</commit>
+            <created-from>plan-43-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk></risk>
+            <status>agent-coded</status>
+            <name>Update session-start.ts download and verify end-to-end [Risk: Low]</name>
+            <commit>cb84919e992ee7953d14eb4ec6857e3d9b647a86</commit>
+            <created-from>plan-43-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-18T21:38:07.095+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-18T22:15:04.751+05:30</timestamp>
+            <message>All tasks complete. darwin-x64 jlink cross-compile, PackageRuntime, PublishRelease, and session-start.ts all updated and verified.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

@@ -72,6 +72,19 @@ test('jlinkDir is a non-directory (e.g. /dev/null): does not create runtime dir 
   }
 });
 
+test('darwin-x64: installs from jlinkDir without error', () => {
+  const cacheDir = makeTmpDir();
+  const pluginRoot = makeTmpDir();
+  const version = '0.3.3';
+  const jlinkDir = makeTmpDir();
+  makeExecutable(path.join(jlinkDir, 'bin', 'shipsmooth-tasks'));
+
+  installRuntime({ version, cacheDir, pluginRoot, jlinkDir, forcePlatform: 'darwin-x64' });
+
+  const destBin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth-tasks');
+  assert.ok(fs.existsSync(destBin), 'darwin-x64 binary should be installed from jlinkDir');
+});
+
 test('unsupported platform: throws with clear message', () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
