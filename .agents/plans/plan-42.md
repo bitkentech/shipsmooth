@@ -20,7 +20,8 @@ Feature: replace shell-script release process with Java code; ship first Java-ru
 - `runtime-0.2.0/` in the repo root is an example of what a shipped runtime looks like.
 
 ### plugin-dist (target module)
-- Currently `<packaging>pom</packaging>`, no Java source.
+- Switching from `<packaging>pom</packaging>` to `<packaging>jar</packaging>` — tested, existing resource-copy executions are unaffected.
+- No Java source yet.
 - Orchestrates resource copying via `maven-resources-plugin` executions.
 - Depends on `plugin-node`, `plugin-resources`, `plugin-skill`.
 
@@ -56,7 +57,20 @@ Both are deleted (or moved to `plugin-devel/` as reference) once Task 4 complete
 
 ## Tasks
 
-### Task 1: Convert plugin-dist to jar and write PackageRuntime [Risk: TBD]
+### Task 1: Verify existing release process end-to-end [Risk: Medium]
+
+Before touching anything, establish that `release.sh` + `mvn compile -Pprod` produces a correct `build/` output and that the `releases` branch structure is as expected. This is the baseline we must not break until Task 5 completes.
+
+Steps:
+- Run `mvn compile -Pprod -P'!dev'` and inspect `build/` output (`.claude-plugin/`, `hooks/`, `dist/`, `scripts/`, `skills/`, `package.json`)
+- Confirm `build/dist/session-start-config.json` has correct `version` and `cacheDir`
+- Inspect the `releases` branch: check out locally, verify `dist/` layout matches what `release.sh` copies
+- Confirm `gh release view v0.2.0` shows zero assets (documenting the known gap)
+- Document any discrepancies in a deviation note — do not fix them here
+
+This task produces no code changes. It is complete when we have a written record of the current state.
+
+### Task 2: Convert plugin-dist to jar and write PackageRuntime [Risk: Low]
 
 Change `<packaging>pom</packaging>` to `<packaging>jar</packaging>` in `plugin-dist/pom.xml`. Add `src/main/java/`. Write `io.bitken.shipsmooth.dist.PackageRuntime` with a `main()` that:
 
@@ -65,7 +79,7 @@ Change `<packaging>pom</packaging>` to `<packaging>jar</packaging>` in `plugin-d
 - Copies jlink image into staging dir as `runtime/`
 - Writes `bin/shipsmooth-tasks` shell launcher (install-relative, `-Xquickstart`, `-Xshareclasses`, SCC under `${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth/scc`)
 - Zips staging dir to `plugin-dist/target/dist/shipsmooth-tasks-{version}-{target}.zip`
-- On Linux-native: optionally smoke-tests the staged launcher with `--help`
+- On Linux-native: smoke-tests the staged launcher with `--help`
 
 Launcher template (same as `package-tasks-java.sh` produces today):
 ```sh
@@ -88,7 +102,9 @@ mvn -pl plugin-dist -am compile exec:java \
   -Pprod -P'!dev'
 ```
 
-### Task 2: Write PublishRelease [Risk: TBD]
+### Task 3: Write PublishRelease [Risk: High]
+
+*Depends on: 2*
 
 Write `io.bitken.shipsmooth.dist.PublishRelease` with a `main()` that orchestrates:
 
@@ -114,7 +130,9 @@ mvn -pl plugin-dist -am compile exec:java \
   -Pprod -P'!dev'
 ```
 
-### Task 3: Wire exec-maven-plugin into plugin-dist pom [Risk: TBD]
+### Task 4: Wire exec-maven-plugin into plugin-dist pom [Risk: Low]
+
+*Depends on: 2*
 
 Add `exec-maven-plugin` executions to `plugin-dist/pom.xml` so invocations shorten to:
 
@@ -128,9 +146,9 @@ mvn -pl plugin-dist -am compile exec:java@publish-release -Dshipsmooth.release.v
 
 Add `<jdk.semeru.linux-x64>` property defaulting to `/opt/installers/jdk-semeru/jdk-25.0.2+10`.
 
-### Task 4: Bump to 0.3.0, run release, verify, retire shell scripts [Risk: TBD]
+### Task 5: Bump to 0.3.0, run release, verify, retire shell scripts [Risk: High]
 
-*Depends on: 1, 2, 3*
+*Depends on: 1, 2, 3, 4*
 
 - Run `PublishRelease` end-to-end for version 0.3.0
 - Verify on GitHub: `v0.3.0` tag, `releases` branch updated, `shipsmooth-tasks-0.3.0-linux-x64.zip` asset present
