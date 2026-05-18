@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add XDG cache resolution in session-start.ts</name>
-            <commit></commit>
+            <commit>7364b6d92e1162864129af06016440886a968524</commit>
             <created-from>plan-45-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -28,7 +28,13 @@
             <created-from>plan-45-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-05-18T23:55:09.499+05:30</timestamp>
+                    <message>Design refined: plugin-skill/pom.xml passes shipsmooth.cache.dir (tilde) instead of adding it alongside .resolved; ResourceBuilder reads tilde form for config, keeps resolved for cliBin only</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>3</id>
