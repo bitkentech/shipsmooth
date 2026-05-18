@@ -144,6 +144,20 @@ class ResourceBuilderIntegrationTest {
             "experimental parallel skill should call the CLI with --enable-experimental");
     }
 
+    @Test
+    void sessionStartConfigForProdHasNoCacheDir() throws Exception {
+        setProdProps();
+        ResourceBuilder.main(new String[]{});
+
+        Path output = tempDir.resolve("dist/session-start-config.json");
+        assertTrue(Files.exists(output), "session-start-config.json should be written");
+
+        String content = Files.readString(output);
+        assertFalse(content.contains("cacheDir"),
+            "prod session-start-config.json must not contain a hardcoded cacheDir — " +
+            "the runtime resolves it via XDG_CACHE_HOME at install time");
+    }
+
     private void setProdProps() {
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("plugin.name", "shipsmooth");
