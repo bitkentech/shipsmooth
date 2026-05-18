@@ -64,6 +64,9 @@ public class PublishRelease {
     }
 
     private void buildAndPackage() throws IOException, InterruptedException {
+        Path buildDir = repoRoot.resolve("build");
+        if (Files.exists(buildDir)) deleteDirectory(buildDir);
+
         runCommand(List.of("mvn", "compile", "-Pprod", "-P!dev"), repoRoot);
 
         Path outputDir = repoRoot.resolve("plugin-dist/target/dist");
