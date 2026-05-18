@@ -22,9 +22,9 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Pass shipsmooth.cache.dir tilde form to ResourceBuilder</name>
-            <commit></commit>
+            <commit>8bae6dbd8c66b016b90d69b263cf4dbb9ad444f3</commit>
             <created-from>plan-45-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -39,9 +39,9 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Integration test — verify prod config has no hardcoded home</name>
-            <commit></commit>
+            <commit>8bae6dbd8c66b016b90d69b263cf4dbb9ad444f3</commit>
             <created-from>plan-45-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
