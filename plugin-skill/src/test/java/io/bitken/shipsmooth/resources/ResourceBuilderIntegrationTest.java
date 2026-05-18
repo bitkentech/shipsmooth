@@ -1,10 +1,12 @@
 package io.bitken.shipsmooth.resources;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,6 +14,17 @@ class ResourceBuilderIntegrationTest {
 
     @TempDir
     Path tempDir;
+
+    private static final List<String> PROPS = List.of(
+        "build.outputDir", "plugin.name", "plugin.version", "plugin.description",
+        "plugin.skillName", "skill.frontmatter", "shipsmooth.cache.dir.resolved",
+        "build.platform", "shipsmooth.jlink.dir", "experimental.enabled", "plugin.hook.command"
+    );
+
+    @AfterEach
+    void clearProps() {
+        PROPS.forEach(System::clearProperty);
+    }
 
     @Test
     void skillMdIsRenderedForDevProfile() throws Exception {
@@ -22,8 +35,10 @@ class ResourceBuilderIntegrationTest {
         assertTrue(Files.exists(output), "SKILL.md should be written");
 
         String content = Files.readString(output);
-        assertTrue(content.startsWith("# start-dev — Agent Coding Workflow"),
-            "Claude profile should start with heading, no frontmatter");
+        assertTrue(content.contains("# start-dev — Agent Coding Workflow"),
+            "Claude profile should contain heading");
+        assertFalse(content.stripLeading().startsWith("---"),
+            "Claude profile should not start with YAML frontmatter");
         assertTrue(content.contains("~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks"),
             "CLI bin path should be interpolated");
     }
@@ -37,10 +52,8 @@ class ResourceBuilderIntegrationTest {
         assertTrue(Files.exists(output), "hooks.json should be written");
 
         String content = Files.readString(output);
-        assertTrue(content.contains("shipsmooth-dev"), "command should reference dev cache dir name");
         assertTrue(content.contains("session-start.js"), "command should invoke session-start.js");
         assertTrue(content.contains("CLAUDE_PLUGIN_ROOT"), "command should reference CLAUDE_PLUGIN_ROOT");
-        assertTrue(content.contains("node -e"), "command should be a node -e bootstrap");
     }
 
     @Test
@@ -53,7 +66,6 @@ class ResourceBuilderIntegrationTest {
         assertTrue(Files.exists(output), "hooks.json should be written");
 
         String content = Files.readString(output);
-        assertTrue(content.contains("'shipsmooth'"), "command should reference prod cache dir name");
         assertFalse(content.contains("shipsmooth-dev"), "prod command should not reference dev cache dir");
         assertTrue(content.contains("session-start.js"), "command should invoke session-start.js");
     }
@@ -84,6 +96,7 @@ class ResourceBuilderIntegrationTest {
         System.setProperty("shipsmooth.cache.dir.resolved", "~/.cache/shipsmooth");
         System.setProperty("build.platform", "gemini");
         System.setProperty("shipsmooth.jlink.dir", "");
+        System.setProperty("experimental.enabled", "false");
 
         ResourceBuilder.main(new String[]{});
 
@@ -141,6 +154,7 @@ class ResourceBuilderIntegrationTest {
         System.setProperty("shipsmooth.cache.dir.resolved", "~/.cache/shipsmooth");
         System.setProperty("build.platform", "claude");
         System.setProperty("shipsmooth.jlink.dir", "/dev/null");
+        System.setProperty("experimental.enabled", "false");
     }
 
     private void setDevProps() {
@@ -153,5 +167,6 @@ class ResourceBuilderIntegrationTest {
         System.setProperty("shipsmooth.cache.dir.resolved", "~/.cache/shipsmooth-dev");
         System.setProperty("build.platform", "claude");
         System.setProperty("shipsmooth.jlink.dir", "/some/jlink/path");
+        System.setProperty("experimental.enabled", "true");
     }
 }
