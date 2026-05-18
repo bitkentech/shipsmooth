@@ -56,6 +56,22 @@ test('local runtime: idempotent when called twice', () => {
   assert.ok(fs.existsSync(destBin));
 });
 
+test('jlinkDir is a non-directory (e.g. /dev/null): does not create runtime dir as a file', () => {
+  const cacheDir = makeTmpDir();
+  const pluginRoot = makeTmpDir();
+  // /dev/null exists but is not a directory — must not cpSync it into the runtime dir
+  try {
+    installRuntime({ version: '0.3.1', cacheDir, pluginRoot, jlinkDir: '/dev/null', forcePlatform: 'linux-x64' });
+  } catch {
+    // expected: will fail trying to download (no real release at this version in test env)
+  }
+  const runtimeDir = path.join(cacheDir, 'runtime-0.3.1');
+  // must not be a plain file — either absent or a directory
+  if (fs.existsSync(runtimeDir)) {
+    assert.ok(fs.statSync(runtimeDir).isDirectory(), 'runtime path must be a directory, not a file');
+  }
+});
+
 test('unsupported platform: throws with clear message', () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
