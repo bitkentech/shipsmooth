@@ -12,6 +12,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 public class PackageRuntime {
 
     private final String target;
+    // TODO: use jdkHome to smoke-test the staged launcher with `--help` on the native platform (Task 5)
     private final Path jdkHome;
     private final Path jlinkImage;
     private final Path outputDir;
@@ -83,6 +84,7 @@ public class PackageRuntime {
         }
     }
 
+    // TODO: make cross-platform — emit a .bat launcher for Windows (Task 6)
     private String buildLauncher() {
         return "#!/bin/sh\n"
                 + "DIR=\"$(cd \"$(dirname \"$0\")\" && pwd)\"\n"
@@ -92,6 +94,6 @@ public class PackageRuntime {
                 + "exec \"$INSTALL/runtime/bin/java\" \\\n"
                 + "  -Xquickstart \\\n"
                 + "  -Xshareclasses:name=shipsmooth_v" + version + ",cacheDir=\"$SCC_DIR\",nonfatal \\\n"
-                + "  -m com.github.pramodbiligiri.shipsmooth.tasks/com.github.pramodbiligiri.shipsmooth.tasks.TasksCli \"$@\"\n";
+                + "  -m io.bitken.shipsmooth.tasks/io.bitken.shipsmooth.tasks.TasksCli \"$@\"\n";
     }
 }
