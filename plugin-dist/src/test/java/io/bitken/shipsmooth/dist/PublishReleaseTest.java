@@ -36,11 +36,14 @@ public class PublishReleaseTest {
 
     @Test
     void assertCleanWorkingTreeFailsOnDirtyRepo() throws IOException, InterruptedException {
-        // init a real git repo with a dirty file
         PublishRelease.runCommand(List.of("git", "init"), tempDir);
         PublishRelease.runCommand(List.of("git", "config", "user.email", "test@test.com"), tempDir);
         PublishRelease.runCommand(List.of("git", "config", "user.name", "Test"), tempDir);
-        Files.writeString(tempDir.resolve("dirty.txt"), "untracked");
+        Files.writeString(tempDir.resolve("README.md"), "hello");
+        PublishRelease.runCommand(List.of("git", "add", "README.md"), tempDir);
+        PublishRelease.runCommand(List.of("git", "commit", "-m", "init"), tempDir);
+        // modify a tracked file without committing
+        Files.writeString(tempDir.resolve("README.md"), "modified");
 
         assertThrows(IllegalStateException.class, () ->
             PublishRelease.assertCleanWorkingTree(tempDir)

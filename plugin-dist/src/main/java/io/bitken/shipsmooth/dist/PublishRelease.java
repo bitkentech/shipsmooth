@@ -121,14 +121,14 @@ public class PublishRelease {
     }
 
     static void assertCleanWorkingTree(Path repoRoot) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder("git", "status", "--porcelain")
-                .directory(repoRoot.toFile())
-                .redirectErrorStream(true);
-        Process proc = pb.start();
-        String output = new String(proc.getInputStream().readAllBytes());
-        proc.waitFor();
-        if (!output.isBlank()) {
-            throw new IllegalStateException("Working tree is not clean:\n" + output);
+        // Check only tracked files — untracked files are not a release blocker
+        ProcessBuilder unstaged = new ProcessBuilder("git", "diff", "--quiet")
+                .directory(repoRoot.toFile());
+        ProcessBuilder staged = new ProcessBuilder("git", "diff", "--cached", "--quiet")
+                .directory(repoRoot.toFile());
+        if (unstaged.start().waitFor() != 0 || staged.start().waitFor() != 0) {
+            String status = runCommand(List.of("git", "status", "--short"), repoRoot);
+            throw new IllegalStateException("Working tree has uncommitted changes:\n" + status);
         }
     }
 
