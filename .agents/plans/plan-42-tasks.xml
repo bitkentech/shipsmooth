@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>42</plan>
+    <plan-version>plan-42-v2</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>active</status>
+        <created>2026-05-18</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk></risk>
+            <status>pending</status>
+            <name>Verify existing release process end-to-end [Risk: Medium]</name>
+            <commit></commit>
+            <created-from>plan-42-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk></risk>
+            <status>pending</status>
+            <name>Convert plugin-dist to jar and write PackageRuntime [Risk: Low]</name>
+            <commit></commit>
+            <created-from>plan-42-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk></risk>
+            <status>pending</status>
+            <name>Write PublishRelease [Risk: High]</name>
+            <commit></commit>
+            <created-from>plan-42-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk></risk>
+            <status>pending</status>
+            <name>Wire exec-maven-plugin into plugin-dist pom [Risk: Low]</name>
+            <commit></commit>
+            <created-from>plan-42-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk></risk>
+            <status>pending</status>
+            <name>Bump to 0.3.0, run release, verify, retire shell scripts [Risk: High]</name>
+            <commit></commit>
+            <created-from>plan-42-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-18T13:53:28.199+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
