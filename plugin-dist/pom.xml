@@ -13,7 +13,18 @@
   <artifactId>plugin-dist</artifactId>
   <packaging>jar</packaging>
 
+  <properties>
+    <junit.jupiter.version>5.10.2</junit.jupiter.version>
+    <jdk.semeru.linux-x64>/opt/installers/jdk-semeru/jdk-25.0.2+10</jdk.semeru.linux-x64>
+  </properties>
+
   <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>io.bitken</groupId>
       <artifactId>plugin-node</artifactId>
