@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>45</plan>
-    <plan-version>plan-45-v1</plan-version>
+    <plan-version>plan-45-v2</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
-        <created>2026-05-18</created>
+        <created>2026-05-19</created>
     </metadata>
     <tasks>
         <task>
@@ -13,8 +13,8 @@
             <risk>low</risk>
             <status>agent-coded</status>
             <name>Add XDG cache resolution in session-start.ts</name>
-            <commit>7364b6d92e1162864129af06016440886a968524</commit>
-            <created-from>plan-45-v1</created-from>
+            <commit>7364b6d</commit>
+            <created-from>plan-45-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -23,26 +23,36 @@
             <id>2</id>
             <risk>low</risk>
             <status>agent-coded</status>
-            <name>Pass shipsmooth.cache.dir tilde form to ResourceBuilder</name>
-            <commit>8bae6dbd8c66b016b90d69b263cf4dbb9ad444f3</commit>
-            <created-from>plan-45-v1</created-from>
+            <name>Stop passing resolved path to ResourceBuilder; omit cacheDir from prod config</name>
+            <commit>8bae6db</commit>
+            <created-from>plan-45-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations>
-                <deviation>
-                    <type>minor</type>
-                    <timestamp>2026-05-18T23:55:09.499+05:30</timestamp>
-                    <message>Design refined: plugin-skill/pom.xml passes shipsmooth.cache.dir (tilde) instead of adding it alongside .resolved; ResourceBuilder reads tilde form for config, keeps resolved for cliBin only</message>
-                </deviation>
-            </deviations>
+            <comments>
+                <comment>
+                    <timestamp>2026-05-19T00:00:00.000+05:30</timestamp>
+                    <message>cliBin still broken after task 2: cacheDirResolved is empty so bare relative path is emitted. Fix deferred to task 4.</message>
+                </comment>
+            </comments>
+            <deviations/>
         </task>
         <task>
             <id>3</id>
             <risk>low</risk>
             <status>agent-coded</status>
-            <name>Integration test — verify prod config has no hardcoded home</name>
-            <commit>8bae6dbd8c66b016b90d69b263cf4dbb9ad444f3</commit>
-            <created-from>plan-45-v1</created-from>
+            <name>Integration tests — prod config has no cacheDir; Node resolves XDG</name>
+            <commit>14f4ae3</commit>
+            <created-from>plan-45-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Fix cliBin to use XDG shell expression; add cross-reference comment</name>
+            <commit></commit>
+            <created-from>plan-45-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -50,7 +60,7 @@
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-05-18T23:34:11.904+05:30</timestamp>
+            <timestamp>2026-05-19T00:35:13.457+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>

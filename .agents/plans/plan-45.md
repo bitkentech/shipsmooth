@@ -65,8 +65,21 @@ export function resolveCache(config: { cacheDir?: string }): string {
 ### What does NOT change
 
 - `expandHome` stays — still needed for dev tilde expansion.
-- `cliBin` in SKILL.md templates still uses the resolved form (dev/gemini-dev local builds only).
-- No change to prod SKILL.md or hooks.json — they don't reference `cacheDir`.
+- No change to prod hooks.json — it doesn't reference `cacheDir`.
+
+### Post-task-2 discovery: cliBin broken in prod SKILL.md
+
+Task 2 removed `shipsmooth.cache.dir.resolved` from `plugin-skill/pom.xml`, so
+`cacheDirResolved` is always empty in `ResourceBuilder`. `cliBin` falls back to the bare
+relative path `runtime-0.3.5/bin/shipsmooth-tasks` — useless without a prefix.
+
+Using the tilde form for `cliBin` would break for users with a custom `XDG_CACHE_HOME`.
+
+Final approach: use the shell expression
+`${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-{version}/bin/shipsmooth-tasks` as `cliBin`.
+This is valid shell, correct for all users, and mirrors the logic in `session-start.ts`
+exactly. Drop `cacheDirResolved` from `ResourceBuilder` entirely. Add a comment in
+`session-start.ts` pointing to the JTE template so the two stay in sync manually.
 
 ## Tasks
 
@@ -88,3 +101,11 @@ no `cacheDir`; dev build writes the tilde form).
 `ResourceBuilderIntegrationTest`: assert prod config has no `cacheDir` field; assert dev
 config has `~/.cache/shipsmooth-dev`. Node tests: `resolveCache` uses `XDG_CACHE_HOME` when
 set, falls back to `~/.cache/shipsmooth`, and expands tilde for dev.
+
+### Task 4: Fix cliBin to use XDG shell expression; add cross-reference comment [Low]
+
+In `ResourceBuilder.java`, replace `cacheDirResolved`-based `cliBin` construction with the
+shell expression `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-{version}/bin/shipsmooth-tasks`.
+Drop `cacheDirResolved` entirely. Add a one-line comment above `resolveCache` in
+`session-start.ts` pointing to `base-workflow.jte.md` so the two stay in sync. Update the
+integration test assertion for `cliBin` in SKILL.md to match the new expression.
