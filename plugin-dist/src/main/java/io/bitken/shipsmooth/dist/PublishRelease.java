@@ -61,7 +61,15 @@ public class PublishRelease {
                   .forEach(addCmd::add);
         }
         runCommand(addCmd, repoRoot);
-        git("commit", "-m", "chore: bump version to " + version);
+
+        // skip commit if nothing changed (version was already set)
+        ProcessBuilder status = new ProcessBuilder("git", "diff", "--cached", "--quiet")
+                .directory(repoRoot.toFile());
+        if (status.start().waitFor() != 0) {
+            git("commit", "-m", "chore: bump version to " + version);
+        } else {
+            System.out.println("Version already at " + version + ", skipping bump commit.");
+        }
     }
 
     private void buildAndPackage() throws IOException, InterruptedException {
