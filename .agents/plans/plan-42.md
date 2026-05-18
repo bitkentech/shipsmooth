@@ -1,6 +1,6 @@
 # Plan 42 — Java-based release pipeline (Linux x64, v0.3.0)
 
-## Status: In Progress
+## Status: Complete
 
 ## Backlog issue
 <!-- No Linear — tracked locally -->
