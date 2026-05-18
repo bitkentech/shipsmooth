@@ -4,14 +4,14 @@
     <plan-version>plan-42-v4</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-05-18</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk></risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Verify existing release process end-to-end [Risk: Medium]</name>
             <commit></commit>
             <created-from>plan-42-v2</created-from>
@@ -22,6 +22,11 @@
                     <type>minor</type>
                     <timestamp>2026-05-18T13:56:00.518+05:30</timestamp>
                     <message>Deferred by user — existing release process verification skipped for now; will revisit before Task 5</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-05-18T15:54:29.300+05:30</timestamp>
+                    <message>Baseline verified. Discrepancies vs releases branch dist/: (1) build/dist/ exists (JS files + session-start-config.json) but releases branch has no dist/ subdirectory — PublishRelease.syncDistAndPublish() will create it. (2) build/skills/ has experimental-start-* and start-dev entries not present on releases branch — these will be added by v0.3.0 release. (3) session-start-config.json shows version=0.2.0, cacheDir empty, jlinkDir=/dev/null — expected for prod build without runtime zip. (4) v0.2.0 GitHub release confirmed zero assets. (5) releases branch dist/ missing dist/ and skills/ subdirs entirely — PublishRelease copies these from build/ so v0.3.0 will add them.</message>
                 </deviation>
             </deviations>
         </task>
@@ -39,20 +44,25 @@
         <task>
             <id>3</id>
             <risk></risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Write PublishRelease [Risk: High]</name>
-            <commit></commit>
+            <commit>c07b41c0f27ed6b84bc05081b4be09644c1e16cb</commit>
             <created-from>plan-42-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-05-18T15:31:55.616+05:30</timestamp>
+                    <message>De-risk draft ready for review. Tests green: runCommand, assertCleanWorkingTree, dirty/clean repo detection. Full orchestration sequence (13 steps) implemented in PublishRelease.run(). Commit: 9054dd0</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
             <id>4</id>
             <risk></risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Wire exec-maven-plugin into plugin-dist pom [Risk: Low]</name>
-            <commit></commit>
+            <commit>0e0b2a83af997789137a4786cbe5f28e890337aa</commit>
             <created-from>plan-42-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -61,12 +71,17 @@
         <task>
             <id>5</id>
             <risk></risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Bump to 0.3.0, run release, verify, retire shell scripts [Risk: High]</name>
             <commit></commit>
             <created-from>plan-42-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-05-18T17:10:30.995+05:30</timestamp>
+                    <message>Cancelled — release will be run manually from main after squash merge.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
     </tasks>
@@ -74,6 +89,11 @@
         <update>
             <timestamp>2026-05-18T13:53:28.199+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-18T17:10:44.747+05:30</timestamp>
+            <message>All code tasks complete. Task 5 (release run) deferred to manual execution from main after squash merge.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
