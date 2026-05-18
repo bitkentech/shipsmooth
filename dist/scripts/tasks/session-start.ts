@@ -21,7 +21,7 @@ export function installRuntime(opts: InstallOptions): void {
   }
 
   const platform = opts.forcePlatform ?? detectPlatform();
-  const supportedPlatforms = ['linux-x64', 'darwin-x64'];
+  const supportedPlatforms = ['linux-x64', 'darwin-x64', 'darwin-arm64'];
   if (!supportedPlatforms.includes(platform)) {
     throw new Error(`shipsmooth: platform ${platform} is not yet supported`);
   }
