@@ -46,7 +46,7 @@
       <groupId>io.bitken</groupId>
       <artifactId>plugin-skill</artifactId>
       <version>${project.version}</version>
-      <type>jar</type>
+      <type>pom</type>
     </dependency>
   </dependencies>
 
