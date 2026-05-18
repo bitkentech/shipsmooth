@@ -80,6 +80,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
         <shipsmooth.cache.dir.resolved>${user.home}/.cache/shipsmooth</shipsmooth.cache.dir.resolved>
         <shipsmooth.jlink.dir>/dev/null</shipsmooth.jlink.dir>
         <shipsmooth.cli.bin>~/.cache/shipsmooth/runtime-@project.version@/bin/shipsmooth-tasks</shipsmooth.cli.bin>
+        <plugin.hook.base>node "${CLAUDE_PLUGIN_ROOT}/dist/session-start.js"</plugin.hook.base>
         <skill.frontmatter></skill.frontmatter>
         <build.platform>claude</build.platform>
         <experimental.enabled>false</experimental.enabled>
@@ -93,6 +94,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
         <plugin.description>Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini</build.outputDir>
         <shipsmooth.dist.path>~/.cache/shipsmooth/dist</shipsmooth.dist.path>
+        <plugin.hook.base>node "${extensionPath}/dist/session-start.js"</plugin.hook.base>
         <build.platform>gemini</build.platform>
 <skill.frontmatter>---
 name: start
