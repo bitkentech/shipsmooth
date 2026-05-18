@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>44</plan>
+    <plan-version>plan-44-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-05-18</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk></risk>
+            <status>agent-coded</status>
+            <name>Add darwin-arm64 jlink build execution to plugin-tasks-java pom [Risk: Low]</name>
+            <commit>e4e12d558c40454e4f81aed30ef6e013b9e805c9</commit>
+            <created-from>plan-44-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk></risk>
+            <status>agent-coded</status>
+            <name>Add darwin-arm64 PackageRuntime execution to plugin-dist pom [Risk: Low]</name>
+            <commit>e4e12d558c40454e4f81aed30ef6e013b9e805c9</commit>
+            <created-from>plan-44-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk></risk>
+            <status>agent-coded</status>
+            <name>Update PublishRelease to package and upload darwin-arm64 zip [Risk: Low]</name>
+            <commit>e4e12d558c40454e4f81aed30ef6e013b9e805c9</commit>
+            <created-from>plan-44-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk></risk>
+            <status>agent-coded</status>
+            <name>Update session-start.ts to support darwin-arm64 [Risk: Low]</name>
+            <commit>e4e12d558c40454e4f81aed30ef6e013b9e805c9</commit>
+            <created-from>plan-44-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-18T22:35:09.961+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-18T23:09:10.258+05:30</timestamp>
+            <message>All tasks complete. darwin-arm64 jlink cross-compile, PackageRuntime, PublishRelease, and session-start.ts updated and verified.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

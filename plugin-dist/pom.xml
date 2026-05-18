@@ -17,6 +17,7 @@
     <junit.jupiter.version>5.10.2</junit.jupiter.version>
     <jdk.semeru.linux-x64>/opt/installers/jdk-semeru/jdk-25.0.2+10</jdk.semeru.linux-x64>
     <jdk.semeru.darwin-x64>/opt/installers/jdk-semeru-mac-x64/Contents/Home</jdk.semeru.darwin-x64>
+    <jdk.semeru.darwin-arm64>/opt/installers/jdk-semeru-mac-arm64/Contents/Home</jdk.semeru.darwin-arm64>
   </properties>
 
   <dependencies>
@@ -207,6 +208,28 @@
               </execution>
 
               <execution>
+                <id>package-runtime-darwin-arm64</id>
+                <goals><goal>java</goal></goals>
+                <configuration>
+                  <mainClass>io.bitken.shipsmooth.dist.PackageRuntime</mainClass>
+                  <arguments>
+                    <argument>darwin-arm64</argument>
+                    <argument>${jdk.semeru.darwin-arm64}</argument>
+                  </arguments>
+                  <systemProperties>
+                    <systemProperty>
+                      <key>shipsmooth.repo.root</key>
+                      <value>${maven.multiModuleProjectDirectory}</value>
+                    </systemProperty>
+                    <systemProperty>
+                      <key>project.version</key>
+                      <value>${project.version}</value>
+                    </systemProperty>
+                  </systemProperties>
+                </configuration>
+              </execution>
+
+              <execution>
                 <id>publish-release</id>
                 <goals><goal>java</goal></goals>
                 <configuration>
@@ -226,6 +249,10 @@
                     <systemProperty>
                       <key>jdk.semeru.darwin-x64</key>
                       <value>${jdk.semeru.darwin-x64}</value>
+                    </systemProperty>
+                    <systemProperty>
+                      <key>jdk.semeru.darwin-arm64</key>
+                      <value>${jdk.semeru.darwin-arm64}</value>
                     </systemProperty>
                   </systemProperties>
                 </configuration>

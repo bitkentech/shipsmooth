@@ -18,6 +18,7 @@
         <jlink.exec.home>/opt/installers/jdk-semeru/jdk-25.0.2+10</jlink.exec.home>
         <jlink.jmods.home>/opt/installers/jdk-semeru/jdk-25.0.2+10</jlink.jmods.home>
         <jlink.jmods.darwin-x64>/opt/installers/jdk-semeru-mac-x64/Contents/Home</jlink.jmods.darwin-x64>
+        <jlink.jmods.darwin-arm64>/opt/installers/jdk-semeru-mac-arm64/Contents/Home</jlink.jmods.darwin-arm64>
         <jlink.jre.home>/opt/installers/jre-semeru/jdk-25.0.2+10-jre</jlink.jre.home>
         <jakarta.xml.bind-api.version>4.0.2</jakarta.xml.bind-api.version>
         <jaxb-runtime.version>4.0.5</jaxb-runtime.version>
@@ -334,6 +335,31 @@
                                             <arg value="zip-9"/>
                                             <arg value="--output"/>
                                             <arg value="${project.build.directory}/jlink-image-darwin-x64"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <!-- Cross-compile macOS arm64 image using Linux jlink + ARM64 Mac jmods -->
+                            <execution>
+                                <id>jlink-build-darwin-arm64</id>
+                                <phase>package</phase>
+                                <goals><goal>run</goal></goals>
+                                <configuration>
+                                    <target>
+                                        <delete dir="${project.build.directory}/jlink-image-darwin-arm64"/>
+                                        <exec executable="${jlink.exec.home}/bin/jlink" failonerror="true">
+                                            <arg value="--module-path"/>
+                                            <arg value="${jlink.runtime.module.path}:${jlink.jmods.darwin-arm64}/jmods"/>
+                                            <arg value="--add-modules"/>
+                                            <arg value="io.bitken.shipsmooth.tasks,openj9.sharedclasses"/>
+                                            <arg value="--launcher"/>
+                                            <arg value="shipsmooth-tasks=io.bitken.shipsmooth.tasks/io.bitken.shipsmooth.tasks.TasksCli"/>
+                                            <arg value="--no-header-files"/>
+                                            <arg value="--no-man-pages"/>
+                                            <arg value="--compress"/>
+                                            <arg value="zip-9"/>
+                                            <arg value="--output"/>
+                                            <arg value="${project.build.directory}/jlink-image-darwin-arm64"/>
                                         </exec>
                                     </target>
                                 </configuration>

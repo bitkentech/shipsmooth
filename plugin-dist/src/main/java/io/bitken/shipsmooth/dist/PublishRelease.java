@@ -11,26 +11,29 @@ public class PublishRelease {
     private final String version;
     private final Path repoRoot;
     private final Path linuxJdkHome;
-    private final Path darwinJdkHome;
+    private final Path darwinX64JdkHome;
+    private final Path darwinArm64JdkHome;
 
-    public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinJdkHome) {
+    public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome) {
         this.version = version;
         this.repoRoot = repoRoot;
         this.linuxJdkHome = linuxJdkHome;
-        this.darwinJdkHome = darwinJdkHome;
+        this.darwinX64JdkHome = darwinX64JdkHome;
+        this.darwinArm64JdkHome = darwinArm64JdkHome;
     }
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
             System.err.println("Usage: PublishRelease <version>");
-            System.err.println("Optional: -Dshipsmooth.repo.root=<repo-root> -Djdk.semeru.linux-x64=<jdk-home> -Djdk.semeru.darwin-x64=<jdk-home>");
+            System.err.println("Optional: -Dshipsmooth.repo.root=<repo-root> -Djdk.semeru.linux-x64=<path> -Djdk.semeru.darwin-x64=<path> -Djdk.semeru.darwin-arm64=<path>");
             System.exit(1);
         }
         String version = args[0];
         Path repoRoot = Path.of(System.getProperty("shipsmooth.repo.root", System.getProperty("user.dir"))).toAbsolutePath();
         Path linuxJdkHome = Path.of(System.getProperty("jdk.semeru.linux-x64", "/opt/installers/jdk-semeru/jdk-25.0.2+10"));
-        Path darwinJdkHome = Path.of(System.getProperty("jdk.semeru.darwin-x64", "/opt/installers/jdk-semeru-mac-x64/Contents/Home"));
-        new PublishRelease(version, repoRoot, linuxJdkHome, darwinJdkHome).run();
+        Path darwinX64JdkHome = Path.of(System.getProperty("jdk.semeru.darwin-x64", "/opt/installers/jdk-semeru-mac-x64/Contents/Home"));
+        Path darwinArm64JdkHome = Path.of(System.getProperty("jdk.semeru.darwin-arm64", "/opt/installers/jdk-semeru-mac-arm64/Contents/Home"));
+        new PublishRelease(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome).run();
     }
 
     public void run() throws IOException, InterruptedException {
@@ -90,8 +93,10 @@ public class PublishRelease {
         Files.createDirectories(outputDir);
         new PackageRuntime("linux-x64", linuxJdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-linux-x64"), outputDir, version).run();
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-tasks-" + version + "-linux-x64.zip"));
-        new PackageRuntime("darwin-x64", darwinJdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-darwin-x64"), outputDir, version).run();
+        new PackageRuntime("darwin-x64", darwinX64JdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-darwin-x64"), outputDir, version).run();
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-tasks-" + version + "-darwin-x64.zip"));
+        new PackageRuntime("darwin-arm64", darwinArm64JdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-darwin-arm64"), outputDir, version).run();
+        System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-tasks-" + version + "-darwin-arm64.zip"));
     }
 
     private void syncDistAndPublish(String mainSha) throws IOException, InterruptedException {
@@ -118,7 +123,8 @@ public class PublishRelease {
                 "--notes", "Release v" + version + " (main: " + mainSha + ")"), repoRoot);
         runCommand(List.of("gh", "release", "upload", "v" + version,
                 distDir2.resolve("shipsmooth-tasks-" + version + "-linux-x64.zip").toString(),
-                distDir2.resolve("shipsmooth-tasks-" + version + "-darwin-x64.zip").toString()), repoRoot);
+                distDir2.resolve("shipsmooth-tasks-" + version + "-darwin-x64.zip").toString(),
+                distDir2.resolve("shipsmooth-tasks-" + version + "-darwin-arm64.zip").toString()), repoRoot);
     }
 
     private String git(String... args) throws IOException, InterruptedException {

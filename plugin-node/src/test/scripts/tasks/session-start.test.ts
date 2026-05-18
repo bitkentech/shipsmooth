@@ -85,12 +85,25 @@ test('darwin-x64: installs from jlinkDir without error', () => {
   assert.ok(fs.existsSync(destBin), 'darwin-x64 binary should be installed from jlinkDir');
 });
 
+test('darwin-arm64: installs from jlinkDir without error', () => {
+  const cacheDir = makeTmpDir();
+  const pluginRoot = makeTmpDir();
+  const version = '0.3.4';
+  const jlinkDir = makeTmpDir();
+  makeExecutable(path.join(jlinkDir, 'bin', 'shipsmooth-tasks'));
+
+  installRuntime({ version, cacheDir, pluginRoot, jlinkDir, forcePlatform: 'darwin-arm64' });
+
+  const destBin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth-tasks');
+  assert.ok(fs.existsSync(destBin), 'darwin-arm64 binary should be installed from jlinkDir');
+});
+
 test('unsupported platform: throws with clear message', () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
 
   assert.throws(
-    () => installRuntime({ version: '0.2.0', cacheDir, pluginRoot, forcePlatform: 'darwin-arm64' }),
+    () => installRuntime({ version: '0.2.0', cacheDir, pluginRoot, forcePlatform: 'win32-x64' }),
     /not yet supported/i,
   );
 });
