@@ -48,6 +48,21 @@ Load the skill as `/shipsmooth:start`. Start discussing the feature with Claude.
 
 The full workflow specification lives in [SKILL.md](plugin-skill/src/main/jte-src/skills/SKILL.jte.md).
 
+## Uninstall
+
+To remove all traces of shipsmooth from a system:
+
+```bash
+# 1. Uninstall the Claude plugin
+#    In Claude Code: /plugin uninstall shipsmooth
+
+# 2. Remove the Java runtime and JIT cache
+rm -rf ~/.cache/shipsmooth
+```
+
+The plugin leaves nothing in `~/.config`, `~/.local`, or any other location.
+Per-repo `.agents/` directories contain your plan history and are yours to keep or remove as you see fit.
+
 ## Experimental
 
 These features are in active development and may change.
