@@ -51,7 +51,7 @@ public class PublishRelease {
     }
 
     private void bumpAndCommitVersion() throws IOException, InterruptedException {
-        runCommand(List.of("mvn", "versions:set", "-DnewVersion=" + version, "-DgenerateBackupPoms=false"), repoRoot);
+        runCommand(List.of("mvn", "-f", repoRoot.resolve("pom.xml").toString(), "versions:set", "-DnewVersion=" + version, "-DgenerateBackupPoms=false"), repoRoot);
 
         List<String> addCmd = new ArrayList<>(List.of("git", "add"));
         try (var stream = Files.walk(repoRoot)) {
@@ -67,7 +67,7 @@ public class PublishRelease {
         Path buildDir = repoRoot.resolve("build");
         if (Files.exists(buildDir)) deleteDirectory(buildDir);
 
-        runCommand(List.of("mvn", "compile", "-Pprod", "-P!dev"), repoRoot);
+        runCommand(List.of("mvn", "-f", repoRoot.resolve("pom.xml").toString(), "compile", "-Pprod", "-P!dev"), repoRoot);
 
         Path outputDir = repoRoot.resolve("plugin-dist/target/dist");
         Files.createDirectories(outputDir);
