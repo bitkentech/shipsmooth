@@ -85,7 +85,7 @@ function downloadAndInstall(version, runtimeDir) {
         downloadFile(url, zipFile);
         fs.mkdirSync(extractDir, { recursive: true });
         child_process.execFileSync('unzip', ['-q', zipFile, '-d', extractDir]);
-        fs.renameSync(path.join(extractDir, `shipsmooth-tasks-${version}`), runtimeDir);
+        fs.renameSync(extractDir, runtimeDir);
     }
     finally {
         fs.rmSync(tmp, { recursive: true, force: true });
