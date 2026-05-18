@@ -3,7 +3,7 @@
     "SessionStart" : [ {
       "hooks" : [ {
         "type" : "command",
-        "command" : ""
+        "command" : "node \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\""
       } ]
     } ]
   }
