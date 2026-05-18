@@ -1,11 +1,11 @@
 {
   "name": "shipsmooth",
+  "version": "0.3.0",
   "description": "Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.",
   "author": {
     "name": "Pramod Biligiri"
   },
   "homepage": "https://github.com/bitkentech/shipsmooth",
   "repository": "https://github.com/bitkentech/shipsmooth",
-  "license": "Apache-2.0",
-  "version": "0.2.0"
+  "license": "Apache-2.0"
 }

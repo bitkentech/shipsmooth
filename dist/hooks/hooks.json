@@ -1,14 +1,10 @@
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "diff -q \"${CLAUDE_PLUGIN_ROOT}/package.json\" \"${CLAUDE_PLUGIN_DATA}/package.json\" >/dev/null 2>&1 || (mkdir -p \"${CLAUDE_PLUGIN_DATA}\" && cp \"${CLAUDE_PLUGIN_ROOT}/package.json\" \"${CLAUDE_PLUGIN_DATA}/\" && cd \"${CLAUDE_PLUGIN_DATA}\" && npm install --silent && mkdir -p \"${CLAUDE_PLUGIN_DATA}/src\" && cp \"${CLAUDE_PLUGIN_ROOT}/scripts/tasks\"/*.ts \"${CLAUDE_PLUGIN_DATA}/src/\" && node_modules/.bin/tsc --target ES2020 --module commonjs --esModuleInterop --strict --outDir \"${CLAUDE_PLUGIN_DATA}/dist\" --rootDir \"${CLAUDE_PLUGIN_DATA}/src\" \"${CLAUDE_PLUGIN_DATA}/src\"/*.ts && echo \"shipsmooth: deps installed and compiled\") || rm -f \"${CLAUDE_PLUGIN_DATA}/package.json\""
-          }
-        ]
-      }
-    ]
+  "hooks" : {
+    "SessionStart" : [ {
+      "hooks" : [ {
+        "type" : "command",
+        "command" : ""
+      } ]
+    } ]
   }
 }
