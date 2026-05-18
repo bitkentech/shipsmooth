@@ -77,6 +77,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
         <build.outputDir>${maven.multiModuleProjectDirectory}/build</build.outputDir>
         <shipsmooth.dist.path>\${CLAUDE_PLUGIN_DATA}/dist</shipsmooth.dist.path>
         <shipsmooth.cache.dir>~/.cache/shipsmooth</shipsmooth.cache.dir>
+        <shipsmooth.cache.dir.resolved>${user.home}/.cache/shipsmooth</shipsmooth.cache.dir.resolved>
         <shipsmooth.jlink.dir>/dev/null</shipsmooth.jlink.dir>
         <shipsmooth.cli.bin>~/.cache/shipsmooth/runtime-@project.version@/bin/shipsmooth-tasks</shipsmooth.cli.bin>
         <skill.frontmatter></skill.frontmatter>
