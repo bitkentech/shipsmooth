@@ -66,9 +66,9 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>todo</status>
+            <status>agent-coded</status>
             <name>Add requirePluginVersions enforcer rule</name>
-            <commit></commit>
+            <commit>1934186c1f9793a783ff927b89e7efc093cc17a0</commit>
             <created-from>plan-47-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -77,14 +77,13 @@
         <task>
             <id>7</id>
             <risk>low</risk>
-            <status>todo</status>
             <name>Add dependencyConvergence enforcer rule</name>
             <commit></commit>
             <created-from>plan-47-v4</created-from>
             <closed-at-version></closed-at-version>
-            <depends-on>6</depends-on>
             <comments/>
             <deviations/>
+            <depends-on>6</depends-on>
         </task>
     </tasks>
     <project-updates>
