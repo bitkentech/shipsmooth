@@ -82,22 +82,47 @@ async function downloadAndInstall(version: string, runtimeDir: string, platform:
 }
 
 const MAX_REDIRECTS = 5;
+const RETRY_DELAY_MS = 1000;
+
+class HttpStatusError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+  }
+}
 
 export async function downloadFile(url: string, dest: string): Promise<void> {
+  process.stderr.write(`shipsmooth: downloading runtime from ${url}\n`);
+  try {
+    await downloadOnce(url, dest);
+    return;
+  } catch (e: any) {
+    if (!shouldRetry(e)) throw e;
+    process.stderr.write(`shipsmooth: download attempt failed (${e.message}); retrying in ${RETRY_DELAY_MS}ms\n`);
+  }
+  await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+  await downloadOnce(url, dest);
+}
+
+function shouldRetry(e: unknown): boolean {
+  if (e instanceof HttpStatusError) return e.status >= 500;
+  return true; // transport errors (ECONNREFUSED, ETIMEDOUT, etc.)
+}
+
+async function downloadOnce(url: string, dest: string): Promise<void> {
   let currentUrl = url;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     const res = await sendGet(currentUrl);
     const status = res.statusCode ?? 0;
 
     if (status >= 300 && status < 400 && res.headers.location) {
-      res.resume(); // drain
+      res.resume();
       currentUrl = new URL(res.headers.location, currentUrl).toString();
       continue;
     }
 
     if (status < 200 || status >= 300) {
       res.resume();
-      throw new Error(`shipsmooth: failed to download ${currentUrl}: HTTP ${status}`);
+      throw new HttpStatusError(status, `shipsmooth: failed to download ${currentUrl}: HTTP ${status}`);
     }
 
     const out = fs.createWriteStream(dest);
