@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Fix copy-dist profile activation and bundle adm-zip</name>
-            <commit></commit>
+            <commit>81b712e7b086af1a4f8930f2cd821ae01c842cc9</commit>
             <created-from>plan-47-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
