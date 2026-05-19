@@ -13,66 +13,72 @@
   <artifactId>plugin-resources</artifactId>
   <packaging>pom</packaging>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+
+          <!-- Copy and filter plugin metadata into build/.claude-plugin/ -->
+          <execution>
+            <id>copy-plugin-meta</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <skip>${skip.copy-dist}</skip>
+              <outputDirectory>${build.outputDir}/.claude-plugin</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/src/main/resources/claude-plugin</directory>
+                  <filtering>true</filtering>
+                  <excludes>
+                    <exclude>marketplace.json</exclude>
+                  </excludes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+
+          <!-- Copy and filter marketplace.json into build/.claude-plugin/ -->
+          <execution>
+            <id>copy-marketplace</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <skip>${skip.copy-dist}</skip>
+              <outputDirectory>${build.outputDir}/.claude-plugin</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/src/main/resources/claude-plugin</directory>
+                  <filtering>true</filtering>
+                  <includes>
+                    <include>marketplace.json</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
   <profiles>
     <profile>
       <id>claude</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>build.platform</name>
+          <value>claude</value>
+        </property>
       </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-resources-plugin</artifactId>
-            <version>3.3.1</version>
-            <executions>
-
-              <!-- Copy and filter plugin metadata into build/.claude-plugin/ -->
-              <execution>
-                <id>copy-plugin-meta</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration>
-                  <outputDirectory>${build.outputDir}/.claude-plugin</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>${project.basedir}/src/main/resources/claude-plugin</directory>
-                      <filtering>true</filtering>
-                      <excludes>
-                        <exclude>marketplace.json</exclude>
-                      </excludes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-
-              <!-- Copy and filter marketplace.json into build/.claude-plugin/ -->
-              <execution>
-                <id>copy-marketplace</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration>
-                  <outputDirectory>${build.outputDir}/.claude-plugin</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>${project.basedir}/src/main/resources/claude-plugin</directory>
-                      <filtering>true</filtering>
-                      <includes>
-                        <include>marketplace.json</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
     </profile>
 
     <profile>
