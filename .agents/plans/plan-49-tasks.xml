@@ -4,16 +4,16 @@
     <plan-version>plan-49-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-05-19</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Move package-runtime and publish-release exec executions to top-level build</name>
-            <commit></commit>
+            <commit>f3be631139ffe11ac6aebb0b6386460819bf41d0</commit>
             <created-from>plan-49-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -24,6 +24,11 @@
         <update>
             <timestamp>2026-05-19T19:03:34.528+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-19T19:39:02.862+05:30</timestamp>
+            <message>Plan complete.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
