@@ -15,20 +15,21 @@ public class ResourceBuilder {
 
     public static void main(String[] args) throws IOException {
         String buildOutputDir = System.getProperty("build.outputDir");
-        String pluginName     = System.getProperty("plugin.name");
         String pluginVersion  = System.getProperty("plugin.version");
         String pluginDesc     = System.getProperty("plugin.description");
-        String skillName      = System.getProperty("plugin.skillName");
         String frontmatter    = System.getProperty("skill.frontmatter", "");
-        String cacheDir       = System.getProperty("shipsmooth.cache.dir", "");
-        String platform       = System.getProperty("build.platform", "claude");
         String jlinkDir       = System.getProperty("shipsmooth.jlink.dir", "");
+        String startBase      = System.getProperty("plugin.skill.start.basename");
+
+        BuildProfile profile  = BuildProfile.fromProperties();
+        String pluginName     = profile.pluginName();
+        String skillName      = profile.skillName(startBase);
         // Shell expression mirrors resolveCache() in session-start.ts — keep in sync with base-workflow.jte.md
-        String cliBin         = "${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-" + pluginVersion + "/bin/shipsmooth-tasks";
+        String cliBin         = profile.cliBin(pluginVersion);
 
         PluginModel model = new PluginModel(
             pluginName, pluginVersion, pluginDesc,
-            skillName, cliBin, frontmatter, cacheDir, platform, jlinkDir
+            skillName, cliBin, frontmatter, profile.platform(), jlinkDir
         );
 
         boolean experimentalEnabled = Boolean.parseBoolean(System.getProperty("experimental.enabled", "false"));
@@ -53,11 +54,8 @@ public class ResourceBuilder {
             return;
         }
 
-        // Second skill: the TLA-checked-ledger variant. Name and frontmatter are
-        // derived from the primary skill (start -> experimental-start-tla, start-dev -> experimental-start-tla-dev).
-        String tlaSkillName = skillName.endsWith("-dev")
-            ? "experimental-" + skillName.substring(0, skillName.length() - "-dev".length()) + "-tla-dev"
-            : "experimental-" + skillName + "-tla";
+        // Second skill: the TLA-checked-ledger variant.
+        String tlaSkillName = profile.skillName("experimental-" + startBase + "-tla");
         String tlaFrontmatter = frontmatter.isEmpty() ? "" : """
             ---
             name: %s
@@ -65,17 +63,15 @@ public class ResourceBuilder {
             ---""".formatted(tlaSkillName);
         PluginModel tlaModel = new PluginModel(
             pluginName, pluginVersion, pluginDesc,
-            tlaSkillName, cliBin, tlaFrontmatter, cacheDir, platform, jlinkDir
+            tlaSkillName, cliBin, tlaFrontmatter, profile.platform(), jlinkDir
         );
         Path tlaSkillDir = Path.of(buildOutputDir, "skills", tlaSkillName);
         Files.createDirectories(tlaSkillDir);
         renderTo(engine, "skills/experimental/start-tla/SKILL.jte", tlaModel, tlaSkillDir.resolve("SKILL.md"));
         System.out.println("Rendered SKILL.md to " + tlaSkillDir.toAbsolutePath());
 
-        // Third skill: the parallel-execution variant. Same naming derivation as TLA.
-        String parallelSkillName = skillName.endsWith("-dev")
-            ? "experimental-" + skillName.substring(0, skillName.length() - "-dev".length()) + "-parallel-dev"
-            : "experimental-" + skillName + "-parallel";
+        // Third skill: the parallel-execution variant.
+        String parallelSkillName = profile.skillName("experimental-" + startBase + "-parallel");
         String parallelFrontmatter = frontmatter.isEmpty() ? "" : """
             ---
             name: %s
@@ -83,7 +79,7 @@ public class ResourceBuilder {
             ---""".formatted(parallelSkillName);
         PluginModel parallelModel = new PluginModel(
             pluginName, pluginVersion, pluginDesc,
-            parallelSkillName, cliBin, parallelFrontmatter, cacheDir, platform, jlinkDir
+            parallelSkillName, cliBin, parallelFrontmatter, profile.platform(), jlinkDir
         );
         Path parallelSkillDir = Path.of(buildOutputDir, "skills", parallelSkillName);
         Files.createDirectories(parallelSkillDir);
@@ -130,9 +126,6 @@ public class ResourceBuilder {
     static void writeSessionStartConfig(ObjectMapper mapper, PluginModel model, Path outputFile) throws IOException {
         ObjectNode config = mapper.createObjectNode()
             .put("version", model.pluginVersion());
-        if (model.cacheDir() != null && !model.cacheDir().isBlank()) {
-            config.put("cacheDir", model.cacheDir());
-        }
         if (model.jlinkDir() != null && !model.jlinkDir().isBlank()) {
             config.put("jlinkDir", model.jlinkDir());
         }
