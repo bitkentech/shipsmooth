@@ -1,4 +1,4 @@
-# Plan 51: Move copy-package-json to top-level build in plugin-dist
+# Plan 51: Move copy-package-json to top-level build; strip dev fields from prod package.json
 
 ## Context
 
@@ -36,6 +36,19 @@ are not needed for Gemini releases.
 After moving `copy-package-json`, `PublishRelease.buildAndPackage()` does not need any
 `-Dbuild.platform=claude` workaround. The compile invocation stays as-is.
 
+### prod package.json cleanup
+
+The Gemini hook copies `package.json` to `~/.cache/shipsmooth/` and runs
+`npm install --prefix` there — it installs `dependencies` at runtime. The Claude hook
+doesn't use `package.json` at runtime at all (adm-zip is bundled into
+`dist/adm-zip-bundle.js`). Either way, `devDependencies` and the `build`/`bundle`/`test`
+scripts are development-only and should not be in the shipped artifact — they pull in
+unnecessary packages (esbuild, typescript, @types/*) on user machines.
+
+The clean fix: add a `package.prod.json` to `plugin-node/` containing only `name`,
+`version`, `description`, `private`, and `dependencies`. The prod build copies this file
+as `package.json`; the dev build keeps copying the full `package.json`.
+
 Backlog issue: none (build tooling fix, discovered during 0.3.9 release).
 
 ## Tasks
@@ -51,3 +64,18 @@ Backlog issue: none (build tooling fix, discovered during 0.3.9 release).
 - Verify: `mvn compile -Pprod -P'!dev'` produces `build/package.json` with the correct
   `0.3.9` version substituted. Also verify `mvn compile -Pprod -P'!dev'` still produces
   `build/.claude-plugin/marketplace.json` with `"name": "bitkentech"`.
+
+### Task 2: Strip devDependencies and dev scripts from prod package.json [Low]
+
+- Add `plugin-node/package.prod.json` containing only `name`, `version`, `description`,
+  `private`, and `dependencies` (no `devDependencies`, no `scripts`). Use
+  `@project.version@` for the version field, same as `package.json`.
+- In `plugin-dist/pom.xml`, split the top-level `copy-package-json` execution into two:
+  one for dev (copies `package.json`, active when `build.env=dev`) and one for prod
+  (copies `package.prod.json` as `package.json`, active when `build.env=prod`). Both are
+  top-level, both gated by `skip.copy-dist`.
+- Alternatively, keep a single execution and use Maven resource filtering with a profile
+  property to select the source file — whichever is cleaner.
+- Verify: `mvn compile -Pprod -P'!dev'` produces `build/package.json` with no
+  `devDependencies` and no `scripts`. `mvn compile` (dev) still produces the full
+  `package.json`.
