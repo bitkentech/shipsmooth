@@ -61,4 +61,50 @@ public class PublishReleaseTest {
 
         assertDoesNotThrow(() -> PublishRelease.assertCleanWorkingTree(tempDir));
     }
+
+    @Test
+    void validateBuildOutputThrowsOnPlaceholderLeak() throws IOException {
+        Path claudePlugin = tempDir.resolve(".claude-plugin");
+        Files.createDirectories(claudePlugin);
+        Files.writeString(claudePlugin.resolve("plugin.json"), """
+                {"name":"${plugin.name}","version":"0.3.8","description":"desc"}
+                """);
+        Files.writeString(claudePlugin.resolve("marketplace.json"), """
+                {"name":"shipsmooth","plugins":[{"name":"shipsmooth","description":"desc"}]}
+                """);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> PublishRelease.validateBuildOutput(tempDir));
+        assertTrue(ex.getMessage().contains("plugin.json"), ex.getMessage());
+        assertTrue(ex.getMessage().contains("${plugin.name}"), ex.getMessage());
+    }
+
+    @Test
+    void skipValidationSuppressesPlaceholderLeakError() throws IOException {
+        Path claudePlugin = tempDir.resolve(".claude-plugin");
+        Files.createDirectories(claudePlugin);
+        Files.writeString(claudePlugin.resolve("plugin.json"), """
+                {"name":"${plugin.name}","version":"0.3.8","description":"desc"}
+                """);
+        Files.writeString(claudePlugin.resolve("marketplace.json"), """
+                {"name":"shipsmooth","plugins":[{"name":"shipsmooth","description":"desc"}]}
+                """);
+
+        // must not throw even though plugin.json has a placeholder leak
+        assertDoesNotThrow(() -> PublishRelease.maybeValidateBuildOutput(tempDir, true));
+    }
+
+    @Test
+    void validateBuildOutputPassesOnCleanManifests() throws IOException {
+        Path claudePlugin = tempDir.resolve(".claude-plugin");
+        Files.createDirectories(claudePlugin);
+        Files.writeString(claudePlugin.resolve("plugin.json"), """
+                {"name":"shipsmooth","version":"0.3.8","description":"Agent coding workflow"}
+                """);
+        Files.writeString(claudePlugin.resolve("marketplace.json"), """
+                {"name":"shipsmooth","plugins":[{"name":"shipsmooth","description":"Agent coding workflow"}]}
+                """);
+
+        assertDoesNotThrow(() -> PublishRelease.validateBuildOutput(tempDir));
+    }
 }

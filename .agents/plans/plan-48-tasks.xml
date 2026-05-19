@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>48</plan>
+    <plan-version>plan-48-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-05-19</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Call ValidateRelease.validate() inside PublishRelease.buildAndPackage()</name>
+            <commit>d0e2cba5f37e9d99206ffac66e92a439d79f68e7</commit>
+            <created-from>plan-48-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Add --dangerous-skip-release-validation escape hatch</name>
+            <commit>9b7a91251290273f9e0d384ae8004fb58fd3eb68</commit>
+            <created-from>plan-48-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-19T18:06:03.292+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-19T18:20:04.743+05:30</timestamp>
+            <message>Plan complete.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

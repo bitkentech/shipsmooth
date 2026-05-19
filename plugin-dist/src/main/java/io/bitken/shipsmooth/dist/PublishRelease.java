@@ -13,13 +13,19 @@ public class PublishRelease {
     private final Path linuxJdkHome;
     private final Path darwinX64JdkHome;
     private final Path darwinArm64JdkHome;
+    private final boolean skipValidation;
 
     public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome) {
+        this(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome, false);
+    }
+
+    public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome, boolean skipValidation) {
         this.version = version;
         this.repoRoot = repoRoot;
         this.linuxJdkHome = linuxJdkHome;
         this.darwinX64JdkHome = darwinX64JdkHome;
         this.darwinArm64JdkHome = darwinArm64JdkHome;
+        this.skipValidation = skipValidation;
     }
 
     public static void main(String[] args) throws Exception {
@@ -29,11 +35,12 @@ public class PublishRelease {
             System.exit(1);
         }
         String version = args[0];
+        boolean skipValidation = List.of(args).contains("--dangerous-skip-release-validation");
         Path repoRoot = Path.of(System.getProperty("shipsmooth.repo.root", System.getProperty("user.dir"))).toAbsolutePath();
         Path linuxJdkHome = Path.of(System.getProperty("jdk.semeru.linux-x64", "/opt/installers/jdk-semeru/jdk-25.0.2+10"));
         Path darwinX64JdkHome = Path.of(System.getProperty("jdk.semeru.darwin-x64", "/opt/installers/jdk-semeru-mac-x64/Contents/Home"));
         Path darwinArm64JdkHome = Path.of(System.getProperty("jdk.semeru.darwin-arm64", "/opt/installers/jdk-semeru-mac-arm64/Contents/Home"));
-        new PublishRelease(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome).run();
+        new PublishRelease(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome, skipValidation).run();
     }
 
     public void run() throws IOException, InterruptedException {
@@ -78,6 +85,18 @@ public class PublishRelease {
         }
     }
 
+    static void validateBuildOutput(Path buildDir) throws IOException {
+        ValidateRelease.validate(buildDir, null);
+    }
+
+    static void maybeValidateBuildOutput(Path buildDir, boolean skip) throws IOException {
+        if (skip) {
+            System.out.println("WARNING: release validation skipped — --dangerous-skip-release-validation was passed");
+            return;
+        }
+        validateBuildOutput(buildDir);
+    }
+
     private void buildAndPackage() throws IOException, InterruptedException {
         Path buildDir = repoRoot.resolve("build");
         if (Files.exists(buildDir)) deleteDirectory(buildDir);
@@ -88,6 +107,7 @@ public class PublishRelease {
                 "package"), repoRoot);
 
         runCommand(List.of("mvn", "-f", repoRoot.resolve("pom.xml").toString(), "compile", "-Pprod", "-P!dev"), repoRoot);
+        maybeValidateBuildOutput(buildDir, skipValidation);
 
         Path outputDir = repoRoot.resolve("plugin-dist/target/dist");
         Files.createDirectories(outputDir);
