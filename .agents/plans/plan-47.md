@@ -65,6 +65,39 @@ fails.
   without needing a fully-qualified groupId/version prefix.
 - No unit test needed — verified by the smoke-test invocation above.
 
+## Enforcer rules
+
+Two `maven-enforcer-plugin` rules bound to the `validate` phase in the root pom
+to make the build fully deterministic:
+
+- **`requirePluginVersions`** — fails if any plugin is invoked without an explicit
+  version declared in pom or pluginManagement. Directly prevents the exec-maven-plugin
+  version-drift incident. Plugins that Maven activates implicitly (surefire, jar,
+  resources, compiler, install, deploy, site) must also be pinned in pluginManagement.
+- **`dependencyConvergence`** — fails if any transitive dependency resolves to
+  conflicting versions across the reactor. Keeps the classpath deterministic and
+  surfaces hidden version conflicts early.
+
+Both rules are additive — they fail the build loudly on violation rather than
+silently picking a version.
+
+### Task 6: Add requirePluginVersions enforcer rule [Low]
+
+- Add `maven-enforcer-plugin` to `<pluginManagement>` in root `pom.xml` (pin version).
+- Add an execution bound to `validate` phase with the `enforce` goal and
+  `requirePluginVersions` rule.
+- Pin any implicitly-used plugins (surefire, jar, resources, compiler, install,
+  deploy) in root `pluginManagement` to satisfy the rule.
+- Verify: `mvn validate` passes; deliberately removing a version triggers a clear
+  failure message.
+
+### Task 7: Add dependencyConvergence enforcer rule [Low]
+
+- Add `dependencyConvergence` rule to the same enforcer execution as task 6.
+- Verify: `mvn validate` passes across the reactor.
+- If any convergence violations surface, resolve them (add `<dependencyManagement>`
+  entries to root pom to pin the winning version).
+
 ## Validate Release
 
 Add a `ValidateRelease` Java class in `plugin-dist` that asserts all placeholder
