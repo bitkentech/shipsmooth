@@ -66,6 +66,39 @@ test('integration: installRuntime downloads from a URL override, extracts, and c
   assert.match(out, /fake-runtime hello/);
 });
 
+test('integration: installRuntime throws if extracted zip is missing bin/shipsmooth-tasks', async () => {
+  const cacheDir = makeTmpDir();
+  const pluginRoot = makeTmpDir();
+  const version = '9.9.9-test';
+
+  const malformed = new AdmZip();
+  malformed.addFile('lib/only.txt', Buffer.from('no bin in here\n'));
+  const zipBytes = malformed.toBuffer();
+
+  const server = await startServer(zipBytes);
+  let err: Error | undefined;
+  try {
+    await installRuntime({
+      version,
+      cacheDir,
+      pluginRoot,
+      forcePlatform: 'linux-x64',
+      releaseUrlBase: server.url,
+    } as any);
+  } catch (e: any) {
+    err = e;
+  } finally {
+    await server.close();
+  }
+
+  assert.ok(err, 'expected throw on malformed archive');
+  assert.match(err!.message, /missing bin\/shipsmooth-tasks/);
+
+  // Must NOT leave a partial runtimeDir behind
+  const runtimeDir = path.join(cacheDir, `runtime-${version}`);
+  assert.ok(!fs.existsSync(runtimeDir), 'partial runtime directory should be cleaned up');
+});
+
 test('integration: installRuntime surfaces the URL in error when download fails', async () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();

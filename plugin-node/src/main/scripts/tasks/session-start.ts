@@ -68,11 +68,12 @@ async function downloadAndInstall(version: string, runtimeDir: string, platform:
   try {
     await downloadFile(url, zipFile);
     fs.mkdirSync(extractDir, { recursive: true });
-    new AdmZip(zipFile).extractAllTo(extractDir, /*overwrite*/ true);
+    new AdmZip(zipFile).extractAllTo(extractDir, true);
     const extractedBin = path.join(extractDir, 'bin', 'shipsmooth-tasks');
-    if (fs.existsSync(extractedBin)) {
-      fs.chmodSync(extractedBin, 0o755);
+    if (!fs.existsSync(extractedBin)) {
+      throw new Error(`shipsmooth: extracted archive is missing bin/shipsmooth-tasks (from ${url})`);
     }
+    fs.chmodSync(extractedBin, 0o755);
     fs.renameSync(extractDir, runtimeDir);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
