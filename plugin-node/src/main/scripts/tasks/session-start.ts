@@ -2,6 +2,9 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as child_process from 'node:child_process';
 import * as os from 'node:os';
+import * as http from 'node:http';
+import * as https from 'node:https';
+import { pipeline } from 'node:stream/promises';
 
 export interface InstallOptions {
   version: string;
@@ -9,9 +12,10 @@ export interface InstallOptions {
   pluginRoot: string;
   jlinkDir?: string;       // dev builds only: path to target/jlink-image
   forcePlatform?: string;  // for testing; overrides actual platform detection
+  releaseUrlBase?: string; // for testing; overrides https://github.com/.../releases/download/v{version}
 }
 
-export function installRuntime(opts: InstallOptions): void {
+export async function installRuntime(opts: InstallOptions): Promise<void> {
   const { version, cacheDir, pluginRoot } = opts;
   const runtimeDir = path.join(cacheDir, `runtime-${version}`);
   const bin = path.join(runtimeDir, 'bin', 'shipsmooth-tasks');
@@ -32,7 +36,7 @@ export function installRuntime(opts: InstallOptions): void {
     fs.chmodSync(bin, 0o755);
     console.log(`shipsmooth: runtime ${version} installed at ${runtimeDir} from local build`);
   } else {
-    downloadAndInstall(version, runtimeDir, platform);
+    await downloadAndInstall(version, runtimeDir, platform, opts.releaseUrlBase);
     console.log(`shipsmooth: runtime ${version} installed at ${runtimeDir}`);
   }
 }
@@ -54,14 +58,15 @@ function detectPlatform(): string {
   return `${plat}-${arch}`;
 }
 
-function downloadAndInstall(version: string, runtimeDir: string, platform: string): void {
-  const url = `https://github.com/bitkentech/shipsmooth/releases/download/v${version}/shipsmooth-tasks-${version}-${platform}.zip`;
+async function downloadAndInstall(version: string, runtimeDir: string, platform: string, urlBase?: string): Promise<void> {
+  const base = urlBase ?? `https://github.com/bitkentech/shipsmooth/releases/download/v${version}`;
+  const url = `${base}/shipsmooth-tasks-${version}-${platform}.zip`;
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shipsmooth-'));
   const zipFile = path.join(tmp, 'runtime.zip');
   const extractDir = `${runtimeDir}.tmp`;
 
   try {
-    downloadFile(url, zipFile);
+    await downloadFile(url, zipFile);
     fs.mkdirSync(extractDir, { recursive: true });
     child_process.execFileSync('unzip', ['-q', zipFile, '-d', extractDir]);
     fs.renameSync(extractDir, runtimeDir);
@@ -71,11 +76,38 @@ function downloadAndInstall(version: string, runtimeDir: string, platform: strin
   }
 }
 
-function downloadFile(url: string, dest: string): void {
-  const result = child_process.spawnSync('curl', ['-fsSL', url, '-o', dest], { encoding: 'utf8' });
-  if (result.status !== 0) {
-    throw new Error(`shipsmooth: failed to download runtime: ${result.stderr}`);
+const MAX_REDIRECTS = 5;
+
+export async function downloadFile(url: string, dest: string): Promise<void> {
+  let currentUrl = url;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    const res = await sendGet(currentUrl);
+    const status = res.statusCode ?? 0;
+
+    if (status >= 300 && status < 400 && res.headers.location) {
+      res.resume(); // drain
+      currentUrl = new URL(res.headers.location, currentUrl).toString();
+      continue;
+    }
+
+    if (status < 200 || status >= 300) {
+      res.resume();
+      throw new Error(`shipsmooth: failed to download ${currentUrl}: HTTP ${status}`);
+    }
+
+    const out = fs.createWriteStream(dest);
+    await pipeline(res, out);
+    return;
   }
+  throw new Error(`shipsmooth: too many redirects fetching ${url}`);
+}
+
+function sendGet(url: string): Promise<http.IncomingMessage> {
+  return new Promise((resolve, reject) => {
+    const lib = url.startsWith('https:') ? https : http;
+    const req = lib.get(url, { headers: { 'user-agent': 'shipsmooth-runtime-installer' } }, resolve);
+    req.on('error', reject);
+  });
 }
 
 function expandHome(p: string): string {
@@ -96,10 +128,9 @@ if (require.main === module) {
   const pluginRoot = process.env['CLAUDE_PLUGIN_ROOT'] ?? '';
   const cacheDir = resolveCache(config);
 
-  try {
-    installRuntime({ version: config.version, cacheDir, pluginRoot, jlinkDir: config.jlinkDir });
-  } catch (e: any) {
-    process.stderr.write(e.message + '\n');
-    process.exit(1);
-  }
+  installRuntime({ version: config.version, cacheDir, pluginRoot, jlinkDir: config.jlinkDir })
+    .catch((e: any) => {
+      process.stderr.write(e.message + '\n');
+      process.exit(1);
+    });
 }
