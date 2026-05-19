@@ -1,10 +1,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as child_process from 'node:child_process';
 import * as os from 'node:os';
 import * as http from 'node:http';
 import * as https from 'node:https';
 import { pipeline } from 'node:stream/promises';
+import AdmZip from 'adm-zip';
 
 export interface InstallOptions {
   version: string;
@@ -68,7 +68,11 @@ async function downloadAndInstall(version: string, runtimeDir: string, platform:
   try {
     await downloadFile(url, zipFile);
     fs.mkdirSync(extractDir, { recursive: true });
-    child_process.execFileSync('unzip', ['-q', zipFile, '-d', extractDir]);
+    new AdmZip(zipFile).extractAllTo(extractDir, /*overwrite*/ true);
+    const extractedBin = path.join(extractDir, 'bin', 'shipsmooth-tasks');
+    if (fs.existsSync(extractedBin)) {
+      fs.chmodSync(extractedBin, 0o755);
+    }
     fs.renameSync(extractDir, runtimeDir);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
