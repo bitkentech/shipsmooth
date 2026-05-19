@@ -77,8 +77,9 @@
         <task>
             <id>7</id>
             <risk>low</risk>
+            <status>agent-coded</status>
             <name>Add dependencyConvergence enforcer rule</name>
-            <commit></commit>
+            <commit>0b12ae57ec28d19b0381eafaaee11bacf1bd5904</commit>
             <created-from>plan-47-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
