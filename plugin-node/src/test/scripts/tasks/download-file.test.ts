@@ -108,6 +108,49 @@ test('downloadFile: surfaces transport errors (connection refused)', async () =>
   assert.ok(err, 'expected throw on connection refused');
 });
 
+test('downloadFile: retries once after a 5xx, then succeeds', async () => {
+  const payload = Buffer.from('eventually-ok');
+  let calls = 0;
+  const server = await startServer((_req, res) => {
+    calls++;
+    if (calls === 1) {
+      res.writeHead(503);
+      res.end();
+    } else {
+      res.writeHead(200);
+      res.end(payload);
+    }
+  });
+  const dest = path.join(makeTmpDir(), 'retry.bin');
+  try {
+    await downloadFile(`${server.url}/r.zip`, dest);
+  } finally {
+    await server.close();
+  }
+  assert.equal(calls, 2, 'should retry exactly once');
+  assert.deepEqual(fs.readFileSync(dest), payload);
+});
+
+test('downloadFile: does NOT retry on 4xx', async () => {
+  let calls = 0;
+  const server = await startServer((_req, res) => {
+    calls++;
+    res.writeHead(404);
+    res.end();
+  });
+  const dest = path.join(makeTmpDir(), 'no-retry.bin');
+  let err: Error | undefined;
+  try {
+    await downloadFile(`${server.url}/x.zip`, dest);
+  } catch (e: any) {
+    err = e;
+  } finally {
+    await server.close();
+  }
+  assert.ok(err);
+  assert.equal(calls, 1, '4xx should not be retried');
+});
+
 test('downloadFile: aborts after too many redirect hops', async () => {
   // Loop a server to itself, count hops via header.
   const server = await startServer((_req, res) => {
