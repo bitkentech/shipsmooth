@@ -44,9 +44,9 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>todo</status>
+            <status>agent-coded</status>
             <name>Add ValidateRelease pre-packaging check</name>
-            <commit></commit>
+            <commit>9938ee9</commit>
             <created-from>plan-47-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -55,9 +55,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>todo</status>
+            <status>agent-coded</status>
             <name>Lock exec-maven-plugin version in root pom pluginManagement</name>
-            <commit></commit>
+            <commit>2cecb32425fd0debffe90780f33ac4ac5b8898e1</commit>
             <created-from>plan-47-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
