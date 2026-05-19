@@ -80,6 +80,21 @@ public class PublishReleaseTest {
     }
 
     @Test
+    void skipValidationSuppressesPlaceholderLeakError() throws IOException {
+        Path claudePlugin = tempDir.resolve(".claude-plugin");
+        Files.createDirectories(claudePlugin);
+        Files.writeString(claudePlugin.resolve("plugin.json"), """
+                {"name":"${plugin.name}","version":"0.3.8","description":"desc"}
+                """);
+        Files.writeString(claudePlugin.resolve("marketplace.json"), """
+                {"name":"shipsmooth","plugins":[{"name":"shipsmooth","description":"desc"}]}
+                """);
+
+        // must not throw even though plugin.json has a placeholder leak
+        assertDoesNotThrow(() -> PublishRelease.maybeValidateBuildOutput(tempDir, true));
+    }
+
+    @Test
     void validateBuildOutputPassesOnCleanManifests() throws IOException {
         Path claudePlugin = tempDir.resolve(".claude-plugin");
         Files.createDirectories(claudePlugin);
