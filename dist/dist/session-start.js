@@ -100,6 +100,12 @@ async function downloadAndInstall(version, runtimeDir, platform, urlBase) {
             throw new Error(`shipsmooth: extracted archive is missing bin/shipsmooth-tasks (from ${url})`);
         }
         fs.chmodSync(extractedBin, 0o755);
+        const runtimeBinDir = path.join(extractDir, 'runtime', 'bin');
+        if (fs.existsSync(runtimeBinDir)) {
+            for (const entry of fs.readdirSync(runtimeBinDir)) {
+                fs.chmodSync(path.join(runtimeBinDir, entry), 0o755);
+            }
+        }
         fs.renameSync(extractDir, runtimeDir);
     }
     finally {

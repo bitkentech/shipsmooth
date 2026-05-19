@@ -1,6 +1,6 @@
 {
-  "name": "shipsmooth-dev",
-  "description": "Development marketplace for bitkentech/shipsmooth plugin",
+  "name": "bitkentech",
+  "description": "Plugin marketplace for bitkentech/shipsmooth",
   "owner": {
     "name": "Bitken Technologies",
     "url": "https://github.com/bitkentech/shipsmooth"
