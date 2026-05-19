@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>50</plan>
+    <plan-version>plan-50-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-05-19</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Fix runtime/bin/* permissions after zip extraction</name>
+            <commit>fcda5633bf0b25ee65ce9db16ee9337b14c2f55c</commit>
+            <created-from>plan-50-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Fix marketplace top-level name in prod build</name>
+            <commit>1844fcea19a14f830a1e542734ede8853624c36f</commit>
+            <created-from>plan-50-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-19T20:47:13.147+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-19T21:05:54.078+05:30</timestamp>
+            <message>Plan complete.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

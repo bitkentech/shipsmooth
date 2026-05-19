@@ -102,6 +102,23 @@ test('resolveCache: expands tilde cacheDir for dev builds', () => {
   );
 });
 
+test('zip extraction: runtime/bin/* files are chmod 0755 after install', async () => {
+  // AdmZip.extractAllTo() ignores Unix mode bits; we must chmod runtime/bin/* ourselves
+  const cacheDir = makeTmpDir();
+  const pluginRoot = makeTmpDir();
+  const version = '0.3.x-chmod-test';
+  const jlinkDir = makeTmpDir();
+  // populate a fake jlink image with non-executable runtime/bin entries
+  const runtimeBin = path.join(jlinkDir, 'bin');
+  fs.mkdirSync(runtimeBin, { recursive: true });
+  fs.writeFileSync(path.join(jlinkDir, 'bin', 'shipsmooth-tasks'), '#!/bin/sh\necho ok\n');
+  fs.chmodSync(path.join(jlinkDir, 'bin', 'shipsmooth-tasks'), 0o755);
+  // jlinkDir path installs via fs.cpSync — verify launcher gets chmod'd
+  await installRuntime({ version, cacheDir, pluginRoot, jlinkDir });
+  const bin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth-tasks');
+  assert.ok((fs.statSync(bin).mode & 0o111) !== 0, 'launcher must be executable');
+});
+
 test('unsupported platform: error message lists supported platforms', async () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
