@@ -112,7 +112,7 @@ bootstrap `node -e` command) to determine whether making `installRuntime` async 
 the hook contract. If the bootstrap is synchronous, adjust it to await/`.then()` the
 returned promise. Document the bootstrap shape in a comment at the top of session-start.ts.
 
-### Task 2: Replace curl with Node https + redirect following [Medium]
+### Task 2: Replace curl with Node https + redirect following [High]
 
 Make `installRuntime` and `downloadAndInstall` async. Replace `downloadFile`'s
 `spawnSync('curl', ...)` with a Node `https.get` implementation that:
@@ -125,7 +125,7 @@ Make `installRuntime` and `downloadAndInstall` async. Replace `downloadFile`'s
 Update unit tests to await async calls. Add a test that asserts `downloadFile` throws
 when the URL returns 404 (use a local http server fixture or a known-bad GitHub URL).
 
-### Task 3: Replace unzip with adm-zip [Medium]
+### Task 3: Replace unzip with adm-zip [High]
 
 Replace `execFileSync('unzip', ...)` in `downloadAndInstall` with `adm-zip`'s
 synchronous extract API. Keep the `extractDir.tmp` → `renameSync` atomic-rename
@@ -135,28 +135,36 @@ Add a unit test that:
 - Programmatically builds a small zip (using adm-zip) containing
   `bin/shipsmooth-tasks` as an executable shell script.
 - Serves it from a local http server.
-- Calls `installRuntime` against that URL (requires the URL to be overridable — see
-  task 4 below if needed, or inject via env var for the test).
+- Calls `installRuntime` against that URL (requires the URL to be overridable — add a
+  test-only env var or option parameter as part of this task).
 - Asserts the extracted binary is executable.
 
-### Task 4: Add logging and one-retry on download failure [Low]
+### Task 4: Integration test — full download path with local http server [Medium]
+
+Add an integration test that spins up an http server on `127.0.0.1:0`, has it return
+a programmatically-built jlink-shaped zip (`bin/shipsmooth-tasks` + a few dummy `lib/`
+files), and exercises the full `installRuntime` download path end-to-end. Asserts the
+runtime directory exists, the binary is executable, and the temp dir is cleaned up.
+
+*Depends-on: 2,3*
+
+This task lands the end-to-end safety net before any optional polish (logging, retry,
+message tweaks). If tasks 2 and 3 introduced a subtle regression, this is where it
+surfaces — and we want it to surface before the codebase moves further.
+
+### Task 5: Add logging and one-retry on download failure [Low]
 
 Add stderr log lines for "downloading from URL" and "retrying after failure". Wrap
 `downloadFile` in a retry loop: max 2 attempts, 1s delay between, no retry on 4xx
 or unsupported-platform errors. Add a test that asserts the retry path is taken for
-a 5xx response (using the local http server fixture from task 3).
+a 5xx response (using the local http server fixture from task 4).
 
-### Task 5: Improve unsupported-platform error message [Low]
+*Depends-on: 4*
+
+### Task 6: Improve unsupported-platform error message [Low]
 
 When `forcePlatform` or the detected platform is not in `supportedPlatforms`, throw
 an error message that lists the supported platforms explicitly (e.g.
 `platform win32-x64 is not yet supported (supported: linux-x64, darwin-x64, darwin-arm64)`).
 Update the existing `unsupported platform` test to assert the message contains the
 list of supported platforms.
-
-### Task 6: Integration test — full download path with local http server [Medium]
-
-Add an integration test that spins up an http server on `127.0.0.1:0`, has it return
-a programmatically-built jlink-shaped zip (`bin/shipsmooth-tasks` + a few dummy `lib/`
-files), and exercises the full `installRuntime` download path end-to-end. Asserts the
-runtime directory exists, the binary is executable, and the temp dir is cleaned up.
