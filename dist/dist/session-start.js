@@ -45,7 +45,7 @@ const os = __importStar(require("node:os"));
 const http = __importStar(require("node:http"));
 const https = __importStar(require("node:https"));
 const promises_1 = require("node:stream/promises");
-const adm_zip_1 = __importDefault(require("adm-zip"));
+const adm_zip_bundle_1 = __importDefault(require("./adm-zip-bundle"));
 async function installRuntime(opts) {
     const { version, cacheDir, pluginRoot } = opts;
     const runtimeDir = path.join(cacheDir, `runtime-${version}`);
@@ -94,7 +94,7 @@ async function downloadAndInstall(version, runtimeDir, platform, urlBase) {
     try {
         await downloadFile(url, zipFile);
         fs.mkdirSync(extractDir, { recursive: true });
-        new adm_zip_1.default(zipFile).extractAllTo(extractDir, true);
+        new adm_zip_bundle_1.default(zipFile).extractAllTo(extractDir, true);
         const extractedBin = path.join(extractDir, 'bin', 'shipsmooth-tasks');
         if (!fs.existsSync(extractedBin)) {
             throw new Error(`shipsmooth: extracted archive is missing bin/shipsmooth-tasks (from ${url})`);
