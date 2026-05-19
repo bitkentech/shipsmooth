@@ -76,6 +76,33 @@ test('integration: installRuntime downloads from a URL override, extracts, chmod
     'extract .tmp dir should be cleaned up');
 });
 
+test('integration: installRuntime chmods runtime/bin/* to executable after extraction', async () => {
+  const cacheDir = makeTmpDir();
+  const pluginRoot = makeTmpDir();
+  const version = '9.9.9-perms';
+
+  // Build a zip where runtime/bin/java has no executable bit stored
+  const zip = new AdmZip();
+  zip.addFile('bin/shipsmooth-tasks', Buffer.from('#!/bin/sh\necho ok\n'), '', 0o755 << 16);
+  zip.addFile('runtime/bin/java', Buffer.from('#!/bin/sh\necho fake-java\n'), '', 0o644 << 16);
+  zip.addFile('runtime/bin/keytool', Buffer.from('#!/bin/sh\necho fake-keytool\n'), '', 0o644 << 16);
+  const zipBytes = zip.toBuffer();
+
+  const server = await startServer(zipBytes);
+  try {
+    await installRuntime({ version, cacheDir, pluginRoot, forcePlatform: 'linux-x64', releaseUrlBase: server.url } as any);
+  } finally {
+    await server.close();
+  }
+
+  const runtimeBin = path.join(cacheDir, `runtime-${version}`, 'runtime', 'bin');
+  for (const name of ['java', 'keytool']) {
+    const f = path.join(runtimeBin, name);
+    assert.ok(fs.existsSync(f), `${name} should exist`);
+    assert.ok((fs.statSync(f).mode & 0o111) !== 0, `${name} should be executable`);
+  }
+});
+
 test('integration: installRuntime throws if extracted zip is missing bin/shipsmooth-tasks', async () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
