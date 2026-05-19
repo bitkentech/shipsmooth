@@ -78,6 +78,10 @@ public class PublishRelease {
         }
     }
 
+    static void validateBuildOutput(Path buildDir) throws IOException {
+        ValidateRelease.validate(buildDir, null);
+    }
+
     private void buildAndPackage() throws IOException, InterruptedException {
         Path buildDir = repoRoot.resolve("build");
         if (Files.exists(buildDir)) deleteDirectory(buildDir);
@@ -88,6 +92,7 @@ public class PublishRelease {
                 "package"), repoRoot);
 
         runCommand(List.of("mvn", "-f", repoRoot.resolve("pom.xml").toString(), "compile", "-Pprod", "-P!dev"), repoRoot);
+        validateBuildOutput(buildDir);
 
         Path outputDir = repoRoot.resolve("plugin-dist/target/dist");
         Files.createDirectories(outputDir);
