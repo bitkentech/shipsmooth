@@ -102,12 +102,19 @@ test('resolveCache: expands tilde cacheDir for dev builds', () => {
   );
 });
 
-test('unsupported platform: throws with clear message', async () => {
+test('unsupported platform: error message lists supported platforms', async () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
 
   await assert.rejects(
     () => installRuntime({ version: '0.2.0', cacheDir, pluginRoot, forcePlatform: 'win32-x64' }),
-    /not yet supported/i,
+    (e: Error) => {
+      assert.match(e.message, /win32-x64/);
+      assert.match(e.message, /not yet supported/i);
+      assert.match(e.message, /linux-x64/);
+      assert.match(e.message, /darwin-x64/);
+      assert.match(e.message, /darwin-arm64/);
+      return true;
+    },
   );
 });
