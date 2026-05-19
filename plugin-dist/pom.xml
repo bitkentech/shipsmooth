@@ -81,6 +81,31 @@
             </configuration>
           </execution>
 
+          <!-- Copy package.json into build output (used by both Claude and Gemini hooks for npm install) -->
+          <execution>
+            <id>copy-package-json</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <skip>${skip.copy-dist}</skip>
+              <outputDirectory>${build.outputDir}</outputDirectory>
+              <useDefaultDelimiters>false</useDefaultDelimiters>
+              <delimiters>
+                <delimiter>@</delimiter>
+              </delimiters>
+              <resources>
+                <resource>
+                  <directory>${maven.multiModuleProjectDirectory}/plugin-node/src/main/resources</directory>
+                  <filtering>true</filtering>
+                  <includes>
+                    <include>package.json</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
 
         </executions>
       </plugin>
@@ -267,31 +292,6 @@
               </execution>
 
 
-              <!-- Copy package.json into build/ -->
-              <execution>
-                <id>copy-package-json</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration>
-                  <outputDirectory>${build.outputDir}</outputDirectory>
-                  <useDefaultDelimiters>false</useDefaultDelimiters>
-                  <delimiters>
-                    <delimiter>@</delimiter>
-                  </delimiters>
-                  <resources>
-                    <resource>
-                      <directory>${maven.multiModuleProjectDirectory}/plugin-node</directory>
-                      <filtering>true</filtering>
-                      <includes>
-                        <include>package.json</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-
             </executions>
           </plugin>
 
@@ -344,46 +344,6 @@
       </build>
     </profile>
 
-    <profile>
-      <id>gemini</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-resources-plugin</artifactId>
-            <version>3.3.1</version>
-            <executions>
-
-              <!-- Copy package.json into build-gemini/ (hook uses it for npm install) -->
-              <execution>
-                <id>copy-package-json</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration>
-                  <outputDirectory>${build.outputDir}</outputDirectory>
-                  <useDefaultDelimiters>false</useDefaultDelimiters>
-                  <delimiters>
-                    <delimiter>@</delimiter>
-                  </delimiters>
-                  <resources>
-                    <resource>
-                      <directory>${maven.multiModuleProjectDirectory}/plugin-node</directory>
-                      <filtering>true</filtering>
-                      <includes>
-                        <include>package.json</include>
-                    </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
   </profiles>
 
 </project>

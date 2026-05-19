@@ -1,0 +1,10 @@
+{
+  "name": "@plugin.name@",
+  "version": "@project.version@",
+  "description": "@plugin.name@ plugin scripts",
+  "private": true,
+  "dependencies": {
+    "fast-xml-parser": "^5.0.0",
+    "typescript": "^5.0.0"
+  }
+}
