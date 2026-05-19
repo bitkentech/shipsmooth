@@ -33,9 +33,9 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Fix plugin-resources profile activation — plugin.name not substituted in marketplace.json and plugin.json</name>
-            <commit></commit>
+            <commit>2843bcca7f0221078f3784acd96ab2b0569f5688</commit>
             <created-from>plan-47-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
