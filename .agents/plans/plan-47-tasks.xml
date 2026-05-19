@@ -19,6 +19,17 @@
             <comments/>
             <deviations/>
         </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Bundle adm-zip into a single file using esbuild</name>
+            <commit></commit>
+            <created-from>plan-47-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
     </tasks>
     <project-updates>
         <update>

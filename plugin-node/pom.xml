@@ -37,7 +37,7 @@
             </configuration>
           </execution>
 
-          <!-- tsc: compile TS source to dist/ -->
+          <!-- tsc + esbuild bundle: compile TS to dist/ and bundle adm-zip -->
           <execution>
             <id>tsc-compile</id>
             <phase>process-resources</phase>
@@ -45,8 +45,12 @@
               <goal>exec</goal>
             </goals>
             <configuration>
-              <executable>node_modules/.bin/tsc</executable>
+              <executable>npm</executable>
               <workingDirectory>${project.basedir}</workingDirectory>
+              <arguments>
+                <argument>run</argument>
+                <argument>build</argument>
+              </arguments>
             </configuration>
           </execution>
         </executions>

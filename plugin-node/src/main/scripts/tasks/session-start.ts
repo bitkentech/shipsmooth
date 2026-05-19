@@ -4,7 +4,7 @@ import * as os from 'node:os';
 import * as http from 'node:http';
 import * as https from 'node:https';
 import { pipeline } from 'node:stream/promises';
-import AdmZip from 'adm-zip';
+import AdmZip from './adm-zip-bundle';
 
 export interface InstallOptions {
   version: string;

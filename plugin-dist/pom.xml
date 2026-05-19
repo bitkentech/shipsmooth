@@ -84,31 +84,6 @@
 
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>3.3.1</version>
-        <executions>
-          <!-- Bundle adm-zip into build/dist/node_modules so session-start.js can require() it -->
-          <execution>
-            <id>copy-adm-zip</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <skip>${skip.copy-dist}</skip>
-              <outputDirectory>${build.outputDir}/dist/node_modules/adm-zip</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${maven.multiModuleProjectDirectory}/plugin-node/node_modules/adm-zip</directory>
-                  <filtering>false</filtering>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
 
