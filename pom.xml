@@ -24,7 +24,92 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <plugin.base.name>shipsmooth</plugin.base.name>
     <plugin.skill.start.basename>start</plugin.skill.start.basename>
+    <skip.copy-dist>true</skip.copy-dist>
   </properties>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- Pinned to prevent Maven resolving latest from central on direct exec:java@id invocations -->
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>3.3.0</version>
+        </plugin>
+        <!-- Canonical compiler version; plugin-tasks-java overrides with its own property -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.3.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.2.5</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.4.1</version>
+        </plugin>
+        <!-- Implicit lifecycle plugins — pinned to satisfy requirePluginVersions -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>3.1.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.1.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.12.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce-plugin-versions</id>
+            <goals><goal>enforce</goal></goals>
+            <configuration>
+              <rules>
+                <requirePluginVersions/>
+                <dependencyConvergence/>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
   <profiles>
     <profile>
@@ -35,6 +120,8 @@
       <properties>
         <build.env>dev</build.env>
         <build.platform>claude</build.platform>
+        <skip.copy-dist>false</skip.copy-dist>
+        <plugin.name>${plugin.base.name}-dev</plugin.name>
         <plugin.description>Agent coding workflow (dev build)</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build</build.outputDir>
         <plugin.hook.base>node "${CLAUDE_PLUGIN_ROOT}/dist/session-start.js"</plugin.hook.base>
@@ -51,6 +138,7 @@
       <properties>
         <build.env>dev</build.env>
         <build.platform>gemini</build.platform>
+        <skip.copy-dist>false</skip.copy-dist>
 
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini-dev</build.outputDir>
 
@@ -71,6 +159,8 @@ description: Use when starting any task — applies the shipsmooth agent coding 
       <properties>
         <build.env>prod</build.env>
         <build.platform>claude</build.platform>
+        <skip.copy-dist>false</skip.copy-dist>
+        <plugin.name>${plugin.base.name}</plugin.name>
         <plugin.description>Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build</build.outputDir>
         <shipsmooth.dist.path>\${CLAUDE_PLUGIN_DATA}/dist</shipsmooth.dist.path>
@@ -86,6 +176,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
       <properties>
         <build.env>prod</build.env>
         <build.platform>gemini</build.platform>
+        <skip.copy-dist>false</skip.copy-dist>
         <plugin.description>Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini</build.outputDir>
         <shipsmooth.dist.path>~/.cache/shipsmooth/dist</shipsmooth.dist.path>

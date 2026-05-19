@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>47</plan>
+    <plan-version>plan-47-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-05-19</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Fix copy-dist profile activation and bundle adm-zip</name>
+            <commit>81b712e7b086af1a4f8930f2cd821ae01c842cc9</commit>
+            <created-from>plan-47-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Bundle adm-zip into a single file using esbuild</name>
+            <commit>f9e108fac15a5217585fe4b961082ca9ebbf4c00</commit>
+            <created-from>plan-47-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Fix plugin-resources profile activation — plugin.name not substituted in marketplace.json and plugin.json</name>
+            <commit>2843bcca7f0221078f3784acd96ab2b0569f5688</commit>
+            <created-from>plan-47-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Add ValidateRelease pre-packaging check</name>
+            <commit>9938ee9</commit>
+            <created-from>plan-47-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Lock exec-maven-plugin version in root pom pluginManagement</name>
+            <commit>2cecb32425fd0debffe90780f33ac4ac5b8898e1</commit>
+            <created-from>plan-47-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Add requirePluginVersions enforcer rule</name>
+            <commit>1934186c1f9793a783ff927b89e7efc093cc17a0</commit>
+            <created-from>plan-47-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Add dependencyConvergence enforcer rule</name>
+            <commit>0b12ae57ec28d19b0381eafaaee11bacf1bd5904</commit>
+            <created-from>plan-47-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>6</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-19T16:56:49.532+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-19T17:59:47.660+05:30</timestamp>
+            <message>Plan complete. All 7 tasks agent-coded.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

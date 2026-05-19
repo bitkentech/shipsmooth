@@ -4,16 +4,18 @@
   "description": "shipsmooth plugin scripts",
   "private": true,
   "dependencies": {
-    "adm-zip": "^0.5.17",
     "fast-xml-parser": "^5.0.0",
     "typescript": "^5.0.0"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.8",
-    "@types/node": "^25.6.0"
+    "@types/node": "^25.6.0",
+    "adm-zip": "^0.5.17",
+    "esbuild": "^0.28.0"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run bundle",
+    "bundle": "esbuild node_modules/adm-zip/adm-zip.js --bundle --platform=node --outfile=dist/adm-zip-bundle.js",
     "test": "tsc -p tsconfig.test.json && node --test dist-test/test/scripts/tasks/*.test.js"
   }
 }

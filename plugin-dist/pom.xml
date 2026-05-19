@@ -52,11 +52,73 @@
     </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+          <!-- Copy compiled JS into build/dist/ alongside session-start-config.json -->
+          <execution>
+            <id>copy-dist</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <skip>${skip.copy-dist}</skip>
+              <outputDirectory>${build.outputDir}/dist</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${maven.multiModuleProjectDirectory}/plugin-node/dist</directory>
+                  <filtering>false</filtering>
+                  <excludes>
+                    <exclude>**/*.test.js</exclude>
+                  </excludes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+
+
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>validate-release</id>
+            <goals><goal>java</goal></goals>
+            <configuration>
+              <mainClass>io.bitken.shipsmooth.dist.ValidateRelease</mainClass>
+              <systemProperties>
+                <systemProperty>
+                  <key>build.outputDir</key>
+                  <value>${build.outputDir}</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>build.gemini.outputDir</key>
+                  <value>${build.gemini.outputDir}</value>
+                </systemProperty>
+              </systemProperties>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
   <profiles>
     <profile>
       <id>claude</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>build.platform</name>
+          <value>claude</value>
+        </property>
       </activation>
       <build>
         <plugins>
@@ -108,26 +170,6 @@
                 </configuration>
               </execution>
 
-              <!-- Copy compiled JS into build/dist/ (SessionStart hook copies from here to cache) -->
-              <execution>
-                <id>copy-dist</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration>
-                  <outputDirectory>${build.outputDir}/dist</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>${maven.multiModuleProjectDirectory}/plugin-node/dist</directory>
-                      <filtering>false</filtering>
-                      <excludes>
-                        <exclude>**/*.test.js</exclude>
-                      </excludes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
 
               <!-- Copy package.json into build/ -->
               <execution>
@@ -319,27 +361,6 @@
             <artifactId>maven-resources-plugin</artifactId>
             <version>3.3.1</version>
             <executions>
-
-              <!-- Copy pre-compiled JS into build-gemini/dist/ (hook copies from here to ~/.cache/shipsmooth/dist/) -->
-              <execution>
-                <id>copy-dist</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration>
-                  <outputDirectory>${build.outputDir}/dist</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>${maven.multiModuleProjectDirectory}/plugin-node/dist</directory>
-                      <filtering>false</filtering>
-                      <excludes>
-                        <exclude>**/*.test.js</exclude>
-                      </excludes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
 
               <!-- Copy package.json into build-gemini/ (hook uses it for npm install) -->
               <execution>
