@@ -24,6 +24,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <plugin.base.name>shipsmooth</plugin.base.name>
     <plugin.skill.start.basename>start</plugin.skill.start.basename>
+    <skip.copy-dist>true</skip.copy-dist>
   </properties>
 
   <profiles>
@@ -35,6 +36,7 @@
       <properties>
         <build.env>dev</build.env>
         <build.platform>claude</build.platform>
+        <skip.copy-dist>false</skip.copy-dist>
         <plugin.description>Agent coding workflow (dev build)</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build</build.outputDir>
         <plugin.hook.base>node "${CLAUDE_PLUGIN_ROOT}/dist/session-start.js"</plugin.hook.base>
@@ -51,6 +53,7 @@
       <properties>
         <build.env>dev</build.env>
         <build.platform>gemini</build.platform>
+        <skip.copy-dist>false</skip.copy-dist>
 
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini-dev</build.outputDir>
 
@@ -71,6 +74,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
       <properties>
         <build.env>prod</build.env>
         <build.platform>claude</build.platform>
+        <skip.copy-dist>false</skip.copy-dist>
         <plugin.description>Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build</build.outputDir>
         <shipsmooth.dist.path>\${CLAUDE_PLUGIN_DATA}/dist</shipsmooth.dist.path>
@@ -86,6 +90,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
       <properties>
         <build.env>prod</build.env>
         <build.platform>gemini</build.platform>
+        <skip.copy-dist>false</skip.copy-dist>
         <plugin.description>Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini</build.outputDir>
         <shipsmooth.dist.path>~/.cache/shipsmooth/dist</shipsmooth.dist.path>
