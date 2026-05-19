@@ -1,6 +1,6 @@
 {
-  "name": "shipsmooth",
-  "version": "0.3.5",
+  "name": "@plugin.name@",
+  "version": "0.3.6",
   "description": "shipsmooth plugin scripts",
   "private": true,
   "dependencies": {

@@ -34,6 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.installRuntime = installRuntime;
+exports.resolveCache = resolveCache;
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
 const child_process = __importStar(require("node:child_process"));
@@ -102,12 +103,19 @@ function downloadFile(url, dest) {
 function expandHome(p) {
     return p.startsWith('~/') ? path.join(os.homedir(), p.slice(2)) : p;
 }
+// If you change this logic, update the cliBin expression in plugin-skill/src/main/jte-src/skills/_partials/base-workflow.jte.md
+function resolveCache(config) {
+    if (config.cacheDir)
+        return expandHome(config.cacheDir);
+    const xdgCache = process.env['XDG_CACHE_HOME'] ?? path.join(os.homedir(), '.cache');
+    return path.join(xdgCache, 'shipsmooth');
+}
 // CLI entrypoint — invoked by the hooks.json node -e bootstrap
 if (require.main === module) {
     const configPath = path.join(__dirname, 'session-start-config.json');
     const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
     const pluginRoot = process.env['CLAUDE_PLUGIN_ROOT'] ?? '';
-    const cacheDir = expandHome(config.cacheDir);
+    const cacheDir = resolveCache(config);
     try {
         installRuntime({ version: config.version, cacheDir, pluginRoot, jlinkDir: config.jlinkDir });
     }
