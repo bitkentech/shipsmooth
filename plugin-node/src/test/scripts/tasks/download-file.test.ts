@@ -89,15 +89,31 @@ test('downloadFile: throws with URL embedded on non-2xx final response', async (
   assert.match(err!.message, /404/);
 });
 
+test('downloadFile: surfaces transport errors (connection refused)', async () => {
+  // Bind, capture port, immediately close — port is now unbound.
+  const probe = http.createServer();
+  await new Promise<void>((r) => probe.listen(0, '127.0.0.1', () => r()));
+  const addr = probe.address();
+  if (typeof addr === 'string' || !addr) throw new Error('bad address');
+  const port = addr.port;
+  await new Promise<void>((r) => probe.close(() => r()));
+
+  const dest = path.join(makeTmpDir(), 'refused.bin');
+  let err: Error | undefined;
+  try {
+    await downloadFile(`http://127.0.0.1:${port}/x.zip`, dest);
+  } catch (e: any) {
+    err = e;
+  }
+  assert.ok(err, 'expected throw on connection refused');
+});
+
 test('downloadFile: aborts after too many redirect hops', async () => {
   // Loop a server to itself, count hops via header.
-  const server = await startServer((req, res) => {
-    const hops = Number(req.headers['x-test-hops'] ?? '0') + 1;
-    // unconditionally redirect to self
+  const server = await startServer((_req, res) => {
     res.writeHead(302, { location: `http://127.0.0.1:${(server as any)._port}/` });
     res.end();
   });
-  // hack: stash port for handler closure
   (server as any)._port = new URL(server.url).port;
 
   const dest = path.join(makeTmpDir(), 'loop.bin');
