@@ -49,3 +49,35 @@ Backlog issue: none (self-contained build fix).
 - Verify: `mvn -Pdev compile` → `build/dist/` contains all JS + `adm-zip`;
   `mvn -Pgemini compile` → `build-gemini/dist/` contains all JS + `adm-zip`;
   `node build/dist/session-start.js` installs runtime successfully.
+
+## Validate Release
+
+Add a `ValidateRelease` Java class in `plugin-dist` that asserts all placeholder
+substitutions in generated JSON manifests resolved correctly before packaging begins.
+
+### Task 4: Add ValidateRelease pre-packaging check [Low]
+
+- New class `plugin-dist/src/main/java/io/bitken/shipsmooth/dist/ValidateRelease.java`.
+- Reads `build.outputDir` and `build.gemini.outputDir` system properties.
+- Validates `build/.claude-plugin/plugin.json`: `name`, `version`, `description` are
+  present, non-empty, and contain no `${`.
+- Validates `build/.claude-plugin/marketplace.json`: top-level `name`, `plugins[0].name`,
+  `plugins[0].description`.
+- Validates `build-gemini/gemini-extension.json` if the file exists (skip silently
+  otherwise): `name`, `version`, `description`.
+- Fails with a precise message naming the file and field on any violation.
+- Wire as a `validate-release` `exec:java` execution (no `<phase>`) in the `claude`
+  profile of `plugin-dist/pom.xml`, passing the same system properties as the
+  existing `package-runtime` execution.
+- Unit test: `ValidateReleaseTest` covering valid JSON, missing field, placeholder
+  leak, and absent gemini file (should pass silently).
+- Release command becomes:
+  ```
+  mvn -pl plugin-dist -am compile \
+    exec:java@validate-release \
+    exec:java@package-runtime \
+    exec:java@package-runtime-darwin-x64 \
+    exec:java@package-runtime-darwin-arm64 \
+    exec:java@publish-release \
+    -Pprod -P'!dev'
+  ```

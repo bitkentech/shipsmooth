@@ -41,6 +41,17 @@
             <comments/>
             <deviations/>
         </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>todo</status>
+            <name>Add ValidateRelease pre-packaging check</name>
+            <commit></commit>
+            <created-from>plan-47-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
     </tasks>
     <project-updates>
         <update>
