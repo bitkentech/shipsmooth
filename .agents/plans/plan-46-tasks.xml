@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>46</plan>
+    <plan-version>plan-46-v2</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-05-19</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Add adm-zip dependency and audit hook entrypoint shape</name>
+            <commit>3b8ab5308db4924134b2d7ef2448e8369fd61f2c</commit>
+            <created-from>plan-46-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Replace curl with Node https + redirect following</name>
+            <commit>8c413fd1128b08e8fef75e5f518b932089779f8d</commit>
+            <created-from>plan-46-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-05-19T13:09:57.075+05:30</timestamp>
+                    <message>De-risk draft ready for review. Node https + redirect-following works; 4 new downloadFile unit tests pass. Preamble integration test still red on chmod (expected — task 3).</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Replace unzip with adm-zip</name>
+            <commit>05c1ee0558c0327ebbeec7f80a7eb24e0d94ac2e</commit>
+            <created-from>plan-46-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-05-19T13:25:59.209+05:30</timestamp>
+                    <message>De-risk draft ready. adm-zip extraction green; both preamble integration tests now pass.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Integration test — full download path with local http server</name>
+            <commit>9e14a0f2c3e2f0b89ee4f428f5d3eb60ca041850</commit>
+            <created-from>plan-46-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2,3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Add logging and one-retry on download failure</name>
+            <commit>fbe4de9f23f97fd49ff8755634e2e05bffc37b91</commit>
+            <created-from>plan-46-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Improve unsupported-platform error message</name>
+            <commit>2b92e781022603a8a7677789de8a24cb38eeb3db</commit>
+            <created-from>plan-46-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-19T12:37:59.575+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-19T15:08:18.376+05:30</timestamp>
+            <message>Plan complete. All 6 tasks agent-coded and pushed.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

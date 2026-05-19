@@ -4,10 +4,12 @@
   "description": "shipsmooth plugin scripts",
   "private": true,
   "dependencies": {
+    "adm-zip": "^0.5.17",
     "fast-xml-parser": "^5.0.0",
     "typescript": "^5.0.0"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
     "@types/node": "^25.6.0"
   },
   "scripts": {
