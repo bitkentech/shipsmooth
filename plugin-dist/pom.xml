@@ -97,7 +97,7 @@
               </delimiters>
               <resources>
                 <resource>
-                  <directory>${maven.multiModuleProjectDirectory}/plugin-node</directory>
+                  <directory>${maven.multiModuleProjectDirectory}/plugin-node/src/main/resources</directory>
                   <filtering>true</filtering>
                   <includes>
                     <include>package.json</include>
