@@ -84,6 +84,30 @@
 
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>validate-release</id>
+            <goals><goal>java</goal></goals>
+            <configuration>
+              <mainClass>io.bitken.shipsmooth.dist.ValidateRelease</mainClass>
+              <systemProperties>
+                <systemProperty>
+                  <key>build.outputDir</key>
+                  <value>${build.outputDir}</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>build.gemini.outputDir</key>
+                  <value>${build.gemini.outputDir}</value>
+                </systemProperty>
+              </systemProperties>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
@@ -180,24 +204,6 @@
             <artifactId>exec-maven-plugin</artifactId>
             <version>3.3.0</version>
             <executions>
-
-              <execution>
-                <id>validate-release</id>
-                <goals><goal>java</goal></goals>
-                <configuration>
-                  <mainClass>io.bitken.shipsmooth.dist.ValidateRelease</mainClass>
-                  <systemProperties>
-                    <systemProperty>
-                      <key>build.outputDir</key>
-                      <value>${build.outputDir}</value>
-                    </systemProperty>
-                    <systemProperty>
-                      <key>build.gemini.outputDir</key>
-                      <value>${build.gemini.outputDir}</value>
-                    </systemProperty>
-                  </systemProperties>
-                </configuration>
-              </execution>
 
               <execution>
                 <id>package-runtime</id>
