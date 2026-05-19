@@ -11,10 +11,21 @@
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Call ValidateRelease.validate() inside PublishRelease.buildAndPackage()</name>
-            <commit></commit>
+            <commit>d0e2cba5f37e9d99206ffac66e92a439d79f68e7</commit>
             <created-from>plan-48-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>todo</status>
+            <name>Add --dangerous-skip-release-validation escape hatch</name>
+            <commit></commit>
+            <created-from>plan-48-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
