@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>45</plan>
-    <plan-version>plan-45-v2</plan-version>
+    <plan-version>plan-45-v4</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -54,6 +54,53 @@
             <commit>9c107fb7800f7e5674a564b686df113d506fa299</commit>
             <created-from>plan-45-v2</created-from>
             <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>open</status>
+            <name>Introduce BuildProfile record</name>
+            <commit></commit>
+            <created-from>plan-45-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>open</status>
+            <name>Refactor ResourceBuilder to use BuildProfile</name>
+            <commit></commit>
+            <created-from>plan-45-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <depends-on>5</depends-on>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>open</status>
+            <name>Update POM properties and system property passing</name>
+            <commit></commit>
+            <created-from>plan-45-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <depends-on>6</depends-on>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>low</risk>
+            <status>open</status>
+            <name>Update integration tests for BuildProfile</name>
+            <commit></commit>
+            <created-from>plan-45-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <depends-on>7</depends-on>
             <comments/>
             <deviations/>
         </task>

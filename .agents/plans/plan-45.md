@@ -109,3 +109,125 @@ shell expression `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-{version}/bin/s
 Drop `cacheDirResolved` entirely. Add a one-line comment above `resolveCache` in
 `session-start.ts` pointing to `base-workflow.jte.md` so the two stay in sync. Update the
 integration test assertion for `cliBin` in SKILL.md to match the new expression.
+
+---
+
+## Phase 2: BuildProfile refactor
+
+### Discovery
+
+After tasks 1–4, two problems remain:
+
+1. `cliBin` hardcodes `shipsmooth` — dev build should use `shipsmooth-dev` but task 4 missed
+   this because `cacheDir` was cleared in prod and non-empty in dev, creating an implicit
+   signal that was never made explicit.
+2. `plugin.name`, `plugin.skillName`, and `shipsmooth.cache.dir` are declared redundantly
+   per-profile in the POM. If the plugin is renamed (it was once called `devostat`), every
+   profile needs updating. The `-dev` suffix logic is also scattered across `ResourceBuilder`
+   as repeated `skillName.endsWith("-dev")` checks.
+
+### Design
+
+Introduce a `BuildProfile` record as the single source of truth for profile-derived naming.
+Profiles declare two orthogonal axes explicitly:
+
+- `build.env` — `dev` or `prod`
+- `build.platform` — `claude`, `gemini`, `opencode`, etc.
+
+Base names are declared once in the default POM properties:
+
+```xml
+<plugin.base.name>shipsmooth</plugin.base.name>
+<plugin.skill.start.basename>start</plugin.skill.start.basename>
+```
+
+`BuildProfile` derives all naming from these:
+
+```java
+public record BuildProfile(String platform, String env, String basePluginName) {
+
+    public boolean isDev()    { return "dev".equals(env); }
+    public boolean isGemini() { return "gemini".equals(platform); }
+
+    public String pluginName()              { return isDev() ? basePluginName + "-dev" : basePluginName; }
+    public String skillName(String base)    { return isDev() ? base + "-dev" : base; }
+    public String cacheSubdir()             { return isDev() ? basePluginName + "-dev" : basePluginName; }
+    public String cliBin(String version)    {
+        return "${XDG_CACHE_HOME:-~/.cache}/" + cacheSubdir() + "/runtime-" + version + "/bin/shipsmooth-tasks";
+    }
+
+    public static BuildProfile fromProperties() {
+        return new BuildProfile(
+            System.getProperty("build.platform", "claude"),
+            System.getProperty("build.env", "prod"),
+            System.getProperty("plugin.base.name")
+        );
+    }
+}
+```
+
+Call site in `ResourceBuilder` for skill name:
+```java
+String startBase = System.getProperty("plugin.skill.start.basename");
+String skillName = profile.skillName(startBase);
+```
+
+### What changes
+
+**`pom.xml`**
+- Add `<plugin.base.name>shipsmooth</plugin.base.name>` and
+  `<plugin.skill.start.basename>start</plugin.skill.start.basename>` to default properties.
+- Each profile drops `plugin.name` and `plugin.skillName` overrides.
+- Each profile adds `<build.env>` and `<build.platform>`.
+- `shipsmooth.cache.dir` and `shipsmooth.cache.dir.resolved` removed from all profiles.
+
+**`plugin-skill/pom.xml`**
+- Stop passing `shipsmooth.cache.dir`, `shipsmooth.cache.dir.resolved`, `plugin.name`,
+  `plugin.skillName` as system properties.
+- Add `build.env`, `build.platform`, `plugin.base.name`, `plugin.skill.start.basename`.
+
+**New `BuildProfile.java`** — as above.
+
+**`ResourceBuilder.java`**
+- Replace scattered `System.getProperty("plugin.name")`, `System.getProperty("plugin.skillName")`,
+  `shipsmooth.cache.dir` reads and `endsWith("-dev")` checks with `BuildProfile`.
+- `cliBin` now comes from `profile.cliBin(pluginVersion)` — correct for both dev and prod.
+
+**`PluginModel.java`**
+- Drop `cacheDir` field — no longer needed at build time.
+- `writeSessionStartConfig` omits `cacheDir` unconditionally (condition already removed in task 2
+  for prod; now dev also omits it since `session-start.ts` uses XDG for dev too via `resolveCache`).
+
+**`session-start.ts`**
+- No change — `resolveCache()` already handles the dev case via tilde expansion when `cacheDir`
+  is present, and XDG when absent.
+
+### Tasks
+
+### Task 5: Introduce BuildProfile record [Low]
+
+Add `BuildProfile.java` in `io.bitken.shipsmooth.resources`. Add unit tests covering
+`isDev()`, `pluginName()`, `skillName()`, `cacheSubdir()`, `cliBin()` for both dev and prod
+env values, and multiple platform values.
+
+### Task 6: Refactor ResourceBuilder to use BuildProfile [Low]
+
+Replace `System.getProperty("plugin.name")`, `System.getProperty("plugin.skillName")`,
+`shipsmooth.cache.dir` reads, and all `endsWith("-dev")` checks with `BuildProfile`.
+`cliBin` comes from `profile.cliBin(pluginVersion)`. Drop `cacheDir` from `PluginModel`.
+Update `writeSessionStartConfig` to omit `cacheDir` unconditionally.
+
+### Task 7: Update POM properties and system property passing [Low]
+
+In `pom.xml`: add `plugin.base.name`, `plugin.skill.start.basename` to default properties;
+replace per-profile `plugin.name`/`plugin.skillName` overrides with `build.env`/`build.platform`;
+remove `shipsmooth.cache.dir` and `shipsmooth.cache.dir.resolved` from all profiles.
+In `plugin-skill/pom.xml`: replace old system properties with `build.env`, `build.platform`,
+`plugin.base.name`, `plugin.skill.start.basename`.
+
+### Task 8: Update integration tests for BuildProfile [Low]
+
+Update `ResourceBuilderIntegrationTest` to pass `build.env`, `build.platform`,
+`plugin.base.name`, `plugin.skill.start.basename` instead of the old properties.
+Assert `cliBin` contains correct subdir (`shipsmooth` vs `shipsmooth-dev`) per env.
+Assert prod config has no `cacheDir`, dev config has no `cacheDir` (session-start resolves it).
