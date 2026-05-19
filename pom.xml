@@ -102,6 +102,7 @@
             <configuration>
               <rules>
                 <requirePluginVersions/>
+                <dependencyConvergence/>
               </rules>
             </configuration>
           </execution>
