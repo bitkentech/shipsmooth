@@ -47,3 +47,18 @@ Backlog issue: none (self-contained release tooling fix).
 - Verify: `mvn install -pl plugin-dist -am -Pprod -P'!dev' -DskipTests` then
   `mvn exec:java@publish-release -pl plugin-dist -Dshipsmooth.release.version=0.3.8
   -Pprod -P'!dev'` completes successfully.
+
+### Task 2: Add --dangerous-skip-release-validation escape hatch [Low]
+
+Add an opt-in flag to `PublishRelease` that bypasses `validateBuildOutput()` for
+cases where validation itself is broken and blocking a release.
+
+- Accept `--dangerous-skip-release-validation` as a command-line argument in
+  `PublishRelease.main()` (not a system property — must be explicit at the call
+  site, not accidentally inherited from env or pom).
+- Pass a `boolean skipValidation` down to `buildAndPackage()` and branch around
+  the `validateBuildOutput()` call.
+- When the flag is present, print a prominent warning before the build:
+  `"WARNING: release validation skipped — --dangerous-skip-release-validation was passed"`
+- Unit test: verify that when `skipValidation=true`, `validateBuildOutput` is not
+  called even if build output contains a placeholder leak (i.e. no exception thrown).
