@@ -11,8 +11,19 @@
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Move copy-package-json to top-level build in plugin-dist</name>
+            <commit>2b7e2c2</commit>
+            <created-from>plan-51-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Strip devDependencies and dev scripts from prod package.json</name>
             <commit></commit>
             <created-from>plan-51-v1</created-from>
             <closed-at-version></closed-at-version>
@@ -22,7 +33,7 @@
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-05-19T21:27:29.281+05:30</timestamp>
+            <timestamp>2026-05-19T21:40:06.781+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
