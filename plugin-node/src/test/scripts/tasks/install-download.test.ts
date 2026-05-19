@@ -38,12 +38,14 @@ function startServer(zipBytes: Buffer): Promise<{ url: string; close: () => Prom
   });
 }
 
-test('integration: installRuntime downloads from a URL override, extracts, and chmods the binary', async () => {
+test('integration: installRuntime downloads from a URL override, extracts, chmods, and cleans up tmp', async () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
   const version = '9.9.9-test';
   const zipBytes = buildFakeRuntimeZip();
   const server = await startServer(zipBytes);
+
+  const tmpEntriesBefore = fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith('shipsmooth-'));
 
   try {
     await installRuntime({
@@ -64,6 +66,14 @@ test('integration: installRuntime downloads from a URL override, extracts, and c
 
   const out = execFileSync(bin, ['hello'], { encoding: 'utf8' });
   assert.match(out, /fake-runtime hello/);
+
+  // No new shipsmooth-* dirs in os.tmpdir — finally{} cleaned the download tmp
+  const tmpEntriesAfter = fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith('shipsmooth-'));
+  assert.deepEqual(tmpEntriesAfter, tmpEntriesBefore, 'no shipsmooth-* tmp dirs should be left behind');
+
+  // No leftover .tmp extract dir in cacheDir
+  assert.ok(!fs.existsSync(`${path.join(cacheDir, `runtime-${version}`)}.tmp`),
+    'extract .tmp dir should be cleaned up');
 });
 
 test('integration: installRuntime throws if extracted zip is missing bin/shipsmooth-tasks', async () => {
