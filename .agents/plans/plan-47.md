@@ -50,6 +50,21 @@ Backlog issue: none (self-contained build fix).
   `mvn -Pgemini compile` → `build-gemini/dist/` contains all JS + `adm-zip`;
   `node build/dist/session-start.js` installs runtime successfully.
 
+## Lock exec-maven-plugin version in pluginManagement
+
+When invoking `exec:java@<id>` directly on the command line (outside a lifecycle
+phase), Maven resolves the plugin version from central metadata (currently `3.6.3`)
+rather than honouring the version declared in the module pom. The `3.6.3` instance
+loads without the execution configuration, so `mainClass` is missing and the build
+fails.
+
+### Task 5: Lock exec-maven-plugin version in root pom pluginManagement [Low]
+
+- Add `exec-maven-plugin:3.3.0` to `<pluginManagement>` in the root `pom.xml`.
+- Verify: `mvn exec:java@validate-release -pl plugin-dist -Pprod -P'!dev'` passes
+  without needing a fully-qualified groupId/version prefix.
+- No unit test needed — verified by the smoke-test invocation above.
+
 ## Validate Release
 
 Add a `ValidateRelease` Java class in `plugin-dist` that asserts all placeholder

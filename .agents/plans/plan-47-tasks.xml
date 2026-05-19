@@ -52,6 +52,17 @@
             <comments/>
             <deviations/>
         </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>todo</status>
+            <name>Lock exec-maven-plugin version in root pom pluginManagement</name>
+            <commit></commit>
+            <created-from>plan-47-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
     </tasks>
     <project-updates>
         <update>
