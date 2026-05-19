@@ -121,8 +121,20 @@
                   <value>${build.outputDir}</value>
                 </systemProperty>
                 <systemProperty>
-                  <key>plugin.name</key>
-                  <value>${plugin.name}</value>
+                  <key>build.env</key>
+                  <value>${build.env}</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>build.platform</key>
+                  <value>${build.platform}</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>plugin.base.name</key>
+                  <value>${plugin.base.name}</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>plugin.skill.start.basename</key>
+                  <value>${plugin.skill.start.basename}</value>
                 </systemProperty>
                 <systemProperty>
                   <key>plugin.version</key>
@@ -133,24 +145,12 @@
                   <value>${plugin.description}</value>
                 </systemProperty>
                 <systemProperty>
-                  <key>plugin.skillName</key>
-                  <value>${plugin.skillName}</value>
-                </systemProperty>
-                <systemProperty>
                   <key>skill.frontmatter</key>
                   <value>${skill.frontmatter}</value>
                 </systemProperty>
                 <systemProperty>
-                  <key>build.platform</key>
-                  <value>${build.platform}</value>
-                </systemProperty>
-                <systemProperty>
                   <key>shipsmooth.jlink.dir</key>
                   <value>${shipsmooth.jlink.dir}</value>
-                </systemProperty>
-                <systemProperty>
-                  <key>shipsmooth.cache.dir</key>
-                  <value>${shipsmooth.cache.dir}</value>
                 </systemProperty>
                 <systemProperty>
                   <key>plugin.hook.command</key>
