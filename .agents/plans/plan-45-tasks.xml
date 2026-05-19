@@ -60,9 +60,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>open</status>
+            <status>agent-coded</status>
             <name>Introduce BuildProfile record</name>
-            <commit></commit>
+            <commit>a57f0373424629ee0149f88f440316bdb5bbbfad</commit>
             <created-from>plan-45-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -71,38 +71,38 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>open</status>
+            <status>agent-coded</status>
             <name>Refactor ResourceBuilder to use BuildProfile</name>
-            <commit></commit>
+            <commit>a8fe693ec91c940cadd3022c4f72aa96b1e3e215</commit>
             <created-from>plan-45-v4</created-from>
             <closed-at-version></closed-at-version>
-            <depends-on>5</depends-on>
             <comments/>
             <deviations/>
+            <depends-on>5</depends-on>
         </task>
         <task>
             <id>7</id>
             <risk>low</risk>
-            <status>open</status>
+            <status>agent-coded</status>
             <name>Update POM properties and system property passing</name>
-            <commit></commit>
+            <commit>0d2100211e39cde837660ff23e48506fc59678af</commit>
             <created-from>plan-45-v4</created-from>
             <closed-at-version></closed-at-version>
-            <depends-on>6</depends-on>
             <comments/>
             <deviations/>
+            <depends-on>6</depends-on>
         </task>
         <task>
             <id>8</id>
             <risk>low</risk>
-            <status>open</status>
+            <status>agent-coded</status>
             <name>Update integration tests for BuildProfile</name>
-            <commit></commit>
+            <commit>c26e639a41da4ca864b3b632db8e7d7ff28aedef</commit>
             <created-from>plan-45-v4</created-from>
             <closed-at-version></closed-at-version>
-            <depends-on>7</depends-on>
             <comments/>
             <deviations/>
+            <depends-on>7</depends-on>
         </task>
     </tasks>
     <project-updates>

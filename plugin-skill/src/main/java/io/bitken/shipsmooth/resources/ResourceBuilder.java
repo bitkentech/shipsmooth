@@ -14,6 +14,8 @@ import java.nio.file.Path;
 public class ResourceBuilder {
 
     public static void main(String[] args) throws IOException {
+
+        // TODO: Consider moving some of these variables into BuildProfile below
         String buildOutputDir = System.getProperty("build.outputDir");
         String pluginVersion  = System.getProperty("plugin.version");
         String pluginDesc     = System.getProperty("plugin.description");
