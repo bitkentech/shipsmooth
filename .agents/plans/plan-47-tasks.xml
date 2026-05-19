@@ -22,9 +22,9 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Bundle adm-zip into a single file using esbuild</name>
-            <commit></commit>
+            <commit>f9e108fac15a5217585fe4b961082ca9ebbf4c00</commit>
             <created-from>plan-47-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
