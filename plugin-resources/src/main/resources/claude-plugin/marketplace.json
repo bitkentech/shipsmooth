@@ -1,5 +1,5 @@
 {
-  "name": "shipsmooth-dev",
+  "name": "${marketplace.name}",
   "description": "Development marketplace for bitkentech/shipsmooth plugin",
   "owner": {
     "name": "Bitken Technologies",
