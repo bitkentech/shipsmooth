@@ -1,6 +1,6 @@
 {
   "name": "${marketplace.name}",
-  "description": "Development marketplace for bitkentech/shipsmooth plugin",
+  "description": "${marketplace.description}",
   "owner": {
     "name": "Bitken Technologies",
     "url": "https://github.com/bitkentech/shipsmooth"
