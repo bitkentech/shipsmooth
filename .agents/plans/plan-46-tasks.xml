@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>46</plan>
+    <plan-version>plan-46-v2</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>active</status>
+        <created>2026-05-19</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Add adm-zip dependency and audit hook entrypoint shape</name>
+            <commit></commit>
+            <created-from>plan-46-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Replace curl with Node https + redirect following</name>
+            <commit></commit>
+            <created-from>plan-46-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Replace unzip with adm-zip</name>
+            <commit></commit>
+            <created-from>plan-46-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Integration test — full download path with local http server</name>
+            <commit></commit>
+            <created-from>plan-46-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2,3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Add logging and one-retry on download failure</name>
+            <commit></commit>
+            <created-from>plan-46-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Improve unsupported-platform error message</name>
+            <commit></commit>
+            <created-from>plan-46-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-19T12:37:59.575+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
