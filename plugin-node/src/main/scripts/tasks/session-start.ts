@@ -89,7 +89,7 @@ export function resolveCache(config: { cacheDir?: string }): string {
   return path.join(xdgCache, 'shipsmooth');
 }
 
-// CLI entrypoint — invoked by the hooks.json node -e bootstrap
+// CLI entrypoint — invoked as `node dist/session-start.js` from hooks.json (SessionStart).
 if (require.main === module) {
   const configPath = path.join(__dirname, 'session-start-config.json');
   const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
