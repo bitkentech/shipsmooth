@@ -58,7 +58,7 @@ public class PublishRelease {
         try {
             syncDistAndPublish(mainSha);
         } finally {
-            git("checkout", originalBranch);
+            git("checkout", "-f", originalBranch);
         }
 
         System.out.println("Release v" + version + " complete.");
