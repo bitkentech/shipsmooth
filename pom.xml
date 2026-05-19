@@ -22,6 +22,8 @@
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <plugin.base.name>shipsmooth</plugin.base.name>
+    <plugin.skill.start.basename>start</plugin.skill.start.basename>
   </properties>
 
   <profiles>
@@ -31,17 +33,15 @@
         <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
-        <plugin.name>shipsmooth-dev</plugin.name>
-        <plugin.skillName>start-dev</plugin.skillName>
+        <build.env>dev</build.env>
+        <build.platform>claude</build.platform>
         <plugin.description>Agent coding workflow (dev build)</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build</build.outputDir>
         <plugin.hook.base>node "${CLAUDE_PLUGIN_ROOT}/dist/session-start.js"</plugin.hook.base>
         <shipsmooth.dist.path>\${CLAUDE_PLUGIN_DATA}/dist</shipsmooth.dist.path>
-        <shipsmooth.cache.dir>~/.cache/shipsmooth-dev</shipsmooth.cache.dir>
         <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/plugin-tasks-java/target/jlink-image</shipsmooth.jlink.dir>
-        <shipsmooth.cli.bin>~/.cache/shipsmooth-dev/runtime-@project.version@/bin/shipsmooth-tasks</shipsmooth.cli.bin>
+        <shipsmooth.cli.bin>${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-@project.version@/bin/shipsmooth-tasks</shipsmooth.cli.bin>
         <skill.frontmatter></skill.frontmatter>
-        <build.platform>claude</build.platform>
         <experimental.enabled>true</experimental.enabled>
       </properties>
     </profile>
@@ -49,16 +49,14 @@
     <profile>
       <id>gemini-dev</id>
       <properties>
+        <build.env>dev</build.env>
         <build.platform>gemini</build.platform>
 
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini-dev</build.outputDir>
 
-        <plugin.name>shipsmooth-dev</plugin.name>
-        <plugin.skillName>start-dev</plugin.skillName>
         <plugin.description>Agent coding workflow (dev build)</plugin.description>
         <plugin.hook.base>node "${extensionPath}/dist/session-start.js"</plugin.hook.base>
 
-        <shipsmooth.cache.dir.resolved>${user.home}/.cache/shipsmooth-dev</shipsmooth.cache.dir.resolved>
         <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/plugin-tasks-java/target/jlink-image</shipsmooth.jlink.dir>
         <skill.frontmatter>---
 name: start-dev
@@ -71,31 +69,27 @@ description: Use when starting any task — applies the shipsmooth agent coding 
     <profile>
       <id>prod</id>
       <properties>
-        <plugin.name>shipsmooth</plugin.name>
-        <plugin.skillName>start</plugin.skillName>
+        <build.env>prod</build.env>
+        <build.platform>claude</build.platform>
         <plugin.description>Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build</build.outputDir>
         <shipsmooth.dist.path>\${CLAUDE_PLUGIN_DATA}/dist</shipsmooth.dist.path>
-        <shipsmooth.cache.dir>~/.cache/shipsmooth</shipsmooth.cache.dir>
-        <shipsmooth.cache.dir.resolved>${user.home}/.cache/shipsmooth</shipsmooth.cache.dir.resolved>
         <shipsmooth.jlink.dir>/dev/null</shipsmooth.jlink.dir>
-        <shipsmooth.cli.bin>~/.cache/shipsmooth/runtime-@project.version@/bin/shipsmooth-tasks</shipsmooth.cli.bin>
+        <shipsmooth.cli.bin>${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-@project.version@/bin/shipsmooth-tasks</shipsmooth.cli.bin>
         <plugin.hook.base>node "${CLAUDE_PLUGIN_ROOT}/dist/session-start.js"</plugin.hook.base>
         <skill.frontmatter></skill.frontmatter>
-        <build.platform>claude</build.platform>
         <experimental.enabled>false</experimental.enabled>
       </properties>
     </profile>
     <profile>
       <id>gemini</id>
       <properties>
-        <plugin.name>shipsmooth</plugin.name>
-        <plugin.skillName>start</plugin.skillName>
+        <build.env>prod</build.env>
+        <build.platform>gemini</build.platform>
         <plugin.description>Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini</build.outputDir>
         <shipsmooth.dist.path>~/.cache/shipsmooth/dist</shipsmooth.dist.path>
         <plugin.hook.base>node "${extensionPath}/dist/session-start.js"</plugin.hook.base>
-        <build.platform>gemini</build.platform>
 <skill.frontmatter>---
 name: start
 description: Use when starting any task — applies the shipsmooth agent coding workflow.

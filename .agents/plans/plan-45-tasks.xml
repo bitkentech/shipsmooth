@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>45</plan>
+    <plan-version>plan-45-v4</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>active</status>
+        <created>2026-05-19</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Add XDG cache resolution in session-start.ts</name>
+            <commit>7364b6d</commit>
+            <created-from>plan-45-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Stop passing resolved path to ResourceBuilder; omit cacheDir from prod config</name>
+            <commit>8bae6db</commit>
+            <created-from>plan-45-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-05-19T00:00:00.000+05:30</timestamp>
+                    <message>cliBin still broken after task 2: cacheDirResolved is empty so bare relative path is emitted. Fix deferred to task 4.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Integration tests — prod config has no cacheDir; Node resolves XDG</name>
+            <commit>14f4ae3</commit>
+            <created-from>plan-45-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Fix cliBin to use XDG shell expression; add cross-reference comment</name>
+            <commit>9c107fb7800f7e5674a564b686df113d506fa299</commit>
+            <created-from>plan-45-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Introduce BuildProfile record</name>
+            <commit>a57f0373424629ee0149f88f440316bdb5bbbfad</commit>
+            <created-from>plan-45-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Refactor ResourceBuilder to use BuildProfile</name>
+            <commit>a8fe693ec91c940cadd3022c4f72aa96b1e3e215</commit>
+            <created-from>plan-45-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Update POM properties and system property passing</name>
+            <commit>0d2100211e39cde837660ff23e48506fc59678af</commit>
+            <created-from>plan-45-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>6</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Update integration tests for BuildProfile</name>
+            <commit>c26e639a41da4ca864b3b632db8e7d7ff28aedef</commit>
+            <created-from>plan-45-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>7</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-19T00:35:13.457+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

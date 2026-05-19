@@ -98,6 +98,39 @@ test('darwin-arm64: installs from jlinkDir without error', () => {
   assert.ok(fs.existsSync(destBin), 'darwin-arm64 binary should be installed from jlinkDir');
 });
 
+test('resolveCache: uses XDG_CACHE_HOME when cacheDir is absent', () => {
+  // This test will fail until resolveCache is implemented in session-start.ts
+  const { resolveCache } = require('../../../main/scripts/tasks/session-start');
+  const orig = process.env['XDG_CACHE_HOME'];
+  try {
+    process.env['XDG_CACHE_HOME'] = '/tmp/xdg-cache-test';
+    assert.equal(resolveCache({}), '/tmp/xdg-cache-test/shipsmooth');
+    assert.equal(resolveCache({ cacheDir: '' }), '/tmp/xdg-cache-test/shipsmooth');
+  } finally {
+    if (orig === undefined) delete process.env['XDG_CACHE_HOME'];
+    else process.env['XDG_CACHE_HOME'] = orig;
+  }
+});
+
+test('resolveCache: falls back to ~/.cache/shipsmooth when XDG_CACHE_HOME unset', () => {
+  const { resolveCache } = require('../../../main/scripts/tasks/session-start');
+  const orig = process.env['XDG_CACHE_HOME'];
+  try {
+    delete process.env['XDG_CACHE_HOME'];
+    assert.equal(resolveCache({}), path.join(os.homedir(), '.cache', 'shipsmooth'));
+  } finally {
+    if (orig !== undefined) process.env['XDG_CACHE_HOME'] = orig;
+  }
+});
+
+test('resolveCache: expands tilde cacheDir for dev builds', () => {
+  const { resolveCache } = require('../../../main/scripts/tasks/session-start');
+  assert.equal(
+    resolveCache({ cacheDir: '~/.cache/shipsmooth-dev' }),
+    path.join(os.homedir(), '.cache', 'shipsmooth-dev'),
+  );
+});
+
 test('unsupported platform: throws with clear message', () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();

@@ -16,9 +16,9 @@ class ResourceBuilderIntegrationTest {
     Path tempDir;
 
     private static final List<String> PROPS = List.of(
-        "build.outputDir", "plugin.name", "plugin.version", "plugin.description",
-        "plugin.skillName", "skill.frontmatter", "shipsmooth.cache.dir.resolved",
-        "build.platform", "shipsmooth.jlink.dir", "experimental.enabled", "plugin.hook.command"
+        "build.outputDir", "build.env", "build.platform", "plugin.base.name",
+        "plugin.skill.start.basename", "plugin.version", "plugin.description",
+        "skill.frontmatter", "shipsmooth.jlink.dir", "experimental.enabled", "plugin.hook.command"
     );
 
     @AfterEach
@@ -39,8 +39,8 @@ class ResourceBuilderIntegrationTest {
             "Claude profile should contain heading");
         assertFalse(content.stripLeading().startsWith("---"),
             "Claude profile should not start with YAML frontmatter");
-        assertTrue(content.contains("~/.cache/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks"),
-            "CLI bin path should be interpolated");
+        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks"),
+            "CLI bin path should use XDG shell expression with -dev subdir");
     }
 
     @Test
@@ -59,7 +59,6 @@ class ResourceBuilderIntegrationTest {
     @Test
     void hooksJsonIsRenderedForProdProfile() throws Exception {
         setProdProps();
-
         ResourceBuilder.main(new String[]{});
 
         Path output = tempDir.resolve("hooks/hooks.json");
@@ -71,7 +70,7 @@ class ResourceBuilderIntegrationTest {
     }
 
     @Test
-    void sessionStartConfigIsWrittenForDevProfile() throws Exception {
+    void sessionStartConfigIsWrittenForDevProfileWithNoCacheDir() throws Exception {
         setDevProps();
         ResourceBuilder.main(new String[]{});
 
@@ -80,7 +79,8 @@ class ResourceBuilderIntegrationTest {
 
         String content = Files.readString(output);
         assertTrue(content.contains("\"version\" : \"0.2.0\""), "config should contain version");
-        assertTrue(content.contains("~/.cache/shipsmooth-dev"), "config should contain cacheDir");
+        assertFalse(content.contains("cacheDir"),
+            "dev session-start-config.json must not contain cacheDir — resolveCache() handles it at runtime");
     }
 
     @Test
@@ -88,13 +88,13 @@ class ResourceBuilderIntegrationTest {
         String frontmatter = "---\nname: start\ndescription: Use when starting any task — applies the shipsmooth agent coding workflow.\n---\n\n";
 
         System.setProperty("build.outputDir", tempDir.toString());
-        System.setProperty("plugin.name", "shipsmooth");
+        System.setProperty("build.env", "prod");
+        System.setProperty("build.platform", "gemini");
+        System.setProperty("plugin.base.name", "shipsmooth");
+        System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.2.0");
         System.setProperty("plugin.description", "Agent coding workflow");
-        System.setProperty("plugin.skillName", "start");
         System.setProperty("skill.frontmatter", frontmatter);
-        System.setProperty("shipsmooth.cache.dir.resolved", "~/.cache/shipsmooth");
-        System.setProperty("build.platform", "gemini");
         System.setProperty("shipsmooth.jlink.dir", "");
         System.setProperty("experimental.enabled", "false");
 
@@ -144,28 +144,64 @@ class ResourceBuilderIntegrationTest {
             "experimental parallel skill should call the CLI with --enable-experimental");
     }
 
+    @Test
+    void sessionStartConfigForProdHasNoCacheDir() throws Exception {
+        setProdProps();
+        ResourceBuilder.main(new String[]{});
+
+        Path output = tempDir.resolve("dist/session-start-config.json");
+        assertTrue(Files.exists(output), "session-start-config.json should be written");
+
+        String content = Files.readString(output);
+        assertFalse(content.contains("cacheDir"),
+            "prod session-start-config.json must not contain a hardcoded cacheDir — " +
+            "the runtime resolves it via XDG_CACHE_HOME at install time");
+    }
+
+    @Test
+    void cliBinInSkillMdUsesProdSubdir() throws Exception {
+        setProdProps();
+        ResourceBuilder.main(new String[]{});
+
+        String content = Files.readString(tempDir.resolve("skills/start/SKILL.md"));
+        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.2.0/bin/shipsmooth-tasks"),
+            "prod cliBin should use shipsmooth subdir");
+        assertFalse(content.contains("shipsmooth-dev"),
+            "prod cliBin must not reference shipsmooth-dev");
+    }
+
+    @Test
+    void cliBinInSkillMdUsesDevSubdir() throws Exception {
+        setDevProps();
+        ResourceBuilder.main(new String[]{});
+
+        String content = Files.readString(tempDir.resolve("skills/start-dev/SKILL.md"));
+        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks"),
+            "dev cliBin should use shipsmooth-dev subdir");
+    }
+
     private void setProdProps() {
         System.setProperty("build.outputDir", tempDir.toString());
-        System.setProperty("plugin.name", "shipsmooth");
+        System.setProperty("build.env", "prod");
+        System.setProperty("build.platform", "claude");
+        System.setProperty("plugin.base.name", "shipsmooth");
+        System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.2.0");
         System.setProperty("plugin.description", "Agent coding workflow");
-        System.setProperty("plugin.skillName", "start");
         System.setProperty("skill.frontmatter", "");
-        System.setProperty("shipsmooth.cache.dir.resolved", "~/.cache/shipsmooth");
-        System.setProperty("build.platform", "claude");
         System.setProperty("shipsmooth.jlink.dir", "/dev/null");
         System.setProperty("experimental.enabled", "false");
     }
 
     private void setDevProps() {
         System.setProperty("build.outputDir", tempDir.toString());
-        System.setProperty("plugin.name", "shipsmooth-dev");
+        System.setProperty("build.env", "dev");
+        System.setProperty("build.platform", "claude");
+        System.setProperty("plugin.base.name", "shipsmooth");
+        System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.2.0");
         System.setProperty("plugin.description", "Agent coding workflow (dev build)");
-        System.setProperty("plugin.skillName", "start-dev");
         System.setProperty("skill.frontmatter", "");
-        System.setProperty("shipsmooth.cache.dir.resolved", "~/.cache/shipsmooth-dev");
-        System.setProperty("build.platform", "claude");
         System.setProperty("shipsmooth.jlink.dir", "/some/jlink/path");
         System.setProperty("experimental.enabled", "true");
     }
