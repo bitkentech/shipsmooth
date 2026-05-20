@@ -23,7 +23,7 @@
             <id>2</id>
             <risk>low</risk>
             <status>pending</status>
-            <name>Write session-start.ps1</name>
+            <name>Lint session-start.ps1 for PowerShell 5.1 compatibility</name>
             <commit></commit>
             <created-from>plan-54-v1</created-from>
             <closed-at-version></closed-at-version>
@@ -35,16 +35,28 @@
             <id>3</id>
             <risk>low</risk>
             <status>pending</status>
+            <name>Write session-start.ps1</name>
+            <commit></commit>
+            <created-from>plan-54-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>pending</status>
             <name>Wire the Windows build in Maven</name>
             <commit></commit>
             <created-from>plan-54-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>2</depends-on>
+            <depends-on>3</depends-on>
         </task>
         <task>
-            <id>4</id>
+            <id>5</id>
             <risk>low</risk>
             <status>pending</status>
             <name>CI and release integration</name>
@@ -53,12 +65,12 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>3</depends-on>
+            <depends-on>4</depends-on>
         </task>
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-05-20T23:35:08.739+05:30</timestamp>
+            <timestamp>2026-05-20T23:49:12.555+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>

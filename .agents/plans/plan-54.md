@@ -94,9 +94,36 @@ Deliverable: a short decision record (added to this plan file as an addendum)
 confirming the chosen wiring approach, so Tasks 2–4 can proceed without
 ambiguity.
 
-### Task 2: Write session-start.ps1 [Low]
+### Task 2: Lint session-start.ps1 for PowerShell 5.1 compatibility [Low]
 
 *Depends-on: 1*
+
+The script must run on PowerShell 5.1 (the version inbox on Windows 10/11).
+To catch accidental use of PS 6+ / PS 7+ features without needing a Windows
+machine, use PSScriptAnalyzer's compatibility rules on Linux:
+
+- Install PowerShell 7.1+ on the Linux CI/dev machine
+  (`sudo apt-get install -y powershell` or the equivalent snap/tarball install).
+- Install PSScriptAnalyzer: `Install-Module -Name PSScriptAnalyzer -Force`.
+- Run the compatibility check against the `PSv5_1` ruleset:
+  ```powershell
+  Invoke-ScriptAnalyzer -Path session-start.ps1 \
+    -Settings PSScriptAnalyzerSettings.psd1
+  ```
+  where `PSScriptAnalyzerSettings.psd1` pins
+  `CompatibilityProfilePath = 'win-8_x64_10.0.14393.0_5.1.14393.206'`
+  (see https://devblogs.microsoft.com/powershell/using-psscriptanalyzer-to-check-powershell-version-compatibility/).
+- Add this check as a step in the GitHub Actions workflow (Task 4) so it runs
+  on every PR.
+
+If PSScriptAnalyzer flags any incompatibility, fix the script before
+proceeding. Document any intentional PS 5.1 limitations (e.g. `Expand-Archive`
+requires PS 5.0+, which is fine; `-FollowRelLink` on `Invoke-WebRequest`
+requires PS 6+, which must be avoided).
+
+### Task 3: Write session-start.ps1 [Low]
+
+*Depends-on: 1,2*
 
 Port `session-start.ts` to PowerShell. The script must:
 
@@ -123,9 +150,9 @@ write a manual smoke-test script `.agents/tmp/test-session-start.ps1` that
 mocks the config and invokes the installer against a local test server or a
 known-good release URL. Document how to run it in comments at the top.
 
-### Task 3: Wire the Windows build in Maven [Low]
+### Task 4: Wire the Windows build in Maven [Low]
 
-*Depends-on: 2*
+*Depends-on: 3*
 
 Add a `windows` Maven profile (or extend the `prod` profile) that:
 
@@ -141,9 +168,9 @@ Add a `windows` Maven profile (or extend the `prod` profile) that:
 The existing `prod` build must remain unmodified — Unix users must not be
 affected.
 
-### Task 4: CI and release integration [Low]
+### Task 5: CI and release integration [Low]
 
-*Depends-on: 3*
+*Depends-on: 4*
 
 Update the GitHub Actions release workflow to:
 
