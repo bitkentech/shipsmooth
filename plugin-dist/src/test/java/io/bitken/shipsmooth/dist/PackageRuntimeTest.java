@@ -40,6 +40,32 @@ public class PackageRuntimeTest {
         }
     }
 
+    // Integration test: windows-x64 zip must use .cmd launcher (drives Task 2)
+    @Test
+    void windowsZipContainsCmdLauncher() throws IOException {
+        Path fakeJdkHome = tempDir.resolve("jdk");
+        Path fakeJlinkImage = tempDir.resolve("jlink-image");
+
+        Files.createDirectories(fakeJlinkImage.resolve("bin"));
+        Files.createDirectories(fakeJlinkImage.resolve("lib"));
+        Files.writeString(fakeJlinkImage.resolve("bin/java.exe"), "fake");
+        Files.writeString(fakeJlinkImage.resolve("bin/shipsmooth-tasks"), "fake");
+
+        Path outputDir = tempDir.resolve("dist");
+        Files.createDirectories(outputDir);
+
+        PackageRuntime pr = new PackageRuntime("windows-x64", fakeJdkHome, fakeJlinkImage, outputDir, "0.3.0");
+        pr.run();
+
+        Path zip = outputDir.resolve("shipsmooth-tasks-0.3.0-windows-x64.zip");
+        assertTrue(Files.exists(zip), "windows-x64 zip must be created");
+
+        try (var zf = new java.util.zip.ZipFile(zip.toFile())) {
+            assertNotNull(zf.getEntry("bin/shipsmooth-tasks.cmd"), "windows zip must contain .cmd launcher");
+            assertNull(zf.getEntry("bin/shipsmooth-tasks"), "windows zip must not contain POSIX launcher");
+        }
+    }
+
     @Test
     void launcherContainsCorrectVersion() throws IOException {
         Path fakeJdkHome = tempDir.resolve("jdk");

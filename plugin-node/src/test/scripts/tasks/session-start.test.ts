@@ -135,3 +135,19 @@ test('unsupported platform: error message lists supported platforms', async () =
     },
   );
 });
+
+// Integration test: win32-x64 must be a supported platform (currently fails — drives Task 4)
+test('win32-x64: installs from jlinkDir without error', async () => {
+  const cacheDir = makeTmpDir();
+  const pluginRoot = makeTmpDir();
+  const version = '0.3.9';
+  const jlinkDir = makeTmpDir();
+  // Windows zip contains .cmd launcher, not a POSIX script
+  fs.mkdirSync(path.join(jlinkDir, 'bin'), { recursive: true });
+  fs.writeFileSync(path.join(jlinkDir, 'bin', 'shipsmooth-tasks.cmd'), '@echo off\necho ok\n');
+
+  await installRuntime({ version, cacheDir, pluginRoot, jlinkDir, forcePlatform: 'win32-x64' });
+
+  const destCmd = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth-tasks.cmd');
+  assert.ok(fs.existsSync(destCmd), 'win32-x64 .cmd launcher should be installed from jlinkDir');
+});
