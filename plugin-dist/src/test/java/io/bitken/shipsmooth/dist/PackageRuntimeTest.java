@@ -89,6 +89,29 @@ public class PackageRuntimeTest {
     }
 
     @Test
+    void windowsLauncherUsesLocalAppData() throws IOException {
+        Path fakeJdkHome = tempDir.resolve("jdk");
+        Path fakeJlinkImage = tempDir.resolve("jlink-image");
+
+        Files.createDirectories(fakeJlinkImage.resolve("bin"));
+        Files.writeString(fakeJlinkImage.resolve("bin/shipsmooth-tasks"), "fake");
+
+        Path outputDir = tempDir.resolve("dist");
+        Files.createDirectories(outputDir);
+
+        PackageRuntime pr = new PackageRuntime("win32-x64", fakeJdkHome, fakeJlinkImage, outputDir, "0.3.0");
+        pr.run();
+
+        try (var zf = new java.util.zip.ZipFile(outputDir.resolve("shipsmooth-tasks-0.3.0-win32-x64.zip").toFile())) {
+            var entry = zf.getEntry("bin/shipsmooth-tasks.cmd");
+            assertNotNull(entry);
+            String content = new String(zf.getInputStream(entry).readAllBytes());
+            assertTrue(content.contains("%LOCALAPPDATA%"), "cmd launcher must use LOCALAPPDATA for SCC dir");
+            assertFalse(content.contains("%USERPROFILE%"), "cmd launcher must not use USERPROFILE for SCC dir");
+        }
+    }
+
+    @Test
     void launcherContainsCorrectVersion() throws IOException {
         Path fakeJdkHome = tempDir.resolve("jdk");
         Path fakeJlinkImage = tempDir.resolve("jlink-image");

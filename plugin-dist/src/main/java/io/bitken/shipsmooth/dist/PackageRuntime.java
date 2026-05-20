@@ -93,7 +93,7 @@ public class PackageRuntime {
         return "@echo off\r\n"
              + "set \"DIR=%~dp0\"\r\n"
              + "set \"INSTALL=%DIR%..\"\r\n"
-             + "set \"SCC_DIR=%USERPROFILE%\\.cache\\shipsmooth\\scc\"\r\n"
+             + "set \"SCC_DIR=%LOCALAPPDATA%\\shipsmooth\\scc\"\r\n"
              + "if not exist \"%SCC_DIR%\" mkdir \"%SCC_DIR%\"\r\n"
              + "\"%INSTALL%\\runtime\\bin\\java.exe\" ^\r\n"
              + "  -Xquickstart ^\r\n"
