@@ -13,18 +13,20 @@ public class PublishRelease {
     private final Path linuxJdkHome;
     private final Path darwinX64JdkHome;
     private final Path darwinArm64JdkHome;
+    private final Path windowsX64JdkHome;
     private final boolean skipValidation;
 
-    public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome) {
-        this(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome, false);
+    public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome, Path windowsX64JdkHome) {
+        this(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome, windowsX64JdkHome, false);
     }
 
-    public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome, boolean skipValidation) {
+    public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome, Path windowsX64JdkHome, boolean skipValidation) {
         this.version = version;
         this.repoRoot = repoRoot;
         this.linuxJdkHome = linuxJdkHome;
         this.darwinX64JdkHome = darwinX64JdkHome;
         this.darwinArm64JdkHome = darwinArm64JdkHome;
+        this.windowsX64JdkHome = windowsX64JdkHome;
         this.skipValidation = skipValidation;
     }
 
@@ -40,7 +42,8 @@ public class PublishRelease {
         Path linuxJdkHome = Path.of(System.getProperty("jdk.semeru.linux-x64", "/opt/installers/jdk-semeru/jdk-25.0.2+10"));
         Path darwinX64JdkHome = Path.of(System.getProperty("jdk.semeru.darwin-x64", "/opt/installers/jdk-semeru-mac-x64/Contents/Home"));
         Path darwinArm64JdkHome = Path.of(System.getProperty("jdk.semeru.darwin-arm64", "/opt/installers/jdk-semeru-mac-arm64/Contents/Home"));
-        new PublishRelease(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome, skipValidation).run();
+        Path windowsX64JdkHome = Path.of(System.getProperty("jdk.semeru.windows-x64", "/opt/installers/jdk-semeru-win-x64/jdk-25.0.2+10"));
+        new PublishRelease(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome, windowsX64JdkHome, skipValidation).run();
     }
 
     public void run() throws IOException, InterruptedException {
@@ -117,6 +120,8 @@ public class PublishRelease {
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-tasks-" + version + "-darwin-x64.zip"));
         new PackageRuntime("darwin-arm64", darwinArm64JdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-darwin-arm64"), outputDir, version).run();
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-tasks-" + version + "-darwin-arm64.zip"));
+        new PackageRuntime("win32-x64", windowsX64JdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-windows-x64"), outputDir, version).run();
+        System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-tasks-" + version + "-win32-x64.zip"));
     }
 
     private void syncDistAndPublish(String mainSha) throws IOException, InterruptedException {
@@ -144,7 +149,8 @@ public class PublishRelease {
         runCommand(List.of("gh", "release", "upload", "v" + version,
                 distDir2.resolve("shipsmooth-tasks-" + version + "-linux-x64.zip").toString(),
                 distDir2.resolve("shipsmooth-tasks-" + version + "-darwin-x64.zip").toString(),
-                distDir2.resolve("shipsmooth-tasks-" + version + "-darwin-arm64.zip").toString()), repoRoot);
+                distDir2.resolve("shipsmooth-tasks-" + version + "-darwin-arm64.zip").toString(),
+                distDir2.resolve("shipsmooth-tasks-" + version + "-win32-x64.zip").toString()), repoRoot);
     }
 
     private String git(String... args) throws IOException, InterruptedException {
