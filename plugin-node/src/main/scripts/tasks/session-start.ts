@@ -168,6 +168,10 @@ function expandHome(p: string): string {
 // If you change this logic, update the cliBin expression in plugin-skill/src/main/jte-src/skills/_partials/base-workflow.jte.md
 export function resolveCache(config: { cacheDir?: string }): string {
   if (config.cacheDir) return expandHome(config.cacheDir);
+  if (process.platform === 'win32') {
+    const localAppData = process.env['LOCALAPPDATA'] ?? path.join(os.homedir(), 'AppData', 'Local');
+    return path.join(localAppData, 'shipsmooth');
+  }
   const xdgCache = process.env['XDG_CACHE_HOME'] ?? path.join(os.homedir(), '.cache');
   return path.join(xdgCache, 'shipsmooth');
 }
