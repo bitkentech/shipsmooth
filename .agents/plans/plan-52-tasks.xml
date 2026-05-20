@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Cross-compile windows-x64 jlink image in plugin-tasks-java</name>
-            <commit></commit>
+            <commit>a8e3aaeeb632fa695b280984dc31195b97e955bd</commit>
             <created-from>plan-52-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -22,9 +22,9 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add Windows .cmd launcher to PackageRuntime</name>
-            <commit></commit>
+            <commit>8767fe2a97e678db1cb09b9e5f842968ef559aa7</commit>
             <created-from>plan-52-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -33,9 +33,9 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Wire windows-x64 into PublishRelease</name>
-            <commit></commit>
+            <commit>51d4e54d3fa74638edab63966491df0402ae2c1f</commit>
             <created-from>plan-52-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -45,9 +45,9 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Support win32-x64 in session-start.ts</name>
-            <commit></commit>
+            <commit>54b0a8006fab31b36052672a83598779accb90a5</commit>
             <created-from>plan-52-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
