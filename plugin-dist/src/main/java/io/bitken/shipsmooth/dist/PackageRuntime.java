@@ -53,14 +53,19 @@ public class PackageRuntime {
             throw new IllegalStateException("jlink image not found at: " + jlinkImage);
         }
 
+        boolean isWindows = target.startsWith("win32");
+        String launcherName = isWindows ? "bin/shipsmooth-tasks.cmd" : "bin/shipsmooth-tasks";
+
         Path zipPath = outputDir.resolve("shipsmooth-tasks-" + version + "-" + target + ".zip");
         try (OutputStream fos = Files.newOutputStream(zipPath);
              ZipArchiveOutputStream zos = new ZipArchiveOutputStream(fos)) {
 
             // write launcher script
-            byte[] launcher = buildLauncher().getBytes();
-            ZipArchiveEntry launcherEntry = new ZipArchiveEntry("bin/shipsmooth-tasks");
-            launcherEntry.setUnixMode(UnixStat.FILE_FLAG | 0755);
+            byte[] launcher = (isWindows ? buildWindowsLauncher() : buildLauncher()).getBytes();
+            ZipArchiveEntry launcherEntry = new ZipArchiveEntry(launcherName);
+            if (!isWindows) {
+                launcherEntry.setUnixMode(UnixStat.FILE_FLAG | 0755);
+            }
             launcherEntry.setSize(launcher.length);
             zos.putArchiveEntry(launcherEntry);
             zos.write(launcher);
@@ -82,6 +87,18 @@ public class PackageRuntime {
                 }
             });
         }
+    }
+
+    private String buildWindowsLauncher() {
+        return "@echo off\r\n"
+             + "set \"DIR=%~dp0\"\r\n"
+             + "set \"INSTALL=%DIR%..\"\r\n"
+             + "set \"SCC_DIR=%USERPROFILE%\\.cache\\shipsmooth\\scc\"\r\n"
+             + "if not exist \"%SCC_DIR%\" mkdir \"%SCC_DIR%\"\r\n"
+             + "\"%INSTALL%\\runtime\\bin\\java.exe\" ^\r\n"
+             + "  -Xquickstart ^\r\n"
+             + "  -Xshareclasses:name=shipsmooth_v" + version + ",cacheDir=\"%SCC_DIR%\",nonfatal ^\r\n"
+             + "  -m io.bitken.shipsmooth.tasks/io.bitken.shipsmooth.tasks.TasksCli %*\r\n";
     }
 
     private String buildLauncher() {

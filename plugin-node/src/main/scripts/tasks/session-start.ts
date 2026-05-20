@@ -15,17 +15,22 @@ export interface InstallOptions {
   releaseUrlBase?: string; // for testing; overrides https://github.com/.../releases/download/v{version}
 }
 
+export function runtimeBin(runtimeDir: string, platform: string): string {
+  return path.join(runtimeDir, 'bin',
+    platform.startsWith('win32') ? 'shipsmooth-tasks.cmd' : 'shipsmooth-tasks');
+}
+
 export async function installRuntime(opts: InstallOptions): Promise<void> {
   const { version, cacheDir, pluginRoot } = opts;
   const runtimeDir = path.join(cacheDir, `runtime-${version}`);
-  const bin = path.join(runtimeDir, 'bin', 'shipsmooth-tasks');
+  const platform = opts.forcePlatform ?? detectPlatform();
+  const bin = runtimeBin(runtimeDir, platform);
 
-  if (isExecutable(bin)) {
+  if (isExecutable(bin, platform)) {
     return;
   }
 
-  const platform = opts.forcePlatform ?? detectPlatform();
-  const supportedPlatforms = ['linux-x64', 'darwin-x64', 'darwin-arm64'];
+  const supportedPlatforms = ['linux-x64', 'darwin-x64', 'darwin-arm64', 'win32-x64'];
   if (!supportedPlatforms.includes(platform)) {
     throw new Error(
       `shipsmooth: platform ${platform} is not yet supported (supported: ${supportedPlatforms.join(', ')})`,
@@ -35,7 +40,9 @@ export async function installRuntime(opts: InstallOptions): Promise<void> {
   const jlinkDir = opts.jlinkDir;
   if (jlinkDir && fs.existsSync(jlinkDir) && fs.statSync(jlinkDir).isDirectory()) {
     fs.cpSync(jlinkDir, runtimeDir, { recursive: true });
-    fs.chmodSync(bin, 0o755);
+    if (!platform.startsWith('win32')) {
+      fs.chmodSync(bin, 0o755);
+    }
     console.log(`shipsmooth: runtime ${version} installed at ${runtimeDir} from local build`);
   } else {
     await downloadAndInstall(version, runtimeDir, platform, opts.releaseUrlBase);
@@ -43,7 +50,10 @@ export async function installRuntime(opts: InstallOptions): Promise<void> {
   }
 }
 
-function isExecutable(p: string): boolean {
+function isExecutable(p: string, platform?: string): boolean {
+  if (platform?.startsWith('win32') || process.platform === 'win32') {
+    return fs.existsSync(p);
+  }
   try {
     fs.accessSync(p, fs.constants.X_OK);
     return true;
@@ -66,18 +76,21 @@ async function downloadAndInstall(version: string, runtimeDir: string, platform:
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shipsmooth-'));
   const zipFile = path.join(tmp, 'runtime.zip');
   const extractDir = `${runtimeDir}.tmp`;
+  const isWin = platform.startsWith('win32');
 
   try {
     await downloadFile(url, zipFile);
     fs.mkdirSync(extractDir, { recursive: true });
     new AdmZip(zipFile).extractAllTo(extractDir, true);
-    const extractedBin = path.join(extractDir, 'bin', 'shipsmooth-tasks');
+    const extractedBin = runtimeBin(extractDir, platform);
     if (!fs.existsSync(extractedBin)) {
-      throw new Error(`shipsmooth: extracted archive is missing bin/shipsmooth-tasks (from ${url})`);
+      throw new Error(`shipsmooth: extracted archive is missing ${path.relative(extractDir, extractedBin)} (from ${url})`);
     }
-    fs.chmodSync(extractedBin, 0o755);
+    if (!isWin) {
+      fs.chmodSync(extractedBin, 0o755);
+    }
     const runtimeBinDir = path.join(extractDir, 'runtime', 'bin');
-    if (fs.existsSync(runtimeBinDir)) {
+    if (!isWin && fs.existsSync(runtimeBinDir)) {
       for (const entry of fs.readdirSync(runtimeBinDir)) {
         fs.chmodSync(path.join(runtimeBinDir, entry), 0o755);
       }

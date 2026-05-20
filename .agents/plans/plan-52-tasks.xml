@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>52</plan>
+    <plan-version>plan-52-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-05-20</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Cross-compile windows-x64 jlink image in plugin-tasks-java</name>
+            <commit>a8e3aaeeb632fa695b280984dc31195b97e955bd</commit>
+            <created-from>plan-52-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Add Windows .cmd launcher to PackageRuntime</name>
+            <commit>8767fe2a97e678db1cb09b9e5f842968ef559aa7</commit>
+            <created-from>plan-52-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Wire windows-x64 into PublishRelease</name>
+            <commit>51d4e54d3fa74638edab63966491df0402ae2c1f</commit>
+            <created-from>plan-52-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Support win32-x64 in session-start.ts</name>
+            <commit>54b0a8006fab31b36052672a83598779accb90a5</commit>
+            <created-from>plan-52-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-20T15:20:44.414+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-20T17:00:34.607+05:30</timestamp>
+            <message>Plan complete. All 4 tasks delivered: jlink windows-x64 cross-compile, .cmd launcher in PackageRuntime, win32-x64 wired into PublishRelease, win32-x64 support in session-start.ts.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
