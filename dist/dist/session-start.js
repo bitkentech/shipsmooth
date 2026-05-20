@@ -36,6 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.runtimeBin = runtimeBin;
 exports.installRuntime = installRuntime;
 exports.downloadFile = downloadFile;
 exports.resolveCache = resolveCache;
@@ -46,22 +47,27 @@ const http = __importStar(require("node:http"));
 const https = __importStar(require("node:https"));
 const promises_1 = require("node:stream/promises");
 const adm_zip_bundle_1 = __importDefault(require("./adm-zip-bundle"));
+function runtimeBin(runtimeDir, platform) {
+    return path.join(runtimeDir, 'bin', platform.startsWith('win32') ? 'shipsmooth-tasks.cmd' : 'shipsmooth-tasks');
+}
 async function installRuntime(opts) {
     const { version, cacheDir, pluginRoot } = opts;
     const runtimeDir = path.join(cacheDir, `runtime-${version}`);
-    const bin = path.join(runtimeDir, 'bin', 'shipsmooth-tasks');
-    if (isExecutable(bin)) {
+    const platform = opts.forcePlatform ?? detectPlatform();
+    const bin = runtimeBin(runtimeDir, platform);
+    if (isExecutable(bin, platform)) {
         return;
     }
-    const platform = opts.forcePlatform ?? detectPlatform();
-    const supportedPlatforms = ['linux-x64', 'darwin-x64', 'darwin-arm64'];
+    const supportedPlatforms = ['linux-x64', 'darwin-x64', 'darwin-arm64', 'win32-x64'];
     if (!supportedPlatforms.includes(platform)) {
         throw new Error(`shipsmooth: platform ${platform} is not yet supported (supported: ${supportedPlatforms.join(', ')})`);
     }
     const jlinkDir = opts.jlinkDir;
     if (jlinkDir && fs.existsSync(jlinkDir) && fs.statSync(jlinkDir).isDirectory()) {
         fs.cpSync(jlinkDir, runtimeDir, { recursive: true });
-        fs.chmodSync(bin, 0o755);
+        if (!platform.startsWith('win32')) {
+            fs.chmodSync(bin, 0o755);
+        }
         console.log(`shipsmooth: runtime ${version} installed at ${runtimeDir} from local build`);
     }
     else {
@@ -69,7 +75,10 @@ async function installRuntime(opts) {
         console.log(`shipsmooth: runtime ${version} installed at ${runtimeDir}`);
     }
 }
-function isExecutable(p) {
+function isExecutable(p, platform) {
+    if (platform?.startsWith('win32') || process.platform === 'win32') {
+        return fs.existsSync(p);
+    }
     try {
         fs.accessSync(p, fs.constants.X_OK);
         return true;
@@ -91,17 +100,20 @@ async function downloadAndInstall(version, runtimeDir, platform, urlBase) {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shipsmooth-'));
     const zipFile = path.join(tmp, 'runtime.zip');
     const extractDir = `${runtimeDir}.tmp`;
+    const isWin = platform.startsWith('win32');
     try {
         await downloadFile(url, zipFile);
         fs.mkdirSync(extractDir, { recursive: true });
         new adm_zip_bundle_1.default(zipFile).extractAllTo(extractDir, true);
-        const extractedBin = path.join(extractDir, 'bin', 'shipsmooth-tasks');
+        const extractedBin = runtimeBin(extractDir, platform);
         if (!fs.existsSync(extractedBin)) {
-            throw new Error(`shipsmooth: extracted archive is missing bin/shipsmooth-tasks (from ${url})`);
+            throw new Error(`shipsmooth: extracted archive is missing ${path.relative(extractDir, extractedBin)} (from ${url})`);
         }
-        fs.chmodSync(extractedBin, 0o755);
+        if (!isWin) {
+            fs.chmodSync(extractedBin, 0o755);
+        }
         const runtimeBinDir = path.join(extractDir, 'runtime', 'bin');
-        if (fs.existsSync(runtimeBinDir)) {
+        if (!isWin && fs.existsSync(runtimeBinDir)) {
             for (const entry of fs.readdirSync(runtimeBinDir)) {
                 fs.chmodSync(path.join(runtimeBinDir, entry), 0o755);
             }
@@ -174,6 +186,10 @@ function expandHome(p) {
 function resolveCache(config) {
     if (config.cacheDir)
         return expandHome(config.cacheDir);
+    if (process.platform === 'win32') {
+        const localAppData = process.env['LOCALAPPDATA'] ?? path.join(os.homedir(), 'AppData', 'Local');
+        return path.join(localAppData, 'shipsmooth');
+    }
     const xdgCache = process.env['XDG_CACHE_HOME'] ?? path.join(os.homedir(), '.cache');
     return path.join(xdgCache, 'shipsmooth');
 }
