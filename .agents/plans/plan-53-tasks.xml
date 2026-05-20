@@ -4,16 +4,16 @@
     <plan-version>plan-53-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-05-20</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Fix resolveCache for Windows in session-start.ts</name>
-            <commit></commit>
+            <commit>cf5bd2a</commit>
             <created-from>plan-53-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -22,9 +22,9 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Fix SCC dir in Windows .cmd launcher</name>
-            <commit></commit>
+            <commit>1c1f33d</commit>
             <created-from>plan-53-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -36,6 +36,11 @@
         <update>
             <timestamp>2026-05-20T17:30:31.486+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-20T17:56:11.749+05:30</timestamp>
+            <message>Plan complete.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
