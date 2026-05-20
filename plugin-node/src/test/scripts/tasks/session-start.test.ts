@@ -94,6 +94,35 @@ test('resolveCache: falls back to ~/.cache/shipsmooth when XDG_CACHE_HOME unset'
   }
 });
 
+test('resolveCache: uses LOCALAPPDATA on win32', () => {
+  const { resolveCache } = require('../../../main/scripts/tasks/session-start');
+  const origPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
+  const origLocalAppData = process.env['LOCALAPPDATA'];
+  try {
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+    process.env['LOCALAPPDATA'] = '/fake/LocalAppData';
+    assert.equal(resolveCache({}), path.join('/fake/LocalAppData', 'shipsmooth'));
+  } finally {
+    if (origPlatform) Object.defineProperty(process, 'platform', origPlatform);
+    if (origLocalAppData === undefined) delete process.env['LOCALAPPDATA'];
+    else process.env['LOCALAPPDATA'] = origLocalAppData;
+  }
+});
+
+test('resolveCache: falls back to AppData/Local when LOCALAPPDATA unset on win32', () => {
+  const { resolveCache } = require('../../../main/scripts/tasks/session-start');
+  const origPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
+  const origLocalAppData = process.env['LOCALAPPDATA'];
+  try {
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+    delete process.env['LOCALAPPDATA'];
+    assert.equal(resolveCache({}), path.join(os.homedir(), 'AppData', 'Local', 'shipsmooth'));
+  } finally {
+    if (origPlatform) Object.defineProperty(process, 'platform', origPlatform);
+    if (origLocalAppData !== undefined) process.env['LOCALAPPDATA'] = origLocalAppData;
+  }
+});
+
 test('resolveCache: expands tilde cacheDir for dev builds', () => {
   const { resolveCache } = require('../../../main/scripts/tasks/session-start');
   assert.equal(
