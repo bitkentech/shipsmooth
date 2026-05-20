@@ -124,16 +124,31 @@ test('unsupported platform: error message lists supported platforms', async () =
   const pluginRoot = makeTmpDir();
 
   await assert.rejects(
-    () => installRuntime({ version: '0.2.0', cacheDir, pluginRoot, forcePlatform: 'win32-x64' }),
+    () => installRuntime({ version: '0.2.0', cacheDir, pluginRoot, forcePlatform: 'freebsd-x64' }),
     (e: Error) => {
-      assert.match(e.message, /win32-x64/);
+      assert.match(e.message, /freebsd-x64/);
       assert.match(e.message, /not yet supported/i);
       assert.match(e.message, /linux-x64/);
       assert.match(e.message, /darwin-x64/);
       assert.match(e.message, /darwin-arm64/);
+      assert.match(e.message, /win32-x64/);
       return true;
     },
   );
+});
+
+// Unit tests for Task 4
+test('win32-x64: runtimeBin returns .cmd path', () => {
+  const { runtimeBin } = require('../../../main/scripts/tasks/session-start');
+  const result = runtimeBin('/cache/runtime-0.3.9', 'win32-x64');
+  assert.ok(result.endsWith('shipsmooth-tasks.cmd'), `expected .cmd path, got ${result}`);
+});
+
+test('linux-x64: runtimeBin returns POSIX path', () => {
+  const { runtimeBin } = require('../../../main/scripts/tasks/session-start');
+  const result = runtimeBin('/cache/runtime-0.3.9', 'linux-x64');
+  assert.ok(!result.endsWith('.cmd'), `expected POSIX path, got ${result}`);
+  assert.ok(result.endsWith('shipsmooth-tasks'), `expected shipsmooth-tasks, got ${result}`);
 });
 
 // Integration test: win32-x64 must be a supported platform (currently fails — drives Task 4)
