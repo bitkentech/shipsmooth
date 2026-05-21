@@ -104,36 +104,61 @@ working `SessionStart` hook on Windows without system Node.js.
 
 ## Tasks
 
-### Task 1: Finalise approach and resolve open questions [Medium]
+### Task 1: Smoke-test the Windows wiring end-to-end [Medium]
 
-One confirmed answer and two remaining open questions:
+A hardcoded smoke-test build lives at `.agents/tmp/win-smoke-test/`. It
+validates the full wiring chain before any real code is written.
 
-**Confirmed:** The marketplace schema has no `platform` field. The approach is
-two named entries (`shipsmooth` + `shipsmooth-windows`) in `marketplace.json`,
-both pointing to the same repo ref. `-ExecutionPolicy Bypass` is included in
-the hook command.
+**Structure:**
+```
+.agents/tmp/win-smoke-test/
+  .claude-plugin/
+    marketplace.json          ← marketplace with one entry: shipsmooth-windows
+  shipsmooth-windows/
+    .claude-plugin/
+      plugin.json             ← minimal manifest, no hooks declared
+    dist/
+      session-start.ps1       ← prints env vars, GETs example.com, exits 0
+```
 
-**Remaining questions to resolve before writing code:**
+**How to test on Windows:**
+1. Copy the `win-smoke-test/` folder to a convenient path on Windows
+   (e.g. `C:\tmp\win-smoke-test`).
+2. In Claude Code on Windows, run:
+   ```
+   /plugin marketplace add C:\tmp\win-smoke-test
+   /plugin install shipsmooth-windows@bitkentech
+   ```
+3. Start a new session (or run `/clear`). Watch the SessionStart output.
+4. Expect to see lines like:
+   ```
+   shipsmooth-windows: SessionStart hook fired
+   shipsmooth-windows: CLAUDE_PLUGIN_ROOT = C:\Users\...\AppData\Roaming\...
+   shipsmooth-windows: PSVersionTable.PSVersion = 5.1...
+   shipsmooth-windows: HTTP GET example.com -> 200
+   shipsmooth-windows: smoke test PASSED
+   ```
 
-1. **Hooks merge under `strict: true`** — does the `hooks` field in a
-   marketplace entry *replace* or *merge with* the hooks declared in
-   `plugin.json`? If it merges, both the `node` and `powershell` `SessionStart`
-   hooks would fire on Windows. Confirm via the Claude Code source or a test
-   install, then choose one of:
-   - Set `strict: false` on the `shipsmooth-windows` entry (marketplace entry
-     is sole authority, no merge).
-   - Move `SessionStart` out of `plugin.json` entirely and declare it only in
-     `marketplace.json` for both entries.
+**What this validates:**
+- Claude Code invokes `powershell.exe` correctly from a hook command
+- `${CLAUDE_PLUGIN_ROOT}` expands to the plugin's cache path on Windows
+- `-ExecutionPolicy Bypass` is sufficient (no policy block)
+- Outbound HTTP works from a hook process
+- `strict: false` in the marketplace entry prevents the `plugin.json`-level
+  hook merge (so only the PowerShell hook fires, not a spurious `node` hook)
 
-2. **`session-start.ps1` location** — the marketplace `hooks` override uses
-   `${CLAUDE_PLUGIN_ROOT}/dist/session-start.ps1`. Confirm that
-   `${CLAUDE_PLUGIN_ROOT}` resolves correctly for a marketplace-installed
-   plugin (vs a locally-sourced plugin), and that `dist/` is included in the
-   files Claude Code copies to its plugin cache when installing from a GitHub
-   source.
+**Remaining questions this smoke test will answer:**
+1. **Hooks merge under `strict: true`** — `strict: false` is set in the smoke
+   test as a precaution. If the test passes, confirm whether `strict: true`
+   would also work (i.e. whether marketplace `hooks` replaces or merges with
+   `plugin.json` hooks). Determines whether the real build needs `strict: false`
+   or can move `SessionStart` out of `plugin.json` entirely.
+2. **`CLAUDE_PLUGIN_ROOT` for marketplace-installed plugins** — the printed
+   value will confirm whether it resolves to the plugin cache path as expected.
 
-Deliverable: a short decision record (added to this plan file as an addendum)
-confirming the resolved answers, so Tasks 2–5 can proceed without ambiguity.
+Deliverable: smoke test passes on Windows. Record the `CLAUDE_PLUGIN_ROOT`
+value observed and the `strict` decision in a short addendum to this plan,
+then proceed to Tasks 2–5.
 
 ### Task 2: Lint session-start.ps1 for PowerShell 5.1 compatibility [Low]
 
