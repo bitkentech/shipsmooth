@@ -1,4 +1,4 @@
-# Plan 54: Windows SessionStart hook without system Node.js
+# Plan 54: Windows plugin without system Node.js
 
 ## Context
 
@@ -35,56 +35,11 @@ effectively broken.
 The Claude Code marketplace `marketplace.json` schema has **no `platform`
 field**. There is no built-in way to restrict a plugin entry to a specific OS.
 
-The solution is to publish **two named plugin entries in the same
-`marketplace.json`**: `shipsmooth` (existing, Unix) and `shipsmooth-windows`
-(new). Both point to the same git ref in the same repo. The difference is
-entirely in the `hooks` override in the Windows entry, which replaces the
-`node` command with `powershell.exe`. No separate build artifact or Maven
-profile is needed — the `.ps1` file just needs to exist in `dist/` in the
-repo at the tagged ref.
-
-```json
-{
-  "name": "bitkentech",
-  "plugins": [
-    {
-      "name": "shipsmooth",
-      "source": { "source": "github", "repo": "bitkentech/shipsmooth", "ref": "v{version}" },
-      "description": "Agent coding workflow...",
-      "category": "development"
-    },
-    {
-      "name": "shipsmooth-windows",
-      "source": { "source": "github", "repo": "bitkentech/shipsmooth", "ref": "v{version}" },
-      "description": "Agent coding workflow (Windows native — use this instead of shipsmooth on Windows without a system Node.js installation).",
-      "category": "development",
-      "hooks": {
-        "SessionStart": [{
-          "hooks": [{
-            "type": "command",
-            "command": "powershell.exe -NonInteractive -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.ps1\""
-          }]
-        }]
-      }
-    }
-  ]
-}
-```
-
-`-ExecutionPolicy Bypass` is included proactively to handle enterprise
-installs where the default policy is `Restricted`; it only scopes to the
-spawned process.
-
-### Open question: hooks merge behaviour under strict mode
-
-By default (`strict: true`), a marketplace entry's `hooks` field is merged
-with `plugin.json`'s hooks. If `plugin.json` already declares a `SessionStart`
-hook (the `node` command), both hooks would fire on Windows — which is wrong.
-This must be confirmed and resolved in Task 1. Options:
-- Set `strict: false` on the `shipsmooth-windows` entry so the marketplace
-  entry is the sole authority (no merge with `plugin.json`).
-- Remove the `SessionStart` hook from `plugin.json` and declare it only in
-  `marketplace.json` for both entries.
+The solution is to publish **two named plugin entries**: `shipsmooth` (existing,
+Unix) and `shipsmooth-windows` (new). Task 1 de-risked the PowerShell hook
+approach. However the investigation surfaced a signing/GPO problem that makes
+PowerShell unreliable on corporate machines (see Task 1 addendum). The npm
+bundling approach (Task 2) is the current candidate for de-risking.
 
 ### Why not a single-entry fallback (e.g. `node || powershell`)?
 
@@ -97,6 +52,74 @@ the fallback runs. There is no clean way to suppress it.
 Silent failure with no actionable error is a poor user experience. The plugin
 should work out of the box on a fresh Windows machine.
 
+### Why not use Claude Code's bundled Node.js?
+
+Claude Code does not expose a bundled Node.js. Verified against documentation:
+`type: "command"` hooks always resolve via system PATH. There is no native JS
+hook type.
+
+## Task 1 addendum — smoke test findings (2026-05-21)
+
+Smoke test ran successfully on Windows 10/11 (personal machine). Key findings:
+
+- **Hook location:** Hook belongs in `hooks/hooks.json` at plugin root, not in
+  `plugin.json` and not as a `hooks` override in `marketplace.json`. The
+  `marketplace.json` hooks-override approach in the original Decision above was
+  wrong.
+- **Working command:** `powershell.exe -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/dist/session-start.ps1"` (no `-NonInteractive` needed).
+- **`CLAUDE_PLUGIN_ROOT`** resolves to the plugin source dir for local installs;
+  will resolve to cache dir for git-ref installs — expected.
+- **PS 5.1 confirmed:** `Invoke-WebRequest -UseBasicParsing` works fine.
+- **Code signing:** Script must be signed on default Windows policy. Self-signed
+  cert works locally; `-ExecutionPolicy Bypass` bypasses process-level policy.
+
+**Blocking issue discovered — GPO:** On enterprise/corporate Windows machines
+(the majority of Windows developer machines), IT admins enforce execution policy
+via Group Policy. When GPO is active, `-ExecutionPolicy Bypass` is **silently
+ignored**. PowerShell scripts will not run regardless of the flag. A proper
+code-signing certificate (~$300–500/yr EV cert) would be needed to work under
+`AllSigned` GPO policy, with re-signing required after every script edit.
+
+This makes the PowerShell approach unsuitable as the primary distribution path.
+Tasks 2–5 (as originally written) are **suspended** pending Task 2 (npm
+de-risk).
+
+### Alternatives considered and rejected
+
+- **`.cmd` / batch script** — no signing, no GPO issues, `curl.exe` + `tar.exe`
+  inbox since Windows 10 1803. Rejected because `${CLAUDE_PLUGIN_ROOT}`
+  expansion inside `cmd.exe /C "..."` is unverified, and batch JSON parsing is
+  painful.
+- **Native `.exe` (Go/Rust)** — no policy issues, but adds a compiled binary,
+  cross-compilation build step, and SmartScreen friction.
+- **Bundle jlink in git repo** — 48 MB binary committed to git, grows with every
+  release. Rejected due to repo bloat.
+
+### npm bundling approach (current candidate — see Task 2)
+
+Claude Code supports an `npm` source type in `marketplace.json`. npm packages
+are full tarballs: arbitrary files including large binaries are extracted into
+`CLAUDE_PLUGIN_ROOT`. npmjs.com has a ~500 MB hard limit per package (the win32
+jlink zip is 48 MB compressed — well within limits).
+
+The approach:
+- Publish `@bitkentech/shipsmooth-windows` to npm with the win32-x64 jlink
+  image bundled inside the package (under `runtime/`).
+- No `SessionStart` hook needed — the runtime is present immediately after
+  `/plugin install`.
+- `marketplace.json` gets a `shipsmooth-windows` entry with
+  `"source": { "source": "npm", "package": "@bitkentech/shipsmooth-windows", "version": "..." }`.
+- The skill's CLI bin path resolves to `${CLAUDE_PLUGIN_ROOT}/runtime/bin/shipsmooth-tasks.cmd`.
+- `npm publish` is added to the release workflow.
+
+**Open questions for Task 2:**
+1. Does `CLAUDE_PLUGIN_ROOT` actually contain the full npm package contents
+   (including `runtime/`) after install, or just specific files?
+2. Does the marketplace URL-hosting approach work cleanly with npm-sourced
+   plugins (S3-hosted `marketplace.json` + npm source)?
+3. npmjs.com package size limit in practice for 48 MB tarballs — confirmed
+   within documented limit but untested.
+
 ## Backlog issue
 
 PB-52 (windows release support) — this plan delivers the missing piece: a
@@ -106,145 +129,62 @@ working `SessionStart` hook on Windows without system Node.js.
 
 ### Task 1: Smoke-test the Windows wiring end-to-end [Medium]
 
-A hardcoded smoke-test build lives at `.agents/tmp/win-smoke-test/`. It
-validates the full wiring chain before any real code is written.
+**Status: complete.** See Task 1 addendum in the Decision section above.
 
-**Structure:**
-```
-.agents/tmp/win-smoke-test/
-  .claude-plugin/
-    marketplace.json          ← marketplace with one entry: shipsmooth-windows
-  shipsmooth-windows/
-    .claude-plugin/
-      plugin.json             ← minimal manifest, no hooks declared
-    dist/
-      session-start.ps1       ← prints env vars, GETs example.com, exits 0
-```
+Smoke test artifact lives at `.agents/tmp/win-smoke-test/` and
+`~/tmp/shipsmooth-windows-working/` (Windows machine). Hook fired correctly,
+`CLAUDE_PLUGIN_ROOT` confirmed, PS 5.1 confirmed. GPO signing issue discovered
+— PowerShell approach suspended in favour of npm bundling (Task 2).
 
-**How to test on Windows:**
-1. Copy the `win-smoke-test/` folder to a convenient path on Windows
-   (e.g. `C:\tmp\win-smoke-test`).
-2. In Claude Code on Windows, run:
-   ```
-   /plugin marketplace add C:\tmp\win-smoke-test
-   /plugin install shipsmooth-windows@bitkentech
-   ```
-3. Start a new session (or run `/clear`). Watch the SessionStart output.
-4. Expect to see lines like:
-   ```
-   shipsmooth-windows: SessionStart hook fired
-   shipsmooth-windows: CLAUDE_PLUGIN_ROOT = C:\Users\...\AppData\Roaming\...
-   shipsmooth-windows: PSVersionTable.PSVersion = 5.1...
-   shipsmooth-windows: HTTP GET example.com -> 200
-   shipsmooth-windows: smoke test PASSED
-   ```
-
-**What this validates:**
-- Claude Code invokes `powershell.exe` correctly from a hook command
-- `${CLAUDE_PLUGIN_ROOT}` expands to the plugin's cache path on Windows
-- `-ExecutionPolicy Bypass` is sufficient (no policy block)
-- Outbound HTTP works from a hook process
-- `strict: false` in the marketplace entry prevents the `plugin.json`-level
-  hook merge (so only the PowerShell hook fires, not a spurious `node` hook)
-
-**Remaining questions this smoke test will answer:**
-1. **Hooks merge under `strict: true`** — `strict: false` is set in the smoke
-   test as a precaution. If the test passes, confirm whether `strict: true`
-   would also work (i.e. whether marketplace `hooks` replaces or merges with
-   `plugin.json` hooks). Determines whether the real build needs `strict: false`
-   or can move `SessionStart` out of `plugin.json` entirely.
-2. **`CLAUDE_PLUGIN_ROOT` for marketplace-installed plugins** — the printed
-   value will confirm whether it resolves to the plugin cache path as expected.
-
-Deliverable: smoke test passes on Windows. Record the `CLAUDE_PLUGIN_ROOT`
-value observed and the `strict` decision in a short addendum to this plan,
-then proceed to Tasks 2–5.
-
-### Task 2: Lint session-start.ps1 for PowerShell 5.1 compatibility [Low]
+### Task 2: De-risk npm bundling approach [Medium]
 
 *Depends-on: 1*
 
-The script must run on PowerShell 5.1 (the version inbox on Windows 10/11).
-To catch accidental use of PS 6+ / PS 7+ features without needing a Windows
-machine, use PSScriptAnalyzer's compatibility rules on Linux:
+Validate that the npm source type works end-to-end for the `shipsmooth-windows`
+use case before writing any production code.
 
-- Install PowerShell 7.1+ on the Linux CI/dev machine
-  (`sudo apt-get install -y powershell` or the equivalent snap/tarball install).
-- Install PSScriptAnalyzer: `Install-Module -Name PSScriptAnalyzer -Force`.
-- Run the compatibility check against the `PSv5_1` ruleset:
-  ```powershell
-  Invoke-ScriptAnalyzer -Path session-start.ps1 \
-    -Settings PSScriptAnalyzerSettings.psd1
-  ```
-  where `PSScriptAnalyzerSettings.psd1` pins
-  `CompatibilityProfilePath = 'win-8_x64_10.0.14393.0_5.1.14393.206'`
-  (see https://devblogs.microsoft.com/powershell/using-psscriptanalyzer-to-check-powershell-version-compatibility/).
-- Add this check as a step in the GitHub Actions workflow (Task 4) so it runs
-  on every PR.
+**Smoke test:**
+1. Create a minimal npm package `@bitkentech/shipsmooth-windows-smoke` with:
+   - `package.json` (name, version, `files` field covering everything)
+   - `.claude-plugin/plugin.json` — minimal manifest, no hooks
+   - `runtime/bin/smoke-marker.txt` — a dummy file standing in for the jlink image
+   - `skills/start/SKILL.md` — copy of the existing SKILL.md
+2. `npm publish --access public` from a test machine.
+3. Add a `marketplace-npm-smoke.json` pointing to the npm package.
+4. On Windows: `/plugin marketplace add <url-or-path>`, `/plugin install`.
+5. Verify:
+   - `CLAUDE_PLUGIN_ROOT` resolves correctly
+   - `runtime/bin/smoke-marker.txt` is present at `${CLAUDE_PLUGIN_ROOT}/runtime/bin/`
+   - SKILL.md is present and loadable
+   - No hook fires (no hooks declared)
 
-If PSScriptAnalyzer flags any incompatibility, fix the script before
-proceeding. Document any intentional PS 5.1 limitations (e.g. `Expand-Archive`
-requires PS 5.0+, which is fine; `-FollowRelLink` on `Invoke-WebRequest`
-requires PS 6+, which must be avoided).
+**Questions this must answer:**
+1. Does `CLAUDE_PLUGIN_ROOT` contain the full npm package contents, including
+   subdirectories, after install?
+2. Does a URL-hosted `marketplace.json` with an npm-sourced plugin entry work
+   cleanly (no "path not found" errors)?
+3. Is there any practical size constraint hit when the package includes a 48 MB
+   binary? (Test with a large dummy file if possible.)
+4. What does the install UX look like — is there a progress indicator, or does
+   it appear to hang?
 
-### Task 3: Write session-start.ps1 [Low]
+Deliverable: smoke test passes on Windows. Record findings as an addendum here,
+then redesign Tasks 3–5 based on the confirmed approach.
 
-*Depends-on: 1,2*
+---
 
-Port `session-start.ts` to PowerShell. The script must:
+*The following tasks were written for the PowerShell approach and are
+**suspended** pending Task 2 outcome. They will be rewritten once the npm
+approach is confirmed.*
 
-- Read `session-start-config.json` from `$PSScriptRoot\..\dist\` (version,
-  jlinkDir).
-- Resolve the cache dir: `$env:LOCALAPPDATA\shipsmooth` (matching plan-53
-  logic; fall back to `$env:USERPROFILE\AppData\Local\shipsmooth` if
-  `LOCALAPPDATA` is unset).
-- Exit 0 immediately if `runtime-{version}\bin\shipsmooth-tasks.cmd` already
-  exists (idempotent).
-- Build the download URL:
-  `https://github.com/bitkentech/shipsmooth/releases/download/v{version}/shipsmooth-tasks-{version}-win32-x64.zip`
-- Download with redirect-following and one retry on HTTP 5xx.
-  Use `Invoke-WebRequest` (PS 3+) or `[System.Net.WebClient]` as fallback.
-- Extract to a `.tmp` staging dir using `Expand-Archive`.
-- Verify `bin\shipsmooth-tasks.cmd` exists in the extracted tree.
-- Rename staging dir to final dir (`Move-Item`).
-- Write progress messages to stderr; exit 1 with a message on any error.
-- Skip the `jlinkDir` dev-copy path (Windows dev builds are not a supported
-  scenario yet; document this explicitly).
+### Task 3 (suspended): Write session-start.ps1 [Low]
 
-No unit test framework is available for PowerShell in this repo. Instead,
-write a manual smoke-test script `.agents/tmp/test-session-start.ps1` that
-mocks the config and invokes the installer against a local test server or a
-known-good release URL. Document how to run it in comments at the top.
+*Depends-on: 1,2 — suspended, see above.*
 
-### Task 4: Update marketplace.json with shipsmooth-windows entry [Low]
+### Task 4 (suspended): Update marketplace.json with shipsmooth-windows entry [Low]
 
-*Depends-on: 3*
+*Depends-on: 3 — suspended, see above.*
 
-Add the `shipsmooth-windows` plugin entry to
-`plugin-resources/src/main/resources/claude-plugin/marketplace.json` (the
-source-of-truth file that gets filtered by Maven into the build output).
+### Task 5 (suspended): CI verification [Low]
 
-The entry must:
-- Point to the same `source` repo and ref as the existing `shipsmooth` entry
-  (ref is interpolated from `${project.version}` at build time, same as now).
-- Override `hooks` with the PowerShell `SessionStart` command (exact form
-  confirmed in Task 1, including `strict` setting).
-- Include a `description` that clearly explains it is the Windows variant and
-  when to use it.
-
-No new Maven profile is needed. No separate build output directory. The
-existing `prod` build produces the same `marketplace.json` with both entries.
-
-### Task 5: CI verification [Low]
-
-*Depends-on: 4*
-
-Update the GitHub Actions release workflow to verify:
-
-- `build/.claude-plugin/marketplace.json` contains a `shipsmooth-windows`
-  entry (grep check).
-- The `shipsmooth-windows` hooks command string contains
-  `session-start.ps1` (grep check).
-- `build/dist/session-start.ps1` exists in the built output.
-- PSScriptAnalyzer PS 5.1 compatibility check passes (install PowerShell +
-  PSScriptAnalyzer in the CI job, run `Invoke-ScriptAnalyzer`).
+*Depends-on: 4 — suspended, see above.*
