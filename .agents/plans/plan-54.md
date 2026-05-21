@@ -32,28 +32,65 @@ effectively broken.
 
 ## Decision
 
-Ship a `session-start.ps1` that is a faithful port of `session-start.ts`
-(Windows-only logic: download zip from GitHub releases, extract, verify).
-At Maven build time, produce a second artifact — `build-win/` — whose
-`hooks.json` uses `powershell.exe -NonInteractive -File
-"${CLAUDE_PLUGIN_ROOT}/dist/session-start.ps1"` as the `SessionStart`
-command. The existing Unix build (`build/`) is unchanged.
+The Claude Code marketplace `marketplace.json` schema has **no `platform`
+field**. There is no built-in way to restrict a plugin entry to a specific OS.
 
-The Windows artifact is uploaded to the Claude Code marketplace alongside the
-standard artifact, tagged for `win32` platforms.
+The solution is to publish **two named plugin entries in the same
+`marketplace.json`**: `shipsmooth` (existing, Unix) and `shipsmooth-windows`
+(new). Both point to the same git ref in the same repo. The difference is
+entirely in the `hooks` override in the Windows entry, which replaces the
+`node` command with `powershell.exe`. No separate build artifact or Maven
+profile is needed — the `.ps1` file just needs to exist in `dist/` in the
+repo at the tagged ref.
+
+```json
+{
+  "name": "bitkentech",
+  "plugins": [
+    {
+      "name": "shipsmooth",
+      "source": { "source": "github", "repo": "bitkentech/shipsmooth", "ref": "v{version}" },
+      "description": "Agent coding workflow...",
+      "category": "development"
+    },
+    {
+      "name": "shipsmooth-windows",
+      "source": { "source": "github", "repo": "bitkentech/shipsmooth", "ref": "v{version}" },
+      "description": "Agent coding workflow (Windows native — use this instead of shipsmooth on Windows without a system Node.js installation).",
+      "category": "development",
+      "hooks": {
+        "SessionStart": [{
+          "hooks": [{
+            "type": "command",
+            "command": "powershell.exe -NonInteractive -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.ps1\""
+          }]
+        }]
+      }
+    }
+  ]
+}
+```
+
+`-ExecutionPolicy Bypass` is included proactively to handle enterprise
+installs where the default policy is `Restricted`; it only scopes to the
+spawned process.
+
+### Open question: hooks merge behaviour under strict mode
+
+By default (`strict: true`), a marketplace entry's `hooks` field is merged
+with `plugin.json`'s hooks. If `plugin.json` already declares a `SessionStart`
+hook (the `node` command), both hooks would fire on Windows — which is wrong.
+This must be confirmed and resolved in Task 1. Options:
+- Set `strict: false` on the `shipsmooth-windows` entry so the marketplace
+  entry is the sole authority (no merge with `plugin.json`).
+- Remove the `SessionStart` hook from `plugin.json` and declare it only in
+  `marketplace.json` for both entries.
 
 ### Why not a single-entry fallback (e.g. `node || powershell`)?
 
 Shell-form `||` fallback in `hooks.json` is unreliable: the failed `node`
 invocation produces stderr that surfaces as a hook error to the user before
 the fallback runs. There is no clean way to suppress it.
-
-### Why not a `.cmd` wrapper?
-
-A `.cmd` file can try `node` then fall back to PowerShell, but Claude Code on
-Linux/macOS cannot invoke `.cmd` files — so a single hook entry pointing to
-`.cmd` breaks Unix users. A separate Windows `hooks.json` is required either
-way.
 
 ### Why not require users to install Node.js?
 
@@ -69,30 +106,34 @@ working `SessionStart` hook on Windows without system Node.js.
 
 ### Task 1: Finalise approach and resolve open questions [Medium]
 
-Before writing any code, nail down the three open questions that affect the
-implementation shape:
+One confirmed answer and two remaining open questions:
 
-1. **Marketplace platform targeting** — does the Claude Code marketplace
-   `plugin.json` / manifest support a `platform` field that restricts a plugin
-   version to Windows only? If yes, the Windows zip can be published as a
-   separate platform-targeted variant. If no, users must manually select the
-   right zip, which changes the UX story.
+**Confirmed:** The marketplace schema has no `platform` field. The approach is
+two named entries (`shipsmooth` + `shipsmooth-windows`) in `marketplace.json`,
+both pointing to the same repo ref. `-ExecutionPolicy Bypass` is included in
+the hook command.
 
-2. **`hooks.json` `shell: "powershell"` on Linux/macOS** — empirically confirm
-   (via the Claude Code source or a test install) whether setting
-   `"shell": "powershell"` on a non-Windows platform causes an error, a silent
-   no-op, or falls back to bash. If it silently no-ops, a single `hooks.json`
-   with `shell: "powershell"` pointing to the `.ps1` might work on Windows and
-   harmlessly do nothing on Unix (with the `.js` hook removed).
+**Remaining questions to resolve before writing code:**
 
-3. **PowerShell execution policy** — confirm whether `powershell.exe
-   -NonInteractive -File script.ps1` is blocked by the default Windows
-   execution policy (`Restricted` on some enterprise installs). The
-   `-ExecutionPolicy Bypass` flag may be needed in the hook command.
+1. **Hooks merge under `strict: true`** — does the `hooks` field in a
+   marketplace entry *replace* or *merge with* the hooks declared in
+   `plugin.json`? If it merges, both the `node` and `powershell` `SessionStart`
+   hooks would fire on Windows. Confirm via the Claude Code source or a test
+   install, then choose one of:
+   - Set `strict: false` on the `shipsmooth-windows` entry (marketplace entry
+     is sole authority, no merge).
+   - Move `SessionStart` out of `plugin.json` entirely and declare it only in
+     `marketplace.json` for both entries.
+
+2. **`session-start.ps1` location** — the marketplace `hooks` override uses
+   `${CLAUDE_PLUGIN_ROOT}/dist/session-start.ps1`. Confirm that
+   `${CLAUDE_PLUGIN_ROOT}` resolves correctly for a marketplace-installed
+   plugin (vs a locally-sourced plugin), and that `dist/` is included in the
+   files Claude Code copies to its plugin cache when installing from a GitHub
+   source.
 
 Deliverable: a short decision record (added to this plan file as an addendum)
-confirming the chosen wiring approach, so Tasks 2–4 can proceed without
-ambiguity.
+confirming the resolved answers, so Tasks 2–5 can proceed without ambiguity.
 
 ### Task 2: Lint session-start.ps1 for PowerShell 5.1 compatibility [Low]
 
@@ -150,33 +191,35 @@ write a manual smoke-test script `.agents/tmp/test-session-start.ps1` that
 mocks the config and invokes the installer against a local test server or a
 known-good release URL. Document how to run it in comments at the top.
 
-### Task 4: Wire the Windows build in Maven [Low]
+### Task 4: Update marketplace.json with shipsmooth-windows entry [Low]
 
 *Depends-on: 3*
 
-Add a `windows` Maven profile (or extend the `prod` profile) that:
+Add the `shipsmooth-windows` plugin entry to
+`plugin-resources/src/main/resources/claude-plugin/marketplace.json` (the
+source-of-truth file that gets filtered by Maven into the build output).
 
-- Sets `build.outputDir` to `build-win/`.
-- Generates a `hooks.json` with the PowerShell command (exact form TBD from
-  Task 1).
-- Copies `session-start.ps1` and `session-start-config.json` into
-  `build-win/dist/`.
-- Does **not** copy `session-start.js` or `adm-zip-bundle.js` (not needed on
-  Windows).
-- Reuses all other build artefacts (skills, plan files, etc.) unchanged.
+The entry must:
+- Point to the same `source` repo and ref as the existing `shipsmooth` entry
+  (ref is interpolated from `${project.version}` at build time, same as now).
+- Override `hooks` with the PowerShell `SessionStart` command (exact form
+  confirmed in Task 1, including `strict` setting).
+- Include a `description` that clearly explains it is the Windows variant and
+  when to use it.
 
-The existing `prod` build must remain unmodified — Unix users must not be
-affected.
+No new Maven profile is needed. No separate build output directory. The
+existing `prod` build produces the same `marketplace.json` with both entries.
 
-### Task 5: CI and release integration [Low]
+### Task 5: CI verification [Low]
 
 *Depends-on: 4*
 
-Update the GitHub Actions release workflow to:
+Update the GitHub Actions release workflow to verify:
 
-- Build the Windows artifact (`mvn -P windows ...`) alongside the existing
-  Unix artifact.
-- Upload `build-win/` as a separate release asset (or marketplace submission)
-  named to distinguish it from the Unix build.
-- Verify the Windows zip contains `session-start.ps1` and the correct
-  `hooks.json` command string (grep check in CI).
+- `build/.claude-plugin/marketplace.json` contains a `shipsmooth-windows`
+  entry (grep check).
+- The `shipsmooth-windows` hooks command string contains
+  `session-start.ps1` (grep check).
+- `build/dist/session-start.ps1` exists in the built output.
+- PSScriptAnalyzer PS 5.1 compatibility check passes (install PowerShell +
+  PSScriptAnalyzer in the CI job, run `Invoke-ScriptAnalyzer`).

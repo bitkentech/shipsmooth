@@ -5,7 +5,7 @@
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
-        <created>2026-05-20</created>
+        <created>2026-05-21</created>
     </metadata>
     <tasks>
         <task>
@@ -47,7 +47,7 @@
             <id>4</id>
             <risk>low</risk>
             <status>pending</status>
-            <name>Wire the Windows build in Maven</name>
+            <name>Update marketplace.json with shipsmooth-windows entry</name>
             <commit></commit>
             <created-from>plan-54-v1</created-from>
             <closed-at-version></closed-at-version>
@@ -59,7 +59,7 @@
             <id>5</id>
             <risk>low</risk>
             <status>pending</status>
-            <name>CI and release integration</name>
+            <name>CI verification</name>
             <commit></commit>
             <created-from>plan-54-v1</created-from>
             <closed-at-version></closed-at-version>
@@ -70,7 +70,7 @@
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-05-20T23:49:12.555+05:30</timestamp>
+            <timestamp>2026-05-21T12:51:29.689+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
