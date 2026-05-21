@@ -95,30 +95,44 @@ de-risk).
 - **Bundle jlink in git repo** — 48 MB binary committed to git, grows with every
   release. Rejected due to repo bloat.
 
-### npm bundling approach (current candidate — see Task 2)
+### npm bundling approach — ELIMINATED (2026-05-21)
 
-Claude Code supports an `npm` source type in `marketplace.json`. npm packages
-are full tarballs: arbitrary files including large binaries are extracted into
-`CLAUDE_PLUGIN_ROOT`. npmjs.com has a ~500 MB hard limit per package (the win32
-jlink zip is 48 MB compressed — well within limits).
+Tested end-to-end. The approach works on Linux/Mac but **fails on Windows** —
+which is the only platform it needs to support.
 
-The approach:
-- Publish `@bitkentech/shipsmooth-windows` to npm with the win32-x64 jlink
-  image bundled inside the package (under `runtime/`).
-- No `SessionStart` hook needed — the runtime is present immediately after
-  `/plugin install`.
-- `marketplace.json` gets a `shipsmooth-windows` entry with
-  `"source": { "source": "npm", "package": "@bitkentech/shipsmooth-windows", "version": "..." }`.
-- The skill's CLI bin path resolves to `${CLAUDE_PLUGIN_ROOT}/runtime/bin/shipsmooth-tasks.cmd`.
-- `npm publish` is added to the release workflow.
+**What was tested:**
+- Published `@pramodbiligiri/shipsmooth-windows-smoke` (49 MB tarball, full
+  win32-x64 jlink image) to npmjs.com. Artifact at `build-windows/`.
+- Install on Linux via `/plugin install shipsmooth-windows@pramodbiligiri`
+  succeeded instantly. Full package extracted to
+  `~/.claude/plugins/cache/pramodbiligiri/shipsmooth-windows/0.3.10/` with all
+  209 files including `runtime/bin/shipsmooth-tasks.cmd`. `CLAUDE_PLUGIN_ROOT`
+  confirmed correct.
+- Install on Windows failed: `Failed to install npm package: Command 'npm' not
+  found or is in an unsafe location`.
 
-**Open questions for Task 2:**
-1. Does `CLAUDE_PLUGIN_ROOT` actually contain the full npm package contents
-   (including `runtime/`) after install, or just specific files?
-2. Does the marketplace URL-hosting approach work cleanly with npm-sourced
-   plugins (S3-hosted `marketplace.json` + npm source)?
-3. npmjs.com package size limit in practice for 48 MB tarballs — confirmed
-   within documented limit but untested.
+**Root cause:** Claude Code's npm source installer shells out to the system
+`npm` binary. Windows users without Node.js don't have `npm` — which is
+exactly the problem we're trying to solve. The npm source type is circular: it
+requires the very thing the plugin is meant to replace.
+
+**Remaining options:**
+
+1. **`.cmd` / batch hook with download** — `cmd.exe /C` invokes the hook, uses
+   `curl.exe` + `tar.exe` (inbox since Windows 10 1803) to download and extract
+   the jlink zip at first session start. No signing, no GPO issues. The
+   `${CLAUDE_PLUGIN_ROOT}` expansion inside `cmd.exe` is still unverified.
+
+2. **git source with jlink in repo** — 48 MB binary committed to git, Claude
+   Code fetches it on `/plugin install` via git (no npm needed). Repo bloat is
+   the cost; Git LFS compatibility with Claude Code's installer is unknown.
+
+3. **Accept Node.js as a prerequisite** — document that Windows users need
+   Node.js installed. The existing Unix hook works unchanged; the Windows entry
+   just has the same hook. Simplest but worst UX.
+
+Current lean: option 1 (`.cmd` hook). Needs a smoke test to verify
+`${CLAUDE_PLUGIN_ROOT}` expansion in `cmd.exe /C "..."` on Windows.
 
 ## Backlog issue
 
@@ -138,38 +152,15 @@ Smoke test artifact lives at `.agents/tmp/win-smoke-test/` and
 
 ### Task 2: De-risk npm bundling approach [Medium]
 
-*Depends-on: 1*
+**Status: complete — approach eliminated.**
 
-Validate that the npm source type works end-to-end for the `shipsmooth-windows`
-use case before writing any production code.
+Published `@pramodbiligiri/shipsmooth-windows-smoke` (49 MB, full win32-x64
+jlink image) to npmjs.com. Linux install succeeded and confirmed full package
+extraction into `CLAUDE_PLUGIN_ROOT`. Windows install failed with `npm not
+found` — circular dependency on the very tool users lack. npm source type is
+not viable for this use case. See npm bundling addendum in Decision section.
 
-**Smoke test:**
-1. Create a minimal npm package `@bitkentech/shipsmooth-windows-smoke` with:
-   - `package.json` (name, version, `files` field covering everything)
-   - `.claude-plugin/plugin.json` — minimal manifest, no hooks
-   - `runtime/bin/smoke-marker.txt` — a dummy file standing in for the jlink image
-   - `skills/start/SKILL.md` — copy of the existing SKILL.md
-2. `npm publish --access public` from a test machine.
-3. Add a `marketplace-npm-smoke.json` pointing to the npm package.
-4. On Windows: `/plugin marketplace add <url-or-path>`, `/plugin install`.
-5. Verify:
-   - `CLAUDE_PLUGIN_ROOT` resolves correctly
-   - `runtime/bin/smoke-marker.txt` is present at `${CLAUDE_PLUGIN_ROOT}/runtime/bin/`
-   - SKILL.md is present and loadable
-   - No hook fires (no hooks declared)
-
-**Questions this must answer:**
-1. Does `CLAUDE_PLUGIN_ROOT` contain the full npm package contents, including
-   subdirectories, after install?
-2. Does a URL-hosted `marketplace.json` with an npm-sourced plugin entry work
-   cleanly (no "path not found" errors)?
-3. Is there any practical size constraint hit when the package includes a 48 MB
-   binary? (Test with a large dummy file if possible.)
-4. What does the install UX look like — is there a progress indicator, or does
-   it appear to hang?
-
-Deliverable: smoke test passes on Windows. Record findings as an addendum here,
-then redesign Tasks 3–5 based on the confirmed approach.
+Artifact remains at `build-windows/` for reference.
 
 ---
 
