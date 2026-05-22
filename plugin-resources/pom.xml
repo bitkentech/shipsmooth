@@ -29,7 +29,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <skip>${skip.copy-dist}</skip>
+              <skip>${skip.copy-plugin-meta}</skip>
               <outputDirectory>${build.outputDir}/.claude-plugin</outputDirectory>
               <resources>
                 <resource>
@@ -51,7 +51,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <skip>${skip.copy-dist}</skip>
+              <skip>${skip.copy-plugin-meta}</skip>
               <outputDirectory>${build.outputDir}/.claude-plugin</outputDirectory>
               <resources>
                 <resource>

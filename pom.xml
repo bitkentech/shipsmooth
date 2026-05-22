@@ -25,6 +25,7 @@
     <plugin.base.name>shipsmooth</plugin.base.name>
     <plugin.skill.start.basename>start</plugin.skill.start.basename>
     <skip.copy-dist>true</skip.copy-dist>
+    <skip.copy-plugin-meta>true</skip.copy-plugin-meta>
   </properties>
 
   <build>
@@ -121,6 +122,7 @@
         <build.env>dev</build.env>
         <build.platform>claude</build.platform>
         <skip.copy-dist>false</skip.copy-dist>
+        <skip.copy-plugin-meta>false</skip.copy-plugin-meta>
         <plugin.name>${plugin.base.name}-dev</plugin.name>
         <marketplace.name>shipsmooth-dev</marketplace.name>
         <marketplace.description>Development marketplace for bitkentech/shipsmooth plugin</marketplace.description>
@@ -141,6 +143,7 @@
         <build.env>dev</build.env>
         <build.platform>gemini</build.platform>
         <skip.copy-dist>false</skip.copy-dist>
+        <skip.copy-plugin-meta>false</skip.copy-plugin-meta>
 
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini-dev</build.outputDir>
 
@@ -162,6 +165,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
         <build.env>prod</build.env>
         <build.platform>claude</build.platform>
         <skip.copy-dist>false</skip.copy-dist>
+        <skip.copy-plugin-meta>false</skip.copy-plugin-meta>
         <plugin.name>${plugin.base.name}</plugin.name>
         <marketplace.name>bitkentech</marketplace.name>
         <marketplace.description>Plugin marketplace for bitkentech/shipsmooth</marketplace.description>
@@ -180,7 +184,11 @@ description: Use when starting any task — applies the shipsmooth agent coding 
       <properties>
         <build.env>prod</build.env>
         <build.platform>windows</build.platform>
-        <skip.copy-dist>false</skip.copy-dist>
+        <skip.copy-dist>true</skip.copy-dist>
+        <skip.copy-plugin-meta>false</skip.copy-plugin-meta>
+        <plugin.name>${plugin.base.name}</plugin.name>
+        <marketplace.name>bitkentech</marketplace.name>
+        <marketplace.description>Plugin marketplace for bitkentech/shipsmooth-windows</marketplace.description>
         <plugin.description>Agent coding workflow (Windows)</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-windows</build.outputDir>
         <plugin.repo.name>shipsmooth-windows</plugin.repo.name>
@@ -196,6 +204,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
         <build.env>prod</build.env>
         <build.platform>gemini</build.platform>
         <skip.copy-dist>false</skip.copy-dist>
+        <skip.copy-plugin-meta>false</skip.copy-plugin-meta>
         <plugin.description>Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini</build.outputDir>
         <shipsmooth.dist.path>~/.cache/shipsmooth/dist</shipsmooth.dist.path>
