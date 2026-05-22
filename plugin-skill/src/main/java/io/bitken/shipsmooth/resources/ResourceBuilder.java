@@ -28,10 +28,12 @@ public class ResourceBuilder {
         String skillName      = profile.skillName(startBase);
         // Shell expression mirrors resolveCache() in session-start.ts — keep in sync with base-workflow.jte.md
         String cliBin         = profile.cliBin(pluginVersion);
+        // repo name drives the Claude Code plugin cache path — may differ from pluginName (e.g. Windows repo is shipsmooth-windows but plugin is shipsmooth)
+        String repoName       = System.getProperty("plugin.repo.name", pluginName);
 
         PluginModel model = new PluginModel(
             pluginName, pluginVersion, pluginDesc,
-            skillName, cliBin, frontmatter, profile.platform(), jlinkDir
+            skillName, cliBin, frontmatter, profile.platform(), jlinkDir, repoName
         );
 
         boolean experimentalEnabled = Boolean.parseBoolean(System.getProperty("experimental.enabled", "false"));
@@ -65,7 +67,7 @@ public class ResourceBuilder {
             ---""".formatted(tlaSkillName);
         PluginModel tlaModel = new PluginModel(
             pluginName, pluginVersion, pluginDesc,
-            tlaSkillName, cliBin, tlaFrontmatter, profile.platform(), jlinkDir
+            tlaSkillName, cliBin, tlaFrontmatter, profile.platform(), jlinkDir, repoName
         );
         Path tlaSkillDir = Path.of(buildOutputDir, "skills", tlaSkillName);
         Files.createDirectories(tlaSkillDir);
@@ -81,7 +83,7 @@ public class ResourceBuilder {
             ---""".formatted(parallelSkillName);
         PluginModel parallelModel = new PluginModel(
             pluginName, pluginVersion, pluginDesc,
-            parallelSkillName, cliBin, parallelFrontmatter, profile.platform(), jlinkDir
+            parallelSkillName, cliBin, parallelFrontmatter, profile.platform(), jlinkDir, repoName
         );
         Path parallelSkillDir = Path.of(buildOutputDir, "skills", parallelSkillName);
         Files.createDirectories(parallelSkillDir);
@@ -111,9 +113,10 @@ public class ResourceBuilder {
     static void writeHooksJson(ObjectMapper mapper, PluginModel model, Path outputFile) throws IOException {
         String command;
         if ("windows".equals(model.platform())) {
-            String v = model.pluginVersion();
+            String v    = model.pluginVersion();
+            String repo = model.repoName();
             String name = model.pluginName();
-            command = "cmd.exe /C \"for /D %i in (\"%USERPROFILE%\\.claude\\plugins\\cache\\bitkentech\\" + name + "\\*\")" +
+            command = "cmd.exe /C \"for /D %i in (\"%USERPROFILE%\\.claude\\plugins\\cache\\bitkentech\\" + repo + "\\*\")" +
                       " do if exist \"%i\\runtime\" xcopy /E /Y /I \"%i\\runtime\"" +
                       " \"%LOCALAPPDATA%\\" + name + "\\" + v + "\\runtime\"\"";
         } else {

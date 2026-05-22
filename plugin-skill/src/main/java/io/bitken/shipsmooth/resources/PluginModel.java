@@ -8,5 +8,6 @@ public record PluginModel(
     String cliBin,
     String skillFrontmatter,
     String platform,
-    String jlinkDir
+    String jlinkDir,
+    String repoName
 ) {}

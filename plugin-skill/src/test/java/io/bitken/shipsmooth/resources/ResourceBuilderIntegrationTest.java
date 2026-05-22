@@ -18,7 +18,8 @@ class ResourceBuilderIntegrationTest {
     private static final List<String> PROPS = List.of(
         "build.outputDir", "build.env", "build.platform", "plugin.base.name",
         "plugin.skill.start.basename", "plugin.version", "plugin.description",
-        "skill.frontmatter", "shipsmooth.jlink.dir", "experimental.enabled", "plugin.hook.command"
+        "skill.frontmatter", "shipsmooth.jlink.dir", "experimental.enabled", "plugin.hook.command",
+        "plugin.repo.name"
     );
 
     @AfterEach
@@ -193,6 +194,8 @@ class ResourceBuilderIntegrationTest {
         assertTrue(content.contains("xcopy"), "Windows hook must use xcopy");
         assertTrue(content.contains("LOCALAPPDATA"), "Windows hook must reference LOCALAPPDATA");
         assertTrue(content.contains("0.3.10"), "Windows hook must contain version");
+        assertTrue(content.contains("shipsmooth-windows"), "hook source path must use repo name (shipsmooth-windows)");
+        assertTrue(content.contains("\\shipsmooth\\"), "hook destination path must use plugin name (shipsmooth)");
         assertFalse(content.contains("session-start.js"), "Windows hook must not reference session-start.js");
         assertFalse(content.contains("CLAUDE_PLUGIN_ROOT"), "Windows hook must not reference CLAUDE_PLUGIN_ROOT");
     }
@@ -227,6 +230,7 @@ class ResourceBuilderIntegrationTest {
         System.setProperty("build.env", "prod");
         System.setProperty("build.platform", "windows");
         System.setProperty("plugin.base.name", "shipsmooth");
+        System.setProperty("plugin.repo.name", "shipsmooth-windows");
         System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.3.10");
         System.setProperty("plugin.description", "Agent coding workflow (Windows)");
