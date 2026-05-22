@@ -203,7 +203,7 @@ class ResourceBuilderIntegrationTest {
         ResourceBuilder.main(new String[]{});
 
         String content = Files.readString(tempDir.resolve("skills/start/SKILL.md"));
-        assertTrue(content.contains("%LOCALAPPDATA%\\shipsmooth-windows\\0.3.10\\runtime\\bin\\shipsmooth-tasks.bat"),
+        assertTrue(content.contains("%LOCALAPPDATA%\\shipsmooth\\0.3.10\\runtime\\bin\\shipsmooth-tasks.bat"),
             "Windows SKILL.md must reference LOCALAPPDATA stable path");
         assertFalse(content.contains("XDG_CACHE_HOME"),
             "Windows SKILL.md must not reference XDG_CACHE_HOME");
@@ -226,7 +226,7 @@ class ResourceBuilderIntegrationTest {
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "prod");
         System.setProperty("build.platform", "windows");
-        System.setProperty("plugin.base.name", "shipsmooth-windows");
+        System.setProperty("plugin.base.name", "shipsmooth");
         System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.3.10");
         System.setProperty("plugin.description", "Agent coding workflow (Windows)");

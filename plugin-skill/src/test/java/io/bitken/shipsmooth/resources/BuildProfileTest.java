@@ -85,7 +85,7 @@ class BuildProfileTest {
 
     @Test
     void windowsPlatform_isWindows_true() {
-        var p = new BuildProfile("windows", "prod", "shipsmooth-windows");
+        var p = new BuildProfile("windows", "prod", "shipsmooth");
         assertTrue(p.isWindows());
     }
 
@@ -97,9 +97,9 @@ class BuildProfileTest {
 
     @Test
     void windowsProfile_cliBin_usesLocalAppData() {
-        var p = new BuildProfile("windows", "prod", "shipsmooth-windows");
+        var p = new BuildProfile("windows", "prod", "shipsmooth");
         assertEquals(
-            "%LOCALAPPDATA%\\shipsmooth-windows\\0.3.10\\runtime\\bin\\shipsmooth-tasks.bat",
+            "%LOCALAPPDATA%\\shipsmooth\\0.3.10\\runtime\\bin\\shipsmooth-tasks.bat",
             p.cliBin("0.3.10")
         );
     }
