@@ -109,7 +109,16 @@ public class ResourceBuilder {
     }
 
     static void writeHooksJson(ObjectMapper mapper, PluginModel model, Path outputFile) throws IOException {
-        String command = System.getProperty("plugin.hook.command", "node \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"");
+        String command;
+        if ("windows".equals(model.platform())) {
+            String v = model.pluginVersion();
+            String name = model.pluginName();
+            command = "cmd.exe /C \"for /D %i in (\"%USERPROFILE%\\.claude\\plugins\\cache\\bitkentech\\" + name + "\\*\")" +
+                      " do if exist \"%i\\runtime\" xcopy /E /Y /I \"%i\\runtime\"" +
+                      " \"%LOCALAPPDATA%\\" + name + "\\" + v + "\\runtime\"\"";
+        } else {
+            command = System.getProperty("plugin.hook.command", "node \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"");
+        }
 
         ObjectNode hook = mapper.createObjectNode()
             .put("type", "command")
