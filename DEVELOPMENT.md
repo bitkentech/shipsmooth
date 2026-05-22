@@ -207,3 +207,56 @@ Structure of the `shipsmooth-gemini` repo after release:
 ├── dist/                   (pre-compiled JS)
 └── package.json
 ```
+
+### Windows release
+
+The Windows plugin bundles a native jlink JRE so users need no Node.js or Java on PATH. It is published to [`bitkentech/shipsmooth-windows`](https://github.com/bitkentech/shipsmooth-windows) — a **deployment-only repo** where each release is an orphan commit force-pushed to `main`. No history is retained on the remote; only the latest release is installable. The full build history is recoverable from this repo.
+
+**Prerequisite:** `shipsmooth-windows` must be cloned as a sibling of this repo:
+```bash
+# from the parent directory of shipsmooth:
+git clone https://github.com/bitkentech/shipsmooth-windows
+```
+
+The default path is `../shipsmooth-windows` (relative to the repo root). Override with:
+```
+-Dshipsmooth.windows.repo=/path/to/shipsmooth-windows
+```
+
+**Build and release:**
+```bash
+# Step 1: install the reactor so plugin-dist can resolve siblings
+mvn install -DskipTests -Pwindows -P'!dev'
+
+# Step 2: run the Windows release
+mvn exec:java@publish-release -pl plugin-dist \
+  -Pwindows -P'!dev' \
+  -Dshipsmooth.release.version=<version>
+
+# Example:
+mvn exec:java@publish-release -pl plugin-dist -Pwindows -P'!dev' -Dshipsmooth.release.version=0.3.10
+```
+
+`PublishRelease` performs these steps for Windows:
+1. Builds the `windows` Maven profile (jlink image + `build-windows/` artifacts)
+2. Resolves the `shipsmooth-windows` sibling repo
+3. Assembles `runtime/`, `hooks/`, `skills/`, and `.claude-plugin/` into that directory
+4. Creates a fresh orphan commit (no prior history)
+5. Force-pushes `main` to `origin` — replacing the previous single-commit release
+
+**Install and verify (on Windows):**
+```
+plugin install shipsmooth@bitkentech
+```
+
+Claude Code caches the plugin under `%USERPROFILE%\.claude\plugins\cache\bitkentech\shipsmooth\<version>\`. The `SessionStart` hook xcopy's the bundled JRE to `%LOCALAPPDATA%\shipsmooth\<version>\runtime\` on every session start.
+
+Structure of the `shipsmooth-windows` repo after release:
+```
+├── .claude-plugin/
+│   ├── plugin.json
+│   └── marketplace.json
+├── hooks/hooks.json
+├── skills/start/SKILL.md
+└── runtime/                (bundled Windows jlink JRE + shipsmooth-tasks.bat)
+```
