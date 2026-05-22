@@ -1,0 +1,10 @@
+{
+  "hooks" : {
+    "SessionStart" : [ {
+      "hooks" : [ {
+        "type" : "command",
+        "command" : "cmd.exe /C \"for /D %i in (\"%USERPROFILE%\\.claude\\plugins\\cache\\bitkentech\\shipsmooth\\*\") do if exist \"%i\\runtime\" xcopy /E /Y /I \"%i\\runtime\" \"%LOCALAPPDATA%\\shipsmooth\\0.3.10\\runtime\"\""
+      } ]
+    } ]
+  }
+}
