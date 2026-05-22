@@ -1,4 +1,4 @@
-# Plan 54: Windows plugin without system Node.js
+# Plan 54: Windows plugin smoke test — offline JRE bundling
 
 ## Context
 
@@ -14,94 +14,91 @@ never downloaded and the plugin is effectively broken. The plugin must
 work out of the box on a fresh Windows machine without making system Node.js a
 prerequisite.
 
-## Proposed New Architecture (The Main Approach)
+## Architecture: Offline JRE Bundling
 
-To ensure an out-of-the-box experience on Windows, we are implementing a
+To ensure an out-of-the-box experience on Windows, we implemented a
 **Build-Time Platform Split** resulting in a dedicated `shipsmooth-windows`
-entry.
+entry in the plugin marketplace.
 
 Instead of executing an online bootstrap download script on the client machine,
-`shipsmooth-windows` will **bundle a pre-stripped win32-x64 jlink image
-(compressed to ~25–35 MB) directly within the plugin's distribution payload**
-published to the marketplace registry.
+`shipsmooth-windows` **bundles a pre-stripped win32-x64 jlink image directly
+within the plugin's distribution payload** published to the marketplace registry.
 
 To bypass Claude Code's known bug where `${CLAUDE_PLUGIN_ROOT}` fails to
 resolve inside strings on Windows (GitHub issue #59713), the `SessionStart`
-hook will execute a native `cmd.exe` wildcard directory loop. This loop
+hook executes a native `cmd.exe` wildcard directory loop. This loop
 dynamically scans Claude Code's internal plugin cache directory, matches any
 active version string, and performs an offline `xcopy` to a stable,
-non-volatile local application directory: `%LOCALAPPDATA%\.shipsmooth\<version>\runtime`.
+non-volatile local application directory: `%LOCALAPPDATA%\shipsmooth\<version>\runtime`.
 
 This approach provides several critical advantages:
-1. **GPO Compliance:** It uses native command processor utilities (`FOR /D`,
-   `IF EXIST`, `xcopy`), which are completely immune to corporate Group Policy
-   execution restrictions.
-2. **Robust Offline Support:** Because the JRE arrives packaged inside the core
-   plugin payload, it avoids network proxy/firewall friction (e.g., deep packet
-   inspection) that typically breaks arbitrary client-side `curl` operations
-   out to GitHub releases.
-3. **Static Execution Path:** It mirrors the volatile, version-dependent cache
-   paths into a predictable local layout. This allows the tools declared in
-   `plugin.json` to safely target
-   `%LOCALAPPDATA%\.shipsmooth\<version>\runtime\bin\java.exe` across future plugin
-   updates.
+1. **GPO Compliance:** Uses native command processor utilities (`FOR /D`,
+   `IF EXIST`, `xcopy`), completely immune to corporate Group Policy restrictions.
+2. **Robust Offline Support:** The JRE arrives packaged inside the plugin
+   payload, avoiding network proxy/firewall friction that typically breaks
+   arbitrary client-side `curl` operations.
+3. **Static Execution Path:** Mirrors the volatile, version-dependent cache
+   paths into a predictable local layout, allowing tools in `plugin.json` to
+   safely target `%LOCALAPPDATA%\shipsmooth\<version>\runtime\bin\java.exe`.
+
+## Deployment Constraint: Latest Release Only
+
+The `bitkentech/shipsmooth-windows` GitHub repository is a **deployment target,
+not a development repo**. To prevent Git binary history bloat (each ~79 MB JRE
+commit accumulates with every release), each release will be pushed as a fresh
+orphan commit with `--force`, replacing the entire history with a single commit.
+
+Consequence: only the latest release is installable via `/plugin install
+shipsmooth-windows@bitkentech`. There is no version pinning. Old releases are
+not retained in the remote repository but are reconstructable from the
+`shipsmooth` main repo's build history. This is an acceptable tradeoff — the
+Windows plugin version is tightly coupled to the bundled `shipsmooth-tasks`
+runtime and there is no independent client-side versioning.
+
+## Smoke Test Results
+
+Plan 54 executed a manual end-to-end smoke test. Key findings:
+
+- `/plugin install shipsmooth-windows@bitkentech` installs successfully on Windows
+- The `cmd.exe` xcopy hook correctly mirrors the JRE to
+  `%LOCALAPPDATA%\shipsmooth\0.3.10\runtime` on `SessionStart`
+- `shipsmooth-tasks.bat` runs without a system Node.js
+- Skill is invoked as `/shipsmooth-windows:start` (namespaced)
+- `PowerShell(& "$env:LOCALAPPDATA\shipsmooth\0.3.10\runtime\bin\shipsmooth-tasks.bat" show --plan 1)` works correctly
+
+### Lessons Learned from marketplace.json
+
+- `owner` field is required
+- `source` must be an object `{"source": "url", "url": "https://..."}` — GitHub
+  shorthand strings are rejected, and `"."` is unsupported
+- HTTPS URL required — the `github` shorthand source type defaults to SSH,
+  breaking installs for users without SSH keys configured
 
 ## Summary of Tried and Discarded Approaches
-
-During the course of de-risking this plan, multiple candidate solutions were
-investigated and systematically eliminated:
 
 ### 1. PowerShell 5.1 Bootstrapper (`-ExecutionPolicy Bypass`)
 * **Concept:** Run a `session-start.ps1` script via the inbox PowerShell
   runtime to handle the HTTP download and zip extraction.
-* **Why Discarded:** Smoke testing revealed that on enterprise/corporate
-  managed Windows machines (the primary user demographic), IT administrators
-  commonly enforce script block execution policies via Group Policy (GPO).
+* **Why Discarded:** On enterprise/corporate managed Windows machines, IT
+  administrators commonly enforce script block execution policies via GPO.
   When a GPO restriction is active, the `-ExecutionPolicy Bypass` flag is
-  silently ignored by the operating system, causing the script to fail.
-  Resolving this would require a paid commercial EV Code Signing certificate
-  (~$300–$500/year) and significant CI re-signing pipeline overhead.
+  silently ignored, causing the script to fail. Resolving this would require
+  a paid commercial EV Code Signing certificate (~$300–$500/year).
 
-### 2. NPM-Registry Bundling Distribution
-### (`@pramodbiligiri/shipsmooth-windows-smoke`)
-* **Concept:** Package the entire 49 MB `jlink` image inside a standard npm
-  package registry tarball and let Claude Code fetch and extract it natively
-  through its npm source type installer.
-* **Why Discarded:** End-to-end testing demonstrated a circular dependency.
-  Claude Code’s internal npm installer engine attempts to shell out to the
-  system's host `npm` binary. On a clean Windows developer machine
-  without Node.js installed, this throws a fatal exception: `Command 'npm' not
-  found or is in an unsafe location`.
+### 2. NPM-Registry Bundling (`@pramodbiligiri/shipsmooth-windows-smoke`)
+* **Concept:** Package the jlink image inside an npm tarball and let Claude
+  Code fetch and extract it natively through its npm source type installer.
+* **Why Discarded:** Claude Code's internal npm installer shells out to the
+  system's host `npm` binary. On a clean Windows machine without Node.js,
+  this throws a fatal exception: `Command 'npm' not found or is in an unsafe location`.
 
 ### 3. Native Bootstrapper Binary (Go / Rust)
-* **Concept:** Compile a small standalone executable to carry out the
-  download/unzipping steps.
-* **Why Discarded:** While it solves the GPO execution policy problem, it
-  introduces repo bloat, cross-compilation pipeline complexities, and potential
-  Windows SmartScreen warnings on corporate systems if left unsigned. The
-  local `cmd.exe` bundle-and-copy loop achieves the same results natively with
-  zero extra binaries.
+* **Concept:** Compile a small standalone executable for the download/unzip steps.
+* **Why Discarded:** Introduces repo bloat, cross-compilation complexity, and
+  potential Windows SmartScreen warnings if unsigned. The `cmd.exe` bundle-and-copy
+  loop achieves the same results natively with zero extra binaries.
 
 ## Tasks
-
-### Task 6: Implement minimal JLink build and update hooks.json [High]
-* **Status:** `pending`
-* **Details:** Optimize the `jlink` assembly pipeline configuration in
-  `plugin-tasks-java/` to strip all non-essential modules, targeting an
-  uncompressed footprint under 35 MB. Update `hooks/hooks.json` in the
-  `shipsmooth-windows` build branch to use the native `cmd.exe` directory
-  wildcard copy statement targeting `%LOCALAPPDATA%\.shipsmooth\<version>\runtime`.
-
-### Task 7: Adapt plugin.json and template model paths [Low]
-* **Status:** `pending`
-* **Details:** Update the tool execution strings declared in `plugin.json` for
-  the Windows variant to point to the static `%LOCALAPPDATA%\.shipsmooth\<version>\runtime\bin\java.exe`
-  copy location. Adjust `PluginModel.java` and `BuildProfile.java` to match this behavior.
-
-### Task 8: Manual smoke test of the Windows bundling approach [High]
-* **Status:** `pending`
-* **Details:** Manually assemble a `shipsmooth-windows` build containing the bundled JRE. Push this to a temporary "smoke-test" GitHub repository. Perform a `/plugin install <repo-url>` on a Windows machine. Verify the `cmd.exe` hook correctly mirrors the JRE to `%LOCALAPPDATA%\.shipsmooth\<version>\runtime` and that `shipsmooth-tasks` runs without a system Node.js.
-*Depends-on: 6,7*
 
 ### Task 1: Smoke-test the Windows wiring end-to-end [Medium]
 * **Status:** `agent-coded`
@@ -114,10 +111,14 @@ investigated and systematically eliminated:
   platforms but verified a fatal circular dependency on Windows due to the lack
   of system `npm`.
 
-### Task 9: Final release to downstream `shipsmooth-windows` repository [Low]
-* **Status:** `pending`
-* **Details:** Once the manual smoke test passes, perform the final push to the official `bitkentech/shipsmooth-windows` repository. Verify the CI/CD pipeline correctly handles the bundled assets.
-*Depends-on: 8*
+### Task 8: Manual smoke test of the Windows bundling approach [High]
+* **Status:** `closed`
+* **Details:** Manually assembled a `shipsmooth-windows` build containing the
+  bundled JRE. Pushed to `bitkentech/shipsmooth-windows` on GitHub. Verified
+  `/plugin install shipsmooth-windows@bitkentech` works end-to-end on Windows.
+  The `cmd.exe` xcopy hook correctly mirrors the JRE to
+  `%LOCALAPPDATA%\shipsmooth\0.3.10\runtime` and `shipsmooth-tasks.bat` runs
+  without a system Node.js. See Smoke Test Results section above.
 
 ### Task 3: Write session-start.ps1 [Low]
 * **Status:** `Canceled`
@@ -126,10 +127,19 @@ investigated and systematically eliminated:
 
 ### Task 4: Update marketplace.json with shipsmooth-windows entry [Low]
 * **Status:** `Canceled`
-* **Reason:** This task was coupled directly to the deployment architecture of
-  the obsolete PowerShell script asset track.
+* **Reason:** Coupled to the obsolete PowerShell script asset track.
 
 ### Task 5: CI verification [Low]
 * **Status:** `Canceled`
-* **Reason:** Canceled to clear the baseline for the rewritten bundling
-  execution validation pipeline.
+* **Reason:** Canceled to clear the baseline for the rewritten bundling pipeline.
+
+## Moved to Plan 55
+
+The following tasks were originally part of Plan 54 but have been moved to
+Plan 55 (Automate Windows release process), which covers the full build
+automation and release pipeline:
+
+- Task 6: Implement minimal JLink build and update hooks.json
+- Task 7: Adapt plugin.json and template model paths
+- Task 9: Final release to downstream shipsmooth-windows repository
+- Task 10: Remove vestigial package.json from shipsmooth-windows repo

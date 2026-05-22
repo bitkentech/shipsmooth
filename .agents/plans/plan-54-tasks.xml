@@ -1,77 +1,94 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>54</plan>
-    <plan-version>plan-54-v1</plan-version>
+    <plan-version>plan-54-v8</plan-version>
     <metadata>
-        <backlog-issue></backlog-issue>
-        <status>active</status>
+        <backlog-issue>PB-52</backlog-issue>
+        <status>closed</status>
         <created>2026-05-21</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Smoke-test the Windows wiring end-to-end</name>
-            <commit></commit>
+            <commit>cf89ee9</commit>
             <created-from>plan-54-v1</created-from>
-            <closed-at-version></closed-at-version>
+            <closed-at-version>plan-54-v7</closed-at-version>
             <comments/>
             <deviations/>
         </task>
         <task>
             <id>2</id>
-            <risk>low</risk>
-            <status>pending</status>
-            <name>Lint session-start.ps1 for PowerShell 5.1 compatibility</name>
-            <commit></commit>
-            <created-from>plan-54-v1</created-from>
-            <closed-at-version></closed-at-version>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>De-risk npm bundling approach</name>
+            <commit>HEAD</commit>
+            <created-from>plan-54-v7</created-from>
+            <closed-at-version>plan-54-v7</closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>1</depends-on>
         </task>
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>abandoned</status>
             <name>Write session-start.ps1</name>
             <commit></commit>
             <created-from>plan-54-v1</created-from>
-            <closed-at-version></closed-at-version>
+            <closed-at-version>plan-54-v7</closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>1,2</depends-on>
         </task>
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>abandoned</status>
             <name>Update marketplace.json with shipsmooth-windows entry</name>
             <commit></commit>
             <created-from>plan-54-v1</created-from>
-            <closed-at-version></closed-at-version>
+            <closed-at-version>plan-54-v7</closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>3</depends-on>
         </task>
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>abandoned</status>
             <name>CI verification</name>
             <commit></commit>
             <created-from>plan-54-v1</created-from>
-            <closed-at-version></closed-at-version>
+            <closed-at-version>plan-54-v7</closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Manual smoke test of the Windows bundling approach</name>
+            <commit>d350c04</commit>
+            <created-from>plan-54-v7</created-from>
+            <closed-at-version>plan-54-v8</closed-at-version>
+            <comments/>
+            <deviations/>
         </task>
     </tasks>
     <project-updates>
         <update>
             <timestamp>2026-05-21T12:59:48.248+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-22T10:00:00.000+05:30</timestamp>
+            <message>Plan pivoted to offline bundling strategy due to corporate GPO and npm circular dependency issues.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-22T12:00:00.000+05:30</timestamp>
+            <message>Smoke test complete. Tasks 6, 7, 9, 10 moved to Plan 55. Plan 54 closed.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
