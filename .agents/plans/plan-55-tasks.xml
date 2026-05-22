@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Wire ResourceBuilder to emit a Windows-variant hooks.json</name>
-            <commit></commit>
+            <commit>c3939f31708cebced32ec90e2fe7d107466f3a1c</commit>
             <created-from>plan-55-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -22,9 +22,9 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Adapt BuildProfile and PluginModel for Windows paths</name>
-            <commit></commit>
+            <commit>c3939f31708cebced32ec90e2fe7d107466f3a1c</commit>
             <created-from>plan-55-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -34,9 +34,9 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Remove vestigial package.json from shipsmooth-windows repo</name>
-            <commit></commit>
+            <commit>c5459e0</commit>
             <created-from>plan-55-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -45,9 +45,9 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Automate orphan-push release to shipsmooth-windows repo</name>
-            <commit></commit>
+            <commit>6d67fa76a841bb8a75df4f715b328205ca6e3f6c</commit>
             <created-from>plan-55-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
