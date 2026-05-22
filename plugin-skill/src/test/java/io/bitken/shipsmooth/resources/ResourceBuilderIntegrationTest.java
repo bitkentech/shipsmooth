@@ -180,6 +180,35 @@ class ResourceBuilderIntegrationTest {
             "dev cliBin should use shipsmooth-dev subdir");
     }
 
+    @Test
+    void hooksJsonForWindowsProfile_usesCmdExeXcopy() throws Exception {
+        setWindowsProps();
+        ResourceBuilder.main(new String[]{});
+
+        Path output = tempDir.resolve("hooks/hooks.json");
+        assertTrue(Files.exists(output), "hooks.json should be written");
+
+        String content = Files.readString(output);
+        assertTrue(content.contains("cmd.exe"), "Windows hook must use cmd.exe");
+        assertTrue(content.contains("xcopy"), "Windows hook must use xcopy");
+        assertTrue(content.contains("LOCALAPPDATA"), "Windows hook must reference LOCALAPPDATA");
+        assertTrue(content.contains("0.3.10"), "Windows hook must contain version");
+        assertFalse(content.contains("session-start.js"), "Windows hook must not reference session-start.js");
+        assertFalse(content.contains("CLAUDE_PLUGIN_ROOT"), "Windows hook must not reference CLAUDE_PLUGIN_ROOT");
+    }
+
+    @Test
+    void skillMdForWindowsProfile_usesLocalAppDataPath() throws Exception {
+        setWindowsProps();
+        ResourceBuilder.main(new String[]{});
+
+        String content = Files.readString(tempDir.resolve("skills/start/SKILL.md"));
+        assertTrue(content.contains("%LOCALAPPDATA%\\shipsmooth-windows\\0.3.10\\runtime\\bin\\shipsmooth-tasks.bat"),
+            "Windows SKILL.md must reference LOCALAPPDATA stable path");
+        assertFalse(content.contains("XDG_CACHE_HOME"),
+            "Windows SKILL.md must not reference XDG_CACHE_HOME");
+    }
+
     private void setProdProps() {
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "prod");
@@ -190,6 +219,19 @@ class ResourceBuilderIntegrationTest {
         System.setProperty("plugin.description", "Agent coding workflow");
         System.setProperty("skill.frontmatter", "");
         System.setProperty("shipsmooth.jlink.dir", "/dev/null");
+        System.setProperty("experimental.enabled", "false");
+    }
+
+    private void setWindowsProps() {
+        System.setProperty("build.outputDir", tempDir.toString());
+        System.setProperty("build.env", "prod");
+        System.setProperty("build.platform", "windows");
+        System.setProperty("plugin.base.name", "shipsmooth-windows");
+        System.setProperty("plugin.skill.start.basename", "start");
+        System.setProperty("plugin.version", "0.3.10");
+        System.setProperty("plugin.description", "Agent coding workflow (Windows)");
+        System.setProperty("skill.frontmatter", "");
+        System.setProperty("shipsmooth.jlink.dir", "");
         System.setProperty("experimental.enabled", "false");
     }
 

@@ -84,6 +84,27 @@ class BuildProfileTest {
     }
 
     @Test
+    void windowsPlatform_isWindows_true() {
+        var p = new BuildProfile("windows", "prod", "shipsmooth-windows");
+        assertTrue(p.isWindows());
+    }
+
+    @Test
+    void claudePlatform_isWindows_false() {
+        var p = new BuildProfile("claude", "prod", "shipsmooth");
+        assertFalse(p.isWindows());
+    }
+
+    @Test
+    void windowsProfile_cliBin_usesLocalAppData() {
+        var p = new BuildProfile("windows", "prod", "shipsmooth-windows");
+        assertEquals(
+            "%LOCALAPPDATA%\\shipsmooth-windows\\0.3.10\\runtime\\bin\\shipsmooth-tasks.bat",
+            p.cliBin("0.3.10")
+        );
+    }
+
+    @Test
     void pluginBaseNameFlows_throughAllDerivedNames() {
         var p = new BuildProfile("claude", "dev", "myplugin");
         assertEquals("myplugin-dev", p.pluginName());
