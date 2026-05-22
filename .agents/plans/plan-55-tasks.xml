@@ -66,6 +66,18 @@
             <deviations/>
             <depends-on>4</depends-on>
         </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Update DEVELOPMENT.md to document the Windows release process</name>
+            <commit></commit>
+            <created-from>plan-55-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>

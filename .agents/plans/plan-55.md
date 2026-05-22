@@ -19,6 +19,20 @@ replacing the entire history. Only the latest release is installable; old
 releases are not retained on the remote but are reconstructable from the
 `shipsmooth` main repo's build history.
 
+## Windows Repo Location
+
+The `shipsmooth-windows` repo is expected to be a sibling of the `shipsmooth`
+repo on the local filesystem (i.e. `../shipsmooth-windows` relative to the repo
+root). This default is computed at runtime as `repoRoot.getParent().resolve("shipsmooth-windows")`.
+
+It can be overridden via a Maven system property:
+```
+-Dshipsmooth.windows.repo=/path/to/shipsmooth-windows
+```
+
+This property is documented in `PublishRelease.java` alongside the existing JDK
+path properties (`jdk.semeru.linux-x64`, etc.) and follows the same convention.
+
 ## Tasks
 
 ### Task 1: Implement minimal JLink build for Windows and update hooks.json [High]
@@ -50,11 +64,14 @@ releases are not retained on the remote but are reconstructable from the
 ### Task 4: Automate orphan-push release to shipsmooth-windows repo [Low]
 * **Status:** `pending`
 * **Details:** Extend `PublishRelease.java` with a Windows release step that:
-  (1) assembles the plugin payload (runtime/, hooks/, skills/, .claude-plugin/)
-  into a staging directory, (2) checks out `bitkentech/shipsmooth-windows`,
+  (1) resolves the `shipsmooth-windows` repo path — defaulting to
+  `repoRoot.getParent().resolve("shipsmooth-windows")`, overridable via
+  `-Dshipsmooth.windows.repo=<path>` — (2) assembles the plugin payload
+  (`runtime/`, `hooks/`, `skills/`, `.claude-plugin/`) into that directory,
   (3) creates a fresh orphan commit containing only the new artifacts, and
   (4) force-pushes to `main`. No history is retained on the remote — each
-  release replaces the previous single commit.
+  release replaces the previous single commit. Document the property alongside
+  the existing JDK path properties in the `main()` usage string.
 *Depends-on: 1,2,3*
 
 ### Task 5: End-to-end release dry-run [Medium]
@@ -64,3 +81,11 @@ releases are not retained on the remote but are reconstructable from the
   `bitkentech/shipsmooth-windows`. Install the plugin on Windows and confirm
   the hook, JRE, and `shipsmooth-tasks.bat` all work correctly.
 *Depends-on: 4*
+
+### Task 6: Update DEVELOPMENT.md to document the Windows release process [Low]
+* **Status:** `pending`
+* **Details:** Update `DEVELOPMENT.md` to cover the Windows release workflow:
+  the `shipsmooth-windows` sibling repo requirement, the orphan-push model,
+  the `-Dshipsmooth.windows.repo` override property, and the install/verify
+  steps. Should sit alongside the existing Linux/macOS release documentation.
+*Depends-on: 5*
