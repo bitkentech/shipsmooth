@@ -12,7 +12,7 @@
             <id>1</id>
             <risk>high</risk>
             <status>pending</status>
-            <name>Implement minimal JLink build for Windows and update hooks.json</name>
+            <name>Wire ResourceBuilder to emit a Windows-variant hooks.json</name>
             <commit></commit>
             <created-from>plan-55-v1</created-from>
             <closed-at-version></closed-at-version>

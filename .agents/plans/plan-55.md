@@ -35,13 +35,14 @@ path properties (`jdk.semeru.linux-x64`, etc.) and follows the same convention.
 
 ## Tasks
 
-### Task 1: Implement minimal JLink build for Windows and update hooks.json [High]
+### Task 1: Wire ResourceBuilder to emit a Windows-variant hooks.json [High]
 * **Status:** `pending`
-* **Details:** Add a Windows-specific jlink profile to `plugin-tasks-java/`
-  that produces a stripped `win32-x64` image targeting under 35 MB uncompressed.
-  Update `ResourceBuilder.java` to emit a Windows-variant `hooks.json` containing
-  the native `cmd.exe` xcopy loop targeting
-  `%LOCALAPPDATA%\shipsmooth\<version>\runtime`.
+* **Details:** The `plugin-tasks-java/pom.xml` already cross-compiles a
+  `win32-x64` jlink image (id `jlink-build-windows-x64`). The remaining work
+  is in `ResourceBuilder.java`: when the build profile is Windows, emit a
+  `hooks.json` containing the native `cmd.exe` xcopy loop targeting
+  `%LOCALAPPDATA%\shipsmooth\<version>\runtime` instead of the Node.js
+  `session-start.js` command used on Unix.
 
 ### Task 2: Adapt BuildProfile and PluginModel for Windows paths [Low]
 * **Status:** `pending`
