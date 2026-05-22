@@ -57,9 +57,9 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>End-to-end release dry-run</name>
-            <commit></commit>
+            <commit>62d0614cfd75b4d8363afeb75db8608292484cec</commit>
             <created-from>plan-55-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -69,9 +69,9 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Update DEVELOPMENT.md to document the Windows release process</name>
-            <commit></commit>
+            <commit>57f1014db8dbc7615af1b69ae4343f3b2704551c</commit>
             <created-from>plan-55-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
