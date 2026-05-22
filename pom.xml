@@ -176,6 +176,21 @@ description: Use when starting any task — applies the shipsmooth agent coding 
       </properties>
     </profile>
     <profile>
+      <id>windows</id>
+      <properties>
+        <build.env>prod</build.env>
+        <build.platform>windows</build.platform>
+        <skip.copy-dist>false</skip.copy-dist>
+        <plugin.description>Agent coding workflow (Windows)</plugin.description>
+        <build.outputDir>${maven.multiModuleProjectDirectory}/build-windows</build.outputDir>
+        <plugin.repo.name>shipsmooth-windows</plugin.repo.name>
+        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/plugin-tasks-java/target/jlink-image-windows-x64</shipsmooth.jlink.dir>
+        <skill.frontmatter></skill.frontmatter>
+        <experimental.enabled>false</experimental.enabled>
+      </properties>
+    </profile>
+
+    <profile>
       <id>gemini</id>
       <properties>
         <build.env>prod</build.env>
