@@ -116,9 +116,11 @@ public class ResourceBuilder {
             String v    = model.pluginVersion();
             String repo = model.repoName();
             String name = model.pluginName();
-            command = "cmd.exe /C \"for /D %i in (\"%USERPROFILE%\\.claude\\plugins\\cache\\bitkentech\\" + repo + "\\*\")" +
-                      " do if exist \"%i\\runtime\" xcopy /E /Y /I \"%i\\runtime\"" +
-                      " \"%LOCALAPPDATA%\\" + name + "\\" + v + "\\runtime\"\"";
+            // Inline cmd.exe quoting breaks when harness pipes the command — use a .bat file instead
+            String batPath = "%USERPROFILE%\\.claude\\plugins\\cache\\bitkentech\\" + repo + "\\" + v + "\\hooks\\install-runtime.bat";
+            command = "cmd.exe /C \"" + batPath + "\"";
+            Path batFile = outputFile.resolveSibling("install-runtime.bat");
+            writeInstallRuntimeBat(batFile, repo, name, v);
         } else {
             command = System.getProperty("plugin.hook.command", "node \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"");
         }
@@ -135,6 +137,16 @@ public class ResourceBuilder {
         root.putObject("hooks").set("SessionStart", sessionStart);
 
         mapper.writerWithDefaultPrettyPrinter().writeValue(outputFile.toFile(), root);
+    }
+
+    static void writeInstallRuntimeBat(Path outputFile, String repo, String pluginName, String version) throws IOException {
+        String dest = "%LOCALAPPDATA%\\" + pluginName + "\\" + version + "\\runtime";
+        String src  = "%USERPROFILE%\\.claude\\plugins\\cache\\bitkentech\\" + repo + "\\" + version + "\\runtime";
+        String bat = "@echo off\r\n" +
+                     "if exist \"" + src + "\" (\r\n" +
+                     "    xcopy /E /Y /I \"" + src + "\" \"" + dest + "\"\r\n" +
+                     ")\r\n";
+        Files.writeString(outputFile, bat);
     }
 
     static void writeSessionStartConfig(ObjectMapper mapper, PluginModel model, Path outputFile) throws IOException {
