@@ -144,6 +144,7 @@ public class ResourceBuilder {
         String src  = "%USERPROFILE%\\.claude\\plugins\\cache\\bitkentech\\" + repo + "\\" + version + "\\runtime";
         String bat = "@echo off\r\n" +
                      "if exist \"" + src + "\" (\r\n" +
+                     "    mkdir \"" + dest + "\" 2>nul\r\n" +
                      "    xcopy /E /Y /I \"" + src + "\" \"" + dest + "\"\r\n" +
                      ")\r\n";
         Files.writeString(outputFile, bat);
