@@ -78,6 +78,18 @@
             <deviations/>
             <depends-on>5</depends-on>
         </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Smoke test Windows build after plugin name fix</name>
+            <commit></commit>
+            <created-from>plan-55-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
