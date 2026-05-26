@@ -116,9 +116,9 @@ public class ResourceBuilder {
             String v    = model.pluginVersion();
             String repo = model.repoName();
             String name = model.pluginName();
-            // Inline cmd.exe quoting breaks when harness pipes the command — use a .bat file instead
+            // MSYS_NO_PATHCONV=1 prevents Git Bash's MSYS2 layer from translating /C to C:
             String batPath = "%USERPROFILE%\\.claude\\plugins\\cache\\bitkentech\\" + repo + "\\" + v + "\\hooks\\install-runtime.bat";
-            command = "cmd.exe /C \"" + batPath + "\"";
+            command = "MSYS_NO_PATHCONV=1 cmd.exe /C \"" + batPath + "\"";
             Path batFile = outputFile.resolveSibling("install-runtime.bat");
             writeInstallRuntimeBat(batFile, repo, name, v);
         } else {
