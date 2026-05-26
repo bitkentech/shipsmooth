@@ -33,6 +33,31 @@ It can be overridden via a Maven system property:
 This property is documented in `PublishRelease.java` alongside the existing JDK
 path properties (`jdk.semeru.linux-x64`, etc.) and follows the same convention.
 
+## Hook Design: BAT file + MSYS_NO_PATHCONV
+
+The SessionStart hook is registered in `hooks.json` as:
+```
+MSYS_NO_PATHCONV=1 cmd.exe /C "%USERPROFILE%\.claude\...\hooks\install-runtime.bat"
+```
+
+**Why `MSYS_NO_PATHCONV=1`:** Claude Code's hook runner is hardcoded to
+`/usr/bin/bash` (upstream issue #32930). Git Bash's MSYS2 layer silently
+translates `/C` in `cmd.exe /C "..."` to the drive letter `C:`, causing
+`cmd.exe` to go interactive and ignore the `.bat` argument. Setting
+`MSYS_NO_PATHCONV=1` disables this path translation.
+
+**Why keep a separate `.bat` file rather than inlining the xcopy logic in
+the `hooks.json` command:** If Git Bash is missing or not on PATH, the hook
+runner will fail to launch at all — but the user can still manually invoke
+`install-runtime.bat` directly from Explorer or CMD to install the JRE. A
+self-contained `.bat` file is a recoverable fallback; an inline bash command
+string is not.
+
+**Known limitation:** Git for Windows is a hard prerequisite. Without it,
+bash is absent and the hook silently fails with exit code 0. There is
+currently no Claude Code workaround for this (upstream #32930). This is
+documented in DEVELOPMENT.md.
+
 ## Tasks
 
 ### Task 1: Wire ResourceBuilder to emit a Windows-variant hooks.json [High]
@@ -89,4 +114,16 @@ path properties (`jdk.semeru.linux-x64`, etc.) and follows the same convention.
   the `shipsmooth-windows` sibling repo requirement, the orphan-push model,
   the `-Dshipsmooth.windows.repo` override property, and the install/verify
   steps. Should sit alongside the existing Linux/macOS release documentation.
+*Depends-on: 5*
+
+### Task 7: Fix hook command — add MSYS_NO_PATHCONV=1 and smoke test [Low]
+* **Details:** Smoke testing on Windows revealed that Git Bash's MSYS2 layer
+  translates `/C` in `cmd.exe /C "..."` to the drive letter `C:`, causing
+  `cmd.exe` to go interactive and ignore the `.bat` argument (silently exits 0).
+  Fix: prefix the hook command with `MSYS_NO_PATHCONV=1` in both
+  `ResourceBuilder.java` and the static `build-windows/hooks/hooks.json`.
+  Then re-run `mvn compile -Pwindows -P!dev`, orphan-push to
+  `shipsmooth-windows`, and smoke test on Windows — including a fresh-install
+  scenario where `%LOCALAPPDATA%\shipsmooth\` does not yet exist (verifies the
+  `mkdir` fix from fix3).
 *Depends-on: 5*
