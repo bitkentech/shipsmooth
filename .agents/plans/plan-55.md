@@ -116,6 +116,24 @@ documented in DEVELOPMENT.md.
   steps. Should sit alongside the existing Linux/macOS release documentation.
 *Depends-on: 5*
 
+### Task 8: Add README.md to shipsmooth-windows repo [Low]
+* **Details:** `ResourceBuilder.java` should emit a `README.md` into
+  `build-windows/` so it is included in every orphan-push release. Content:
+  - Brief intro pointing to the main `bitkentech/shipsmooth` repo for plugin
+    details.
+  - **How to Install** section: Windows-specific install command
+    (`/plugin install shipsmooth@bitkentech`), note that Git for Windows is
+    required and Git Bash must be on PATH, with a link to the Claude Code
+    Additional Dependencies section:
+    https://code.claude.com/docs/en/setup#additional-dependencies
+  - **Troubleshooting** section:
+    - How to check whether Git Bash is on PATH (`where.exe bash` in CMD/PowerShell)
+    - If missing: how to manually run `install-runtime.bat` directly from
+      Explorer or CMD as a fallback, and how to verify the files were copied
+      (check that `%LOCALAPPDATA%\shipsmooth\<version>\runtime\bin\shipsmooth-tasks.bat`
+      exists).
+*Depends-on: 7*
+
 ### Task 7: Fix hook command — add MSYS_NO_PATHCONV=1 and smoke test [Low]
 * **Details:** Smoke testing on Windows revealed that Git Bash's MSYS2 layer
   translates `/C` in `cmd.exe /C "..."` to the drive letter `C:`, causing
