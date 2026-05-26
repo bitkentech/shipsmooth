@@ -116,7 +116,29 @@ documented in DEVELOPMENT.md.
   steps. Should sit alongside the existing Linux/macOS release documentation.
 *Depends-on: 5*
 
-### Task 8: Add README.md to shipsmooth-windows repo [Low]
+### Task 7: Smoke test Windows build after plugin name fix [Low]
+* **Status:** `agent-coded`
+* **Details:** Initial smoke test on Windows after the automated pipeline was
+  wired up. Revealed two issues fixed inline: (1) inline `cmd.exe /C "..."`
+  quoting broke under the bash harness — extracted to `install-runtime.bat`;
+  (2) `xcopy /I` does not create missing parent dirs — added `mkdir` before
+  xcopy. Both fixes committed as `fix(7):` commits. Smoke test is complete;
+  the issues it surfaced are tracked in tasks 8 and 9.
+*Depends-on: 5*
+
+### Task 8: Fix hook command — add MSYS_NO_PATHCONV=1 and re-smoke-test [Low]
+* **Details:** Smoke testing revealed that Git Bash's MSYS2 layer translates
+  `/C` in `cmd.exe /C "..."` to the drive letter `C:`, causing `cmd.exe` to
+  go interactive and ignore the `.bat` argument (silently exits 0). Fix:
+  prefix the hook command with `MSYS_NO_PATHCONV=1` in both
+  `ResourceBuilder.java` and the static `build-windows/hooks/hooks.json`.
+  Then re-run `mvn compile -Pwindows -P!dev`, orphan-push to
+  `shipsmooth-windows`, and smoke test on Windows — including a fresh-install
+  scenario where `%LOCALAPPDATA%\shipsmooth\` does not yet exist (verifies the
+  `mkdir` fix from task 7).
+*Depends-on: 7*
+
+### Task 9: Add README.md to shipsmooth-windows repo [Low]
 * **Details:** `ResourceBuilder.java` should emit a `README.md` into
   `build-windows/` so it is included in every orphan-push release. Content:
   - Brief intro pointing to the main `bitkentech/shipsmooth` repo for plugin
@@ -132,16 +154,4 @@ documented in DEVELOPMENT.md.
       Explorer or CMD as a fallback, and how to verify the files were copied
       (check that `%LOCALAPPDATA%\shipsmooth\<version>\runtime\bin\shipsmooth-tasks.bat`
       exists).
-*Depends-on: 7*
-
-### Task 7: Fix hook command — add MSYS_NO_PATHCONV=1 and smoke test [Low]
-* **Details:** Smoke testing on Windows revealed that Git Bash's MSYS2 layer
-  translates `/C` in `cmd.exe /C "..."` to the drive letter `C:`, causing
-  `cmd.exe` to go interactive and ignore the `.bat` argument (silently exits 0).
-  Fix: prefix the hook command with `MSYS_NO_PATHCONV=1` in both
-  `ResourceBuilder.java` and the static `build-windows/hooks/hooks.json`.
-  Then re-run `mvn compile -Pwindows -P!dev`, orphan-push to
-  `shipsmooth-windows`, and smoke test on Windows — including a fresh-install
-  scenario where `%LOCALAPPDATA%\shipsmooth\` does not yet exist (verifies the
-  `mkdir` fix from fix3).
-*Depends-on: 5*
+*Depends-on: 8*

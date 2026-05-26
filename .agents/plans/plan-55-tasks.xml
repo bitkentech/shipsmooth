@@ -81,14 +81,38 @@
         <task>
             <id>7</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Smoke test Windows build after plugin name fix</name>
-            <commit></commit>
+            <commit>04bd8f4</commit>
             <created-from>plan-55-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
             <depends-on>5</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Fix hook command — add MSYS_NO_PATHCONV=1 and re-smoke-test</name>
+            <commit></commit>
+            <created-from>plan-55-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>7</depends-on>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Add README.md to shipsmooth-windows repo</name>
+            <commit></commit>
+            <created-from>plan-55-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>8</depends-on>
         </task>
     </tasks>
     <project-updates>
