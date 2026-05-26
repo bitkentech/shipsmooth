@@ -223,25 +223,54 @@ The default path is `../shipsmooth-windows` (relative to the repo root). Overrid
 -Dshipsmooth.windows.repo=/path/to/shipsmooth-windows
 ```
 
-**Build and release:**
+**Full release (via PublishRelease):**
 ```bash
 # Step 1: install plugin-dist and its upstream dependencies into the local Maven repo
 mvn install -pl plugin-dist -am -Pwindows -P'!dev' -DskipTests
 
 # Step 2: run the Windows release
 mvn exec:java@publish-release -pl plugin-dist -Pwindows -P'!dev' -Dshipsmooth.release.version=<version>
-
-# Example (patch releases use a -fixN suffix):
-mvn install -pl plugin-dist -am -Pwindows -P'!dev' -DskipTests
-mvn exec:java@publish-release -pl plugin-dist -Pwindows -P'!dev' -Dshipsmooth.release.version=0.3.10-fix5
 ```
 
 `PublishRelease` performs these steps for Windows:
-1. Builds the `windows` Maven profile (jlink image + `build-windows/` artifacts)
-2. Resolves the `shipsmooth-windows` sibling repo
-3. Assembles `runtime/`, `hooks/`, `skills/`, and `.claude-plugin/` into that directory
-4. Creates a fresh orphan commit (no prior history)
-5. Force-pushes `main` to `origin` — replacing the previous single-commit release
+1. Bumps the version in all pom.xml files and commits
+2. Builds the jlink image and `build-windows/` artifacts
+3. Resolves the `shipsmooth-windows` sibling repo
+4. Assembles `runtime/`, `hooks/`, `skills/`, and `.claude-plugin/` into that directory
+5. Creates a fresh orphan commit (no prior history)
+6. Force-pushes `main` to `origin` — replacing the previous single-commit release
+
+**Windows-only fix release (manual orphan push):**
+
+Use this when fixing a Windows-specific issue without bumping the main repo version.
+The `-fixN` suffix is only a label in the release commit message — do **not** run `PublishRelease`
+as it bumps all pom.xml files and bakes the suffix into the build artifacts.
+
+```bash
+# Step 1: rebuild the jlink image (only needed if shipsmooth-tasks changed)
+mvn package -pl plugin-tasks-java -Pjlink -DskipTests
+
+# Step 2: build the Windows plugin artifacts (pom version stays at e.g. 0.3.10)
+mvn compile -Pwindows -P'!dev'
+
+# Step 3: wipe and re-populate the shipsmooth-windows working tree
+MAIN_SHA=$(git rev-parse --short HEAD)
+FIX_VERSION=0.3.10-fix6   # increment fixN each time
+cd ../shipsmooth-windows
+git checkout --orphan releases-$FIX_VERSION
+git rm -rf --quiet .
+
+# Step 4: copy build artifacts
+# Note: cp -r with . skips hidden dirs — copy .claude-plugin separately
+cp -r /path/to/shipsmooth/build-windows/. .
+cp -r /path/to/shipsmooth/build-windows/.claude-plugin .
+cp -r /path/to/shipsmooth/plugin-tasks-java/target/jlink-image-windows-x64 runtime
+
+# Step 5: commit and force-push
+git add .
+git commit -m "release: v$FIX_VERSION (main: $MAIN_SHA) — <brief description>"
+git push origin releases-$FIX_VERSION:main --force
+```
 
 **Install and verify (on Windows):**
 ```
