@@ -225,16 +225,15 @@ The default path is `../shipsmooth-windows` (relative to the repo root). Overrid
 
 **Build and release:**
 ```bash
-# Step 1: install the reactor so plugin-dist can resolve siblings
-mvn install -DskipTests -Pwindows -P'!dev'
+# Step 1: install plugin-dist and its upstream dependencies into the local Maven repo
+mvn install -pl plugin-dist -am -Pwindows -P'!dev' -DskipTests
 
 # Step 2: run the Windows release
-mvn exec:java@publish-release -pl plugin-dist \
-  -Pwindows -P'!dev' \
-  -Dshipsmooth.release.version=<version>
+mvn exec:java@publish-release -pl plugin-dist -Pwindows -P'!dev' -Dshipsmooth.release.version=<version>
 
-# Example:
-mvn exec:java@publish-release -pl plugin-dist -Pwindows -P'!dev' -Dshipsmooth.release.version=0.3.10
+# Example (patch releases use a -fixN suffix):
+mvn install -pl plugin-dist -am -Pwindows -P'!dev' -DskipTests
+mvn exec:java@publish-release -pl plugin-dist -Pwindows -P'!dev' -Dshipsmooth.release.version=0.3.10-fix5
 ```
 
 `PublishRelease` performs these steps for Windows:
