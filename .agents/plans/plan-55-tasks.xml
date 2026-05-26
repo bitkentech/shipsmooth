@@ -114,6 +114,18 @@
             <deviations/>
             <depends-on>8</depends-on>
         </task>
+        <task>
+            <id>10</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Final smoke test on Windows after all fixes</name>
+            <commit></commit>
+            <created-from>plan-55-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>9</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
