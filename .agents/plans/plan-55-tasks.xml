@@ -123,9 +123,9 @@
         <task>
             <id>10</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add README.md to shipsmooth-windows repo</name>
-            <commit></commit>
+            <commit>1231b0a195a47f82e64efcd73f8e8ab9514f7307</commit>
             <created-from>plan-55-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
