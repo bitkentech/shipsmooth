@@ -94,7 +94,7 @@
             <id>8</id>
             <risk>low</risk>
             <status>pending</status>
-            <name>Fix hook command — add MSYS_NO_PATHCONV=1 and re-smoke-test</name>
+            <name>Move build-windows static sources into plugin-resources and gitignore build-windows</name>
             <commit></commit>
             <created-from>plan-55-v4</created-from>
             <closed-at-version></closed-at-version>
@@ -106,7 +106,7 @@
             <id>9</id>
             <risk>low</risk>
             <status>pending</status>
-            <name>Add README.md to shipsmooth-windows repo</name>
+            <name>Fix hook command — add MSYS_NO_PATHCONV=1</name>
             <commit></commit>
             <created-from>plan-55-v4</created-from>
             <closed-at-version></closed-at-version>
@@ -118,13 +118,25 @@
             <id>10</id>
             <risk>low</risk>
             <status>pending</status>
+            <name>Add README.md to shipsmooth-windows repo</name>
+            <commit></commit>
+            <created-from>plan-55-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>8</depends-on>
+        </task>
+        <task>
+            <id>11</id>
+            <risk>low</risk>
+            <status>pending</status>
             <name>Final smoke test on Windows after all fixes</name>
             <commit></commit>
             <created-from>plan-55-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>9</depends-on>
+            <depends-on>9,10</depends-on>
         </task>
     </tasks>
     <project-updates>
