@@ -4,7 +4,7 @@
     <plan-version>plan-55-v1</plan-version>
     <metadata>
         <backlog-issue>PB-52</backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-05-22</created>
     </metadata>
     <tasks>
@@ -161,6 +161,11 @@
         <update>
             <timestamp>2026-05-22T12:00:00.000+05:30</timestamp>
             <message>Plan initialised. Tasks migrated from Plan 54 (6→1, 7→2, 10→3, 9→4) plus new Task 5 for dry-run validation.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-26T14:44:33.756+05:30</timestamp>
+            <message>Plan complete. All 12 tasks delivered. Windows v0.3.10 release published to shipsmooth-windows.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
