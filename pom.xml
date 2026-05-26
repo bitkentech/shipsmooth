@@ -6,7 +6,7 @@
 
   <groupId>io.bitken</groupId>
   <artifactId>shipsmooth</artifactId>
-  <version>0.3.10-fix5</version>
+  <version>0.3.10</version>
   <packaging>pom</packaging>
 
   <modules>
