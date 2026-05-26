@@ -135,9 +135,9 @@
         <task>
             <id>11</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Final smoke test on Windows after all fixes</name>
-            <commit></commit>
+            <commit>cc67c65c6f96c5f86c64b6a0cc832fd86b662511</commit>
             <created-from>plan-55-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
