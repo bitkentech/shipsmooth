@@ -147,9 +147,9 @@
         <task>
             <id>12</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Link to shipsmooth-windows from main README.md</name>
-            <commit></commit>
+            <commit>7ab1ee908af300c98101222df85689233ed2ef36</commit>
             <created-from>plan-55-v5</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
