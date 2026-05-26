@@ -14,6 +14,7 @@ public class PublishRelease {
     private final Path darwinX64JdkHome;
     private final Path darwinArm64JdkHome;
     private final Path windowsX64JdkHome;
+    private final Path windowsRepoPath;
     private final boolean skipValidation;
 
     public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome, Path windowsX64JdkHome) {
@@ -21,19 +22,27 @@ public class PublishRelease {
     }
 
     public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome, Path windowsX64JdkHome, boolean skipValidation) {
+        this(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome, windowsX64JdkHome,
+                repoRoot.getParent().resolve("shipsmooth-windows"), skipValidation);
+    }
+
+    public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome, Path windowsX64JdkHome, Path windowsRepoPath, boolean skipValidation) {
         this.version = version;
         this.repoRoot = repoRoot;
         this.linuxJdkHome = linuxJdkHome;
         this.darwinX64JdkHome = darwinX64JdkHome;
         this.darwinArm64JdkHome = darwinArm64JdkHome;
         this.windowsX64JdkHome = windowsX64JdkHome;
+        this.windowsRepoPath = windowsRepoPath;
         this.skipValidation = skipValidation;
     }
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
             System.err.println("Usage: PublishRelease <version>");
-            System.err.println("Optional: -Dshipsmooth.repo.root=<repo-root> -Djdk.semeru.linux-x64=<path> -Djdk.semeru.darwin-x64=<path> -Djdk.semeru.darwin-arm64=<path>");
+            System.err.println("Optional: -Dshipsmooth.repo.root=<path> -Dshipsmooth.windows.repo=<path>");
+            System.err.println("         -Djdk.semeru.linux-x64=<path> -Djdk.semeru.darwin-x64=<path>");
+            System.err.println("         -Djdk.semeru.darwin-arm64=<path> -Djdk.semeru.windows-x64=<path>");
             System.exit(1);
         }
         String version = args[0];
@@ -43,7 +52,8 @@ public class PublishRelease {
         Path darwinX64JdkHome = Path.of(System.getProperty("jdk.semeru.darwin-x64", "/opt/installers/jdk-semeru-mac-x64/Contents/Home"));
         Path darwinArm64JdkHome = Path.of(System.getProperty("jdk.semeru.darwin-arm64", "/opt/installers/jdk-semeru-mac-arm64/Contents/Home"));
         Path windowsX64JdkHome = Path.of(System.getProperty("jdk.semeru.windows-x64", "/opt/installers/jdk-semeru-win-x64/jdk-25.0.2+10"));
-        new PublishRelease(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome, windowsX64JdkHome, skipValidation).run();
+        Path windowsRepoPath = Path.of(System.getProperty("shipsmooth.windows.repo", repoRoot.getParent().resolve("shipsmooth-windows").toString()));
+        new PublishRelease(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome, windowsX64JdkHome, windowsRepoPath, skipValidation).run();
     }
 
     public void run() throws IOException, InterruptedException {
@@ -63,6 +73,9 @@ public class PublishRelease {
         } finally {
             git("checkout", "-f", originalBranch);
         }
+
+        buildWindowsPlugin();
+        publishWindowsRelease(mainSha);
 
         System.out.println("Release v" + version + " complete.");
     }
@@ -122,6 +135,41 @@ public class PublishRelease {
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-tasks-" + version + "-darwin-arm64.zip"));
         new PackageRuntime("win32-x64", windowsX64JdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-windows-x64"), outputDir, version).run();
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-tasks-" + version + "-win32-x64.zip"));
+    }
+
+    private void buildWindowsPlugin() throws IOException, InterruptedException {
+        Path buildDir = repoRoot.resolve("build-windows");
+        if (Files.exists(buildDir)) deleteDirectory(buildDir);
+
+        runCommand(List.of("mvn", "-f", repoRoot.resolve("pom.xml").toString(),
+                "compile", "-Pwindows", "-P!dev"), repoRoot);
+        System.out.println("Windows plugin build complete: " + buildDir);
+    }
+
+    private void publishWindowsRelease(String mainSha) throws IOException, InterruptedException {
+        if (!Files.exists(windowsRepoPath)) {
+            throw new IllegalStateException("Windows repo not found at: " + windowsRepoPath +
+                "\nClone bitkentech/shipsmooth-windows there or pass -Dshipsmooth.windows.repo=<path>");
+        }
+
+        Path buildDir = repoRoot.resolve("build-windows");
+
+        // Wipe working tree, create fresh orphan commit — no history retained
+        runCommand(List.of("git", "checkout", "--orphan", "releases-" + version), windowsRepoPath);
+        runCommand(List.of("git", "rm", "-rf", "--quiet", "."), windowsRepoPath);
+
+        // Copy plugin payload
+        copyRecursive(buildDir.resolve(".claude-plugin"), windowsRepoPath.resolve(".claude-plugin"));
+        copyRecursive(buildDir.resolve("hooks"),          windowsRepoPath.resolve("hooks"));
+        copyRecursive(buildDir.resolve("skills"),         windowsRepoPath.resolve("skills"));
+        copyRecursive(repoRoot.resolve("plugin-tasks-java/target/jlink-image-windows-x64"),
+                      windowsRepoPath.resolve("runtime"));
+
+        runCommand(List.of("git", "add", "."), windowsRepoPath);
+        runCommand(List.of("git", "commit", "-m", "release: v" + version + " (main: " + mainSha + ")"), windowsRepoPath);
+        runCommand(List.of("git", "branch", "-M", "releases-" + version, "main"), windowsRepoPath);
+        runCommand(List.of("git", "push", "origin", "main", "--force"), windowsRepoPath);
+        System.out.println("Windows release v" + version + " pushed to " + windowsRepoPath);
     }
 
     private void syncDistAndPublish(String mainSha) throws IOException, InterruptedException {

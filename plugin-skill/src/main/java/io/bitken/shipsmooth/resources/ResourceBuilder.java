@@ -28,10 +28,12 @@ public class ResourceBuilder {
         String skillName      = profile.skillName(startBase);
         // Shell expression mirrors resolveCache() in session-start.ts — keep in sync with base-workflow.jte.md
         String cliBin         = profile.cliBin(pluginVersion);
+        // repo name drives the Claude Code plugin cache path — may differ from pluginName (e.g. Windows repo is shipsmooth-windows but plugin is shipsmooth)
+        String repoName       = System.getProperty("plugin.repo.name", pluginName);
 
         PluginModel model = new PluginModel(
             pluginName, pluginVersion, pluginDesc,
-            skillName, cliBin, frontmatter, profile.platform(), jlinkDir
+            skillName, cliBin, frontmatter, profile.platform(), jlinkDir, repoName
         );
 
         boolean experimentalEnabled = Boolean.parseBoolean(System.getProperty("experimental.enabled", "false"));
@@ -65,7 +67,7 @@ public class ResourceBuilder {
             ---""".formatted(tlaSkillName);
         PluginModel tlaModel = new PluginModel(
             pluginName, pluginVersion, pluginDesc,
-            tlaSkillName, cliBin, tlaFrontmatter, profile.platform(), jlinkDir
+            tlaSkillName, cliBin, tlaFrontmatter, profile.platform(), jlinkDir, repoName
         );
         Path tlaSkillDir = Path.of(buildOutputDir, "skills", tlaSkillName);
         Files.createDirectories(tlaSkillDir);
@@ -81,7 +83,7 @@ public class ResourceBuilder {
             ---""".formatted(parallelSkillName);
         PluginModel parallelModel = new PluginModel(
             pluginName, pluginVersion, pluginDesc,
-            parallelSkillName, cliBin, parallelFrontmatter, profile.platform(), jlinkDir
+            parallelSkillName, cliBin, parallelFrontmatter, profile.platform(), jlinkDir, repoName
         );
         Path parallelSkillDir = Path.of(buildOutputDir, "skills", parallelSkillName);
         Files.createDirectories(parallelSkillDir);
@@ -109,7 +111,19 @@ public class ResourceBuilder {
     }
 
     static void writeHooksJson(ObjectMapper mapper, PluginModel model, Path outputFile) throws IOException {
-        String command = System.getProperty("plugin.hook.command", "node \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"");
+        String command;
+        if ("windows".equals(model.platform())) {
+            String v    = model.pluginVersion();
+            String repo = model.repoName();
+            String name = model.pluginName();
+            // MSYS_NO_PATHCONV=1 prevents Git Bash's MSYS2 layer from translating /C to C:
+            String batPath = "%USERPROFILE%\\.claude\\plugins\\cache\\bitkentech\\" + repo + "\\" + v + "\\hooks\\install-runtime.bat";
+            command = "MSYS_NO_PATHCONV=1 cmd.exe /C \"" + batPath + "\"";
+            Path batFile = outputFile.resolveSibling("install-runtime.bat");
+            writeInstallRuntimeBat(batFile, repo, name, v);
+        } else {
+            command = System.getProperty("plugin.hook.command", "node \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"");
+        }
 
         ObjectNode hook = mapper.createObjectNode()
             .put("type", "command")
@@ -123,6 +137,17 @@ public class ResourceBuilder {
         root.putObject("hooks").set("SessionStart", sessionStart);
 
         mapper.writerWithDefaultPrettyPrinter().writeValue(outputFile.toFile(), root);
+    }
+
+    static void writeInstallRuntimeBat(Path outputFile, String repo, String pluginName, String version) throws IOException {
+        String dest = "%LOCALAPPDATA%\\" + pluginName + "\\" + version + "\\runtime";
+        String src  = "%USERPROFILE%\\.claude\\plugins\\cache\\bitkentech\\" + repo + "\\" + version + "\\runtime";
+        String bat = "@echo off\r\n" +
+                     "if exist \"" + src + "\" (\r\n" +
+                     "    mkdir \"" + dest + "\" 2>nul\r\n" +
+                     "    xcopy /E /Y /I \"" + src + "\" \"" + dest + "\"\r\n" +
+                     ")\r\n";
+        Files.writeString(outputFile, bat);
     }
 
     static void writeSessionStartConfig(ObjectMapper mapper, PluginModel model, Path outputFile) throws IOException {

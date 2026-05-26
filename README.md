@@ -17,7 +17,7 @@ The workflow borrows ideas from the [Spiral Model](https://en.wikipedia.org/wiki
 
 ## Installation
 
-### Claude Code
+### Claude Code (Linux / macOS)
 
 First, register the marketplace (one-time setup):
 ```
@@ -28,6 +28,10 @@ Then install the plugin:
 ```
 /plugin install shipsmooth@bitkentech
 ```
+
+### Claude Code (Windows)
+
+See the [shipsmooth-windows README](https://github.com/bitkentech/shipsmooth-windows) for Windows-specific installation instructions.
 
 ### Gemini CLI
 

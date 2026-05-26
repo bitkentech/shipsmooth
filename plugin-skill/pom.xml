@@ -160,6 +160,10 @@
                   <key>experimental.enabled</key>
                   <value>${experimental.enabled}</value>
                 </systemProperty>
+                <systemProperty>
+                  <key>plugin.repo.name</key>
+                  <value>${plugin.repo.name}</value>
+                </systemProperty>
               </systemProperties>
             </configuration>
           </execution>
