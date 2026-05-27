@@ -147,6 +147,18 @@
             <deviations/>
             <depends-on>10,11</depends-on>
         </task>
+        <task>
+            <id>13</id>
+            <risk>low</risk>
+            <status>todo</status>
+            <name>Delete unused TypeScript files from integrations/common/scripts/tasks/</name>
+            <commit></commit>
+            <created-from>plan-57-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <depends-on>12</depends-on>
+            <comments/>
+            <deviations/>
+        </task>
     </tasks>
     <project-updates>
         <update>

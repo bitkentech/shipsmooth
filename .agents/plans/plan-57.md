@@ -200,6 +200,13 @@ Files:
 - Move physical directories: `io/bitken/shipsmooth/resources/` → `io/bitken/ss/resources/`
 *Depends-on: 9*
 
+### Task 13: Delete unused TypeScript files from `integrations/common/scripts/tasks/` [Low]
+TypeScript is no longer used now that the CLI is Java-only. The following files are dead code and should be removed:
+`add-comment.ts`, `add-deviation.ts`, `hello.ts`, `init.ts`, `project-update.ts`, `set-commit.ts`, `show.ts`, `types.ts`, `update-status.ts`, `xml-utils.ts`.
+
+Keep: `session-start.ts` (still active), `adm-zip-bundle.d.ts` (type declaration used by session-start), `plan-tasks.xsd` (JAXB source for `app/pom.xml`).
+*Depends-on: 12*
+
 ### Task 12: Update remaining docs and stragglers [Low]
 - `docs/decisions/2026-04-27-jlink-startup-optimisation.md` — references to old package names
 - `docs/observations/2026-04-28-jaxb-jlink-bloat.md` — references to old package names
@@ -222,3 +229,4 @@ Files:
 10. Task 10 — Rename `packaging/` module package to `io.bitken.ss.dist` [Low]
 11. Task 11 — Rename `integrations/common/` module package to `io.bitken.ss.resources` [Low]
 12. Task 12 — Update remaining docs and stragglers [Low]
+13. Task 13 — Delete unused TypeScript files from `integrations/common/scripts/tasks/` [Low]
