@@ -1,4 +1,4 @@
-@param io.bitken.shipsmooth.resources.PluginModel model
+@param io.bitken.ss.resources.PluginModel model
 
 Use the Monitor tool with this command:
 ```bash

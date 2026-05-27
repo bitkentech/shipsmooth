@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.resources;
+package io.bitken.ss.resources;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

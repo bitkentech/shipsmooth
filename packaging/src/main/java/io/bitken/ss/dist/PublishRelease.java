@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.dist;
+package io.bitken.ss.dist;
 
 import java.io.IOException;
 import java.nio.file.*;

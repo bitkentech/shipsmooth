@@ -114,7 +114,7 @@
         <task>
             <id>10</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Rename packaging/ module package to io.bitken.ss.dist</name>
             <commit></commit>
             <created-from>plan-57-v2</created-from>
@@ -126,7 +126,7 @@
         <task>
             <id>11</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Rename integrations/common/ module package to io.bitken.ss.resources</name>
             <commit></commit>
             <created-from>plan-57-v2</created-from>
@@ -138,7 +138,7 @@
         <task>
             <id>12</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Update remaining docs and stragglers</name>
             <commit></commit>
             <created-from>plan-57-v2</created-from>

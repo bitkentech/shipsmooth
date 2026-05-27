@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.dist;
+package io.bitken.ss.dist;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

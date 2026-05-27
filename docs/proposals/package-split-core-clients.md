@@ -50,7 +50,7 @@ A package split avoids all three traps so long as behaviour stays on the domain 
 ## 3. Proposed package layout
 
 ```
-io.bitken.shipsmooth.tasks
+io.bitken.ss
 ├── core/                    ← domain + services (the "library")
 │   ├── workflow/            ← domain: plans, tasks, state machine
 │   ├── ledger/              ← domain: ledger entries, events

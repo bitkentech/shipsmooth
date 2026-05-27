@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.dist;
+package io.bitken.ss.dist;
 
 import org.apache.commons.compress.archivers.zip.UnixStat;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -98,7 +98,7 @@ public class PackageRuntime {
              + "\"%INSTALL%\\runtime\\bin\\java.exe\" ^\r\n"
              + "  -Xquickstart ^\r\n"
              + "  -Xshareclasses:name=shipsmooth_v" + version + ",cacheDir=\"%SCC_DIR%\",nonfatal ^\r\n"
-             + "  -m io.bitken.shipsmooth.tasks/io.bitken.shipsmooth.tasks.TasksCli %*\r\n";
+             + "  -m io.bitken.ss/io.bitken.ss.cli.Shipsmooth %*\r\n";
     }
 
     private String buildLauncher() {
@@ -111,7 +111,7 @@ public class PackageRuntime {
                 exec "$INSTALL/runtime/bin/java" \\
                   -Xquickstart \\
                   -Xshareclasses:name=shipsmooth_v%s,cacheDir="$SCC_DIR",nonfatal \\
-                  -m io.bitken.shipsmooth.tasks/io.bitken.shipsmooth.tasks.TasksCli "$@"
+                  -m io.bitken.ss/io.bitken.ss.cli.Shipsmooth "$@"
                 """.formatted(version);
     }
 }

@@ -1,4 +1,4 @@
-@param io.bitken.shipsmooth.resources.PluginModel model
+@param io.bitken.ss.resources.PluginModel model
 
 **Step 2 — run integrate in the background** (Bash tool with `run_in_background: true`):
 

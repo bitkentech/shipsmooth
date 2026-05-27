@@ -102,7 +102,7 @@
             <phase>compile</phase>
             <goals><goal>java</goal></goals>
             <configuration>
-              <mainClass>io.bitken.shipsmooth.resources.ResourceBuilder</mainClass>
+              <mainClass>io.bitken.ss.resources.ResourceBuilder</mainClass>
               <systemProperties>
                 <systemProperty>
                   <key>build.outputDir</key>

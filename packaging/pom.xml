@@ -112,7 +112,7 @@
             <id>validate-release</id>
             <goals><goal>java</goal></goals>
             <configuration>
-              <mainClass>io.bitken.shipsmooth.dist.ValidateRelease</mainClass>
+              <mainClass>io.bitken.ss.dist.ValidateRelease</mainClass>
               <systemProperties>
                 <systemProperty>
                   <key>build.outputDir</key>
@@ -130,7 +130,7 @@
             <id>package-runtime</id>
             <goals><goal>java</goal></goals>
             <configuration>
-              <mainClass>io.bitken.shipsmooth.dist.PackageRuntime</mainClass>
+              <mainClass>io.bitken.ss.dist.PackageRuntime</mainClass>
               <arguments>
                 <argument>linux-x64</argument>
                 <argument>${jdk.semeru.linux-x64}</argument>
@@ -152,7 +152,7 @@
             <id>package-runtime-darwin-x64</id>
             <goals><goal>java</goal></goals>
             <configuration>
-              <mainClass>io.bitken.shipsmooth.dist.PackageRuntime</mainClass>
+              <mainClass>io.bitken.ss.dist.PackageRuntime</mainClass>
               <arguments>
                 <argument>darwin-x64</argument>
                 <argument>${jdk.semeru.darwin-x64}</argument>
@@ -174,7 +174,7 @@
             <id>package-runtime-darwin-arm64</id>
             <goals><goal>java</goal></goals>
             <configuration>
-              <mainClass>io.bitken.shipsmooth.dist.PackageRuntime</mainClass>
+              <mainClass>io.bitken.ss.dist.PackageRuntime</mainClass>
               <arguments>
                 <argument>darwin-arm64</argument>
                 <argument>${jdk.semeru.darwin-arm64}</argument>
@@ -196,7 +196,7 @@
             <id>package-runtime-windows-x64</id>
             <goals><goal>java</goal></goals>
             <configuration>
-              <mainClass>io.bitken.shipsmooth.dist.PackageRuntime</mainClass>
+              <mainClass>io.bitken.ss.dist.PackageRuntime</mainClass>
               <arguments>
                 <argument>win32-x64</argument>
                 <argument>${jdk.semeru.windows-x64}</argument>
@@ -218,7 +218,7 @@
             <id>publish-release</id>
             <goals><goal>java</goal></goals>
             <configuration>
-              <mainClass>io.bitken.shipsmooth.dist.PublishRelease</mainClass>
+              <mainClass>io.bitken.ss.dist.PublishRelease</mainClass>
               <arguments>
                 <argument>${shipsmooth.release.version}</argument>
               </arguments>

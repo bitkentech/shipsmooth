@@ -1,4 +1,4 @@
-@param io.bitken.shipsmooth.resources.PluginModel model
+@param io.bitken.ss.resources.PluginModel model
 
 If the user chooses **Yes**: patch `.claude/settings.json` in the target repo (see below), then proceed with the parallel dispatch.
 If the user chooses **No**: execute all tasks sequentially in the main context window using the standard per-task loop instead. Do not dispatch any `Agent` tool calls.

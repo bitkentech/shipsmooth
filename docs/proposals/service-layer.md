@@ -14,7 +14,7 @@ As Shipsmooth evolves from a local-first CLI tool toward a broader ecosystem (We
 
 ## 2. The Problem: The "Thick Command" Trap
 
-Several commands in `io.bitken.shipsmooth.tasks.commands` today act as mini-orchestrators. `WorkerInitCommand`, for instance, is responsible for calculating branch names, coordinating with `WorktreeService` to modify the filesystem, and determining the state to record via `LedgerService`. The PicoCLI `call()` method is the orchestrator.
+Several commands in `io.bitken.ss.commands` today act as mini-orchestrators. `WorkerInitCommand`, for instance, is responsible for calculating branch names, coordinating with `WorktreeService` to modify the filesystem, and determining the state to record via `LedgerService`. The PicoCLI `call()` method is the orchestrator.
 
 This coupling produces three concrete failure modes:
 

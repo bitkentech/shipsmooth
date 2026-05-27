@@ -12,14 +12,14 @@
 the plan task XML files at `.agents/plans/plan-N-tasks.xml`. The module declaration is:
 
 ```java
-module io.bitken.shipsmooth.tasks {
+module io.bitken.ss {
     requires info.picocli;
     requires jakarta.xml.bind;
     requires java.xml;
     requires org.glassfish.jaxb.runtime;
 
-    opens io.bitken.shipsmooth.tasks.commands to info.picocli;
-    opens io.bitken.shipsmooth.tasks.jaxb to jakarta.xml.bind;
+    opens io.bitken.ss.commands to info.picocli;
+    opens io.bitken.ss.jaxb to jakarta.xml.bind;
 }
 ```
 
@@ -27,7 +27,7 @@ The only JAXB consumer is a single class:
 `plugin-tasks-java/src/main/java/io/bitken/shipsmooth/tasks/service/XmlService.java`
 (two methods: `readPlanTasks` and `writePlanTasks`, lines 31–42).
 
-The 14 JAXB-annotated POJOs under `io.bitken.shipsmooth.tasks.jaxb` are generated at
+The 14 JAXB-annotated POJOs under `io.bitken.ss.jaxb` are generated at
 compile time by `jaxb2-maven-plugin` from
 `plugin-node/src/main/scripts/tasks/plan-tasks.xsd`.
 

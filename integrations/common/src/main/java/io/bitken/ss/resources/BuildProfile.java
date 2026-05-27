@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.resources;
+package io.bitken.ss.resources;
 
 public record BuildProfile(String platform, String env, String basePluginName) {
 

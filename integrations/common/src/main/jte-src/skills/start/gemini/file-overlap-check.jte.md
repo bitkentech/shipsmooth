@@ -1,4 +1,4 @@
-@param io.bitken.shipsmooth.resources.PluginModel model
+@param io.bitken.ss.resources.PluginModel model
 
 Run `git branch -l 'agent-work/*' --format '%(refname:short)'` to list agent-work branches. For each branch printed, run these two commands, substituting the branch name for `{branch}`:
 ```bash
