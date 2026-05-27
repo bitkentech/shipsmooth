@@ -11,7 +11,8 @@
 
   <modules>
     <module>hooks</module>
-    <module>plugin-resources</module>
+    <module>integrations/claude</module>
+    <module>integrations/gemini</module>
     <module>skills</module>
     <module>packaging</module>
     <module>devel</module>

@@ -41,7 +41,7 @@
     </dependency>
     <dependency>
       <groupId>io.bitken</groupId>
-      <artifactId>plugin-resources</artifactId>
+      <artifactId>integration-claude</artifactId>
       <version>${project.version}</version>
       <type>pom</type>
     </dependency>
