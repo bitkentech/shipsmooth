@@ -147,6 +147,7 @@
 
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini-dev</build.outputDir>
 
+        <plugin.name>${plugin.base.name}-dev</plugin.name>
         <plugin.description>Agent coding workflow (dev build)</plugin.description>
         <plugin.hook.base>node "${extensionPath}/dist/session-start.js"</plugin.hook.base>
 
