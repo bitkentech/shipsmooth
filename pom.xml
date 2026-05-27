@@ -13,7 +13,7 @@
     <module>hooks</module>
     <module>plugin-resources</module>
     <module>skills</module>
-    <module>plugin-dist</module>
+    <module>packaging</module>
     <module>devel</module>
     <module>app</module>
   </modules>
