@@ -12,7 +12,7 @@
   <modules>
     <module>hooks</module>
     <module>plugin-resources</module>
-    <module>plugin-skill</module>
+    <module>skills</module>
     <module>plugin-dist</module>
     <module>devel</module>
     <module>app</module>
