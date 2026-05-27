@@ -45,19 +45,55 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Migrate remaining CLI commands to PlanService</name>
-            <commit></commit>
+            <commit>15542d13f2b809c0061e2b9f80f468664a52d10f</commit>
             <created-from>plan-59-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
             <depends-on>3</depends-on>
         </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Rename XmlService → TaskStore and move to gw/</name>
+            <commit></commit>
+            <created-from>plan-59-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Rename GitTagService → GitTags and move to gw/</name>
+            <commit></commit>
+            <created-from>plan-59-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Move PlanService and friends to svc/plan/</name>
+            <commit></commit>
+            <created-from>plan-59-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>6</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-05-27T17:10:55.311+05:30</timestamp>
+            <timestamp>2026-05-27T18:42:12.090+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
