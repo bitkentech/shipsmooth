@@ -183,6 +183,31 @@ Rename `META-INF/native-image/io.bitken.shipsmooth.tasks/` → `META-INF/native-
 Run `mvn compile` then `mvn test -pl app -am`. Fix any stragglers.
 *Depends-on: 1,2,3,4,5,6,7,8*
 
+### Task 10: Rename `packaging/` module package `io.bitken.shipsmooth.dist` → `io.bitken.ss.dist` [Low]
+Files:
+- `packaging/src/main/java/io/bitken/shipsmooth/dist/{PackageRuntime,PublishRelease,ValidateRelease}.java` — update `package` declarations
+- `packaging/src/test/java/io/bitken/shipsmooth/dist/{PackageRuntimeTest,PublishReleaseTest,ValidateReleaseTest}.java` — update `package` declarations
+- `packaging/pom.xml` — update `<mainClass>` references (6 occurrences)
+- Move physical directories: `io/bitken/shipsmooth/dist/` → `io/bitken/ss/dist/`
+*Depends-on: 9*
+
+### Task 11: Rename `integrations/common/` module package `io.bitken.shipsmooth.resources` → `io.bitken.ss.resources` [Low]
+Files:
+- `integrations/common/src/main/java/io/bitken/shipsmooth/resources/{BuildProfile,PluginModel,ResourceBuilder}.java` — update `package` declarations
+- `integrations/common/src/test/java/io/bitken/shipsmooth/resources/{BuildProfileTest,ResourceBuilderIntegrationTest}.java` — update `package` declarations
+- `integrations/common/pom.xml` — update `<mainClass>` reference
+- `.jte.md` templates that reference `io.bitken.shipsmooth.resources.PluginModel` — update to `io.bitken.ss.resources.PluginModel`
+- Move physical directories: `io/bitken/shipsmooth/resources/` → `io/bitken/ss/resources/`
+*Depends-on: 9*
+
+### Task 12: Update remaining docs and stragglers [Low]
+- `docs/decisions/2026-04-27-jlink-startup-optimisation.md` — references to old package names
+- `docs/observations/2026-04-28-jaxb-jlink-bloat.md` — references to old package names
+- `docs/proposals/package-split-core-clients.md` — references to old package names
+- `docs/proposals/service-layer.md` — references to old package names
+- Any other files surfaced by `grep -r "io.bitken.shipsmooth" .`
+*Depends-on: 10,11*
+
 ## Risk-sorted task order
 
 1. Task 1 — Rename package declarations in all Java source files [Medium]
@@ -194,3 +219,6 @@ Run `mvn compile` then `mvn test -pl app -am`. Fix any stragglers.
 7. Task 7 — Update `app/pom.xml` [Low]
 8. Task 8 — Rename and update native-image resource directory [Low]
 9. Task 9 — Verify full build and tests pass [Low]
+10. Task 10 — Rename `packaging/` module package to `io.bitken.ss.dist` [Low]
+11. Task 11 — Rename `integrations/common/` module package to `io.bitken.ss.resources` [Low]
+12. Task 12 — Update remaining docs and stragglers [Low]
