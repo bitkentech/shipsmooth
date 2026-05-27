@@ -10,7 +10,7 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>plugin-node</module>
+    <module>hooks</module>
     <module>plugin-resources</module>
     <module>plugin-skill</module>
     <module>plugin-dist</module>

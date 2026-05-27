@@ -10,7 +10,7 @@
     <version>0.3.10</version>
   </parent>
 
-  <artifactId>plugin-node</artifactId>
+  <artifactId>hooks</artifactId>
   <packaging>pom</packaging>
 
   <build>
