@@ -67,9 +67,9 @@ public class ServicesModule {
             ProcessRunner processes,
             WorktreeService worktreeService,
             EventLedger ledgerService,
-            TaskStore xmlService,
+            TaskStore taskStore,
             io.bitken.ss.workflow.ProgressReporter reporter) {
-        return new WorkflowServiceImpl(repoRoot, processes, worktreeService, ledgerService, xmlService, reporter);
+        return new WorkflowServiceImpl(repoRoot, processes, worktreeService, ledgerService, taskStore, reporter);
     }
 
     @Provides
@@ -80,8 +80,8 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    PlanService providePlanService(TaskStore xml, EventLedger ledger) {
-        return new PlanService(xml, ledger);
+    PlanService providePlanService(TaskStore taskStore, EventLedger ledger) {
+        return new PlanService(taskStore, ledger);
     }
 
     @Provides

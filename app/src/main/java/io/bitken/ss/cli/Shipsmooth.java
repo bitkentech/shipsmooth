@@ -33,7 +33,7 @@ public class Shipsmooth {
     private final List<Callable<?>> experimentalCommands = new ArrayList<>();
 
     public Shipsmooth(AppComponents app) {
-        TaskStore xml = app.xmlService();
+        TaskStore taskStore = app.taskStore();
         EventLedger ledger = app.eventLedger();
         PlanService planService = app.planService();
         WorktreeService worktree = app.worktreeService();
@@ -63,7 +63,7 @@ public class Shipsmooth {
             boolean enableExperimental;
         }));
 
-        for (Callable<?> command : buildCommands(xml, ledger, planService, worktree, workflow, workflowImpl)) {
+        for (Callable<?> command : buildCommands(taskStore, ledger, planService, worktree, workflow, workflowImpl)) {
             if (command instanceof FeatureFlags ff && ff.isExperimental()) {
                 experimentalCommands.add(command);
             } else {

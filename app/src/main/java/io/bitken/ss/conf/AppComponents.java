@@ -12,7 +12,7 @@ import jakarta.inject.Singleton;
 @Singleton
 @Component(modules = ServicesModule.class)
 public interface AppComponents {
-    TaskStore xmlService();
+    TaskStore taskStore();
     EventLedger eventLedger();
     PlanService planService();
     WorktreeService worktreeService();
