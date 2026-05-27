@@ -91,13 +91,37 @@
             <id>8</id>
             <risk>low</risk>
             <status>pending</status>
-            <name>Manual testing of dev build, Gemini build, and mvn clean</name>
+            <name>Move top-level scripts/ into devel/</name>
             <commit></commit>
             <created-from>plan-56-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
             <depends-on>7</depends-on>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Fix REPO_ROOT paths in moved scripts</name>
+            <commit></commit>
+            <created-from>plan-56-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>8</depends-on>
+        </task>
+        <task>
+            <id>10</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Manual testing of dev build, Gemini build, and mvn clean</name>
+            <commit></commit>
+            <created-from>plan-56-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>9</depends-on>
         </task>
     </tasks>
     <project-updates>

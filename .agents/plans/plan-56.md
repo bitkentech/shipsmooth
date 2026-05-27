@@ -124,6 +124,50 @@ module. This makes "shared integration source" a first-class concept.
 
 *Depends-on: 6*
 
+### Task 8: Move top-level scripts/ into devel/ [Low]
+
+The top-level `scripts/` directory contains developer shell utilities
+(release, smoke test, experiments). These belong under `devel/` alongside
+other development-only tooling.
+
+- `mv scripts/ devel/scripts/`
+- Update `DEVELOPMENT.md`: replace `./scripts/` with `./devel/scripts/` in
+  all usage examples (smoke-gemini, release-gemini invocations)
+
+*Depends-on: 7*
+
+### Task 9: Fix REPO_ROOT paths in moved scripts [Low]
+
+All scripts in `devel/scripts/` compute `REPO_ROOT` as `$SCRIPT_DIR/..`,
+which resolved to the repo root when scripts lived at `scripts/` (one level
+deep). Now at `devel/scripts/` (two levels deep), they must go up two levels.
+
+Scripts using `${SCRIPT_DIR}/..`:
+- `experiment-jlink-with-shr.sh`
+- `package-tasks-java.sh`
+- `release.sh`
+- `release-gemini.sh`
+- `experiment-startup-matrix.sh`
+
+Change each: `"${SCRIPT_DIR}/.."` → `"${SCRIPT_DIR}/../.."`
+
+Scripts using inline `$(dirname "${BASH_SOURCE[0]}")/..`:
+- `test-gemini-hook.sh`
+- `smoke-gemini.sh`
+
+Change each: `$(dirname "${BASH_SOURCE[0]}")/.."` → `$(dirname "${BASH_SOURCE[0]}")/../../.."` (note: these
+inline forms don't use `SCRIPT_DIR`, so they need three `..` segments
+total: `dirname` gives the dir, then `/../..` goes up two levels)
+
+Also fix `smoke-gemini.sh` line that invokes `test-gemini-hook.sh` via
+`$REPO_ROOT/scripts/test-gemini-hook.sh` → `$REPO_ROOT/devel/scripts/test-gemini-hook.sh`
+
+*Depends-on: 8*
+
+### Task 10: Manual testing of dev build, Gemini build, and mvn clean [Low]
+
+*Depends-on: 9*
+
 ## Verification
 
 After tasks 1–5 (renames):
@@ -149,4 +193,11 @@ mvn -Pdev package -DskipTests
 mvn -Pgemini package -DskipTests
 # Spot-check SKILL.md contains harness-specific agent commands
 grep -q "agent-resolver-call" build/skills/start/SKILL.md
+```
+
+After tasks 8–9 (scripts move):
+```bash
+ls devel/scripts/
+# Verify REPO_ROOT resolves correctly:
+bash -c 'SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"; echo $REPO_ROOT' -- devel/scripts/release.sh
 ```
