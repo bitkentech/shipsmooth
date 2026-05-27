@@ -33,9 +33,9 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Migrate UpdateStatus to PlanService (tracer bullet)</name>
-            <commit></commit>
+            <commit>446e305d87b186381e3d355e74dede47b791b6f5</commit>
             <created-from>plan-59-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>

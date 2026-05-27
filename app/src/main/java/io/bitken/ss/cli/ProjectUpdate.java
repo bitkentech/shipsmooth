@@ -1,30 +1,21 @@
 package io.bitken.ss.cli;
 
-import io.bitken.ss.jaxb.PlanTasks;
-import io.bitken.ss.ledger.Event;
-import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.EventLedger;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.service.PlanService;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 public class ProjectUpdate implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
-    private final XmlService xmlService;
-    private final EventLedger ledgerService;
+    private final PlanService planService;
 
     @Inject
-    public ProjectUpdate(XmlService xmlService, EventLedger ledgerService) {
+    public ProjectUpdate(PlanService planService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
-        this.xmlService = xmlService;
-        this.ledgerService = ledgerService;
-
+        this.planService = planService;
         this.spec.name("project-update");
         this.spec.usageMessage().description("Add a project update.");
         this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
@@ -45,21 +36,8 @@ public class ProjectUpdate implements Callable<Integer>, HasSpec {
         Boolean blocked = pr.matchedOptionValue("blocked", null);
         String message = pr.matchedOptionValue("message", null);
 
-        var file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
-        var planTasks = xmlService.readPlanTasks(file);
-        xmlService.projectUpdate(planTasks, status, blocked, message);
-        xmlService.writePlanTasks(planTasks, file);
+        planService.projectUpdate(plan, status, blocked, message);
         System.out.println("Project update added.");
-
-        try {
-            ledgerService.ensureLedgerFile();
-            var payload = (status != null ? "status=" + status : "") +
-                (Boolean.TRUE.equals(blocked) ? " blocked=true" : "") +
-                (message != null ? " " + message : "");
-            ledgerService.record(Event.system(EventType.PROJECT_UPDATE, null, payload.strip(), null));
-        } catch (Exception e) {
-            System.err.println("Warning: ledger record failed (XML mutation preserved): " + e.getMessage());
-        }
         return 0;
     }
 }

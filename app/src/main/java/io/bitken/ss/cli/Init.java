@@ -2,10 +2,7 @@ package io.bitken.ss.cli;
 
 import io.bitken.ss.AgentsLayout;
 import io.bitken.ss.git.GitTagService;
-import io.bitken.ss.jaxb.PlanTasks;
-import io.bitken.ss.ledger.Event;
-import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.EventLedger;
+import io.bitken.ss.service.PlanService;
 import io.bitken.ss.service.XmlService;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
@@ -14,25 +11,24 @@ import picocli.CommandLine.Model.OptionSpec;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 public class Init implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
+    private final PlanService planService;
     private final XmlService xmlService;
-    private final EventLedger ledgerService;
     private final GitTagService gitTagService;
 
-    public Init(XmlService xmlService, EventLedger ledgerService) {
-        this(xmlService, ledgerService, new GitTagService());
+    public Init(PlanService planService, XmlService xmlService) {
+        this(planService, xmlService, new GitTagService());
     }
 
     @Inject
-    public Init(XmlService xmlService, EventLedger ledgerService, GitTagService gitTagService) {
+    public Init(PlanService planService, XmlService xmlService, GitTagService gitTagService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
+        this.planService = planService;
         this.xmlService = xmlService;
-        this.ledgerService = ledgerService;
         this.gitTagService = gitTagService;
 
         spec.name("init");
@@ -68,15 +64,12 @@ public class Init implements Callable<Integer>, HasSpec {
         var tasks = xmlService.parseTasksFromPlan(markdown);
         var planVersion = gitTagService.getPlanVersion(plan);
 
-        var planTasks = xmlService.generatePlanTasks(plan, planVersion, tasks);
-        var outFile = xmlService.planTasksFile(plan);
-        xmlService.writePlanTasks(planTasks, outFile);
+        planService.initPlan(plan, planVersion, tasks);
 
-        System.out.println("Written " + tasks.size() + " tasks to " + outFile.getPath());
+        System.out.println("Written " + tasks.size() + " tasks to " + xmlService.planTasksFile(plan).getPath());
 
         bootstrapAgentsLayout(Paths.get("."));
         ensureGitignore(Paths.get("."));
-        recordTaskRegistrations(tasks, planVersion);
         return 0;
     }
 
@@ -98,17 +91,6 @@ public class Init implements Callable<Integer>, HasSpec {
         }
         if (changed) {
             Files.writeString(gi, updated.toString());
-        }
-    }
-
-    private void recordTaskRegistrations(List<XmlService.Task> tasks, String planVersion) {
-        try {
-            for (var task : tasks) {
-                ledgerService.record(Event.forTask(EventType.TASK_REGISTRATION, String.valueOf(task.id()),
-                        null, task.name(), null));
-            }
-        } catch (Exception e) {
-            System.err.println("Warning: ledger registration failed: " + e.getMessage());
         }
     }
 }
