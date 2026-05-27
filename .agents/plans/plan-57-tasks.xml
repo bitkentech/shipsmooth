@@ -23,13 +23,12 @@
             <id>2</id>
             <risk>medium</risk>
             <status>pending</status>
-            <name>Rename `cmd/` to `cli/` and move `TasksCli` into it</name>
+            <name>Rename `cmd/` to `cli/`, move and rename `TasksCli` → `Shipsmooth`</name>
             <commit></commit>
             <created-from>plan-57-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>1</depends-on>
         </task>
         <task>
             <id>3</id>
@@ -115,7 +114,7 @@
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-05-27T15:25:44.369+05:30</timestamp>
+            <timestamp>2026-05-27T15:28:39.260+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>

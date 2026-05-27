@@ -6,7 +6,7 @@ Backlog issue: none — structural refactor. `io.bitken.shipsmooth.tasks` is too
 
 Structural changes alongside the rename:
 
-1. **`cmd` → `cli`**: more descriptive — says what the package *is* rather than abbreviating "command". `TasksCli.java` moves into `cli/` as well — it's the CLI entry point and belongs with the commands.
+1. **`cmd` → `cli`**: more descriptive — says what the package *is* rather than abbreviating "command". `TasksCli.java` moves into `cli/` and is renamed to `Shipsmooth.java` — it's the product entry point and the class name should reflect that. `TasksCli` as a class name is also updated to `Shipsmooth` throughout.
 
 2. **`conf/` package**: `di/` and `stability/` are both configuration-time concerns. Merge into `conf/`. `stability/` has only one class (`FeatureFlags`) so it dissolves directly — no sub-package.
 
@@ -37,7 +37,7 @@ Files moving between packages:
 
 | File | From | To |
 |------|------|----|
-| `TasksCli.java` | `io.bitken.ss` (root) | `io.bitken.ss.cli` |
+| `TasksCli.java` → `Shipsmooth.java` | `io.bitken.ss` (root) | `io.bitken.ss.cli` |
 
 The JAXB-generated package is controlled by `<packageName>` in `app/pom.xml`. The native-image resource dir is named after the module and must also be renamed.
 
@@ -47,7 +47,7 @@ The JAXB-generated package is controlled by `<packageName>` in `app/pom.xml`. Th
 io/bitken/ss/
 ├── AgentsLayout.java
 ├── cli/
-│   ├── TasksCli.java
+│   ├── Shipsmooth.java
 │   ├── AddComment.java
 │   ├── AddDeviation.java
 │   ├── Claim.java
@@ -105,13 +105,13 @@ io/bitken/ss/
 ### Task 1: Rename package declarations in all Java source files [Medium]
 Mechanical sed across all `.java` files in `src/main/java` and `src/test/java`. Covers both `package` statements and `import` statements. Risk: a missed file leaves a compile error; easy to catch at build time. Medium because of volume (76 files).
 
-### Task 2: Rename `cmd/` to `cli/` and move `TasksCli` into it [Medium]
+### Task 2: Rename `cmd/` to `cli/`, move and rename `TasksCli` → `Shipsmooth` [Medium]
 - Rename `cmd/` directory to `cli/`, update package declarations inside from `ss.cmd` → `ss.cli`
-- Move `TasksCli.java` from root into `cli/`, update its package declaration
-- Update all import references to `ss.cmd.*` and `ss.TasksCli` across the codebase
-- Update `module-info.java` opens directive
-- Update `<mainClass>` in `pom.xml` to `io.bitken.ss.cli.TasksCli`
-Medium because `TasksCli` is referenced from `pom.xml`, tests, and potentially the DI module.
+- Move `TasksCli.java` from root into `cli/`, rename file to `Shipsmooth.java`
+- Rename class `TasksCli` → `Shipsmooth` and update all references (imports, test files, DI wiring)
+- Update `module-info.java` opens directive (`ss.cmd` → `ss.cli`)
+- Update `<mainClass>` in `pom.xml` to `io.bitken.ss.cli.Shipsmooth`
+Medium because `TasksCli` is referenced from `pom.xml`, tests, and the DI module.
 *Depends-on: 1*
 
 ### Task 3: Move `di/` to `conf/` and dissolve `stability/` into `conf/` [Medium]
@@ -173,7 +173,7 @@ Module name + `opens` directives: `ss.cmd` → `ss.cli`, `ss.di` → `ss.conf`, 
 *Depends-on: 1,2,3,4*
 
 ### Task 7: Update `app/pom.xml` [Low]
-String replacements in `<mainClass>` (`io.bitken.ss.cli.TasksCli`), `<packageName>` (`io.bitken.ss.jaxb`), native-image args, jlink args.
+String replacements in `<mainClass>` (`io.bitken.ss.cli.Shipsmooth`), `<packageName>` (`io.bitken.ss.jaxb`), native-image args, jlink args.
 *Depends-on: 2*
 
 ### Task 8: Rename and update native-image resource directory [Low]
