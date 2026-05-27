@@ -48,7 +48,7 @@ const https = __importStar(require("node:https"));
 const promises_1 = require("node:stream/promises");
 const adm_zip_bundle_1 = __importDefault(require("./adm-zip-bundle"));
 function runtimeBin(runtimeDir, platform) {
-    return path.join(runtimeDir, 'bin', platform.startsWith('win32') ? 'shipsmooth-tasks.cmd' : 'shipsmooth-tasks');
+    return path.join(runtimeDir, 'bin', platform.startsWith('win32') ? 'shipsmooth.cmd' : 'shipsmooth');
 }
 async function installRuntime(opts) {
     const { version, cacheDir, pluginRoot } = opts;
@@ -96,7 +96,7 @@ function detectPlatform() {
 }
 async function downloadAndInstall(version, runtimeDir, platform, urlBase) {
     const base = urlBase ?? `https://github.com/bitkentech/shipsmooth/releases/download/v${version}`;
-    const url = `${base}/shipsmooth-tasks-${version}-${platform}.zip`;
+    const url = `${base}/shipsmooth-${version}-${platform}.zip`;
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shipsmooth-'));
     const zipFile = path.join(tmp, 'runtime.zip');
     const extractDir = `${runtimeDir}.tmp`;
@@ -179,19 +179,15 @@ function sendGet(url) {
         req.on('error', reject);
     });
 }
-function expandHome(p) {
-    return p.startsWith('~/') ? path.join(os.homedir(), p.slice(2)) : p;
-}
 // If you change this logic, update the cliBin expression in plugin-skill/src/main/jte-src/skills/_partials/base-workflow.jte.md
 function resolveCache(config) {
-    if (config.cacheDir)
-        return expandHome(config.cacheDir);
+    const subdir = config.name ?? 'shipsmooth';
     if (process.platform === 'win32') {
         const localAppData = process.env['LOCALAPPDATA'] ?? path.join(os.homedir(), 'AppData', 'Local');
-        return path.join(localAppData, 'shipsmooth');
+        return path.join(localAppData, subdir);
     }
     const xdgCache = process.env['XDG_CACHE_HOME'] ?? path.join(os.homedir(), '.cache');
-    return path.join(xdgCache, 'shipsmooth');
+    return path.join(xdgCache, subdir);
 }
 // CLI entrypoint — invoked as `node dist/session-start.js` from hooks.json (SessionStart).
 if (require.main === module) {
