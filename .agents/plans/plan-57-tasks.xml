@@ -58,13 +58,12 @@
             <id>5</id>
             <risk>low</risk>
             <status>pending</status>
-            <name>Rename CLI command to `shipsmooth`</name>
+            <name>Rename `shipsmooth-tasks` → `shipsmooth` everywhere</name>
             <commit></commit>
             <created-from>plan-57-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>2</depends-on>
         </task>
         <task>
             <id>6</id>
@@ -116,7 +115,7 @@
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-05-27T15:22:51.876+05:30</timestamp>
+            <timestamp>2026-05-27T15:25:44.369+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>

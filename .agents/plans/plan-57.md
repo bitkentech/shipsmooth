@@ -131,10 +131,41 @@ Medium because two packages are merging and all referencing files must be update
 Medium because it changes the package of 10 classes and their imports in several files.
 *Depends-on: 1*
 
-### Task 5: Rename CLI command to `shipsmooth` [Low]
-- In `TasksCli.java`: change `rootSpec.name("tasks")` → `rootSpec.name("shipsmooth")`
-- In `app/pom.xml`: rename jlink launcher from `shipsmooth-tasks` to `shipsmooth` in all launcher script args
-Note: the distributed runtime binary name is a release artifact — out of scope here.
+### Task 5: Rename `shipsmooth-tasks` → `shipsmooth` everywhere [Low]
+Full rename across all files that reference the binary or command name:
+
+**App code:**
+- `TasksCli.java`: `rootSpec.name("tasks")` → `rootSpec.name("shipsmooth")`
+- `app/pom.xml`: jlink launcher name and all script args (`shipsmooth-tasks` → `shipsmooth`)
+- `packaging/pom.xml`: any packaging references
+- `packaging/src/main/java/.../PackageRuntime.java`: binary name string
+- `packaging/src/main/java/.../PublishRelease.java`: binary name string
+- `packaging/src/test/java/.../PackageRuntimeTest.java`: test string literals
+- `integrations/common/src/main/java/.../BuildProfile.java`: binary name string
+- `integrations/common/src/test/java/.../BuildProfileTest.java` and `ResourceBuilderIntegrationTest.java`: test string literals
+
+**Scripts and config:**
+- `devel/scripts/package-tasks-java.sh`
+- `devel/scripts/experiment-startup-matrix.sh`
+- `devel/scripts/experiment-jlink-with-shr.sh`
+- `.claude/settings.local.json`
+
+**Skills:**
+- `build/skills/start-dev/SKILL.md`
+- `build/skills/experimental-start-parallel-dev/SKILL.md`
+
+**Docs (update references so they stay accurate):**
+- `README.md`
+- `DEVELOPMENT.md`
+- `docs/proposals/service-layer.md`
+- `docs/proposals/xdg-local-bin-launcher.md`
+- `docs/proposals/feature-flags-typed-visitable.md`
+- `docs/proposals/goal-oriented-impl.md`
+- `docs/observations/2026-04-27-openj9-scc-startup-correction.md`
+- `docs/decisions/2026-04-27-jlink-startup-optimisation.md`
+- `integrations/claude/src/main/resources/windows/README.md`
+
+Note: the distributed runtime binary in `runtime-0.3.10/bin/shipsmooth-tasks` is a release artifact — it will be renamed when the next runtime version is cut. The SKILL.md runtime invocation path keeps the old binary name for the current runtime version; update the invocation example to reflect the new name for future releases.
 *Depends-on: 2*
 
 ### Task 6: Update `module-info.java` [Low]
