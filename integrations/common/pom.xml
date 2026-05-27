@@ -39,6 +39,26 @@
   <build>
     <plugins>
 
+      <!-- Clean scripts/dist, scripts/dist-test, and scripts/node_modules on mvn clean -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>3.3.2</version>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>${project.basedir}/scripts/dist</directory>
+            </fileset>
+            <fileset>
+              <directory>${project.basedir}/scripts/dist-test</directory>
+            </fileset>
+            <fileset>
+              <directory>${project.basedir}/scripts/node_modules</directory>
+            </fileset>
+          </filesets>
+        </configuration>
+      </plugin>
+
       <!-- 0. npm install + tsc/esbuild: compile TS scripts to scripts/dist/ -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
