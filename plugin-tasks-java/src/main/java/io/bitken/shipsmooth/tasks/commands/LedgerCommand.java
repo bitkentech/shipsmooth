@@ -1,8 +1,5 @@
 package io.bitken.shipsmooth.tasks.commands;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import jakarta.inject.Inject;
@@ -10,8 +7,6 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Model.PositionalParamSpec;
 
-import java.nio.file.Paths;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 public class LedgerCommand implements Callable<Integer>, HasSpec {
@@ -76,16 +71,30 @@ public class LedgerCommand implements Callable<Integer>, HasSpec {
             for (int i = 0; i < hashes.size(); i++) {
                 var hash = hashes.get(i);
                 var ev = ledgerService.readEvent(hash);
-                if (taskId != null && !taskId.equals(ev.taskId())) continue;
-                if (type != null && !type.equalsIgnoreCase(ev.eventType().name())) continue;
-                var taskLabel = ev.taskId() != null ? ev.taskId() : "<system>";
-                var summary = ev.payload() != null
-                    ? ev.payload().lines().findFirst().orElse("")
-                    : (ev.baseCommitSha() != null ? "commit=" + ev.baseCommitSha().substring(0, Math.min(8, ev.baseCommitSha().length())) : "");
-                System.out.printf("[%03d] %s %s | %s | %s | %s%n",
-                    i, hash.substring(0, 8), ev.eventType(), taskLabel, ev.timestamp(), summary);
+                if (matches(ev, taskId, type)) {
+                    printRow(i, hash, ev);
+                }
             }
             return 0;
+        }
+
+        private boolean matches(io.bitken.shipsmooth.tasks.ledger.Event ev, String taskId, String type) {
+            if (taskId != null && !taskId.equals(ev.taskId())) return false;
+            if (type != null && !type.equalsIgnoreCase(ev.eventType().name())) return false;
+            return true;
+        }
+
+        private void printRow(int i, String hash, io.bitken.shipsmooth.tasks.ledger.Event ev) {
+            var taskLabel = ev.taskId() != null ? ev.taskId() : "<system>";
+            var summary = summarize(ev);
+            System.out.printf("[%03d] %s %s | %s | %s | %s%n",
+                i, hash.substring(0, 8), ev.eventType(), taskLabel, ev.timestamp(), summary);
+        }
+
+        private String summarize(io.bitken.shipsmooth.tasks.ledger.Event ev) {
+            if (ev.payload() != null) return ev.payload().lines().findFirst().orElse("");
+            if (ev.baseCommitSha() != null) return "commit=" + ev.baseCommitSha().substring(0, Math.min(8, ev.baseCommitSha().length()));
+            return "";
         }
     }
 
@@ -152,11 +161,7 @@ public class LedgerCommand implements Callable<Integer>, HasSpec {
                 System.err.println("       Git commit SHAs live in .git/ — use 'worker-base' to resolve a task's recorded commit SHA.");
                 return 1;
             }
-            var mapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .enable(SerializationFeature.INDENT_OUTPUT);
-            System.out.println(mapper.writeValueAsString(ev));
+            System.out.println(ledgerService.renderEventJson(ev));
             return 0;
         }
     }

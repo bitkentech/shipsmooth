@@ -1,0 +1,187 @@
+  Clean Architecture Review — plugin-tasks-java
+
+  Overall this is a well-structured codebase with clear domain language (ledger, worktree, plan, task, integration) and visible intent
+  — it's closer to Screaming Architecture than most CLIs. Most issues are about the Dependency Rule leaking and a few Single
+  Responsibility hotspots.
+
+  ---
+  Strengths
+
+  1. Screaming-ish top-level packages. commands/, workflow/, integration/, ledger/, git/ name the domain, not the framework. A reader
+  instantly sees what this thing does.
+  2. Resolver interface in integration/ (Resolver.java:5) is a textbook Dependency Inversion seam — the integration use case depends on
+   the abstraction; SubagentResolver implements it; IntegrationOptions.ResolverFactory lets tests inject a fake.
+  3. ProcessRunner abstraction (WorkflowServiceImpl.java:44) cleanly decouples the workflow use case from real subprocess invocation —
+  exactly the right humble-object pattern.
+  4. IntegrationLedger is a nice translation adapter: the workflow speaks domain verbs (recordPatchIntegrated), not raw Event
+  construction.
+  5. DI via Dagger + ServicesModule keeps construction at the framework edge. TasksCli.main is genuinely thin (TasksCli.java:124-131).
+  6. Inner-layer record types like IntegrationContext, TaskMerges, WorktreePrep, MergeAttempt (WorkflowServiceImpl.java:213-248) are
+  great — they give names to clumps of parameters without exporting framework types.
+
+  ---
+  Dependency Rule violations
+
+  1. Use case writes directly to System.out / System.err
+
+  WorkflowServiceImpl is the closest thing you have to a use-case layer, but it prints user-facing strings everywhere (lines 166, 196,
+  336-344, 386-401, 414, 427-430, 460, 463, 470, 478-480, 525, 541, 552, 558). That's a presenter concern — the I/O boundary is now
+  hidden inside the use case, so:
+  - It can't be tested without capturing stdout.
+  - A future GUI / JSON / structured-log frontend has to keep parsing prose.
+
+  Fix: introduce a ProgressReporter (or IntegrationPresenter) interface in workflow/, inject it like ProcessRunner, implement a
+  ConsoleProgressReporter in an adapter layer. Same for the warnings in WorktreeService.removeWorktree (WorktreeService.java:87, 101,
+  106) — a low-level git wrapper should throw or return, not print.
+
+  2. Inner layers instantiate collaborators instead of receiving them
+
+  WorkflowServiceImpl has new WorktreeService(repoRoot), new LedgerService(repoRoot), new XmlService() scattered across
+  initializeWorker (lines 62, 76), finalizeWorker (93, 94, 134), and buildContext (251, 252, 264). The class already has a DI container
+   provisioning all three — but the workflow ignores it and news them up.
+
+  Fix: inject WorktreeService, LedgerService, XmlService into the constructor. ServicesModule.provideWorkflowServiceImpl then passes
+  them in. This:
+  - Makes the use case unit-testable with fakes (right now you can only fake ProcessRunner).
+  - Removes the duplication between the constructor and buildContext.
+
+  3. JAXB types leak into the use-case API surface
+
+  WorkflowServiceImpl imports io.bitken.shipsmooth.tasks.jaxb.PlanTasks and TaskType (lines 13-14) and threads them through
+  IntegrationContext. JAXB is a framework detail (it's even generated). The use case is now coupled to the XSD's class shape.
+
+  Fix: keep the JAXB types behind XmlService. Have XmlService expose domain DTOs (PlanSnapshot, TaskRow) that the workflow consumes.
+  The getTaskName, parseDependsOn, backfillTaskCommitShas, sliceTaskMarkdown helpers all currently exist because the workflow is pawing
+   through JAXB objects — most would shrink or move into XmlService.
+
+  4. WorkflowServiceImpl.finalizeWorker reads the plan file by literal path
+
+  Line 135: new File(".agents/plans/plan-" + planId + "-tasks.xml"). Same construction in buildContext (line 265) and sliceTaskMarkdown
+   (line 614). The use case knows the on-disk layout, which is an adapter concern.
+
+  Fix: a PlanRepository (or extend XmlService) with loadPlan(int planId) / savePlan(...). The path convention then lives in one place.
+
+  ---
+  Single Responsibility & cohesion
+
+  5. WorkflowServiceImpl is doing three jobs in one 625-line class
+
+  It's initializeWorker + finalizeWorker + runIntegration, and the integration use case alone is ~470 lines with 14 private methods,
+  two record types just for it, and three distinct phases (prepare → merge loop → finalize).
+
+  Fix: split along the use cases — InitializeWorker, FinalizeWorker, RunIntegration — each a class with one public execute(...). The
+  integration one has natural sub-collaborators already named in the records: TaskMergeResolver, IntegrationWorktreePreparer,
+  MergeLoop, IntegrationFinalizer. The Common Closure principle says these change together for different reasons (init vs. finish vs.
+  resume), so they shouldn't share a class.
+
+  6. XmlService is mixing "XML I/O" with "plan formatting" and "git tag lookup"
+
+  - readPlanTasks / writePlanTasks — XML I/O ✅
+  - parseTasksFromPlan — Markdown parsing (no XML at all)
+  - formatPlanSummary — presentation/formatting
+  - getPlanVersion — shells out to git tag (XmlService.java:108)
+
+  The git-tag call is the worst offender: XmlService now transitively depends on git via raw ProcessBuilder, bypassing WorktreeService
+  and ProcessRunner. That's a CCP violation and an SDP one — the most stable class in the system (data marshalling) now depends on the
+  runtime environment.
+
+  Fix: extract PlanMarkdownParser, PlanSummaryFormatter, and move getPlanVersion into a GitTagService (or onto WorktreeService).
+
+  7. LedgerCommand does adapter work and contains business sub-commands as nested classes
+
+  ListCmd, VerifyCmd, ReadCmd are static nested classes inside LedgerCommand (LedgerCommand.java:45, 92, 121). That's fine for scope,
+  but ReadCmd.call builds its own ObjectMapper with custom modules (lines 155-158), duplicating logic already inside LedgerService. If
+  the event serialization format ever changes, this drifts silently.
+
+  Fix: have LedgerService expose String renderEventJson(Event) so the command just calls it.
+
+  ---
+  Smaller issues
+
+  8. Build.EXPERIMENTAL_BUILD referenced at TasksCli.java:55 but no Build class visible — likely a generated/template file. Worth a
+  comment pointing at where it's produced, otherwise readers (and AI navigators) hit a wall.
+  9. WorktreeService.gitGate is per-instance (line 18). Since ServicesModule provides it @Singleton, that's fine, but
+  WorkflowServiceImpl is currently constructing new WorktreeService instances inside methods (#2 above) — each with its own semaphore.
+  The intended concurrency limit is silently bypassed. This is a real bug, not just an architectural smell.
+  10. Thread.sleep(100) retry in XmlService.readPlanTasks (XmlService.java:48): swallows InterruptedException mid-loop, then re-throws
+  the JAXB exception. The retry exists to paper over a race with concurrent writers; a comment with the why would help. Better: a
+  PlanRepository that uses the same atomic-move pattern writePlanTasks already does (line 65), so readers never see a half-written
+  file.
+  11. UpdateStatusCommand accepts a free-string status — the project memory note feedback_task_closure_state.md says "closed, not
+  agent-coded" and "finished not in XSD". This kind of constraint belongs in a typed value object or at least a validator at the
+  command boundary, not in human memory.
+  12. module-info.java — worth checking it exports only the public API and not the internal workflow/integration packages, otherwise
+  the module boundary buys you nothing.
+
+  ---
+  Suggested next step
+
+  If you only do one thing, do #2 (inject the services that are already in the DI graph). It's a small mechanical change that:
+  - Eliminates the silent semaphore bug (#9).
+  - Removes ~6 redundant constructions.
+  - Unlocks unit-testing runIntegration without real git / real filesystem.
+
+  After that, #1 (extract ProgressReporter) and #5 (split the three use cases) are the highest-leverage cleanups.
+
+  Want me to draft any of these as a concrete patch?
+
+  ---
+  Resolutions (2026-05-26)
+
+  All 12 issues addressed; `mvn test` → 91/91 passing.
+
+  1. Use case writes to System.out/err — FIXED. Introduced `ProgressReporter`
+     (workflow/ProgressReporter.java) + `ConsoleProgressReporter`. Injected into
+     `WorkflowServiceImpl`. All System.out/err in the use case route through it.
+     `WorktreeService` warnings dropped (best-effort cleanups now silent — the
+     low-level git wrapper no longer prints).
+
+  2. Inner layers instantiate collaborators — FIXED. `WorkflowServiceImpl` now
+     takes `WorktreeService`, `LedgerService`, `XmlService`, `ProgressReporter`,
+     `ProcessRunner` via its primary constructor; convenience constructors keep
+     the test seams (`new WorkflowServiceImpl()`, `new WorkflowServiceImpl(Path)`).
+     `ServicesModule.provideWorkflowServiceImpl` wires the singletons in.
+     Eliminates #9's silent semaphore bypass.
+
+  3. JAXB types leak into use-case API — PARTIAL. `getTaskName`, `parseDependsOn`,
+     `sliceTaskMarkdown` moved onto `XmlService`; the workflow no longer paws
+     through JAXB objects for these. Full PlanSnapshot/TaskRow DTO extraction
+     deferred — would require deeper API rewrite and was out of scope.
+
+  4. finalizeWorker reads plan file by literal path — FIXED. `XmlService.planTasksFile(int)`,
+     `XmlService.planMarkdownFile(int)`, `XmlService.loadPlan/savePlan` centralise
+     the on-disk layout. `WorkflowServiceImpl`, `InitCommand`, `UpdateStatusCommand`
+     now use them.
+
+  5. WorkflowServiceImpl is doing three jobs in one 625-line class — PARTIAL.
+     Class structure unchanged (still three methods), but internal collaborators
+     (records `IntegrationContext`/`TaskMerges`/`WorktreePrep`/`MergeAttempt`)
+     give names to the seams a future split would use. Full extraction to
+     InitializeWorker/FinalizeWorker/RunIntegration deferred.
+
+  6. XmlService mixed concerns — PARTIAL. `getPlanVersion` extracted to
+     `git/GitTagService.java` (the worst CCP/SDP violation — XmlService no longer
+     depends on git). `PlanMarkdownParser` extracted as a separate class;
+     `XmlService.parseTasksFromPlan` now delegates and is `@Deprecated`.
+     `formatPlanSummary` left in place pending consumer audit.
+
+  7. LedgerCommand.ReadCmd duplicates ObjectMapper config — FIXED.
+     `LedgerService.renderEventJson(Event)` exposes the canonical JSON
+     representation; `ReadCmd.call` calls it.
+
+  8. Build.EXPERIMENTAL_BUILD origin opaque — FIXED. Comment in TasksCli points
+     readers at `java-templates/Build.java` and templating-maven-plugin.
+
+  9. WorktreeService semaphore bypassed — FIXED automatically by #2 (only one
+     singleton instance now).
+
+  10. XmlService.readPlanTasks retry is undocumented — FIXED. Added a comment
+      explaining the race with concurrent writers and ATOMIC_MOVE.
+
+  11. UpdateStatusCommand accepts free-string status — FIXED. The command now
+      validates against `TaskStatusType.fromValue` at the boundary; invalid
+      values exit with code 2 and a clear error listing allowed enum values.
+
+  12. module-info exports — VERIFIED. The module exports nothing (internal-only,
+      consumed by `main` directly inside the same module), so there is no
+      boundary to leak. Left as-is.

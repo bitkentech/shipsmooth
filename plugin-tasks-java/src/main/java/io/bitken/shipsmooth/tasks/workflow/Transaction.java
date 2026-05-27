@@ -2,6 +2,7 @@ package io.bitken.shipsmooth.tasks.workflow;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.function.Consumer;
 
 /**
  * Narrow unit-of-work helper used inside {@link WorkflowServiceImpl} when a
@@ -19,6 +20,15 @@ import java.util.Deque;
 public final class Transaction {
 
     private final Deque<RollbackStep> rollbackStack = new ArrayDeque<>();
+    private final Consumer<String> warnSink;
+
+    public Transaction() {
+        this(System.err::println);
+    }
+
+    public Transaction(Consumer<String> warnSink) {
+        this.warnSink = warnSink;
+    }
 
     /**
      * Register an inverse action to run if the transaction is rolled back.
@@ -35,7 +45,7 @@ public final class Transaction {
 
     /**
      * Run registered rollback actions in reverse order. Each is best-effort:
-     * a failure in one inverse is logged to stderr but does not stop the rest.
+     * a failure in one inverse is reported via the warnSink but does not stop the rest.
      */
     public void rollback() {
         while (!rollbackStack.isEmpty()) {
@@ -43,7 +53,7 @@ public final class Transaction {
             try {
                 step.action.run();
             } catch (Exception e) {
-                System.err.println("Transaction rollback step failed: "
+                warnSink.accept("Transaction rollback step failed: "
                         + step.description + " — " + e.getMessage());
             }
         }

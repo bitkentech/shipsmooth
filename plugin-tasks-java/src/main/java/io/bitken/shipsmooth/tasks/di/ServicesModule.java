@@ -2,9 +2,12 @@ package io.bitken.shipsmooth.tasks.di;
 
 import dagger.Module;
 import dagger.Provides;
+import io.bitken.shipsmooth.tasks.git.GitTagService;
 import io.bitken.shipsmooth.tasks.git.WorktreeService;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
 import io.bitken.shipsmooth.tasks.service.XmlService;
+import io.bitken.shipsmooth.tasks.workflow.DefaultProcessRunner;
+import io.bitken.shipsmooth.tasks.workflow.ProcessRunner;
 import io.bitken.shipsmooth.tasks.workflow.WorkflowService;
 import io.bitken.shipsmooth.tasks.workflow.WorkflowServiceImpl;
 import jakarta.inject.Singleton;
@@ -40,14 +43,38 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    WorktreeService provideWorktreeService(Path repoRoot) {
-        return new WorktreeService(repoRoot);
+    ProcessRunner provideProcessRunner() {
+        return new DefaultProcessRunner();
     }
 
     @Provides
     @Singleton
-    WorkflowServiceImpl provideWorkflowServiceImpl(Path repoRoot) {
-        return new WorkflowServiceImpl(repoRoot);
+    WorktreeService provideWorktreeService(Path repoRoot, ProcessRunner processes) {
+        return new WorktreeService(repoRoot, processes);
+    }
+
+    @Provides
+    @Singleton
+    GitTagService provideGitTagService() {
+        return new GitTagService();
+    }
+
+    @Provides
+    @Singleton
+    WorkflowServiceImpl provideWorkflowServiceImpl(
+            Path repoRoot,
+            ProcessRunner processes,
+            WorktreeService worktreeService,
+            LedgerService ledgerService,
+            XmlService xmlService,
+            io.bitken.shipsmooth.tasks.workflow.ProgressReporter reporter) {
+        return new WorkflowServiceImpl(repoRoot, processes, worktreeService, ledgerService, xmlService, reporter);
+    }
+
+    @Provides
+    @Singleton
+    io.bitken.shipsmooth.tasks.workflow.ProgressReporter provideProgressReporter() {
+        return new io.bitken.shipsmooth.tasks.workflow.ConsoleProgressReporter();
     }
 
     @Provides

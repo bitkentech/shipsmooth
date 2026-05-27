@@ -1,5 +1,7 @@
 package io.bitken.shipsmooth.tasks.commands;
 
+import io.bitken.shipsmooth.tasks.AgentsLayout;
+import io.bitken.shipsmooth.tasks.git.GitTagService;
 import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
@@ -9,7 +11,6 @@ import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,12 +22,18 @@ public class InitCommand implements Callable<Integer>, HasSpec {
     private final CommandSpec spec;
     private final XmlService xmlService;
     private final LedgerService ledgerService;
+    private final GitTagService gitTagService;
+
+    public InitCommand(XmlService xmlService, LedgerService ledgerService) {
+        this(xmlService, ledgerService, new GitTagService());
+    }
 
     @Inject
-    public InitCommand(XmlService xmlService, LedgerService ledgerService) {
+    public InitCommand(XmlService xmlService, LedgerService ledgerService, GitTagService gitTagService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.xmlService = xmlService;
         this.ledgerService = ledgerService;
+        this.gitTagService = gitTagService;
 
         spec.name("init");
         spec.usageMessage().description("Initialize task tracking XML for a plan");
@@ -59,10 +66,10 @@ public class InitCommand implements Callable<Integer>, HasSpec {
         }
         var markdown = Files.readString(markdownPath);
         var tasks = xmlService.parseTasksFromPlan(markdown);
-        var planVersion = xmlService.getPlanVersion(plan);
+        var planVersion = gitTagService.getPlanVersion(plan);
 
         var planTasks = xmlService.generatePlanTasks(plan, planVersion, tasks);
-        var outFile = new File(".agents/plans/plan-" + plan + "-tasks.xml");
+        var outFile = xmlService.planTasksFile(plan);
         xmlService.writePlanTasks(planTasks, outFile);
 
         System.out.println("Written " + tasks.size() + " tasks to " + outFile.getPath());
@@ -74,11 +81,7 @@ public class InitCommand implements Callable<Integer>, HasSpec {
     }
 
     private void bootstrapAgentsLayout(Path repoRoot) throws Exception {
-        Files.createDirectories(repoRoot.resolve(".agents").resolve("objects"));
-        var ledger = repoRoot.resolve(".agents").resolve("ledger.jsonl");
-        if (!Files.exists(ledger)) {
-            Files.createFile(ledger);
-        }
+        new AgentsLayout(repoRoot).bootstrap();
     }
 
     private void ensureGitignore(Path repoRoot) throws Exception {

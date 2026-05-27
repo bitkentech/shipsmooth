@@ -1,25 +1,31 @@
 package io.bitken.shipsmooth.tasks.git;
 
+import io.bitken.shipsmooth.tasks.workflow.ProcessRunner;
+
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Low-level git worktree operations.
+ *
+ * <p>All git commands are dispatched through the injected {@link ProcessRunner} so
+ * there is one code path for process spawning regardless of the call site.
+ * The {@link #gitGate} semaphore serialises concurrent git index writes.
  */
 public class WorktreeService {
 
     private final Semaphore gitGate = new Semaphore(4);
     private final Path repoRoot;
+    private final ProcessRunner processes;
 
-    public WorktreeService(Path repoRoot) {
+    public WorktreeService(Path repoRoot, ProcessRunner processes) {
         this.repoRoot = repoRoot;
+        this.processes = processes;
     }
 
     public Path repoRoot() {
@@ -32,28 +38,32 @@ public class WorktreeService {
 
     /** HEAD SHA of the given worktree directory (use this when querying an integration worktree). */
     public String headSha(File worktreeDir) throws IOException, InterruptedException {
-        return capture(worktreeDir, "git", "rev-parse", "HEAD").trim();
+        return processes.capture(worktreeDir, "git", "rev-parse", "HEAD").trim();
     }
 
     /** Returns the HEAD SHA of the named branch, resolving it in the repo. */
     public String branchSha(String branch) throws IOException, InterruptedException {
-        return capture(repoRoot.toFile(), "git", "rev-parse", branch).trim();
+        return processes.capture(repoRoot.toFile(), "git", "rev-parse", branch).trim();
     }
 
     public boolean branchExists(String branch) throws IOException, InterruptedException {
-        Process p = new ProcessBuilder("git", "rev-parse", "--verify", branch)
-                .directory(repoRoot.toFile())
-                .redirectErrorStream(true)
-                .start();
-        p.getInputStream().readAllBytes();
-        p.waitFor(10, TimeUnit.SECONDS);
-        return p.exitValue() == 0;
+        gitGate.acquire();
+        try {
+            try {
+                processes.capture(repoRoot.toFile(), "git", "rev-parse", "--verify", branch);
+                return true;
+            } catch (IOException e) {
+                return false;
+            }
+        } finally {
+            gitGate.release();
+        }
     }
 
     public void deleteBranch(String branch) throws IOException, InterruptedException {
         gitGate.acquire();
         try {
-            run(repoRoot.toFile(), "git", "branch", "-D", branch);
+            processes.run(repoRoot.toFile(), "git", "branch", "-D", branch);
         } finally {
             gitGate.release();
         }
@@ -68,42 +78,51 @@ public class WorktreeService {
         gitGate.acquire();
         try {
             if (baseSha != null && !baseSha.isBlank()) {
-                run(repoRoot.toFile(), "git", "worktree", "add", relativePath, "-b", branch, baseSha);
+                processes.run(repoRoot.toFile(), "git", "worktree", "add", relativePath, "-b", branch, baseSha);
             } else {
-                run(repoRoot.toFile(), "git", "worktree", "add", relativePath, "-b", branch);
+                processes.run(repoRoot.toFile(), "git", "worktree", "add", relativePath, "-b", branch);
             }
         } finally {
             gitGate.release();
         }
     }
 
-    /** Remove worktree directory but keep the branch ref. */
+    /**
+     * Remove worktree directory but keep the branch ref. Failures from the
+     * underlying {@code git worktree remove} are swallowed — this is a cleanup
+     * step and the caller does not have a recovery path. Use {@link #removeWorktreeStrict}
+     * if you need the IOException to propagate.
+     */
     public void removeWorktreeKeepBranch(String relativePath) throws IOException, InterruptedException {
         gitGate.acquireUninterruptibly();
         try {
             try {
-                run(repoRoot.toFile(), "git", "worktree", "remove", "--force", relativePath);
-            } catch (IOException e) {
-                System.err.println("Warning: worktree remove failed for " + relativePath + ": " + e.getMessage());
+                processes.run(repoRoot.toFile(), "git", "worktree", "remove", "--force", relativePath);
+            } catch (IOException ignored) {
+                // best-effort cleanup
             }
         } finally {
             gitGate.release();
         }
     }
 
-    /** Remove worktree directory AND delete the branch. */
+    /** Remove worktree directory AND delete the branch. Best-effort; failures are swallowed. */
     public void removeWorktree(String relativePath, String branch) {
         gitGate.acquireUninterruptibly();
         try {
             try {
-                run(repoRoot.toFile(), "git", "worktree", "remove", "--force", relativePath);
-            } catch (Exception e) {
-                System.err.println("Warning: worktree remove failed for " + relativePath + ": " + e.getMessage());
+                processes.run(repoRoot.toFile(), "git", "worktree", "remove", "--force", relativePath);
+            } catch (IOException ignored) {
+                // best-effort cleanup
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
             try {
-                run(repoRoot.toFile(), "git", "branch", "-D", branch);
-            } catch (Exception e) {
-                System.err.println("Warning: branch delete failed for " + branch + ": " + e.getMessage());
+                processes.run(repoRoot.toFile(), "git", "branch", "-D", branch);
+            } catch (IOException ignored) {
+                // best-effort cleanup
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         } finally {
             gitGate.release();
@@ -117,13 +136,13 @@ public class WorktreeService {
     public String commitAll(File worktreeDir, String message) throws IOException, InterruptedException {
         gitGate.acquire();
         try {
-            run(worktreeDir, "git", "add", "-A");
-            String status = capture(worktreeDir, "git", "status", "--porcelain").trim();
+            processes.run(worktreeDir, "git", "add", "-A");
+            String status = processes.capture(worktreeDir, "git", "status", "--porcelain").trim();
             if (status.isEmpty()) {
-                return capture(worktreeDir, "git", "rev-parse", "HEAD").trim();
+                return processes.capture(worktreeDir, "git", "rev-parse", "HEAD").trim();
             }
-            run(worktreeDir, "git", "commit", "-q", "-m", message);
-            return capture(worktreeDir, "git", "rev-parse", "HEAD").trim();
+            processes.run(worktreeDir, "git", "commit", "-q", "-m", message);
+            return processes.capture(worktreeDir, "git", "rev-parse", "HEAD").trim();
         } finally {
             gitGate.release();
         }
@@ -136,8 +155,8 @@ public class WorktreeService {
     public String diff(File worktreeDir) throws IOException, InterruptedException {
         gitGate.acquire();
         try {
-            run(worktreeDir, "git", "add", "-A");
-            return capture(worktreeDir, "git", "diff", "--cached");
+            processes.run(worktreeDir, "git", "add", "-A");
+            return processes.capture(worktreeDir, "git", "diff", "--cached");
         } finally {
             gitGate.release();
         }
@@ -148,7 +167,7 @@ public class WorktreeService {
             throws IOException, InterruptedException {
         gitGate.acquire();
         try {
-            run(repoRoot.toFile(), "git", "worktree", "add", relativePath, "-b", branch, baseRef);
+            processes.run(repoRoot.toFile(), "git", "worktree", "add", relativePath, "-b", branch, baseRef);
         } finally {
             gitGate.release();
         }
@@ -163,17 +182,13 @@ public class WorktreeService {
             throws IOException, InterruptedException {
         gitGate.acquire();
         try {
-            Process p = new ProcessBuilder("git", "merge", "--squash", branch)
-                    .directory(worktreeDir)
-                    .redirectErrorStream(true)
-                    .start();
-            p.getInputStream().readAllBytes(); // drain
-            p.waitFor(60, TimeUnit.SECONDS);
-            if (p.exitValue() == 0) {
+            try {
+                processes.run(worktreeDir, "git", "merge", "--squash", branch);
                 return MergeResult.success();
+            } catch (IOException e) {
+                // merge --squash exits non-zero on conflicts; enumerate unmerged files
             }
-            // Enumerate unmerged files
-            String unmerged = capture(worktreeDir, "git", "diff", "--name-only", "--diff-filter=U");
+            String unmerged = processes.capture(worktreeDir, "git", "diff", "--name-only", "--diff-filter=U");
             List<String> files = Arrays.stream(unmerged.split("\n"))
                     .map(String::trim)
                     .filter(s -> !s.isEmpty())
@@ -188,7 +203,7 @@ public class WorktreeService {
     public void resetHard(File worktreeDir, String sha) throws IOException, InterruptedException {
         gitGate.acquire();
         try {
-            run(worktreeDir, "git", "reset", "--hard", sha);
+            processes.run(worktreeDir, "git", "reset", "--hard", sha);
         } finally {
             gitGate.release();
         }
@@ -198,36 +213,47 @@ public class WorktreeService {
         return Files.isDirectory(repoRoot.resolve(relativePath));
     }
 
-    private void run(File cwd, String... cmd) throws IOException, InterruptedException {
-        Process p = new ProcessBuilder(cmd)
-                .directory(cwd)
-                .redirectErrorStream(true)
-                .start();
-        String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        if (!p.waitFor(60, TimeUnit.SECONDS)) {
-            p.destroyForcibly();
-            throw new IOException("Timeout: " + String.join(" ", cmd));
-        }
-        if (p.exitValue() != 0) {
-            throw new IOException("Command failed (" + p.exitValue() + "): "
-                    + String.join(" ", cmd) + "\n" + out);
+    // ── git facade methods used by WorkflowServiceImpl ─────────────────────────
+
+    /** Returns the current branch name (--abbrev-ref HEAD). */
+    public String currentBranch() throws IOException, InterruptedException {
+        return processes.capture(repoRoot.toFile(), "git", "rev-parse", "--abbrev-ref", "HEAD").trim();
+    }
+
+    /** {@code git log --oneline {range}} output, e.g. range = "sha1..sha2". */
+    public String logOneline(String range) throws IOException, InterruptedException {
+        return processes.capture(repoRoot.toFile(), "git", "log", "--oneline", range);
+    }
+
+    /** {@code git log --oneline {range}} from a specific worktree directory. */
+    public String logOneline(File worktreeDir, String range) throws IOException, InterruptedException {
+        return processes.capture(worktreeDir, "git", "log", "--oneline", range);
+    }
+
+    /** Re-attaches the worktree for an existing branch (no {@code -b}). */
+    public void attachWorktree(String relativePath, String branch) throws IOException, InterruptedException {
+        gitGate.acquire();
+        try {
+            processes.run(repoRoot.toFile(), "git", "worktree", "add", relativePath, branch);
+        } finally {
+            gitGate.release();
         }
     }
 
-    private String capture(File cwd, String... cmd) throws IOException, InterruptedException {
-        Process p = new ProcessBuilder(cmd)
-                .directory(cwd)
-                .redirectErrorStream(false)
-                .start();
-        String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        if (!p.waitFor(60, TimeUnit.SECONDS)) {
-            p.destroyForcibly();
-            throw new IOException("Timeout: " + String.join(" ", cmd));
+    /**
+     * Stage a single path and commit it with the given message.
+     * No-ops if the file is unmodified.
+     */
+    public void commitFile(File worktreeDir, String filePath, String message) throws IOException, InterruptedException {
+        gitGate.acquire();
+        try {
+            processes.run(worktreeDir, "git", "add", filePath);
+            String status = processes.capture(worktreeDir, "git", "status", "--porcelain", filePath).trim();
+            if (!status.isEmpty()) {
+                processes.run(worktreeDir, "git", "commit", "-m", message);
+            }
+        } finally {
+            gitGate.release();
         }
-        if (p.exitValue() != 0) {
-            String err = new String(p.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
-            throw new IOException("Command failed: " + String.join(" ", cmd) + "\n" + err);
-        }
-        return out;
     }
 }

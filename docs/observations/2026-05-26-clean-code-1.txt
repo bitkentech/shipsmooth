@@ -1,0 +1,228 @@
+  Clean Code Review: plugin-tasks-java/src/main/java
+
+  Scope: 54 files, ~3,735 LOC. I focused on the largest/highest-traffic files: WorkflowServiceImpl (606), XmlService (299),
+  WorktreeService (238), LedgerCommand (154), LedgerService (150), TasksCli (135), InitCommand (118), plus samples of PromptBuilder,
+  ObjectStore, Transaction, WorkerBaseCommand, ServicesModule.
+
+  Overall: The code is in good shape. The recent refactor (commit 38698b9 refactor(clean-arch): inject services, extract
+  ProgressReporter, split helpers) clearly paid down debt — DI is clean, WorkflowServiceImpl was decomposed into named records and
+  small methods, and the Transaction class is a nice small abstraction with a self-aware doc-comment. Findings below are ranked from
+  highest to lowest leverage.
+
+  ---
+  High-impact
+
+  1. WorktreeService is two classes pretending to be one (SRP)
+
+  WorktreeService mixes three responsibilities:
+  1. Process runner — private run/capture duplicate DefaultProcessRunner.
+  2. Git operations — commitAll, mergeSquash, diff, resetHard, branch queries.
+  3. Concurrency policy — the Semaphore gitGate semantic.
+
+  The duplication is the most concrete symptom: WorktreeService.run/capture (lines 206–237) re-implement what ProcessRunner already
+  provides, so the same git invocations get spawned through two parallel code paths depending on which collaborator the caller reached
+  for. In WorkflowServiceImpl you can see both: git.commitAll(...) (via WorktreeService's internal runner) sits next to
+  processes.run(integrationDir, "git", "commit", "-m", commitMsg) (line 433, via ProcessRunner). Same dependency, two routes.
+
+  Move: Inject ProcessRunner into WorktreeService and delete the private run/capture. The semaphore stays where it is; the
+  process-spawning concern goes away.
+
+  2. Inconsistent "low-level git" boundary in WorkflowServiceImpl
+
+  Several spots in WorkflowServiceImpl reach past WorktreeService and call git directly via processes:
+
+  - WorkflowServiceImpl.java:134 — processes.capture(worktreeDir, "git", "log", "--oneline", ...)
+  - WorkflowServiceImpl.java:270 — processes.capture(repoRoot.toFile(), "git", "rev-parse", "--abbrev-ref", "HEAD")
+  - WorkflowServiceImpl.java:357 — processes.run(repoRoot.toFile(), "git", "worktree", "add", ...)
+  - WorkflowServiceImpl.java:433 — processes.run(ctx.integrationDir, "git", "commit", "-m", commitMsg)
+  - WorkflowServiceImpl.java:465–469 — git add, git status --porcelain, git commit
+  - backfillTaskCommitShas (line 497) — git log --oneline
+
+  Each is a small leak that defeats the abstraction the rest of the file follows (everywhere else, git goes through git.x()). Either
+  add currentBranch(), logOneline(range), commitFile(message, path), addPath(path), statusPorcelain(path), commitWithStaged(message) to
+   WorktreeService, or rename WorktreeService to GitFacade and let it own all git calls. Right now a reader can't tell when to use
+  which.
+
+  3. Magic strings repeated across the codebase
+
+  The integration / worktree layout is hard-coded in many places:
+
+  - ".agents/tasks/" + taskId — WorkflowServiceImpl.java:85, 115
+  - "agent-work/" + taskId — WorkflowServiceImpl.java:86, 116, 305
+  - "integration/plan-" + plan — WorkflowServiceImpl.java:279
+  - ".agents/integration/plan-" + plan — WorkflowServiceImpl.java:280
+  - ".agents/plans/plan-" + planId + "-tasks.xml" — XmlService.java:34 and WorkerBaseCommand.java:46 (the latter rebuilds the path
+  manually instead of calling xmlService.planTasksFile)
+  - ".agents/ledger.jsonl", ".agents/objects" — LedgerService.java:32, ObjectStore.java:18, InitCommand.java:84–87 (re-creates the
+  layout that ObjectStore and LedgerService already know about)
+
+  Move: A RepoLayout / AgentsLayout value object that owns these path templates. Every planTasksFile, worktreeRel(taskId),
+  agentBranch(taskId), integrationBranch(plan), integrationRel(plan) lives in one place. Today these conventions are duplicated and the
+   duplication is wrong in at least one place (WorkerBaseCommand ignores xmlService.planTasksFile).
+
+  4. WorkflowServiceImpl — runIntegrationInternal reads well, but data classes are misplaced
+
+  The decomposition of runIntegration is genuinely good. But the four record declarations (IntegrationContext, TaskMerges,
+  WorktreePrep, MergeAttempt) sit in the middle of WorkflowServiceImpl.java:230–262 between runIntegrationInternal and buildContext.
+  They interrupt the stepdown flow: the reader hits four record definitions before getting to the first private helper.
+
+  Move: Either group all four at the bottom of the file, or extract them to a small integration/ sub-package as package-private types.
+  IntegrationContext in particular has fourteen fields and would be more comfortable as a sibling file alongside IntegrationOrder,
+  IntegrationLedger, etc. The current location mixes abstraction levels.
+
+  5. XmlService does too much
+
+  XmlService (299 lines) is:
+  - file-path policy (planTasksFile, planMarkdownFile),
+  - JAXB I/O (readPlanTasks, writePlanTasks, with retry-on-race),
+  - task lookup / mutation (findTask, setCommit, addComment, addDeviation, updateTaskStatus, setDependsOn),
+  - markdown slicing (sliceTaskMarkdown),
+  - presentation (formatPlanSummary, pad),
+  - and a date-conversion helper.
+
+  Several reasons to change. The deprecated method parseTasksFromPlan (line 133) even points at the next split: markdown parsing
+  already moved to PlanMarkdownParser. Same pattern applies for formatPlanSummary (belongs in a PlanSummaryFormatter), and
+  sliceTaskMarkdown (belongs with PlanMarkdownParser or a new PlanMarkdown type).
+
+  The doc comment at lines 86–88 also flags a subtle issue: the read/write race is real and the 100ms retry is a workaround, not a fix.
+   A FileLock-on-read (matching the lock used in LedgerService.appendHash) would eliminate the race instead of papering over it. Worth
+  a follow-up.
+
+  ---
+  Medium
+
+  6. LedgerService.findLastEvent / findLastEventAfter / findLastEventIndex — O(n) full re-reads
+
+  Each of these methods calls readHashes() and then readEvent(hash) per entry. mergeTaskLoop triggers a chain of findLastEvent calls
+  per task, and each one re-reads the entire ledger from disk. For a plan with N tasks, integration is O(N²) ledger reads. Not a
+  correctness problem now, but it's a one-cache-away fix: keep an in-memory List<Event> populated once per command invocation and read
+  from it. The append path can invalidate.
+
+  Lower-priority because typical N is small, but worth knowing.
+
+  7. findLastEventIndex uses entrySet().containsAll(...) on the metadata map
+
+  LedgerService.java:109:
+  ev.metadata().entrySet().containsAll(metadataMatch.entrySet())
+  This works but it's O(n·m) and the intent ("all keys/values in the filter map are present in the event metadata") is not obvious at a
+   glance. A small helper metadataMatches(Event, Map<String,String>) would express intent and isolate the implementation.
+
+  8. LedgerCommand.ListCmd.call — multiple-responsibility method
+
+  LedgerCommand.java:60–84 mixes argument parsing, count-shortcut, filtering, slicing the summary string, and formatted printing. The
+  summary computation (lines 77–79) is a chained ternary that should be a named helper:
+  String summary = summarize(ev);  // hides payload/baseCommitSha selection
+  And the loop body should be if (matches(ev, taskId, type)) printRow(i, hash, ev);.
+
+  9. ObjectStore.readObject mixes two modes in one method
+
+  ObjectStore.java:53 — when sha1.length() == 40 it's a direct lookup; otherwise it's a prefix scan with ambiguity detection. Two
+  responsibilities, two methods: readByFullSha(String) and readByPrefix(String), with a tiny readObject dispatcher. The current shape
+  forces every reader to figure out which branch they're in.
+
+  10. TasksCli constructor — long initialiser, command list as anonymous array
+
+  TasksCli.java:63–82 builds an array of 18 command instances inline. Each new XCommand(...) repeats the wiring of xml, ledger,
+  worktree, workflow. The Dagger module already knows how to provide these — switching TasksCli to take Set<Callable<?>> commands from
+  a multibinding would let the DI graph own the wiring and let TasksCli shrink to "register subcommands, parse, execute."
+
+  Smaller version of the same fix: extract buildCommands(xml, ledger, worktree, workflow, workflowImpl) to a private method so the
+  constructor doesn't carry that bullet list.
+
+  11. WorkflowServiceImpl constructor stack — four convenience constructors
+
+  Lines 53–80 — four constructors, each chaining the next. Test seams are valid, but the cascade hides which constructor production
+  code uses. Recommend: keep the canonical 6-arg constructor, delete WorkflowServiceImpl() and WorkflowServiceImpl(Path), and have
+  tests use either Dagger's TestComponent or build the service explicitly with mocks. The WorkflowServiceImpl(Path, ProcessRunner)
+  overload is dangerous: it creates a new WorktreeService, defeating the singleton/semaphore guarantee the class doc warns about (line
+  38–41).
+
+  12. WorkflowServiceImpl.invokeResolver — long-ish (52 lines) but the loop body is the smell
+
+  Lines 535–564. The loop has six exit paths (break/continue/return mixed with i == maxLlmIterations checks). Extract one method
+  tryResolverOnce(ctx, resolver, rctx, attempt) → OneShotResult { Outcome outcome, String verifyError, String commitSha } and the outer
+   loop becomes a clean switch over the outcome. The if (i == maxLlmIterations) break repetition is a strong hint that the iteration
+  condition wants to live in one place.
+
+  ---
+  Low / nits
+
+  13. WorktreeService.removeWorktree / removeWorktreeKeepBranch swallow IOExceptions
+
+  Lines 86–116. The comment says "best-effort cleanup," which is a fair design choice, but catch (Exception ignored) is over-broad —
+  it'll also eat InterruptedException semantics. At minimum, restore the interrupt flag on InterruptedException. Better: catch
+  IOException specifically and let interrupts propagate.
+
+  14. WorktreeService.branchExists doesn't drain stderr / mixes redirected streams
+
+  WorktreeService.java:43–51 — redirectErrorStream(true) then readAllBytes() then waitFor and exitValue(). The read consumes the merged
+   stream, but the buffer is discarded. Fine for correctness, but the pattern differs from run/capture for no reason — and bypasses the
+   gitGate semaphore (so branchExists runs unsynchronised against addWorktree etc.). If the semaphore protects against git index lock
+  contention, every git command should hold it.
+
+  15. WorkerBaseCommand flagged experimental but not consistent with sibling commands
+
+  WorkerBaseCommand.java:18 overrides isExperimental() → true. WorkerInitCommand, WorkerFinishCommand, WorkerCleanupCommand apparently
+  don't. Not strictly a Clean Code issue, but the asymmetry is worth a sanity check — is worker-base really experimental while the rest
+   of the worker family is stable?
+
+  Also WorkerBaseCommand.java:46 rebuilds the XML path string instead of calling xmlService.planTasksFile(plan) — duplication of the
+  convention in XmlService.java:34. Easy fix.
+
+  Also WorkerBaseCommand.java:55: List.of(dependsOn.split(",")).stream() is the same as Arrays.stream(dependsOn.split(",")), and it
+  duplicates XmlService.parseDependsOn — call that instead.
+
+  16. PromptBuilder — one giant string concatenation
+
+  PromptBuilder.java:5–62 builds a multi-section prompt with StringBuilder.append chains. It works, but it's painful to scan because
+  intent (section name) is interleaved with content. Two options:
+  - Java text blocks ("""...""") with String.format placeholders — much more readable for prose.
+  - Split into private methods per section (preflightSection, gitForbiddenSection, taskSection, etc.) and String.join("\n\n", ...).
+
+  The current form makes it easy to break the prompt with a stray missing space.
+
+  17. Transaction.rollback logs to System.err
+
+  Transaction.java:46 — the class deliberately stays narrow (good!) but the dependency on System.err couples it to stdio. If
+  WorkflowServiceImpl already takes a ProgressReporter, passing one to Transaction (or letting it take a Consumer<String> warnSink)
+  would let the rest of the system route warnings consistently.
+
+  18. XmlService.readPlanTasks — Thread.sleep(100) busy-wait
+
+  Lines 89–109. Already flagged in the class itself; restating: the // Retry papers over a race… comment is exactly the kind of "why"
+  comment worth keeping, but the underlying fix (file lock on read) is preferable.
+
+  19. InitCommand — bootstrapAgentsLayout and ensureGitignore re-create layout knowledge
+
+  InitCommand.java:83–106 — InitCommand re-derives .agents/objects, .agents/ledger.jsonl, and writes gitignore entries. Some of this
+  overlaps with LedgerService.ensureLedgerFile. Pull the bootstrap policy into one place (AgentsLayout.bootstrap(Path)) and call from
+  InitCommand.
+
+  20. XmlService.parseDependsOn swallows NumberFormatException
+
+  Line 65 — silently drops malformed entries. Probably fine in practice, but a debug log would help if a typo ever surfaces. Document
+  the choice, or stop swallowing.
+
+  ---
+  What's already good
+
+  - Transaction is a great example of a small, well-named abstraction with a self-aware doc-comment that says "if a second use appears,
+   promote this." Keep doing that.
+  - The record IntegrationContext / record TaskMerges / record MergeAttempt pattern in WorkflowServiceImpl — much better than the
+  parameter sprawl that was likely there before.
+  - WorkflowErrorCode (existence of an explicit enum rather than message-only exceptions) suggests good error-handling discipline.
+  - DI via Dagger with explicit ServicesModule keeps wiring legible.
+  - ConsoleProgressReporter / ProgressReporter split — proper Dependency Inversion, the workflow doesn't talk to stdout directly.
+
+  ---
+  Suggested follow-up order
+
+  If you want me to actually do any of these, the highest leverage moves are, in order:
+
+  1. Introduce AgentsLayout (#3) — small change, removes duplication across WorkflowServiceImpl, XmlService, LedgerService,
+  ObjectStore, InitCommand, WorkerBaseCommand.
+  2. Collapse process running into ProcessRunner (#1) — delete WorktreeService's private runner; inject ProcessRunner. Removes the
+  two-path ambiguity.
+  3. Close the git-call leaks in WorkflowServiceImpl (#2) — promote the six processes.run("git", ...) sites in WorkflowServiceImpl to
+  methods on WorktreeService.
+  4. Split XmlService (#5) into PlanRepository (path + I/O) + PlanSummaryFormatter + keep XML mutation in something narrower.

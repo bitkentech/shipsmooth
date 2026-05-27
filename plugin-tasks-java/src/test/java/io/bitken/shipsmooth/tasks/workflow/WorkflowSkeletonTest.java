@@ -1,6 +1,10 @@
 package io.bitken.shipsmooth.tasks.workflow;
 
+import io.bitken.shipsmooth.tasks.di.DaggerAppComponents;
+import io.bitken.shipsmooth.tasks.di.ServicesModule;
 import org.junit.jupiter.api.Test;
+
+import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -20,9 +24,10 @@ class WorkflowSkeletonTest {
 
     @Test
     void workflowServiceImpl_constructible() {
-        // Default no-arg construction is enough for the skeleton; methods will
-        // be added in later tasks.
-        WorkflowServiceImpl impl = new WorkflowServiceImpl();
+        WorkflowServiceImpl impl = DaggerAppComponents.builder()
+                .servicesModule(new ServicesModule(Paths.get(".")))
+                .build()
+                .workflowServiceImpl();
         assertNotNull(impl);
         assertTrue(impl instanceof WorkflowService,
                 "WorkflowServiceImpl must implement WorkflowService");

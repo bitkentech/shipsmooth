@@ -1,6 +1,5 @@
 package io.bitken.shipsmooth.tasks.commands;
 
-import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
@@ -9,9 +8,6 @@ import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
-import java.io.File;
-import java.nio.file.Paths;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 public class WorkerBaseCommand implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
@@ -42,18 +38,17 @@ public class WorkerBaseCommand implements Callable<Integer>, HasSpec, io.bitken.
         var plan = (int) pr.matchedOption("plan").getValue();
         var task = (String) pr.matchedOption("task").getValue();
 
-        var repoRoot = Paths.get(".");
-        var xmlFile = new File(".agents/plans/plan-" + plan + "-tasks.xml");
+        var xmlFile = xmlService.planTasksFile(plan);
         var planTasks = xmlService.readPlanTasks(xmlFile);
 
-        var dependsOn = xmlService.getDependsOn(planTasks, Integer.parseInt(task));
-        if (dependsOn.isBlank()) {
+        var dependsOnStr = xmlService.getDependsOn(planTasks, Integer.parseInt(task));
+        if (dependsOnStr.isBlank()) {
             System.err.println("worker-base: task " + task + " has no <depends-on> — use HEAD as base");
             return 1;
         }
 
-        var parentIds = List.of(dependsOn.split(",")).stream()
-            .map(String::trim).filter(s -> !s.isBlank()).toList();
+        var parentIds = xmlService.parseDependsOn(dependsOnStr).stream()
+            .map(String::valueOf).toList();
 
         var ledger = this.ledgerService;
         String latestSha = null;

@@ -1,5 +1,7 @@
 package io.bitken.shipsmooth.tasks.workflow;
 
+import io.bitken.shipsmooth.tasks.di.DaggerAppComponents;
+import io.bitken.shipsmooth.tasks.di.ServicesModule;
 import io.bitken.shipsmooth.tasks.integration.IntegrationLedger;
 import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
 import io.bitken.shipsmooth.tasks.ledger.Event;
@@ -36,7 +38,10 @@ class WorkflowServiceRunIntegrationTest {
     private static final String INTEGRATION_REL = ".agents/integration/plan-" + PLAN_NUM;
 
     private final Path repoRoot = Paths.get(".");
-    private final WorkflowService service = new WorkflowServiceImpl();
+    private final WorkflowService service = DaggerAppComponents.builder()
+            .servicesModule(new ServicesModule(repoRoot))
+            .build()
+            .workflowService();
     private File xmlFile;
     private File mdFile;
 

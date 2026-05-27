@@ -42,7 +42,17 @@ public class UpdateStatusCommand implements Callable<Integer>, HasSpec {
         int task = pr.matchedOption("task").getValue();
         String status = pr.matchedOption("status").getValue();
 
-        var file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
+        // Validate against the XSD enum at the boundary — fail fast with a
+        // clear error instead of letting a typo land in the XML.
+        try {
+            io.bitken.shipsmooth.tasks.jaxb.TaskStatusType.fromValue(status);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Error: invalid status \"" + status + "\". Allowed values: "
+                    + java.util.Arrays.toString(io.bitken.shipsmooth.tasks.jaxb.TaskStatusType.values()));
+            return 2;
+        }
+
+        var file = xmlService.planTasksFile(plan);
         var planTasks = xmlService.readPlanTasks(file);
         xmlService.updateTaskStatus(planTasks, task, status);
         xmlService.writePlanTasks(planTasks, file);

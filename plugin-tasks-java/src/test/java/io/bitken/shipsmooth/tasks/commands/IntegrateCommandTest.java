@@ -210,7 +210,7 @@ public class IntegrateCommandTest {
         // A resolver that does nothing (leaves conflict markers in place)
         Resolver noOpResolver = (dir, ctx) -> {};
 
-        IntegrateCommand cmd = new IntegrateCommand(new io.bitken.shipsmooth.tasks.workflow.WorkflowServiceImpl(repoRoot));
+        IntegrateCommand cmd = new IntegrateCommand(app.workflowService());
         cmd.setResolverFactory((taskId, integrationAbs) -> noOpResolver);
 
         CommandLine cli = new CommandLine(cmd.getSpec());

@@ -50,13 +50,31 @@ public class TasksCli {
             @CommandLine.Option(names = {"-V", "--version"}, versionHelp = true, description = "Print version information and exit.")
             boolean version;
 
+            // Build is generated at compile time from
+            // src/main/java-templates/io/bitken/shipsmooth/tasks/Build.java
+            // by templating-maven-plugin (see pom.xml). The output lands in
+            // target/generated-sources/java-templates/ and is on the compile path.
             @CommandLine.Option(names = ENABLE_EXPERIMENTAL_FLAG,
                 description = "Enable experimental subcommands.",
                 hidden = !Build.EXPERIMENTAL_BUILD)
             boolean enableExperimental;
         }));
 
-        Callable<?>[] commands = {
+        for (Callable<?> command : buildCommands(xml, ledger, worktree, workflow, workflowImpl)) {
+            if (command instanceof FeatureFlags ff && ff.isExperimental()) {
+                experimentalCommands.add(command);
+            } else {
+                CommandSpec subSpec = ((HasSpec) command).getSpec();
+                rootSpec.addSubcommand(subSpec.name(), subSpec);
+            }
+        }
+
+        cmd = new CommandLine(rootSpec);
+    }
+
+    private Callable<?>[] buildCommands(XmlService xml, LedgerService ledger, WorktreeService worktree,
+            WorkflowService workflow, WorkflowServiceImpl workflowImpl) {
+        return new Callable<?>[] {
             new InitCommand(xml, ledger),
             new AddCommentCommand(xml, ledger),
             new AddDeviationCommand(xml, ledger),
@@ -76,17 +94,6 @@ public class TasksCli {
             new WorkerFinishCommand(workflowImpl),
             new WorkerInitCommand(workflow),
         };
-
-        for (Callable<?> command : commands) {
-            if (command instanceof FeatureFlags ff && ff.isExperimental()) {
-                experimentalCommands.add(command);
-            } else {
-                CommandSpec subSpec = ((HasSpec) command).getSpec();
-                rootSpec.addSubcommand(subSpec.name(), subSpec);
-            }
-        }
-
-        cmd = new CommandLine(rootSpec);
     }
 
     /** Test seam for integration command. */

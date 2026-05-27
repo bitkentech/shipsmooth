@@ -35,6 +35,11 @@ public class LedgerService {
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
+    /** Renders an event back to the canonical JSON representation used for storage and inspection. */
+    public String renderEventJson(Event event) throws IOException {
+        return mapper.copy().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(event);
+    }
+
     public Path ledgerPath() {
         return ledgerPath;
     }
@@ -101,11 +106,16 @@ public class LedgerService {
         int result = -1;
         for (int i = 0; i < hashes.size(); i++) {
             Event ev = readEvent(hashes.get(i));
-            if (type == ev.eventType() && ev.metadata().entrySet().containsAll(metadataMatch.entrySet())) {
+            if (type == ev.eventType() && metadataMatches(ev, metadataMatch)) {
                 result = i;
             }
         }
         return result;
+    }
+
+    /** Returns true if every key/value in {@code filter} is present in the event's metadata. */
+    private boolean metadataMatches(Event ev, java.util.Map<String, String> filter) {
+        return ev.metadata().entrySet().containsAll(filter.entrySet());
     }
 
     /**

@@ -51,10 +51,14 @@ public class ObjectStore {
     }
 
     public byte[] readObject(String sha1) throws IOException {
-        if (sha1.length() == 40) {
-            return Files.readAllBytes(root.resolve(sha1.substring(0, 2)).resolve(sha1.substring(2)));
-        }
-        // Prefix lookup: scan the fan-out directory for a unique match.
+        return sha1.length() == 40 ? readByFullSha(sha1) : readByPrefix(sha1);
+    }
+
+    private byte[] readByFullSha(String sha1) throws IOException {
+        return Files.readAllBytes(root.resolve(sha1.substring(0, 2)).resolve(sha1.substring(2)));
+    }
+
+    private byte[] readByPrefix(String sha1) throws IOException {
         String dir = sha1.substring(0, Math.min(2, sha1.length()));
         String remainder = sha1.length() > 2 ? sha1.substring(2) : "";
         Path fanDir = root.resolve(dir);

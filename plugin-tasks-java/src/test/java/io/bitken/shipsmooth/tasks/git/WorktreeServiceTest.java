@@ -1,5 +1,6 @@
 package io.bitken.shipsmooth.tasks.git;
 
+import io.bitken.shipsmooth.tasks.workflow.DefaultProcessRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -25,7 +26,7 @@ public class WorktreeServiceTest {
         Files.writeString(tempDir.resolve("seed.txt"), "seed");
         git("add", "seed.txt");
         git("commit", "-q", "-m", "init");
-        svc = new WorktreeService(tempDir);
+        svc = new WorktreeService(tempDir, new DefaultProcessRunner());
     }
 
     @Test

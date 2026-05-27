@@ -12,18 +12,14 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class XmlService {
 
@@ -33,6 +29,56 @@ public class XmlService {
         public Task(int id, String name, String risk) { this(id, name, risk, ""); }
     }
 
+    /** Canonical path of the plan's tasks XML file, relative to the working directory. */
+    public File planTasksFile(int planId) {
+        return new File(".agents/plans/plan-" + planId + "-tasks.xml");
+    }
+
+    /** Canonical path of the plan's narrative markdown file, relative to the working directory. */
+    public File planMarkdownFile(int planId) {
+        return new File(".agents/plans/plan-" + planId + ".md");
+    }
+
+    /** Convenience: load the plan's XML by plan id using the canonical layout. */
+    public PlanTasks loadPlan(int planId) throws JAXBException {
+        return readPlanTasks(planTasksFile(planId));
+    }
+
+    /** Convenience: save the plan's XML by plan id using the canonical layout. */
+    public void savePlan(int planId, PlanTasks plan) throws JAXBException {
+        writePlanTasks(plan, planTasksFile(planId));
+    }
+
+    /** Returns the task's display name, or the id stringified if not present. */
+    public String getTaskName(PlanTasks planTasks, int taskId) {
+        return planTasks.getTasks().getTask().stream()
+                .filter(t -> t.getId().intValue() == taskId)
+                .map(t -> t.getName() != null ? t.getName() : String.valueOf(taskId))
+                .findFirst().orElse(String.valueOf(taskId));
+    }
+
+    /** Parses "1,2,3" → [1,2,3]. Empty/null → empty list. Malformed entries are skipped with a debug log. */
+    public List<Integer> parseDependsOn(String s) {
+        if (s == null || s.isBlank()) return List.of();
+        List<Integer> result = new ArrayList<>();
+        for (String part : s.split(",")) {
+            try {
+                result.add(Integer.parseInt(part.trim()));
+            } catch (NumberFormatException e) {
+                System.err.println("parseDependsOn: skipping malformed entry '" + part.trim() + "' in depends-on: " + s);
+            }
+        }
+        return result;
+    }
+
+    /** @see PlanMarkdown#sliceTaskSection(int, int) */
+    public String sliceTaskMarkdown(int planId, int taskId) {
+        return new PlanMarkdown(this).sliceTaskSection(planId, taskId);
+    }
+
+    // Retry papers over a race with concurrent writers: writePlanTasks uses
+    // ATOMIC_MOVE, but readers can still race the rename and observe an empty
+    // file briefly. Sleep+retry is cheap because the failure mode is rare.
     public PlanTasks readPlanTasks(File file) throws JAXBException {
         int retries = 5;
         while (retries > 0) {
@@ -75,47 +121,10 @@ public class XmlService {
         }
     }
 
+    /** @deprecated call {@link PlanMarkdownParser#parse} directly — markdown parsing is not XML I/O. */
+    @Deprecated
     public List<Task> parseTasksFromPlan(String markdown) {
-        List<Task> tasks = new ArrayList<>();
-        Pattern headingPattern = Pattern.compile(
-                "^###\\s+Task\\s+(\\d+):\\s+(.+?)(?:\\s+\\[(High|Medium|Low)\\])?\\s*$",
-                Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
-        // Matches an optional "*Depends-on: 1,2,3*" line anywhere after the heading (within ~20 lines)
-        Pattern dependsOnPattern = Pattern.compile(
-                "^\\*Depends-on:\\s*([\\d,\\s]+)\\*\\s*$",
-                Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
-        Matcher matcher = headingPattern.matcher(markdown);
-        while (matcher.find()) {
-            int id = Integer.parseInt(matcher.group(1));
-            String name = matcher.group(2).trim();
-            String risk = matcher.group(3) != null ? matcher.group(3).toLowerCase() : "";
-            // Search the ~500 chars after the heading for a depends-on line
-            int searchEnd = Math.min(matcher.end() + 500, markdown.length());
-            // Stop at next task heading
-            Matcher nextHeading = headingPattern.matcher(markdown.substring(matcher.end(), searchEnd));
-            int regionEnd = nextHeading.find() ? matcher.end() + nextHeading.start() : searchEnd;
-            String region = markdown.substring(matcher.end(), regionEnd);
-            Matcher depMatcher = dependsOnPattern.matcher(region);
-            String dependsOn = depMatcher.find() ? depMatcher.group(1).replaceAll("\\s", "") : "";
-            tasks.add(new Task(id, name, risk, dependsOn));
-        }
-        return tasks;
-    }
-
-    public String getPlanVersion(int planNum) {
-        String planVersion = "plan-" + planNum + "-v1";
-        try {
-            Process process = new ProcessBuilder("git", "tag", "-l", "plan-" + planNum + "-v*", "--sort=-version:refname").start();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line = reader.readLine();
-                if (line != null && !line.trim().isEmpty()) {
-                    planVersion = line.trim();
-                }
-            }
-        } catch (IOException e) {
-            // Ignore and use default
-        }
-        return planVersion;
+        return new PlanMarkdownParser().parse(markdown);
     }
 
     public PlanTasks generatePlanTasks(int planNum, String planVersion, List<Task> tasks) throws Exception {
@@ -223,47 +232,9 @@ public class XmlService {
         planTasks.getProjectUpdates().getUpdate().add(update);
     }
 
+    /** @see PlanSummaryFormatter#format(PlanTasks) */
     public String formatPlanSummary(PlanTasks planTasks) {
-        StringBuilder sb = new StringBuilder();
-        MetadataType meta = planTasks.getMetadata();
-        sb.append(String.format("Plan %d (%s)  status: %s  backlog: %s\n\n",
-                planTasks.getPlan(),
-                planTasks.getPlanVersion(),
-                meta.getStatus().value(),
-                meta.getBacklogIssue() != null && !meta.getBacklogIssue().isEmpty() ? meta.getBacklogIssue() : "—"));
-
-        int idWidth = 3;
-        int riskWidth = 6;
-        int statusWidth = 12;
-        int nameWidth = 40;
-
-        String header = String.format("%s  %s  %s  %s  COMMIT",
-                pad("ID", idWidth), pad("RISK", riskWidth), pad("STATUS", statusWidth), pad("NAME", nameWidth));
-        sb.append(header).append("\n");
-        sb.append("-".repeat(header.length())).append("\n");
-
-        for (TaskType t : planTasks.getTasks().getTask()) {
-            sb.append(String.format("%s  %s  %s  %s  %s\n",
-                    pad(t.getId().toString(), idWidth),
-                    pad(t.getRisk(), riskWidth),
-                    pad(t.getStatus().value(), statusWidth),
-                    pad(t.getName(), nameWidth),
-                    t.getCommit() != null && !t.getCommit().isEmpty() ? t.getCommit() : "—"));
-        }
-
-        sb.append("\nProject updates:\n");
-        for (UpdateType u : planTasks.getProjectUpdates().getUpdate()) {
-            String flag = (u.isBlocked() != null && u.isBlocked()) ? " [BLOCKED]" : "";
-            sb.append(String.format("  %s%s  %s\n", u.getTimestamp().toString(), flag, u.getMessage()));
-        }
-
-        return sb.toString();
-    }
-
-    private String pad(String s, int width) {
-        if (s == null) s = "";
-        if (s.length() >= width) return s.substring(0, width);
-        return s + " ".repeat(width - s.length());
+        return new PlanSummaryFormatter().format(planTasks);
     }
 
     private TaskType findTask(PlanTasks planTasks, int taskId) {
