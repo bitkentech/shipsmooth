@@ -10,7 +10,7 @@
     <version>0.3.10</version>
   </parent>
 
-  <artifactId>plugin-devel</artifactId>
+  <artifactId>devel</artifactId>
   <packaging>pom</packaging>
   <description>Development-time helper scripts (migration tools, one-off utilities)</description>
 

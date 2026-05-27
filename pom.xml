@@ -10,12 +10,12 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>plugin-node</module>
-    <module>plugin-resources</module>
-    <module>plugin-skill</module>
-    <module>plugin-dist</module>
-    <module>plugin-devel</module>
-    <module>plugin-tasks-java</module>
+    <module>integrations/common</module>
+    <module>integrations/claude</module>
+    <module>integrations/gemini</module>
+    <module>packaging</module>
+    <module>devel</module>
+    <module>app</module>
   </modules>
 
   <properties>
@@ -37,7 +37,7 @@
           <artifactId>exec-maven-plugin</artifactId>
           <version>3.3.0</version>
         </plugin>
-        <!-- Canonical compiler version; plugin-tasks-java overrides with its own property -->
+        <!-- Canonical compiler version; app overrides with its own property -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
@@ -130,7 +130,7 @@
         <build.outputDir>${maven.multiModuleProjectDirectory}/build</build.outputDir>
         <plugin.hook.base>node "${CLAUDE_PLUGIN_ROOT}/dist/session-start.js"</plugin.hook.base>
         <shipsmooth.dist.path>\${CLAUDE_PLUGIN_DATA}/dist</shipsmooth.dist.path>
-        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/plugin-tasks-java/target/jlink-image</shipsmooth.jlink.dir>
+        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/app/target/jlink-image</shipsmooth.jlink.dir>
         <shipsmooth.cli.bin>${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-@project.version@/bin/shipsmooth-tasks</shipsmooth.cli.bin>
         <skill.frontmatter></skill.frontmatter>
         <experimental.enabled>true</experimental.enabled>
@@ -150,7 +150,7 @@
         <plugin.description>Agent coding workflow (dev build)</plugin.description>
         <plugin.hook.base>node "${extensionPath}/dist/session-start.js"</plugin.hook.base>
 
-        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/plugin-tasks-java/target/jlink-image</shipsmooth.jlink.dir>
+        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/app/target/jlink-image</shipsmooth.jlink.dir>
         <skill.frontmatter>---
 name: start-dev
 description: Use when starting any task — applies the shipsmooth agent coding workflow (dev build).
@@ -192,7 +192,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
         <plugin.description>Agent coding workflow (Windows)</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-windows</build.outputDir>
         <plugin.repo.name>${plugin.base.name}</plugin.repo.name>
-        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/plugin-tasks-java/target/jlink-image-windows-x64</shipsmooth.jlink.dir>
+        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/app/target/jlink-image-windows-x64</shipsmooth.jlink.dir>
         <skill.frontmatter></skill.frontmatter>
         <experimental.enabled>false</experimental.enabled>
       </properties>

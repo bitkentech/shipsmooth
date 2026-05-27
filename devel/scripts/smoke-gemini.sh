@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 GEMINI_BIN="/opt/nvm/versions/node/v22.22.2/bin/gemini"
 BUILD_DIR="$REPO_ROOT/build-gemini"
 
@@ -102,7 +102,7 @@ fi
 # --- 4. Hook logic test ---
 echo ""
 echo "--- Step 3: hook logic test ---"
-bash "$REPO_ROOT/scripts/test-gemini-hook.sh"
+bash "$REPO_ROOT/devel/scripts/test-gemini-hook.sh"
 
 echo ""
 echo "=== ALL SMOKE TESTS PASSED ==="

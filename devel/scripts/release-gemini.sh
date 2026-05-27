@@ -25,7 +25,7 @@ TAG="v${VERSION}"
 GEMINI_REPO="bitkentech/shipsmooth-gemini"
 GEMINI_REPO_URL="git@github.com:${GEMINI_REPO}.git"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 cd "$REPO_ROOT"
 

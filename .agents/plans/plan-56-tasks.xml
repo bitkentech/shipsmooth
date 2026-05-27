@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>56</plan>
+    <plan-version>plan-56-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-05-27</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename plugin-devel to devel</name>
+            <commit>3169e93c026c8fa09e776225c952487d385c4baf</commit>
+            <created-from>plan-56-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename plugin-tasks-java to app</name>
+            <commit>786d9468a8f313509aacebc08bf27addff637659</commit>
+            <created-from>plan-56-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename plugin-node to hooks</name>
+            <commit>0700ac2aea6b2f0462960d23c35ca226d3db73de</commit>
+            <created-from>plan-56-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename plugin-skill to skills</name>
+            <commit>8efbee7bba731832190903c436c8d0b748b8f75e</commit>
+            <created-from>plan-56-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename plugin-dist to packaging</name>
+            <commit>e9a2981f5941ceae622f5fe869cc99affb936440</commit>
+            <created-from>plan-56-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Split plugin-resources into integrations/claude and integrations/gemini</name>
+            <commit>221780ae2b29ea6e0fc18dd29ff171c70f631fad</commit>
+            <created-from>plan-56-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Merge skills and hooks sources into integrations/common</name>
+            <commit>2ba8dfb94cbb077db625379e485c0ea92ca9e2de</commit>
+            <created-from>plan-56-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Move top-level scripts/ into devel/</name>
+            <commit>04fdaa0</commit>
+            <created-from>plan-56-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>7</depends-on>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Fix REPO_ROOT paths in moved scripts</name>
+            <commit>1db1add</commit>
+            <created-from>plan-56-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>8</depends-on>
+        </task>
+        <task>
+            <id>10</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Manual testing of dev build, Gemini build, and mvn clean</name>
+            <commit>1a195430fe0b3c0c8463bc9655f6a9b1e5004cf6</commit>
+            <created-from>plan-56-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>9</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-27T12:27:57.709+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-27T13:31:19.291+05:30</timestamp>
+            <message>Plan complete. All 10 tasks agent-coded. Session startup smoke test passed.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

@@ -9,15 +9,15 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # --- Setup: fake extension dir with package.json and dist/*.js ---
 FAKE_EXT="$(mktemp -d)"
 trap 'rm -rf "$FAKE_EXT" "$CACHE_DIR"' EXIT
 
-cp "$REPO_ROOT/plugin-node/package.json" "$FAKE_EXT/"
+cp "$REPO_ROOT/hooks/package.json" "$FAKE_EXT/"
 mkdir -p "$FAKE_EXT/dist"
-cp "$REPO_ROOT/plugin-node/dist"/*.js "$FAKE_EXT/dist/"
+cp "$REPO_ROOT/hooks/dist"/*.js "$FAKE_EXT/dist/"
 
 # Use an isolated cache dir so we don't clobber ~/.cache/shipsmooth
 CACHE_DIR="$(mktemp -d)"

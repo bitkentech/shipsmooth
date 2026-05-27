@@ -8,90 +8,13 @@
     <groupId>io.bitken</groupId>
     <artifactId>shipsmooth</artifactId>
     <version>0.3.10</version>
+    <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>plugin-resources</artifactId>
+  <artifactId>integration-gemini</artifactId>
   <packaging>pom</packaging>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>3.3.1</version>
-        <executions>
-
-          <!-- Copy and filter plugin metadata into build/.claude-plugin/ -->
-          <execution>
-            <id>copy-plugin-meta</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <skip>${skip.copy-plugin-meta}</skip>
-              <outputDirectory>${build.outputDir}/.claude-plugin</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${project.basedir}/src/main/resources/claude-plugin</directory>
-                  <filtering>true</filtering>
-                  <excludes>
-                    <exclude>marketplace.json</exclude>
-                  </excludes>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-
-          <!-- Copy and filter marketplace.json into build/.claude-plugin/ -->
-          <execution>
-            <id>copy-marketplace</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <skip>${skip.copy-plugin-meta}</skip>
-              <outputDirectory>${build.outputDir}/.claude-plugin</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${project.basedir}/src/main/resources/claude-plugin</directory>
-                  <filtering>true</filtering>
-                  <includes>
-                    <include>marketplace.json</include>
-                  </includes>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
-
   <profiles>
-    <profile>
-      <id>claude</id>
-      <activation>
-        <property>
-          <name>build.platform</name>
-          <value>claude</value>
-        </property>
-      </activation>
-    </profile>
-
-    <profile>
-      <id>gemini-logic</id>
-      <activation>
-        <property>
-          <name>build.platform</name>
-          <value>gemini</value>
-        </property>
-      </activation>
-      <build>
-      </build>
-    </profile>
 
     <profile>
       <id>gemini</id>
@@ -186,6 +109,7 @@
         </plugins>
       </build>
     </profile>
+
     <profile>
       <id>gemini-dev</id>
       <build>
@@ -261,44 +185,6 @@
         </plugins>
       </build>
     </profile>
-
-    <profile>
-      <id>windows</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-resources-plugin</artifactId>
-            <version>3.3.1</version>
-            <executions>
-
-              <!-- Copy README.md into build-windows/ -->
-              <execution>
-                <id>copy-windows-readme</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration>
-                  <outputDirectory>${build.outputDir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>${project.basedir}/src/main/resources/windows</directory>
-                      <filtering>false</filtering>
-                      <includes>
-                        <include>README.md</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
 
   </profiles>
 

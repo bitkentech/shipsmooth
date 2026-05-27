@@ -3,9 +3,9 @@
     "target": "ES2020",
     "module": "commonjs",
     "outDir": "dist",
-    "rootDir": "src/main/scripts/tasks",
+    "rootDir": "tasks",
     "strict": true,
     "esModuleInterop": true
   },
-  "include": ["src/main/scripts/tasks/**/*.ts"]
+  "include": ["tasks/**/*.ts"]
 }

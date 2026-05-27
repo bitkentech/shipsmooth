@@ -8,11 +8,12 @@
 ## Repo structure
 
 This repo uses a multi-module Maven layout:
-- `plugin-node/` — TypeScript source and tests for the local task tracking scripts
-- `plugin-skill/` — JTE template source for SKILL.md (`src/main/jte-src/skills/SKILL.jte.md`)
-- `plugin-resources/` — plugin metadata and hooks
-- `plugin-tasks-java/` — Java utilities for task tracking
-- `plugin-dist/` — assembles the final `build/` output from the other modules
+- `integrations/common/` — JTE skill templates, Java `ResourceBuilder`, and TypeScript hook scripts
+- `integrations/claude/` — Claude plugin metadata (`claude-plugin/`, `windows/`)
+- `integrations/gemini/` — Gemini extension metadata (`gemini-extension/`)
+- `app/` — Java CLI (`shipsmooth-tasks`) and domain logic
+- `packaging/` — assembles the final `build/` output from the other modules
+- `devel/` — development-time helper scripts
 
 ## Build the dev version
 
@@ -107,7 +108,7 @@ Changes to source files are reflected immediately after the next `mvn process-re
 ### Run smoke tests
 
 ```bash
-./scripts/smoke-gemini.sh
+./devel/scripts/smoke-gemini.sh
 ```
 
 Verifies the build layout, links the extension, and runs the hook logic test.
@@ -121,7 +122,7 @@ gemini extensions uninstall shipsmooth
 ### Notes
 - `build-gemini/` is gitignored — always a local, derived artifact
 - Run `mvn compile` (default, no `-P gemini`) to rebuild the Claude plugin; run `mvn -P gemini,!dev,!claude process-resources` for Gemini
-- The `claude` profile in `plugin-resources/pom.xml` is `activeByDefault` — always disable it explicitly when building for Gemini
+- The `claude` profile in `integrations/claude/pom.xml` is `activeByDefault` — always disable it explicitly when building for Gemini
 
 ## Releasing a new version
 
@@ -133,20 +134,20 @@ gemini extensions uninstall shipsmooth
 
 ### Claude Code release
 
-Releases are orchestrated by `PublishRelease.java` in `plugin-dist`. It bumps the version, builds, packages the runtime zip, pushes to the `releases` branch, and creates a GitHub Release — all in one step.
+Releases are orchestrated by `PublishRelease.java` in `packaging`. It bumps the version, builds, packages the runtime zip, pushes to the `releases` branch, and creates a GitHub Release — all in one step.
 
 ```bash
-# Step 1: install modules into local Maven repo (required so plugin-dist can resolve siblings standalone)
-mvn install -pl plugin-dist -am -Pprod -P'!dev' -DskipTests
+# Step 1: install modules into local Maven repo (required so packaging can resolve siblings standalone)
+mvn install -pl packaging -am -Pprod -P'!dev' -DskipTests
 
 # Step 2: run the release
-mvn exec:java@publish-release -pl plugin-dist \
+mvn exec:java@publish-release -pl packaging \
   -Dshipsmooth.release.version=<version> \
   -Pprod -P'!dev'
 
 # Example:
-mvn install -pl plugin-dist -am -Pprod -P'!dev' -DskipTests
-mvn exec:java@publish-release -pl plugin-dist -Dshipsmooth.release.version=0.3.2 -Pprod -P'!dev'
+mvn install -pl packaging -am -Pprod -P'!dev' -DskipTests
+mvn exec:java@publish-release -pl packaging -Dshipsmooth.release.version=0.3.2 -Pprod -P'!dev'
 ```
 
 `PublishRelease` performs these steps:
@@ -172,16 +173,16 @@ dist/
 
 The `releases` branch is an orphan — it shares no history with `main`.
 
-> **Note:** The two-step invocation (install then exec) is required because `exec:java@publish-release` runs `plugin-dist` outside the reactor. The `install` step puts the sibling module POMs into the local repo so Maven can resolve them. `plugin-dist` does not use any classes from siblings — the dependencies are ordering-only.
+> **Note:** The two-step invocation (install then exec) is required because `exec:java@publish-release` runs `packaging` outside the reactor. The `install` step puts the sibling module POMs into the local repo so Maven can resolve them. `packaging` does not use any classes from siblings — the dependencies are ordering-only.
 
 ### Gemini CLI release
 
 Gemini CLI installs extensions by cloning a repo where `gemini-extension.json` lives at the root (see [Gemini CLI extension releasing docs](https://geminicli.com/docs/extensions/releasing/)). This is incompatible with the layout of the `releases` branch, where Claude's `.claude-plugin/` metadata sits at the root of `dist/`. Rather than add branch-switching complexity here, Gemini releases are published to a dedicated repo — [`bitkentech/shipsmooth-gemini`](https://github.com/bitkentech/shipsmooth-gemini) — whose `main` branch is a pure publish artifact fully replaced on each release.
 
 ```bash
-./scripts/release-gemini.sh <version>
+./devel/scripts/release-gemini.sh <version>
 # Example:
-./scripts/release-gemini.sh 0.0.1
+./devel/scripts/release-gemini.sh 0.0.1
 ```
 
 The script:
@@ -195,7 +196,7 @@ The script:
 
 Pass `--force` to skip the clean-tree check (useful during iterative testing):
 ```bash
-./scripts/release-gemini.sh 0.0.2 --force
+./devel/scripts/release-gemini.sh 0.0.2 --force
 ```
 
 Structure of the `shipsmooth-gemini` repo after release:
@@ -225,11 +226,11 @@ The default path is `../shipsmooth-windows` (relative to the repo root). Overrid
 
 **Full release (via PublishRelease):**
 ```bash
-# Step 1: install plugin-dist and its upstream dependencies into the local Maven repo
-mvn install -pl plugin-dist -am -Pwindows -P'!dev' -DskipTests
+# Step 1: install packaging and its upstream dependencies into the local Maven repo
+mvn install -pl packaging -am -Pwindows -P'!dev' -DskipTests
 
 # Step 2: run the Windows release
-mvn exec:java@publish-release -pl plugin-dist -Pwindows -P'!dev' -Dshipsmooth.release.version=<version>
+mvn exec:java@publish-release -pl packaging -Pwindows -P'!dev' -Dshipsmooth.release.version=<version>
 ```
 
 `PublishRelease` performs these steps for Windows:
@@ -248,7 +249,7 @@ as it bumps all pom.xml files and bakes the suffix into the build artifacts.
 
 ```bash
 # Step 1: rebuild the jlink image (only needed if shipsmooth-tasks changed)
-mvn package -pl plugin-tasks-java -Pjlink -DskipTests
+mvn package -pl app -Pjlink -DskipTests
 
 # Step 2: build the Windows plugin artifacts (pom version stays at e.g. 0.3.10)
 mvn compile -Pwindows -P'!dev'
@@ -264,7 +265,7 @@ git rm -rf --quiet .
 # Note: cp -r with . skips hidden dirs — copy .claude-plugin separately
 cp -r /path/to/shipsmooth/build-windows/. .
 cp -r /path/to/shipsmooth/build-windows/.claude-plugin .
-cp -r /path/to/shipsmooth/plugin-tasks-java/target/jlink-image-windows-x64 runtime
+cp -r /path/to/shipsmooth/app/target/jlink-image-windows-x64 runtime
 
 # Step 5: commit and force-push
 git add .
