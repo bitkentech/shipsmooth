@@ -8,9 +8,10 @@
     <groupId>io.bitken</groupId>
     <artifactId>shipsmooth</artifactId>
     <version>0.3.10</version>
+    <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>skills</artifactId>
+  <artifactId>integration-common</artifactId>
 
   <properties>
     <jte.version>3.1.15</jte.version>
@@ -38,77 +39,44 @@
   <build>
     <plugins>
 
-      <!-- 1a. Copy .jte.md sources to target/jte-src/, renaming to .jte -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>3.1.0</version>
-        <executions>
-          <execution>
-            <id>rename-jte-sources</id>
-            <phase>generate-sources</phase>
-            <goals><goal>run</goal></goals>
-            <configuration>
-              <target>
-                <copy todir="${project.build.directory}/jte-src">
-                  <fileset dir="${project.basedir}/src/main/jte-src"/>
-                  <globmapper from="*.jte.md" to="*.jte"/>
-                </copy>
-              </target>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <!-- 1b. Compile .jte templates to Java bytecode at generate-sources -->
-      <plugin>
-        <groupId>gg.jte</groupId>
-        <artifactId>jte-maven-plugin</artifactId>
-        <version>${jte.version}</version>
-        <executions>
-          <execution>
-            <phase>generate-sources</phase>
-            <goals><goal>generate</goal></goals>
-            <configuration>
-              <sourceDirectory>${project.build.directory}/jte-src</sourceDirectory>
-              <targetDirectory>${project.build.directory}/generated-sources/jte</targetDirectory>
-              <contentType>Plain</contentType>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <!-- 2. Register generated JTE sources so javac sees them -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.6.0</version>
-        <executions>
-          <execution>
-            <phase>generate-sources</phase>
-            <goals><goal>add-source</goal></goals>
-            <configuration>
-              <sources>
-                <source>${project.build.directory}/generated-sources/jte</source>
-              </sources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <!-- 3. maven-compiler-plugin (explicit for clarity) -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
-      </plugin>
-
-      <!-- 4. Run ResourceBuilder to render files into ${build.outputDir} -->
+      <!-- 0. npm install + tsc/esbuild: compile TS scripts to scripts/dist/ -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.1.0</version>
         <executions>
+          <execution>
+            <id>npm-install</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>bash</executable>
+              <workingDirectory>${project.basedir}/scripts</workingDirectory>
+              <arguments>
+                <argument>-c</argument>
+                <argument>[ -d node_modules ] &amp;&amp; [ node_modules -nt package.json ] || npm install --silent</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>tsc-compile</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>npm</executable>
+              <workingDirectory>${project.basedir}/scripts</workingDirectory>
+              <arguments>
+                <argument>run</argument>
+                <argument>build</argument>
+              </arguments>
+            </configuration>
+          </execution>
+
+          <!-- 4. Run ResourceBuilder to render JTE templates into ${build.outputDir} -->
           <execution>
             <id>render-plugin-resources</id>
             <phase>compile</phase>
@@ -168,6 +136,71 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <!-- 1a. Copy .jte.md sources to target/jte-src/, renaming to .jte -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>rename-jte-sources</id>
+            <phase>generate-sources</phase>
+            <goals><goal>run</goal></goals>
+            <configuration>
+              <target>
+                <copy todir="${project.build.directory}/jte-src">
+                  <fileset dir="${project.basedir}/src/main/jte-src"/>
+                  <globmapper from="*.jte.md" to="*.jte"/>
+                </copy>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- 1b. Compile .jte templates to Java bytecode -->
+      <plugin>
+        <groupId>gg.jte</groupId>
+        <artifactId>jte-maven-plugin</artifactId>
+        <version>${jte.version}</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals><goal>generate</goal></goals>
+            <configuration>
+              <sourceDirectory>${project.build.directory}/jte-src</sourceDirectory>
+              <targetDirectory>${project.build.directory}/generated-sources/jte</targetDirectory>
+              <contentType>Plain</contentType>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- 2. Register generated JTE sources so javac sees them -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals><goal>add-source</goal></goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/jte</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- 3. maven-compiler-plugin (explicit for clarity) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
       </plugin>
 
       <!-- surefire for JUnit 5 -->

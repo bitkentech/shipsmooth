@@ -10,10 +10,9 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>hooks</module>
+    <module>integrations/common</module>
     <module>integrations/claude</module>
     <module>integrations/gemini</module>
-    <module>skills</module>
     <module>packaging</module>
     <module>devel</module>
     <module>app</module>

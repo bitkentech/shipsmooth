@@ -35,19 +35,12 @@
     </dependency>
     <dependency>
       <groupId>io.bitken</groupId>
-      <artifactId>hooks</artifactId>
+      <artifactId>integration-common</artifactId>
       <version>${project.version}</version>
-      <type>pom</type>
     </dependency>
     <dependency>
       <groupId>io.bitken</groupId>
       <artifactId>integration-claude</artifactId>
-      <version>${project.version}</version>
-      <type>pom</type>
-    </dependency>
-    <dependency>
-      <groupId>io.bitken</groupId>
-      <artifactId>skills</artifactId>
       <version>${project.version}</version>
       <type>pom</type>
     </dependency>
@@ -72,7 +65,7 @@
               <outputDirectory>${build.outputDir}/dist</outputDirectory>
               <resources>
                 <resource>
-                  <directory>${maven.multiModuleProjectDirectory}/hooks/dist</directory>
+                  <directory>${maven.multiModuleProjectDirectory}/integrations/common/scripts/dist</directory>
                   <filtering>false</filtering>
                   <excludes>
                     <exclude>**/*.test.js</exclude>
@@ -98,7 +91,7 @@
               </delimiters>
               <resources>
                 <resource>
-                  <directory>${maven.multiModuleProjectDirectory}/hooks/src/main/resources</directory>
+                  <directory>${maven.multiModuleProjectDirectory}/integrations/common/scripts/src/main/resources</directory>
                   <filtering>true</filtering>
                   <includes>
                     <include>package.json</include>
@@ -287,7 +280,7 @@
                   <outputDirectory>${build.outputDir}/scripts/tasks</outputDirectory>
                   <resources>
                     <resource>
-                      <directory>${maven.multiModuleProjectDirectory}/hooks/dist</directory>
+                      <directory>${maven.multiModuleProjectDirectory}/integrations/common/scripts/dist</directory>
                       <filtering>false</filtering>
                       <excludes>
                         <exclude>**/*.test.js</exclude>
@@ -308,7 +301,7 @@
                   <outputDirectory>${build.outputDir}/scripts/tasks</outputDirectory>
                   <resources>
                     <resource>
-                      <directory>${maven.multiModuleProjectDirectory}/hooks/src/main/scripts/tasks</directory>
+                      <directory>${maven.multiModuleProjectDirectory}/integrations/common/scripts/tasks</directory>
                       <filtering>false</filtering>
                       <excludes>
                         <exclude>**/*.test.ts</exclude>
