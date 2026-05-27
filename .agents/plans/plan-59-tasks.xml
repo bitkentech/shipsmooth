@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Rename LedgerService → EventLedger</name>
-            <commit></commit>
+            <commit>1633e3588b00adced52fe5ca4fba59312f891810</commit>
             <created-from>plan-59-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>

@@ -5,6 +5,7 @@ import dagger.Provides;
 import io.bitken.ss.git.GitTagService;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.EventLedger;
+import io.bitken.ss.service.PlanService;
 import io.bitken.ss.service.XmlService;
 import io.bitken.ss.workflow.DefaultProcessRunner;
 import io.bitken.ss.workflow.ProcessRunner;
@@ -75,6 +76,12 @@ public class ServicesModule {
     @Singleton
     io.bitken.ss.workflow.ProgressReporter provideProgressReporter() {
         return new io.bitken.ss.workflow.ConsoleProgressReporter();
+    }
+
+    @Provides
+    @Singleton
+    PlanService providePlanService(XmlService xml, EventLedger ledger) {
+        return new PlanService(xml, ledger);
     }
 
     @Provides
