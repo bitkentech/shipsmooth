@@ -7,7 +7,7 @@ import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.jaxb.PlanTasks;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,8 +35,8 @@ public class ShipsmoothIntegrationTest {
         planDir.mkdirs();
         Files.writeString(mdFile.toPath(), "### Task 1: CLI test task [High]\n");
 
-        List<XmlService.Task> tasks = List.of(new XmlService.Task(1, "CLI test task", "high"));
-        XmlService xmlService = new XmlService();
+        List<TaskStore.Task> tasks = List.of(new TaskStore.Task(1, "CLI test task", "high"));
+        TaskStore xmlService = new TaskStore();
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xmlService.writePlanTasks(planTasks, xmlFile);
 
@@ -120,7 +120,7 @@ public class ShipsmoothIntegrationTest {
         int exit = tasksCli.execute("add-comment", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "via Shipsmooth");
         assertEquals(0, exit);
 
-        XmlService xmlService = new XmlService();
+        TaskStore xmlService = new TaskStore();
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
         var comments = planTasks.getTasks().getTask().get(0).getComments().getComment();
         assertEquals(1, comments.size());

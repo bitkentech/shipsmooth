@@ -3,7 +3,7 @@ package io.bitken.ss.cli;
 import io.bitken.ss.AgentsLayout;
 import io.bitken.ss.git.GitTagService;
 import io.bitken.ss.service.PlanService;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.gw.TaskStore;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
@@ -17,15 +17,15 @@ public class Init implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
     private final PlanService planService;
-    private final XmlService xmlService;
+    private final TaskStore xmlService;
     private final GitTagService gitTagService;
 
-    public Init(PlanService planService, XmlService xmlService) {
+    public Init(PlanService planService, TaskStore xmlService) {
         this(planService, xmlService, new GitTagService());
     }
 
     @Inject
-    public Init(PlanService planService, XmlService xmlService, GitTagService gitTagService) {
+    public Init(PlanService planService, TaskStore xmlService, GitTagService gitTagService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.planService = planService;
         this.xmlService = xmlService;

@@ -1,4 +1,4 @@
-package io.bitken.ss.service;
+package io.bitken.ss.gw;
 
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.jaxb.TaskStatusType;
@@ -10,11 +10,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class XmlServiceTest {
+public class TaskStoreTest {
 
     @Test
     public void testReadPlanTasks() throws Exception {
-        XmlService service = new XmlService();
+        TaskStore service = new TaskStore();
         Path path = Paths.get("../.agents/plans/plan-27-tasks.xml");
         PlanTasks planTasks = service.readPlanTasks(path.toFile());
         
@@ -25,11 +25,11 @@ public class XmlServiceTest {
 
     @Test
     public void testParseTasksFromPlan() {
-        XmlService service = new XmlService();
+        TaskStore service = new TaskStore();
         String markdown = "### Task 1: Fix bug [High]\n" +
                 "### Task 2: Refactor [Medium]\n" +
                 "### Task 3: Test\n";
-        List<XmlService.Task> tasks = service.parseTasksFromPlan(markdown);
+        List<TaskStore.Task> tasks = service.parseTasksFromPlan(markdown);
         assertEquals(3, tasks.size());
         assertEquals(1, tasks.get(0).id());
         assertEquals("Fix bug", tasks.get(0).name());
@@ -41,8 +41,8 @@ public class XmlServiceTest {
 
     @Test
     public void testUpdateOperations() throws Exception {
-        XmlService service = new XmlService();
-        List<XmlService.Task> tasks = List.of(new XmlService.Task(1, "Task 1", "high"));
+        TaskStore service = new TaskStore();
+        List<TaskStore.Task> tasks = List.of(new TaskStore.Task(1, "Task 1", "high"));
         PlanTasks planTasks = service.generatePlanTasks(99, "plan-99-v1", tasks);
         
         service.updateTaskStatus(planTasks, 1, "in-progress");

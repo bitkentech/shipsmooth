@@ -7,7 +7,7 @@ import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.gw.TaskStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,10 +69,10 @@ class WorkflowServiceRunIntegrationTest {
         Files.writeString(mdFile.toPath(),
                 "### Task 2: Add file A [Low]\n\n" +
                 "### Task 3: Add file B [Low]\n");
-        XmlService xmlService = new XmlService();
+        TaskStore xmlService = new TaskStore();
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1",
-                List.of(new XmlService.Task(2, "Add file A", "low"),
-                        new XmlService.Task(3, "Add file B", "low")));
+                List.of(new TaskStore.Task(2, "Add file A", "low"),
+                        new TaskStore.Task(3, "Add file B", "low")));
         xmlService.writePlanTasks(planTasks, xmlFile);
 
         createAgentWorkBranch("2", "fileA-996.txt", "content-A");
@@ -120,9 +120,9 @@ class WorkflowServiceRunIntegrationTest {
     @Test
     void runIntegration_throwsWhenNothingToIntegrate() throws Exception {
         Files.writeString(mdFile.toPath(), "### Task 9: Empty plan [Low]\n");
-        XmlService xmlService = new XmlService();
+        TaskStore xmlService = new TaskStore();
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1",
-                List.of(new XmlService.Task(9, "Empty plan", "low")));
+                List.of(new TaskStore.Task(9, "Empty plan", "low")));
         xmlService.writePlanTasks(planTasks, xmlFile);
 
         IntegrationOptions opts = new IntegrationOptions().verifyCmd("echo ok");

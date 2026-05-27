@@ -1,5 +1,6 @@
 package io.bitken.ss.service;
 
+import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventLedger;
@@ -12,15 +13,15 @@ import java.util.Map;
 
 public class PlanService {
 
-    private final XmlService xml;
+    private final TaskStore xml;
     private final EventLedger ledger;
 
-    public PlanService(XmlService xml, EventLedger ledger) {
+    public PlanService(TaskStore xml, EventLedger ledger) {
         this.xml = xml;
         this.ledger = ledger;
     }
 
-    public void initPlan(int planId, String planVersion, List<XmlService.Task> tasks) throws Exception {
+    public void initPlan(int planId, String planVersion, List<TaskStore.Task> tasks) throws Exception {
         PlanTasks plan = xml.generatePlanTasks(planId, planVersion, tasks);
         xml.writePlanTasks(plan, xml.planTasksFile(planId));
         recordBestEffort(() -> {

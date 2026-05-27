@@ -5,7 +5,7 @@ import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.ledger.ObjectStore;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.gw.TaskStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,8 +42,8 @@ public class LedgerIntegrationTest {
         xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
         Files.writeString(mdFile.toPath(), "### Task 1: Test task [High]\n");
 
-        XmlService xmlService = new XmlService();
-        List<XmlService.Task> tasks = List.of(new XmlService.Task(1, "Test task", "high"));
+        TaskStore xmlService = new TaskStore();
+        List<TaskStore.Task> tasks = List.of(new TaskStore.Task(1, "Test task", "high"));
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xmlService.writePlanTasks(planTasks, xmlFile);
     }

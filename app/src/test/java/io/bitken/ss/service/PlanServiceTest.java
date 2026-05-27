@@ -1,5 +1,6 @@
 package io.bitken.ss.service;
 
+import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.jaxb.PlanTasks;
@@ -17,7 +18,7 @@ public class PlanServiceTest {
     Path tempDir;
 
     private PlanService planService() {
-        XmlService xml = new XmlService();
+        TaskStore xml = new TaskStore();
         EventLedger ledger = new EventLedger(tempDir);
         return new PlanService(xml, ledger);
     }
@@ -25,7 +26,7 @@ public class PlanServiceTest {
     @Test
     public void updateTaskStatusMutatesXmlAndRecordsLedgerEvent() throws Exception {
         PlanService svc = planService();
-        var tasks = List.of(new XmlService.Task(1, "do the thing", "low"));
+        var tasks = List.of(new TaskStore.Task(1, "do the thing", "low"));
         svc.initPlan(1, "plan-1-v1", tasks);
 
         svc.updateTaskStatus(1, 1, "agent-coded");
@@ -46,7 +47,7 @@ public class PlanServiceTest {
     @Test
     public void addCommentMutatesXmlAndRecordsLedgerEvent() throws Exception {
         PlanService svc = planService();
-        svc.initPlan(1, "plan-1-v1", List.of(new XmlService.Task(1, "a task", "low")));
+        svc.initPlan(1, "plan-1-v1", List.of(new TaskStore.Task(1, "a task", "low")));
 
         svc.addComment(1, 1, "looks good");
 
@@ -63,7 +64,7 @@ public class PlanServiceTest {
     @Test
     public void ledgerFailureDoesNotRollBackXmlMutation() throws Exception {
         // Simulate ledger failure by pointing EventLedger at a read-only path
-        XmlService xml = new XmlService();
+        TaskStore xml = new TaskStore();
         Path readOnlyDir = tempDir.resolve("ro");
         readOnlyDir.toFile().mkdirs();
         readOnlyDir.toFile().setReadOnly();
@@ -76,7 +77,7 @@ public class PlanServiceTest {
         // (XML write will also fail here since tempDir is used for XML too; we just check no exception escapes)
         assertDoesNotThrow(() -> {
             try {
-                svc.initPlan(1, "plan-1-v1", List.of(new XmlService.Task(1, "t", "low")));
+                svc.initPlan(1, "plan-1-v1", List.of(new TaskStore.Task(1, "t", "low")));
             } catch (Exception e) {
                 // XML write failure is expected here — that's fine, we just want no unchecked exception
             }

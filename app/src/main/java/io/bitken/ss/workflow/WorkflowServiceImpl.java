@@ -15,7 +15,7 @@ import io.bitken.ss.jaxb.TaskType;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.gw.TaskStore;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * Default {@link WorkflowService} implementation.
  *
- * <p>Collaborators ({@link WorktreeService}, {@link EventLedger}, {@link XmlService},
+ * <p>Collaborators ({@link WorktreeService}, {@link EventLedger}, {@link TaskStore},
  * {@link ProcessRunner}, {@link ProgressReporter}) are injected — the DI container
  * already provisions them and using the injected singletons (rather than fresh
  * instances) keeps the {@code WorktreeService} git semaphore meaningful across
@@ -45,12 +45,12 @@ public class WorkflowServiceImpl implements WorkflowService {
     private final ProcessRunner processes;
     private final WorktreeService git;
     private final EventLedger ledger;
-    private final XmlService xmlService;
+    private final TaskStore xmlService;
     private final ProgressReporter reporter;
 
     public WorkflowServiceImpl(Path repoRoot, ProcessRunner processes,
                                WorktreeService git, EventLedger ledger,
-                               XmlService xmlService, ProgressReporter reporter) {
+                               TaskStore xmlService, ProgressReporter reporter) {
         this.repoRoot = repoRoot;
         this.processes = processes;
         this.git = git;

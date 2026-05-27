@@ -6,7 +6,7 @@ import io.bitken.ss.git.GitTagService;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.PlanService;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.workflow.DefaultProcessRunner;
 import io.bitken.ss.workflow.ProcessRunner;
 import io.bitken.ss.workflow.WorkflowService;
@@ -32,8 +32,8 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    XmlService provideXmlService() {
-        return new XmlService();
+    TaskStore provideTaskStore() {
+        return new TaskStore();
     }
 
     @Provides
@@ -67,7 +67,7 @@ public class ServicesModule {
             ProcessRunner processes,
             WorktreeService worktreeService,
             EventLedger ledgerService,
-            XmlService xmlService,
+            TaskStore xmlService,
             io.bitken.ss.workflow.ProgressReporter reporter) {
         return new WorkflowServiceImpl(repoRoot, processes, worktreeService, ledgerService, xmlService, reporter);
     }
@@ -80,7 +80,7 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    PlanService providePlanService(XmlService xml, EventLedger ledger) {
+    PlanService providePlanService(TaskStore xml, EventLedger ledger) {
         return new PlanService(xml, ledger);
     }
 

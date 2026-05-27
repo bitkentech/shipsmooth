@@ -1,7 +1,7 @@
 package io.bitken.ss.cli;
 
 import io.bitken.ss.service.PlanService;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.gw.TaskStore;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
@@ -13,10 +13,10 @@ public class WorkerBase implements Callable<Integer>, HasSpec, io.bitken.ss.conf
 
     private final CommandSpec spec;
     private final PlanService planService;
-    private final XmlService xmlService;
+    private final TaskStore xmlService;
 
     @Inject
-    public WorkerBase(PlanService planService, XmlService xmlService) {
+    public WorkerBase(PlanService planService, TaskStore xmlService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("worker-base");
         this.spec.usageMessage().description("Print the base commit SHA for a dependent task (from parent's COMMIT_RECORDED event).");

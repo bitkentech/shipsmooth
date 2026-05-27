@@ -6,7 +6,7 @@ import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.gw.TaskStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,8 +56,8 @@ class WorkflowServiceFinalizeWorkerTest {
         cleanup();
 
         Files.writeString(mdFile.toPath(), "### Task 1: Finalize test [Low]\n");
-        XmlService xs = new XmlService();
-        List<XmlService.Task> tasks = List.of(new XmlService.Task(1, "Finalize test", "low"));
+        TaskStore xs = new TaskStore();
+        List<TaskStore.Task> tasks = List.of(new TaskStore.Task(1, "Finalize test", "low"));
         PlanTasks planTasks = xs.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xs.writePlanTasks(planTasks, xmlFile);
     }

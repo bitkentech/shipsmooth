@@ -3,7 +3,7 @@ package io.bitken.ss.cli;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.PlanService;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.gw.TaskStore;
 
 import java.nio.file.Paths;
 import org.junit.jupiter.api.AfterEach;
@@ -25,7 +25,7 @@ public class CommandsTest {
     private final File planDir = new File(".agents/plans");
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
-    private final XmlService xmlService = new XmlService();
+    private final TaskStore xmlService = new TaskStore();
     private EventLedger ledgerService;
     private PlanService planService;
 
@@ -36,7 +36,7 @@ public class CommandsTest {
         planDir.mkdirs();
         Files.writeString(mdFile.toPath(), "### Task 1: Test task [High]\n");
 
-        List<XmlService.Task> tasks = List.of(new XmlService.Task(1, "Test task", "high"));
+        List<TaskStore.Task> tasks = List.of(new TaskStore.Task(1, "Test task", "high"));
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xmlService.writePlanTasks(planTasks, xmlFile);
     }

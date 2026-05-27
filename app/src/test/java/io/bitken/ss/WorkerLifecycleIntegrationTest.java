@@ -8,7 +8,7 @@ import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.gw.TaskStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,8 +48,8 @@ public class WorkerLifecycleIntegrationTest {
         planDir.mkdirs();
         Files.writeString(mdFile.toPath(), "### Task 1: Worker lifecycle test task [Low]\n");
 
-        XmlService xmlService = new XmlService();
-        List<XmlService.Task> tasks = List.of(new XmlService.Task(1, "Worker lifecycle test task", "low"));
+        TaskStore xmlService = new TaskStore();
+        List<TaskStore.Task> tasks = List.of(new TaskStore.Task(1, "Worker lifecycle test task", "low"));
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xmlService.writePlanTasks(planTasks, xmlFile);
 
@@ -128,7 +128,7 @@ public class WorkerLifecycleIntegrationTest {
                 "events must be in lifecycle order");
 
         // XML commit field populated
-        XmlService xmlService = new XmlService();
+        TaskStore xmlService = new TaskStore();
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
         String commit = planTasks.getTasks().getTask().stream()
                 .filter(t -> t.getId().intValue() == 1)

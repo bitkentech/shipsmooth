@@ -4,7 +4,7 @@ import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.PlanService;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.gw.TaskStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
@@ -23,7 +23,7 @@ public class InitLedgerTest {
     private final File planDir = new File(".agents/plans");
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
-    private final XmlService xmlService = new XmlService();
+    private final TaskStore xmlService = new TaskStore();
     private EventLedger ledgerService;
     private PlanService planService;
 

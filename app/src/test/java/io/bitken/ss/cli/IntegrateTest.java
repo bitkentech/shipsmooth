@@ -9,7 +9,7 @@ import io.bitken.ss.workflow.integration.Resolver;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.jaxb.PlanTasks;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,10 +79,10 @@ public class IntegrateTest {
         Files.writeString(mdFile.toPath(),
                 "### Task 2: Add file A [Low]\n\n" +
                 "### Task 3: Add file B [Low]\n");
-        XmlService xmlService = new XmlService();
-        List<XmlService.Task> tasks = List.of(
-                new XmlService.Task(2, "Add file A", "low"),
-                new XmlService.Task(3, "Add file B", "low")
+        TaskStore xmlService = new TaskStore();
+        List<TaskStore.Task> tasks = List.of(
+                new TaskStore.Task(2, "Add file A", "low"),
+                new TaskStore.Task(3, "Add file B", "low")
         );
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xmlService.writePlanTasks(planTasks, xmlFile);
@@ -147,8 +147,8 @@ public class IntegrateTest {
     @Test
     void forceFlag_deletesExistingIntegrationAndStartsFresh() throws Exception {
         Files.writeString(mdFile.toPath(), "### Task 2: Add file A [Low]\n");
-        XmlService xmlService = new XmlService();
-        List<XmlService.Task> tasks = List.of(new XmlService.Task(2, "Add file A", "low"));
+        TaskStore xmlService = new TaskStore();
+        List<TaskStore.Task> tasks = List.of(new TaskStore.Task(2, "Add file A", "low"));
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xmlService.writePlanTasks(planTasks, xmlFile);
 
@@ -191,10 +191,10 @@ public class IntegrateTest {
         Files.writeString(mdFile.toPath(),
                 "### Task 4: Edit shared [Low]\n\n" +
                 "### Task 5: Also edit shared [Low]\n");
-        XmlService xmlService = new XmlService();
-        List<XmlService.Task> tasks = List.of(
-                new XmlService.Task(4, "Edit shared", "low"),
-                new XmlService.Task(5, "Also edit shared", "low")
+        TaskStore xmlService = new TaskStore();
+        List<TaskStore.Task> tasks = List.of(
+                new TaskStore.Task(4, "Edit shared", "low"),
+                new TaskStore.Task(5, "Also edit shared", "low")
         );
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xmlService.writePlanTasks(planTasks, xmlFile);
