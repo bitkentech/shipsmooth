@@ -68,9 +68,9 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Split plugin-resources into integrations/claude and integrations/gemini</name>
-            <commit></commit>
+            <commit>221780ae2b29ea6e0fc18dd29ff171c70f631fad</commit>
             <created-from>plan-56-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -79,9 +79,9 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Merge skills and hooks sources into integrations/common</name>
-            <commit></commit>
+            <commit>2ba8dfb94cbb077db625379e485c0ea92ca9e2de</commit>
             <created-from>plan-56-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
