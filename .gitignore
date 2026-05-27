@@ -20,3 +20,5 @@ model/*.tlc
 model/*.out
 model/states/
 .claude/settings.local.json
+.idea/
+.serena/
