@@ -23,7 +23,7 @@ public class PlanService {
 
     public void initPlan(int planId, String planVersion, List<TaskStore.Task> tasks) throws Exception {
         PlanTasks plan = xml.generatePlanTasks(planId, planVersion, tasks);
-        xml.writePlanTasks(plan, xml.planTasksFile(planId));
+        xml.savePlan(planId, plan);
         recordBestEffort(() -> {
             ledger.ensureLedgerFile();
             for (var t : tasks) {
@@ -100,10 +100,9 @@ public class PlanService {
     }
 
     private void mutateAndRecord(int planId, XmlMutation mutation, EventSupplier eventSupplier) throws Exception {
-        var file = xml.planTasksFile(planId);
-        var plan = xml.readPlanTasks(file);
+        var plan = xml.loadPlan(planId);
         mutation.apply(plan);
-        xml.writePlanTasks(plan, file);
+        xml.savePlan(planId, plan);
         recordBestEffort(() -> {
             ledger.ensureLedgerFile();
             ledger.record(eventSupplier.get());

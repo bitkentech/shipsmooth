@@ -1,6 +1,6 @@
 package io.bitken.ss.cli;
 
-import io.bitken.ss.AgentsLayout;
+import io.bitken.ss.ShipsmoothDataLocator;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.gw.TaskStore;
@@ -66,15 +66,12 @@ public class Init implements Callable<Integer>, HasSpec {
 
         planService.initPlan(plan, planVersion, tasks);
 
-        System.out.println("Written " + tasks.size() + " tasks to " + xmlService.planTasksFile(plan).getPath());
+        ShipsmoothDataLocator locator = new ShipsmoothDataLocator(Paths.get("."));
+        System.out.println("Written " + tasks.size() + " tasks to " + locator.planTasksFile(plan).getPath());
 
-        bootstrapAgentsLayout(Paths.get("."));
+        locator.bootstrap();
         ensureGitignore(Paths.get("."));
         return 0;
-    }
-
-    private void bootstrapAgentsLayout(Path repoRoot) throws Exception {
-        new AgentsLayout(repoRoot).bootstrap();
     }
 
     private void ensureGitignore(Path repoRoot) throws Exception {
@@ -83,7 +80,7 @@ public class Init implements Callable<Integer>, HasSpec {
         var updated = new StringBuilder(content);
         if (!content.isEmpty() && !content.endsWith("\n")) updated.append('\n');
         var changed = false;
-        for (var entry : new String[]{".agents/tasks/*", ".agents/integration/*", ".agents/objects/", ".agents/ledger.jsonl"}) {
+        for (var entry : ShipsmoothDataLocator.GITIGNORE_ENTRIES) {
             if (content.lines().noneMatch(l -> l.trim().equals(entry))) {
                 updated.append(entry).append('\n');
                 changed = true;

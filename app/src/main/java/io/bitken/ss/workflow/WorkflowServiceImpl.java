@@ -1,5 +1,6 @@
 package io.bitken.ss.workflow;
 
+import io.bitken.ss.ShipsmoothDataLocator;
 import io.bitken.ss.git.MergeResult;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.workflow.integration.IntegrationDefaults;
@@ -42,6 +43,7 @@ import java.util.Set;
 public class WorkflowServiceImpl implements WorkflowService {
 
     private final Path repoRoot;
+    private final ShipsmoothDataLocator locator;
     private final ProcessRunner processes;
     private final WorktreeService git;
     private final EventLedger ledger;
@@ -51,7 +53,14 @@ public class WorkflowServiceImpl implements WorkflowService {
     public WorkflowServiceImpl(Path repoRoot, ProcessRunner processes,
                                WorktreeService git, EventLedger ledger,
                                TaskStore xmlService, ProgressReporter reporter) {
+        this(repoRoot, new ShipsmoothDataLocator(repoRoot), processes, git, ledger, xmlService, reporter);
+    }
+
+    public WorkflowServiceImpl(Path repoRoot, ShipsmoothDataLocator locator, ProcessRunner processes,
+                               WorktreeService git, EventLedger ledger,
+                               TaskStore xmlService, ProgressReporter reporter) {
         this.repoRoot = repoRoot;
+        this.locator = locator;
         this.processes = processes;
         this.git = git;
         this.ledger = ledger;
@@ -62,8 +71,8 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Override
     public Path initializeWorker(int planId, String taskId, String baseSha) throws WorkflowException {
         try {
-            String worktreeRel = ".agents/tasks/" + taskId;
-            String branch = "agent-work/" + taskId;
+            String worktreeRel = locator.worktreeRel(taskId);
+            String branch = locator.agentBranch(taskId);
 
             if (git.worktreeExists(worktreeRel)) {
                 throw new WorkflowException(WorkflowErrorCode.WORKTREE_ALREADY_EXISTS,
@@ -92,8 +101,8 @@ public class WorkflowServiceImpl implements WorkflowService {
         try {
             ledger.ensureLedgerFile();
 
-            String worktreeRel = ".agents/tasks/" + taskId;
-            String branch = "agent-work/" + taskId;
+            String worktreeRel = locator.worktreeRel(taskId);
+            String branch = locator.agentBranch(taskId);
             File worktreeDir = repoRoot.resolve(worktreeRel).toFile();
 
             if (!worktreeDir.isDirectory()) {
@@ -128,7 +137,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                         "worker-finish: subagent produced no changes (empty diff). Aborting.");
             }
 
-            File xmlFile = xmlService.planTasksFile(planId);
+            File xmlFile = locator.planTasksFile(planId);
             PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
             final String resolvedPreCommitBranchSha = preCommitBranchSha;
             String taskName = xmlService.getTaskName(planTasks, Integer.parseInt(taskId));
@@ -217,11 +226,11 @@ public class WorkflowServiceImpl implements WorkflowService {
         String verifyCmd = (options.verifyCmd() != null && !options.verifyCmd().isBlank())
                 ? options.verifyCmd() : IntegrationDefaults.VERIFY_CMD;
 
-        File xmlFile = xmlService.planTasksFile(plan);
+        File xmlFile = locator.planTasksFile(plan);
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
 
-        String integrationBranch = "integration/plan-" + plan;
-        String integrationRel = ".agents/integration/plan-" + plan;
+        String integrationBranch = locator.integrationBranch(plan);
+        String integrationRel = locator.integrationRel(plan);
         String integrationAbs = repoRoot.resolve(integrationRel).toAbsolutePath().toString();
         File integrationDir = repoRoot.resolve(integrationRel).toFile();
 

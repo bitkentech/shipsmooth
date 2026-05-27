@@ -2,6 +2,7 @@ package io.bitken.ss.conf;
 
 import dagger.Module;
 import dagger.Provides;
+import io.bitken.ss.ShipsmoothDataLocator;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.EventLedger;
@@ -32,14 +33,20 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    TaskStore provideTaskStore() {
-        return new TaskStore();
+    ShipsmoothDataLocator provideDataLocator(Path repoRoot) {
+        return new ShipsmoothDataLocator(repoRoot);
     }
 
     @Provides
     @Singleton
-    EventLedger provideEventLedger(Path repoRoot) {
-        return new EventLedger(repoRoot);
+    TaskStore provideTaskStore(ShipsmoothDataLocator locator) {
+        return new TaskStore(locator);
+    }
+
+    @Provides
+    @Singleton
+    EventLedger provideEventLedger(ShipsmoothDataLocator locator) {
+        return new EventLedger(locator);
     }
 
     @Provides
@@ -64,12 +71,13 @@ public class ServicesModule {
     @Singleton
     WorkflowServiceImpl provideWorkflowServiceImpl(
             Path repoRoot,
+            ShipsmoothDataLocator locator,
             ProcessRunner processes,
             WorktreeService worktreeService,
             EventLedger ledgerService,
             TaskStore taskStore,
             io.bitken.ss.workflow.ProgressReporter reporter) {
-        return new WorkflowServiceImpl(repoRoot, processes, worktreeService, ledgerService, taskStore, reporter);
+        return new WorkflowServiceImpl(repoRoot, locator, processes, worktreeService, ledgerService, taskStore, reporter);
     }
 
     @Provides

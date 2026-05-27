@@ -1,6 +1,7 @@
 package io.bitken.ss.conf;
 
 import dagger.Component;
+import io.bitken.ss.ShipsmoothDataLocator;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.svc.plan.PlanService;
@@ -12,6 +13,7 @@ import jakarta.inject.Singleton;
 @Singleton
 @Component(modules = ServicesModule.class)
 public interface AppComponents {
+    ShipsmoothDataLocator dataLocator();
     TaskStore taskStore();
     EventLedger eventLedger();
     PlanService planService();

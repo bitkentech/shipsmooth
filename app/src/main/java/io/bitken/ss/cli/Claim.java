@@ -1,5 +1,6 @@
 package io.bitken.ss.cli;
 
+import io.bitken.ss.ShipsmoothDataLocator;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
@@ -10,7 +11,6 @@ import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
-import java.io.File;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -45,10 +45,7 @@ public class Claim implements Callable<Integer>, HasSpec, io.bitken.ss.conf.Feat
         int plan = pr.matchedOption("plan").getValue();
         String task = pr.matchedOption("task").getValue();
 
-        var repoRoot = Paths.get(".");
-        var xmlFile = new File(".agents/plans/plan-" + plan + "-tasks.xml");
-
-        PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
+        PlanTasks planTasks = xmlService.loadPlan(plan);
 
         boolean taskExists = planTasks.getTasks().getTask().stream()
             .anyMatch(t -> String.valueOf(t.getId()).equals(task));

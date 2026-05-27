@@ -1,4 +1,5 @@
 package io.bitken.ss.gw;
+import io.bitken.ss.ShipsmoothDataLocator;
 
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.jaxb.TaskStatusType;
@@ -14,7 +15,7 @@ public class TaskStoreTest {
 
     @Test
     public void testReadPlanTasks() throws Exception {
-        TaskStore service = new TaskStore();
+        TaskStore service = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         Path path = Paths.get("../.agents/plans/plan-27-tasks.xml");
         PlanTasks planTasks = service.readPlanTasks(path.toFile());
         
@@ -25,7 +26,7 @@ public class TaskStoreTest {
 
     @Test
     public void testParseTasksFromPlan() {
-        TaskStore service = new TaskStore();
+        TaskStore service = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         String markdown = "### Task 1: Fix bug [High]\n" +
                 "### Task 2: Refactor [Medium]\n" +
                 "### Task 3: Test\n";
@@ -41,7 +42,7 @@ public class TaskStoreTest {
 
     @Test
     public void testUpdateOperations() throws Exception {
-        TaskStore service = new TaskStore();
+        TaskStore service = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         List<TaskStore.Task> tasks = List.of(new TaskStore.Task(1, "Task 1", "high"));
         PlanTasks planTasks = service.generatePlanTasks(99, "plan-99-v1", tasks);
         

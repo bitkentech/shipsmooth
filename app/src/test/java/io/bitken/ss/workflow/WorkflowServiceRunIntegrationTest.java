@@ -1,4 +1,5 @@
 package io.bitken.ss.workflow;
+import io.bitken.ss.ShipsmoothDataLocator;
 
 import io.bitken.ss.conf.DaggerAppComponents;
 import io.bitken.ss.conf.ServicesModule;
@@ -69,7 +70,7 @@ class WorkflowServiceRunIntegrationTest {
         Files.writeString(mdFile.toPath(),
                 "### Task 2: Add file A [Low]\n\n" +
                 "### Task 3: Add file B [Low]\n");
-        TaskStore xmlService = new TaskStore();
+        TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1",
                 List.of(new TaskStore.Task(2, "Add file A", "low"),
                         new TaskStore.Task(3, "Add file B", "low")));
@@ -120,7 +121,7 @@ class WorkflowServiceRunIntegrationTest {
     @Test
     void runIntegration_throwsWhenNothingToIntegrate() throws Exception {
         Files.writeString(mdFile.toPath(), "### Task 9: Empty plan [Low]\n");
-        TaskStore xmlService = new TaskStore();
+        TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1",
                 List.of(new TaskStore.Task(9, "Empty plan", "low")));
         xmlService.writePlanTasks(planTasks, xmlFile);

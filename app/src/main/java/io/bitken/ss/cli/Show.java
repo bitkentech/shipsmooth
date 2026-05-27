@@ -6,7 +6,6 @@ import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
-import java.io.File;
 import java.util.concurrent.Callable;
 
 public class Show implements Callable<Integer>, HasSpec {
@@ -32,8 +31,7 @@ public class Show implements Callable<Integer>, HasSpec {
         var pr = spec.commandLine().getParseResult();
         int plan = pr.matchedOption("plan").getValue();
 
-        File file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
-        PlanTasks planTasks = xmlService.readPlanTasks(file);
+        PlanTasks planTasks = xmlService.loadPlan(plan);
         System.out.print(xmlService.formatPlanSummary(planTasks));
         return 0;
     }

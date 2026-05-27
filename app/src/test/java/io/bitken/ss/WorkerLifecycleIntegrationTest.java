@@ -1,4 +1,5 @@
 package io.bitken.ss;
+import io.bitken.ss.ShipsmoothDataLocator;
 
 import io.bitken.ss.cli.Shipsmooth;
 import io.bitken.ss.conf.AppComponents;
@@ -48,7 +49,7 @@ public class WorkerLifecycleIntegrationTest {
         planDir.mkdirs();
         Files.writeString(mdFile.toPath(), "### Task 1: Worker lifecycle test task [Low]\n");
 
-        TaskStore xmlService = new TaskStore();
+        TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         List<TaskStore.Task> tasks = List.of(new TaskStore.Task(1, "Worker lifecycle test task", "low"));
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xmlService.writePlanTasks(planTasks, xmlFile);
@@ -128,7 +129,7 @@ public class WorkerLifecycleIntegrationTest {
                 "events must be in lifecycle order");
 
         // XML commit field populated
-        TaskStore xmlService = new TaskStore();
+        TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
         String commit = planTasks.getTasks().getTask().stream()
                 .filter(t -> t.getId().intValue() == 1)

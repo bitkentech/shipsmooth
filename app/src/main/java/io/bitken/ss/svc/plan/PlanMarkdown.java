@@ -1,6 +1,6 @@
 package io.bitken.ss.svc.plan;
 
-import io.bitken.ss.gw.TaskStore;
+import io.bitken.ss.ShipsmoothDataLocator;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,10 +10,10 @@ import java.nio.file.Files;
  */
 public class PlanMarkdown {
 
-    private final TaskStore xmlService;
+    private final ShipsmoothDataLocator locator;
 
-    public PlanMarkdown(TaskStore xmlService) {
-        this.xmlService = xmlService;
+    public PlanMarkdown(ShipsmoothDataLocator locator) {
+        this.locator = locator;
     }
 
     /**
@@ -22,7 +22,7 @@ public class PlanMarkdown {
      */
     public String sliceTaskSection(int planId, int taskId) {
         try {
-            File planFile = xmlService.planMarkdownFile(planId);
+            File planFile = locator.planMarkdownFile(planId);
             if (!planFile.exists()) return "";
             String content = Files.readString(planFile.toPath());
             String marker = "### Task " + taskId + ":";

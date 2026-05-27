@@ -3,6 +3,7 @@ package io.bitken.ss.ledger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.bitken.ss.ShipsmoothDataLocator;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -28,8 +29,12 @@ public class EventLedger {
     private final Object appendMonitor = new Object();
 
     public EventLedger(Path repoRoot) {
-        this.store = new ObjectStore(repoRoot);
-        this.ledgerPath = repoRoot.resolve(".agents").resolve("ledger.jsonl");
+        this(new ShipsmoothDataLocator(repoRoot));
+    }
+
+    public EventLedger(ShipsmoothDataLocator locator) {
+        this.store = new ObjectStore(locator.objectStorePath());
+        this.ledgerPath = locator.ledgerPath();
         this.mapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);

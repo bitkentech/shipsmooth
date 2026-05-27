@@ -1,4 +1,5 @@
 package io.bitken.ss;
+import io.bitken.ss.ShipsmoothDataLocator;
 
 import io.bitken.ss.cli.Shipsmooth;
 import io.bitken.ss.conf.AppComponents;
@@ -47,7 +48,7 @@ public class WorkerDependencyIntegrationTest {
         Files.writeString(mdFile.toPath(),
                 "### Task 1: Foundation task [Low]\n### Task 2: Dependent task [Low]\n");
 
-        TaskStore xmlService = new TaskStore();
+        TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         List<TaskStore.Task> tasks = List.of(
                 new TaskStore.Task(1, "Foundation task", "low"),
                 new TaskStore.Task(2, "Dependent task", "low")
@@ -122,7 +123,7 @@ public class WorkerDependencyIntegrationTest {
         assertTrue(branchExists("agent-work/" + TASK_2), "branch agent-work/2 should survive");
 
         // Both XML <commit> fields populated
-        TaskStore xmlService = new TaskStore();
+        TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         PlanTasks result = xmlService.readPlanTasks(xmlFile);
         String commit1 = result.getTasks().getTask().stream()
                 .filter(t -> t.getId().intValue() == 1).findFirst().orElseThrow().getCommit();

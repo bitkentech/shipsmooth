@@ -1,4 +1,5 @@
 package io.bitken.ss.cli;
+import io.bitken.ss.ShipsmoothDataLocator;
 
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.EventLedger;
@@ -25,7 +26,7 @@ public class CommandsTest {
     private final File planDir = new File(".agents/plans");
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
-    private final TaskStore xmlService = new TaskStore();
+    private final TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
     private EventLedger ledgerService;
     private PlanService planService;
 

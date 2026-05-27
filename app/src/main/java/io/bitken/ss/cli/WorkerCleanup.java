@@ -1,5 +1,6 @@
 package io.bitken.ss.cli;
 
+import io.bitken.ss.ShipsmoothDataLocator;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
@@ -40,8 +41,9 @@ public class WorkerCleanup implements Callable<Integer>, HasSpec, io.bitken.ss.c
         int plan = pr.matchedOption("plan").getValue();
         String task = pr.matchedOption("task").getValue();
 
-        var worktreeRel = ".agents/tasks/" + task;
-        var branch = "agent-work/" + task;
+        ShipsmoothDataLocator locator = new ShipsmoothDataLocator(Paths.get("."));
+        var worktreeRel = locator.worktreeRel(task);
+        var branch = locator.agentBranch(task);
 
         ledger.ensureLedgerFile();
 

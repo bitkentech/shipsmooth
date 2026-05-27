@@ -115,7 +115,9 @@ public class EventLedgerTest {
 
     @Test
     public void writeObjectIdempotent() throws Exception {
-        ObjectStore store = new ObjectStore(tempDir);
+        Path objectStoreRoot = tempDir.resolve(".agents/objects");
+        Files.createDirectories(objectStoreRoot);
+        ObjectStore store = new ObjectStore(objectStoreRoot);
         byte[] data = "idempotency check".getBytes(StandardCharsets.UTF_8);
 
         String sha1a = store.writeObject(data);
@@ -123,7 +125,7 @@ public class EventLedgerTest {
 
         assertEquals(sha1a, sha1b);
 
-        Path obj = tempDir.resolve(".agents/objects")
+        Path obj = objectStoreRoot
                 .resolve(sha1a.substring(0, 2))
                 .resolve(sha1a.substring(2));
         assertTrue(Files.exists(obj));
