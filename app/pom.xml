@@ -133,7 +133,7 @@
                 </executions>
                 <configuration>
                     <sources>
-                        <source>../integrations/common/scripts/tasks/plan-tasks.xsd</source>
+                        <source>src/main/resources/plan-tasks.xsd</source>
                     </sources>
                     <packageName>io.bitken.ss.jaxb</packageName>
                     <clearOutputDir>false</clearOutputDir>
