@@ -57,9 +57,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Rename XmlService → TaskStore and move to gw/</name>
-            <commit></commit>
+            <commit>45fc496964a7b1250540740374bf1425f14a09bd</commit>
             <created-from>plan-59-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
