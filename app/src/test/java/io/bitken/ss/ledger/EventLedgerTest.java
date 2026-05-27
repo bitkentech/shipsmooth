@@ -13,14 +13,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LedgerServiceTest {
+public class EventLedgerTest {
 
     @TempDir
     Path tempDir;
 
     @Test
     public void recordAndReadEvent() throws Exception {
-        LedgerService ledger = new LedgerService(tempDir);
+        EventLedger ledger = new EventLedger(tempDir);
         ledger.ensureLedgerFile();
 
         Event event = Event.forTask(EventType.STATUS_UPDATED, "3", null, "status=agent-coded", null);
@@ -62,7 +62,7 @@ public class LedgerServiceTest {
 
     @Test
     public void multipleAppendsMaintainOrder() throws Exception {
-        LedgerService ledger = new LedgerService(tempDir);
+        EventLedger ledger = new EventLedger(tempDir);
         ledger.ensureLedgerFile();
 
         String sha1 = ledger.record(Event.forTask(EventType.TASK_REGISTRATION, "1", null, "task 1", null));
@@ -75,7 +75,7 @@ public class LedgerServiceTest {
 
     @Test
     public void verifyLedgerReturnsTimeline() throws Exception {
-        LedgerService ledger = new LedgerService(tempDir);
+        EventLedger ledger = new EventLedger(tempDir);
         ledger.ensureLedgerFile();
 
         ledger.record(Event.forTask(EventType.TASK_REGISTRATION, "1", null, "registered", null));

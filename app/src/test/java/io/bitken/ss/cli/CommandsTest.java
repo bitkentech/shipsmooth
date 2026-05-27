@@ -1,7 +1,7 @@
 package io.bitken.ss.cli;
 
 import io.bitken.ss.jaxb.PlanTasks;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.XmlService;
 
 import java.nio.file.Paths;
@@ -25,11 +25,11 @@ public class CommandsTest {
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
     private final XmlService xmlService = new XmlService();
-    private LedgerService ledgerService;
+    private EventLedger ledgerService;
 
     @BeforeEach
     public void setUp() throws Exception {
-        ledgerService = new LedgerService(Paths.get("."));
+        ledgerService = new EventLedger(Paths.get("."));
         planDir.mkdirs();
         Files.writeString(mdFile.toPath(), "### Task 1: Test task [High]\n");
         

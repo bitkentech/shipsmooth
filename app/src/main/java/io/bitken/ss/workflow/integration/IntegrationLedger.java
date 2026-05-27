@@ -2,7 +2,7 @@ package io.bitken.ss.workflow.integration;
 
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 
 import java.io.IOException;
 import java.util.List;
@@ -10,10 +10,10 @@ import java.util.Map;
 
 public class IntegrationLedger {
 
-    private final LedgerService ledger;
+    private final EventLedger ledger;
     private final int planId;
 
-    public IntegrationLedger(LedgerService ledger, int planId) {
+    public IntegrationLedger(EventLedger ledger, int planId) {
         this.ledger = ledger;
         this.planId = planId;
     }

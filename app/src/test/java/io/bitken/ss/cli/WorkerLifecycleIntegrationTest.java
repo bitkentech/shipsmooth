@@ -7,7 +7,7 @@ import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.XmlService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +54,7 @@ public class WorkerLifecycleIntegrationTest {
     @BeforeEach
     void setUp() throws Exception {
         planDir.mkdirs();
-        new LedgerService(repoRoot).ensureLedgerFile();
+        new EventLedger(repoRoot).ensureLedgerFile();
         cleanup();
 
         // Plan markdown + XML so worker-finish can resolve the task name.
@@ -81,7 +81,7 @@ public class WorkerLifecycleIntegrationTest {
      */
     @Test
     void workerLifecycle_emitsExpectedLedgerEvents() throws Exception {
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         long ledgerCountBefore = countEvents(ledger);
         int snapshotIndex = (int) ledgerCountBefore - 1;
 
@@ -135,7 +135,7 @@ public class WorkerLifecycleIntegrationTest {
      */
     @Test
     void workerFinish_abortsWhenSubagentCommittedInWorktree() throws Exception {
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         int snapshotIndex = ledger.readHashes().size() - 1; // -1 == "from the beginning is OK; we only care about after this"
 
         int initExit = new Shipsmooth(app).execute(
@@ -162,7 +162,7 @@ public class WorkerLifecycleIntegrationTest {
 
     // -------- helpers --------
 
-    private long countEvents(LedgerService ledger) throws Exception {
+    private long countEvents(EventLedger ledger) throws Exception {
         return ledger.readHashes().size();
     }
 

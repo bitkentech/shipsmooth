@@ -7,7 +7,7 @@ import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.XmlService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +56,7 @@ public class WorkerDependencyIntegrationTest {
         xmlService.setDependsOn(planTasks, 2, "1");
         xmlService.writePlanTasks(planTasks, xmlFile);
 
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         ledger.ensureLedgerFile();
 
         cleanupWorktrees();
@@ -72,7 +72,7 @@ public class WorkerDependencyIntegrationTest {
     @Test
     void dependentTask_inheritsParentCommit() throws Exception {
         Shipsmooth cli = new Shipsmooth(app);
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         int beforeCount = ledger.readHashes().size();
 
         // --- Task 1: full lifecycle ---

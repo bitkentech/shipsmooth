@@ -3,7 +3,7 @@ package io.bitken.ss.cli;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.XmlService;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
@@ -16,10 +16,10 @@ public class AddComment implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
     private final XmlService xmlService;
-    private final LedgerService ledgerService;
+    private final EventLedger ledgerService;
 
     @Inject
-    public AddComment(XmlService xmlService, LedgerService ledgerService) {
+    public AddComment(XmlService xmlService, EventLedger ledgerService) {
         this.xmlService = xmlService;
         this.ledgerService = ledgerService;
         spec = CommandSpec.wrapWithoutInspection(this);

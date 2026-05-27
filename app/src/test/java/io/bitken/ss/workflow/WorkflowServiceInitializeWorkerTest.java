@@ -4,7 +4,7 @@ import io.bitken.ss.conf.DaggerAppComponents;
 import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ class WorkflowServiceInitializeWorkerTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        new LedgerService(repoRoot).ensureLedgerFile();
+        new EventLedger(repoRoot).ensureLedgerFile();
         cleanup();
     }
 
@@ -57,7 +57,7 @@ class WorkflowServiceInitializeWorkerTest {
      */
     @Test
     void initializeWorker_createsWorktreeBranchAndLedgerEvent() throws Exception {
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         int snapshot = ledger.readHashes().size() - 1;
 
         service.initializeWorker(PLAN_NUM, TASK_ID, null);
@@ -95,7 +95,7 @@ class WorkflowServiceInitializeWorkerTest {
     @Test
     void initializeWorker_recordsExplicitBaseShaWhenProvided() throws Exception {
         String headSha = git(repoRoot.toFile(), "rev-parse", "HEAD").trim();
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         int snapshot = ledger.readHashes().size() - 1;
 
         service.initializeWorker(PLAN_NUM, TASK_ID, headSha);

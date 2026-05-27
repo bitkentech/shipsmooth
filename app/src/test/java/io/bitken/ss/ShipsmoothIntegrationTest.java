@@ -6,7 +6,7 @@ import io.bitken.ss.conf.DaggerAppComponents;
 import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.XmlService;
 import io.bitken.ss.jaxb.PlanTasks;
 import org.junit.jupiter.api.AfterEach;
@@ -40,7 +40,7 @@ public class ShipsmoothIntegrationTest {
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xmlService.writePlanTasks(planTasks, xmlFile);
 
-        LedgerService ledger = new LedgerService(Paths.get("."));
+        EventLedger ledger = new EventLedger(Paths.get("."));
         ledger.ensureLedgerFile();
         tasksCli = new Shipsmooth(app);
     }
@@ -58,7 +58,7 @@ public class ShipsmoothIntegrationTest {
 
     @Test
     public void updateStatusViaCliRecordsLedgerEntry() throws Exception {
-        LedgerService ledger = new LedgerService(Paths.get("."));
+        EventLedger ledger = new EventLedger(Paths.get("."));
         int before = ledger.readHashes().size();
 
         int exit = tasksCli.execute("update-status", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "agent-coded");
@@ -114,7 +114,7 @@ public class ShipsmoothIntegrationTest {
 
     @Test
     public void addCommentViaCliMutatesXmlAndRecordsLedgerEntry() throws Exception {
-        LedgerService ledger = new LedgerService(Paths.get("."));
+        EventLedger ledger = new EventLedger(Paths.get("."));
         int before = ledger.readHashes().size();
 
         int exit = tasksCli.execute("add-comment", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "via Shipsmooth");

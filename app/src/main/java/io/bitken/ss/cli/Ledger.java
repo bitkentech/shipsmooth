@@ -1,7 +1,7 @@
 package io.bitken.ss.cli;
 
 import io.bitken.ss.ledger.Event;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
@@ -12,10 +12,10 @@ import java.util.concurrent.Callable;
 public class Ledger implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
-    private final LedgerService ledgerService;
+    private final EventLedger ledgerService;
 
     @Inject
-    public Ledger(LedgerService ledgerService) {
+    public Ledger(EventLedger ledgerService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.ledgerService = ledgerService;
         this.spec.name("ledger");
@@ -40,9 +40,9 @@ public class Ledger implements Callable<Integer>, HasSpec {
     public static class ListCmd implements Callable<Integer>, HasSpec {
 
         private final CommandSpec spec;
-        private final LedgerService ledgerService;
+        private final EventLedger ledgerService;
 
-        public ListCmd(LedgerService ledgerService) {
+        public ListCmd(EventLedger ledgerService) {
             this.ledgerService = ledgerService;
             spec = CommandSpec.wrapWithoutInspection(this);
             spec.name("list");
@@ -101,9 +101,9 @@ public class Ledger implements Callable<Integer>, HasSpec {
     public static class VerifyCmd implements Callable<Integer>, HasSpec {
 
         private final CommandSpec spec;
-        private final LedgerService ledgerService;
+        private final EventLedger ledgerService;
 
-        public VerifyCmd(LedgerService ledgerService) {
+        public VerifyCmd(EventLedger ledgerService) {
             this.ledgerService = ledgerService;
             spec = CommandSpec.wrapWithoutInspection(this);
             spec.name("verify");
@@ -130,9 +130,9 @@ public class Ledger implements Callable<Integer>, HasSpec {
     public static class ReadCmd implements Callable<Integer>, HasSpec {
 
         private final CommandSpec spec;
-        private final LedgerService ledgerService;
+        private final EventLedger ledgerService;
 
-        public ReadCmd(LedgerService ledgerService) {
+        public ReadCmd(EventLedger ledgerService) {
             this.ledgerService = ledgerService;
             spec = CommandSpec.wrapWithoutInspection(this);
             spec.name("read");

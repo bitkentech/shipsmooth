@@ -15,7 +15,7 @@ public class AppComponentTest {
                 .build();
 
         assertNotNull(app.xmlService());
-        assertNotNull(app.ledgerService());
+        assertNotNull(app.eventLedger());
         assertNotNull(app.worktreeService());
         assertNotNull(app.workflowService());
         assertNotNull(app.workflowServiceImpl());
@@ -28,7 +28,7 @@ public class AppComponentTest {
                 .build();
 
         assertSame(app.xmlService(), app.xmlService());
-        assertSame(app.ledgerService(), app.ledgerService());
+        assertSame(app.eventLedger(), app.eventLedger());
         assertSame(app.worktreeService(), app.worktreeService());
         assertSame(app.workflowService(), app.workflowService());
         assertSame(app.workflowServiceImpl(), app.workflowServiceImpl());

@@ -6,7 +6,7 @@ import io.bitken.ss.conf.DaggerAppComponents;
 import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
@@ -21,7 +21,7 @@ public class LedgerRecordPatchIntegratedTest {
 
     @Test
     void writesPatchIntegratedEventWithRecoveryFlag() throws Exception {
-        LedgerService ledger = new LedgerService(Paths.get("."));
+        EventLedger ledger = new EventLedger(Paths.get("."));
         ledger.ensureLedgerFile();
 
         int exit = new Shipsmooth(app).execute(

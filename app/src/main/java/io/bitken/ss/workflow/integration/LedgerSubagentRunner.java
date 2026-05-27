@@ -2,7 +2,7 @@ package io.bitken.ss.workflow.integration;
 
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -24,12 +24,12 @@ public class LedgerSubagentRunner implements SubagentRunner {
     static final long POLL_INTERVAL_MS = 500;
     static final long TIMEOUT_MINUTES = 30;
 
-    private final LedgerService ledger;
+    private final EventLedger ledger;
     private final String worktreePath;
     private final int taskId;
     private int attemptCounter = 0;
 
-    public LedgerSubagentRunner(LedgerService ledger, String worktreePath, int taskId) {
+    public LedgerSubagentRunner(EventLedger ledger, String worktreePath, int taskId) {
         this.ledger = ledger;
         this.worktreePath = worktreePath;
         this.taskId = taskId;

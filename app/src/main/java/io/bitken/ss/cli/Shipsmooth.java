@@ -6,7 +6,7 @@ import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;
 import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.git.WorktreeService;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.XmlService;
 import io.bitken.ss.conf.FeatureFlags;
 import io.bitken.ss.workflow.WorkflowService;
@@ -33,7 +33,7 @@ public class Shipsmooth {
 
     public Shipsmooth(AppComponents app) {
         XmlService xml = app.xmlService();
-        LedgerService ledger = app.ledgerService();
+        EventLedger ledger = app.eventLedger();
         WorktreeService worktree = app.worktreeService();
         WorkflowService workflow = app.workflowService();
         WorkflowServiceImpl workflowImpl = app.workflowServiceImpl();
@@ -73,7 +73,7 @@ public class Shipsmooth {
         cmd = new CommandLine(rootSpec);
     }
 
-    private Callable<?>[] buildCommands(XmlService xml, LedgerService ledger, WorktreeService worktree,
+    private Callable<?>[] buildCommands(XmlService xml, EventLedger ledger, WorktreeService worktree,
             WorkflowService workflow, WorkflowServiceImpl workflowImpl) {
         return new Callable<?>[] {
             new Init(xml, ledger),

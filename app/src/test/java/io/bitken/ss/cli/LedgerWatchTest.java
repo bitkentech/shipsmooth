@@ -2,7 +2,7 @@ package io.bitken.ss.cli;
 
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
@@ -25,7 +25,7 @@ public class LedgerWatchTest {
 
     @Test
     public void watchBlocksUntilResolverRequestedThenPrintsPayload() throws Exception {
-        LedgerService ledger = new LedgerService(tempDir);
+        EventLedger ledger = new EventLedger(tempDir);
         ledger.ensureLedgerFile();
 
         // Write non-matching events before the watcher starts
@@ -69,7 +69,7 @@ public class LedgerWatchTest {
 
     @Test
     public void watchSkipsResolverRequestedThatAlreadyHasMatchingComplete() throws Exception {
-        LedgerService ledger = new LedgerService(tempDir);
+        EventLedger ledger = new EventLedger(tempDir);
         ledger.ensureLedgerFile();
 
         // Simulate a completed resolver cycle already in the ledger
@@ -108,7 +108,7 @@ public class LedgerWatchTest {
 
     @Test
     public void watchAfterSkipsStaleTerminalEvent() throws Exception {
-        LedgerService ledger = new LedgerService(tempDir);
+        EventLedger ledger = new EventLedger(tempDir);
         ledger.ensureLedgerFile();
 
         // Stale INTEGRATION_COMPLETE from a prior run at index 0
@@ -147,7 +147,7 @@ public class LedgerWatchTest {
 
     @Test
     public void watchExitsOneOnTimeout() throws Exception {
-        LedgerService ledger = new LedgerService(tempDir);
+        EventLedger ledger = new EventLedger(tempDir);
         ledger.ensureLedgerFile();
 
         ByteArrayOutputStream err = new ByteArrayOutputStream();

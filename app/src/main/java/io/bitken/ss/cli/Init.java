@@ -5,7 +5,7 @@ import io.bitken.ss.git.GitTagService;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.XmlService;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
@@ -21,15 +21,15 @@ public class Init implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
     private final XmlService xmlService;
-    private final LedgerService ledgerService;
+    private final EventLedger ledgerService;
     private final GitTagService gitTagService;
 
-    public Init(XmlService xmlService, LedgerService ledgerService) {
+    public Init(XmlService xmlService, EventLedger ledgerService) {
         this(xmlService, ledgerService, new GitTagService());
     }
 
     @Inject
-    public Init(XmlService xmlService, LedgerService ledgerService, GitTagService gitTagService) {
+    public Init(XmlService xmlService, EventLedger ledgerService, GitTagService gitTagService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.xmlService = xmlService;
         this.ledgerService = ledgerService;

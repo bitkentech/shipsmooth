@@ -3,7 +3,7 @@ package io.bitken.ss;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.ledger.ObjectStore;
 import io.bitken.ss.service.XmlService;
 import org.junit.jupiter.api.AfterEach;
@@ -56,7 +56,7 @@ public class LedgerIntegrationTest {
 
     @Test
     public void updateStatusRecordsOneLedgerEntry() throws Exception {
-        LedgerService ledger = new LedgerService(tempDir);
+        EventLedger ledger = new EventLedger(tempDir);
         ledger.ensureLedgerFile();
 
         // Simulate: run update-status, then assert one new entry appeared
@@ -78,7 +78,7 @@ public class LedgerIntegrationTest {
 
     @Test
     public void verifyLedgerReconstructsTimeline() throws Exception {
-        LedgerService ledger = new LedgerService(tempDir);
+        EventLedger ledger = new EventLedger(tempDir);
         ledger.ensureLedgerFile();
 
         ledger.record(Event.forTask(EventType.TASK_REGISTRATION, "1", null, "Test task", null));

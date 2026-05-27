@@ -4,7 +4,7 @@ import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.XmlService;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
@@ -21,10 +21,10 @@ public class Claim implements Callable<Integer>, HasSpec, io.bitken.ss.conf.Feat
     private final CommandSpec spec;
     private final XmlService xmlService;
     private final WorktreeService git;
-    private final LedgerService ledger;
+    private final EventLedger ledger;
 
     @Inject
-    public Claim(XmlService xmlService, WorktreeService git, LedgerService ledger) {
+    public Claim(XmlService xmlService, WorktreeService git, EventLedger ledger) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("claim");
         this.spec.usageMessage().description("Claim a task for subagent execution and record AGENT_START.");

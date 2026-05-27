@@ -7,7 +7,7 @@ import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.XmlService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +53,7 @@ public class WorkerLifecycleIntegrationTest {
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xmlService.writePlanTasks(planTasks, xmlFile);
 
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         ledger.ensureLedgerFile();
 
         // Clean up any leftover worktree/branch from a previous failed run
@@ -81,7 +81,7 @@ public class WorkerLifecycleIntegrationTest {
     @Test
     void happyPath_workerLifecycleLeavesCommitAndBranch() throws Exception {
         Shipsmooth cli = new Shipsmooth(app);
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         int beforeCount = ledger.readHashes().size();
 
         int exit;
@@ -154,7 +154,7 @@ public class WorkerLifecycleIntegrationTest {
     @Test
     void workerFinish_abortsWhenSubagentCommitted() throws Exception {
         Shipsmooth cli = new Shipsmooth(app);
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
 
         cli.execute("--enable-experimental", "claim","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         cli.execute("--enable-experimental", "worker-init","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);

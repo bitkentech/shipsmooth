@@ -4,7 +4,7 @@ import dagger.Module;
 import dagger.Provides;
 import io.bitken.ss.git.GitTagService;
 import io.bitken.ss.git.WorktreeService;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.XmlService;
 import io.bitken.ss.workflow.DefaultProcessRunner;
 import io.bitken.ss.workflow.ProcessRunner;
@@ -37,8 +37,8 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    LedgerService provideLedgerService(Path repoRoot) {
-        return new LedgerService(repoRoot);
+    EventLedger provideEventLedger(Path repoRoot) {
+        return new EventLedger(repoRoot);
     }
 
     @Provides
@@ -65,7 +65,7 @@ public class ServicesModule {
             Path repoRoot,
             ProcessRunner processes,
             WorktreeService worktreeService,
-            LedgerService ledgerService,
+            EventLedger ledgerService,
             XmlService xmlService,
             io.bitken.ss.workflow.ProgressReporter reporter) {
         return new WorkflowServiceImpl(repoRoot, processes, worktreeService, ledgerService, xmlService, reporter);

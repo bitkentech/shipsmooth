@@ -5,7 +5,7 @@ import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.service.XmlService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +52,7 @@ class WorkflowServiceFinalizeWorkerTest {
         xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
         mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
         planDir.mkdirs();
-        new LedgerService(repoRoot).ensureLedgerFile();
+        new EventLedger(repoRoot).ensureLedgerFile();
         cleanup();
 
         Files.writeString(mdFile.toPath(), "### Task 1: Finalize test [Low]\n");
@@ -73,7 +73,7 @@ class WorkflowServiceFinalizeWorkerTest {
      */
     @Test
     void finalizeWorker_emitsPatchAndCommitEvents() throws Exception {
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         int snapshot = ledger.readHashes().size() - 1;
 
         service.initializeWorker(PLAN_NUM, TASK_ID, null);
@@ -101,7 +101,7 @@ class WorkflowServiceFinalizeWorkerTest {
      */
     @Test
     void finalizeWorker_rejectsSubagentCommits() throws Exception {
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         int snapshot = ledger.readHashes().size() - 1;
 
         service.initializeWorker(PLAN_NUM, TASK_ID, null);
@@ -128,7 +128,7 @@ class WorkflowServiceFinalizeWorkerTest {
      */
     @Test
     void finalizeWorker_rejectsEmptyDiff() throws Exception {
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         int snapshot = ledger.readHashes().size() - 1;
 
         service.initializeWorker(PLAN_NUM, TASK_ID, null);
