@@ -63,16 +63,27 @@ moves into `PlanService` once and is removed from all CLI commands.
 
 Wire into Dagger in `ServicesModule` / `AppComponents`.
 
-### Task 3: Migrate CLI commands to PlanService [Medium]
+### Task 3: Migrate UpdateStatus to PlanService (tracer bullet) [High]
 
 *Depends-on: 2*
 
-Migrate these CLI commands to inject `PlanService` instead of `XmlService` +
-`EventLedger` separately:
+Migrate `UpdateStatus` as the tracer bullet — it is the simplest command that
+exercises the full XML-mutate + ledger-record path and validates that the
+`PlanService` API shape is correct end-to-end before the bulk migration.
+
+- `UpdateStatus` — replace `XmlService` + `EventLedger` injection with
+  `PlanService`; delegate to `updateTaskStatus(plan, task, status)`
+- Update `Shipsmooth.java` wiring for this one command
+- Confirm `mvn test -pl app` is green before proceeding to Task 4
+
+### Task 4: Migrate remaining CLI commands to PlanService [Low]
+
+*Depends-on: 3*
+
+Migrate the remaining commands after the tracer bullet confirms the API:
 
 - `AddComment` — `addComment(plan, task, message)`
 - `AddDeviation` — `addDeviation(plan, task, type, message)`
-- `UpdateStatus` — `updateTaskStatus(plan, task, status)`
 - `SetCommit` — `setTaskCommit(plan, task, commit, branch)`
 - `ProjectUpdate` — `projectUpdate(plan, status, blocked, message)`
 - `Init` — `initPlan(plan, planVersion, tasks)` (keep `GitTagService` injection)
@@ -80,10 +91,10 @@ Migrate these CLI commands to inject `PlanService` instead of `XmlService` +
 
 Commands that only write ledger events with no XML mutation (`Claim`,
 `LedgerRecordCommit`, `LedgerRecordPatchIntegrated`, `LedgerResolverComplete`,
-`LedgerWatch`, `WorkerCleanup`) stay on `EventLedger` directly via `recordEvent`
-or the `EventLedger` instance — they do not need `PlanService`.
+`LedgerWatch`, `WorkerCleanup`) stay on `EventLedger` directly — they do not
+need `PlanService`.
 
-`Shipsmooth.java` wiring updated to pass `PlanService` where needed.
+`Shipsmooth.java` wiring updated for all migrated commands.
 
 ## Verification
 
