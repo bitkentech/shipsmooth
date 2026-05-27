@@ -150,14 +150,14 @@
         <task>
             <id>13</id>
             <risk>low</risk>
-            <status>todo</status>
+            <status>agent-coded</status>
             <name>Delete unused TypeScript files from integrations/common/scripts/tasks/</name>
-            <commit></commit>
+            <commit>f1655d393c62c5b931aff8b3df339a85dbec741d</commit>
             <created-from>plan-57-v2</created-from>
             <closed-at-version></closed-at-version>
-            <depends-on>12</depends-on>
             <comments/>
             <deviations/>
+            <depends-on>12</depends-on>
         </task>
     </tasks>
     <project-updates>
