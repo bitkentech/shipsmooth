@@ -32,9 +32,9 @@
         </task>
         <task>
             <id>3</id>
-            <risk>medium</risk>
+            <risk>high</risk>
             <status>pending</status>
-            <name>Migrate CLI commands to PlanService</name>
+            <name>Migrate UpdateStatus to PlanService (tracer bullet)</name>
             <commit></commit>
             <created-from>plan-59-v1</created-from>
             <closed-at-version></closed-at-version>
@@ -42,10 +42,22 @@
             <deviations/>
             <depends-on>2</depends-on>
         </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Migrate remaining CLI commands to PlanService</name>
+            <commit></commit>
+            <created-from>plan-59-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-05-27T17:04:15.551+05:30</timestamp>
+            <timestamp>2026-05-27T17:10:55.311+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
