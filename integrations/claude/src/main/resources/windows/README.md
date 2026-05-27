@@ -65,6 +65,6 @@ You can run the runtime installer directly without Git Bash:
    %LOCALAPPDATA%\shipsmooth
    ```
 
-2. Open the version-numbered folder (e.g. `0.3.10`) and confirm that `runtime\bin\shipsmooth-tasks.bat` exists inside it.
+2. Open the version-numbered folder (e.g. `0.3.10`) and confirm that `runtime\bin\shipsmooth.bat` exists inside it.
 
 If it does, the runtime is installed and the plugin is ready to use.

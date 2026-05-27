@@ -40,7 +40,7 @@ class ResourceBuilderIntegrationTest {
             "Claude profile should contain heading");
         assertFalse(content.stripLeading().startsWith("---"),
             "Claude profile should not start with YAML frontmatter");
-        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks"),
+        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth"),
             "CLI bin path should use XDG shell expression with -dev subdir");
     }
 
@@ -164,7 +164,7 @@ class ResourceBuilderIntegrationTest {
         ResourceBuilder.main(new String[]{});
 
         String content = Files.readString(tempDir.resolve("skills/start/SKILL.md"));
-        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.2.0/bin/shipsmooth-tasks"),
+        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.2.0/bin/shipsmooth"),
             "prod cliBin should use shipsmooth subdir");
         assertFalse(content.contains("shipsmooth-dev"),
             "prod cliBin must not reference shipsmooth-dev");
@@ -176,7 +176,7 @@ class ResourceBuilderIntegrationTest {
         ResourceBuilder.main(new String[]{});
 
         String content = Files.readString(tempDir.resolve("skills/start-dev/SKILL.md"));
-        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth-tasks"),
+        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth"),
             "dev cliBin should use shipsmooth-dev subdir");
     }
 
@@ -207,7 +207,7 @@ class ResourceBuilderIntegrationTest {
         ResourceBuilder.main(new String[]{});
 
         String content = Files.readString(tempDir.resolve("skills/start/SKILL.md"));
-        assertTrue(content.contains("%LOCALAPPDATA%\\shipsmooth\\0.3.10\\runtime\\bin\\shipsmooth-tasks.bat"),
+        assertTrue(content.contains("%LOCALAPPDATA%\\shipsmooth\\0.3.10\\runtime\\bin\\shipsmooth.bat"),
             "Windows SKILL.md must reference LOCALAPPDATA stable path");
         assertFalse(content.contains("XDG_CACHE_HOME"),
             "Windows SKILL.md must not reference XDG_CACHE_HOME");

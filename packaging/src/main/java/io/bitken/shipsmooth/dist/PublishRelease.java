@@ -128,13 +128,13 @@ public class PublishRelease {
         Path outputDir = repoRoot.resolve("plugin-dist/target/dist");
         Files.createDirectories(outputDir);
         new PackageRuntime("linux-x64", linuxJdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-linux-x64"), outputDir, version).run();
-        System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-tasks-" + version + "-linux-x64.zip"));
+        System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-" + version + "-linux-x64.zip"));
         new PackageRuntime("darwin-x64", darwinX64JdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-darwin-x64"), outputDir, version).run();
-        System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-tasks-" + version + "-darwin-x64.zip"));
+        System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-" + version + "-darwin-x64.zip"));
         new PackageRuntime("darwin-arm64", darwinArm64JdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-darwin-arm64"), outputDir, version).run();
-        System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-tasks-" + version + "-darwin-arm64.zip"));
+        System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-" + version + "-darwin-arm64.zip"));
         new PackageRuntime("win32-x64", windowsX64JdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-windows-x64"), outputDir, version).run();
-        System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-tasks-" + version + "-win32-x64.zip"));
+        System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-" + version + "-win32-x64.zip"));
     }
 
     private void buildWindowsPlugin() throws IOException, InterruptedException {
@@ -195,10 +195,10 @@ public class PublishRelease {
                 "--target", "releases", "--title", "v" + version,
                 "--notes", "Release v" + version + " (main: " + mainSha + ")"), repoRoot);
         runCommand(List.of("gh", "release", "upload", "v" + version,
-                distDir2.resolve("shipsmooth-tasks-" + version + "-linux-x64.zip").toString(),
-                distDir2.resolve("shipsmooth-tasks-" + version + "-darwin-x64.zip").toString(),
-                distDir2.resolve("shipsmooth-tasks-" + version + "-darwin-arm64.zip").toString(),
-                distDir2.resolve("shipsmooth-tasks-" + version + "-win32-x64.zip").toString()), repoRoot);
+                distDir2.resolve("shipsmooth-" + version + "-linux-x64.zip").toString(),
+                distDir2.resolve("shipsmooth-" + version + "-darwin-x64.zip").toString(),
+                distDir2.resolve("shipsmooth-" + version + "-darwin-arm64.zip").toString(),
+                distDir2.resolve("shipsmooth-" + version + "-win32-x64.zip").toString()), repoRoot);
     }
 
     private String git(String... args) throws IOException, InterruptedException {

@@ -24,7 +24,7 @@ jlink flags (in `plugin-tasks-java/pom.xml`, `jlink` profile):
 ```
 (notably **no** `--strip-debug`)
 
-Launcher script (`target/scc-launcher/shipsmooth-tasks`):
+Launcher script (`target/scc-launcher/shipsmooth`):
 ```sh
 exec ${jlink.jre.home}/bin/java \
   -Xquickstart \
@@ -38,7 +38,7 @@ exec ${jlink.jre.home}/bin/java \
 Each configuration was measured with:
 1. SCC cache cleared
 2. 5 warmup runs to populate the cache
-3. 100 timed runs of `shipsmooth-tasks --help` via `time`, parsed to milliseconds
+3. 100 timed runs of `shipsmooth --help` via `time`, parsed to milliseconds
 
 Measurements ran on the same machine in the same session to keep OS-level variance comparable.
 
@@ -161,7 +161,7 @@ Pre-warming the cache for distribution was considered and rejected: the SCC file
 - `<jlink.module.path>` — module path with `jmods`, for jlink itself.
 - `jlink-version-check` antrun execution (Task 1).
 - `jlink-build-image` antrun execution (Task 4) — **note: no `--strip-debug`**.
-- `jlink-write-scc-launcher` antrun execution (Task 6) — emits `target/scc-launcher/shipsmooth-tasks` with `-Xquickstart` and `-Xshareclasses:name=shipsmooth_v1,nonfatal`.
+- `jlink-write-scc-launcher` antrun execution (Task 6) — emits `target/scc-launcher/shipsmooth` with `-Xquickstart` and `-Xshareclasses:name=shipsmooth_v1,nonfatal`.
 - `jlink-smoke-help` and `jlink-smoke-show` antrun executions (Task 5) — both invoke the SCC launcher.
 
 ## Open questions for follow-up

@@ -49,14 +49,14 @@ public class PackageRuntime {
     }
 
     public void run() throws IOException {
-        if (!Files.exists(jlinkImage.resolve("bin/shipsmooth-tasks"))) {
+        if (!Files.exists(jlinkImage.resolve("bin/shipsmooth"))) {
             throw new IllegalStateException("jlink image not found at: " + jlinkImage);
         }
 
         boolean isWindows = target.startsWith("win32");
-        String launcherName = isWindows ? "bin/shipsmooth-tasks.cmd" : "bin/shipsmooth-tasks";
+        String launcherName = isWindows ? "bin/shipsmooth.cmd" : "bin/shipsmooth";
 
-        Path zipPath = outputDir.resolve("shipsmooth-tasks-" + version + "-" + target + ".zip");
+        Path zipPath = outputDir.resolve("shipsmooth-" + version + "-" + target + ".zip");
         try (OutputStream fos = Files.newOutputStream(zipPath);
              ZipArchiveOutputStream zos = new ZipArchiveOutputStream(fos)) {
 

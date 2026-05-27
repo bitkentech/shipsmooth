@@ -135,7 +135,7 @@
                     <sources>
                         <source>../integrations/common/scripts/tasks/plan-tasks.xsd</source>
                     </sources>
-                    <packageName>io.bitken.shipsmooth.tasks.jaxb</packageName>
+                    <packageName>io.bitken.ss.jaxb</packageName>
                     <clearOutputDir>false</clearOutputDir>
                 </configuration>
             </plugin>
@@ -144,14 +144,14 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>${exec-maven-plugin.version}</version>
                 <configuration>
-                    <mainClass>io.bitken.shipsmooth.tasks.XmlServiceAgentRunner</mainClass>
+                    <mainClass>io.bitken.ss.XmlServiceAgentRunner</mainClass>
                     <classpathScope>test</classpathScope>
                     <executable>/snap/graalvm-jdk/current/graalvm-ce/bin/java</executable>
                     <arguments>
-                        <argument>-agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/native-image/io.bitken.shipsmooth.tasks</argument>
+                        <argument>-agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/native-image/io.bitken.ss</argument>
                         <argument>-classpath</argument>
                         <classpath/>
-                        <argument>io.bitken.shipsmooth.tasks.XmlServiceAgentRunner</argument>
+                        <argument>io.bitken.ss.XmlServiceAgentRunner</argument>
                     </arguments>
                 </configuration>
             </plugin>
@@ -171,8 +171,8 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <imageName>shipsmooth-tasks</imageName>
-                    <mainClass>io.bitken.shipsmooth.tasks.TasksCli</mainClass>
+                    <imageName>shipsmooth</imageName>
+                    <mainClass>io.bitken.ss.cli.Shipsmooth</mainClass>
                     <buildArgs>
                         <buildArg>-H:+ReportExceptionStackTraces</buildArg>
                         <buildArg>- -no-fallback</buildArg>
@@ -288,9 +288,9 @@
                                             <arg value="--module-path"/>
                                             <arg value="${jlink.module.path}"/>
                                             <arg value="--add-modules"/>
-                                            <arg value="io.bitken.shipsmooth.tasks,openj9.sharedclasses"/>
+                                            <arg value="io.bitken.ss,openj9.sharedclasses"/>
                                             <arg value="--launcher"/>
-                                            <arg value="shipsmooth-tasks=io.bitken.shipsmooth.tasks/io.bitken.shipsmooth.tasks.TasksCli"/>
+                                            <arg value="shipsmooth=io.bitken.ss/io.bitken.ss.cli.Shipsmooth"/>
                                             <arg value="--no-header-files"/>
                                             <arg value="--no-man-pages"/>
                                             <arg value="--compress"/>
@@ -327,9 +327,9 @@
                                             <arg value="--module-path"/>
                                             <arg value="${jlink.runtime.module.path}:${jlink.jmods.darwin-x64}/jmods"/>
                                             <arg value="--add-modules"/>
-                                            <arg value="io.bitken.shipsmooth.tasks,openj9.sharedclasses"/>
+                                            <arg value="io.bitken.ss,openj9.sharedclasses"/>
                                             <arg value="--launcher"/>
-                                            <arg value="shipsmooth-tasks=io.bitken.shipsmooth.tasks/io.bitken.shipsmooth.tasks.TasksCli"/>
+                                            <arg value="shipsmooth=io.bitken.ss/io.bitken.ss.cli.Shipsmooth"/>
                                             <arg value="--no-header-files"/>
                                             <arg value="--no-man-pages"/>
                                             <arg value="--compress"/>
@@ -352,9 +352,9 @@
                                             <arg value="--module-path"/>
                                             <arg value="${jlink.runtime.module.path}:${jlink.jmods.darwin-arm64}/jmods"/>
                                             <arg value="--add-modules"/>
-                                            <arg value="io.bitken.shipsmooth.tasks,openj9.sharedclasses"/>
+                                            <arg value="io.bitken.ss,openj9.sharedclasses"/>
                                             <arg value="--launcher"/>
-                                            <arg value="shipsmooth-tasks=io.bitken.shipsmooth.tasks/io.bitken.shipsmooth.tasks.TasksCli"/>
+                                            <arg value="shipsmooth=io.bitken.ss/io.bitken.ss.cli.Shipsmooth"/>
                                             <arg value="--no-header-files"/>
                                             <arg value="--no-man-pages"/>
                                             <arg value="--compress"/>
@@ -377,9 +377,9 @@
                                             <arg value="--module-path"/>
                                             <arg value="${jlink.runtime.module.path}:${jlink.jmods.windows-x64}/jmods"/>
                                             <arg value="--add-modules"/>
-                                            <arg value="io.bitken.shipsmooth.tasks,openj9.sharedclasses"/>
+                                            <arg value="io.bitken.ss,openj9.sharedclasses"/>
                                             <arg value="--launcher"/>
-                                            <arg value="shipsmooth-tasks=io.bitken.shipsmooth.tasks/io.bitken.shipsmooth.tasks.TasksCli"/>
+                                            <arg value="shipsmooth=io.bitken.ss/io.bitken.ss.cli.Shipsmooth"/>
                                             <arg value="--no-header-files"/>
                                             <arg value="--no-man-pages"/>
                                             <arg value="--compress"/>
@@ -410,16 +410,16 @@
                                     <!-- TODO: Make scc-launcher cross-platform -->
                                     <target>
                                         <mkdir dir="${project.build.directory}/scc-launcher"/>
-                                        <echo file="${project.build.directory}/scc-launcher/shipsmooth-tasks">#!/bin/sh
+                                        <echo file="${project.build.directory}/scc-launcher/shipsmooth">#!/bin/sh
 SCC_DIR="${project.build.directory}/scc"
 mkdir -p "$SCC_DIR"
 exec ${jlink.jre.home}/bin/java \
   -Xquickstart \
   -Xshareclasses:name=shipsmooth_v${project.version},cacheDir="$SCC_DIR",nonfatal \
   --module-path ${jlink.runtime.module.path} \
-  -m io.bitken.shipsmooth.tasks/io.bitken.shipsmooth.tasks.TasksCli "$@"
+  -m io.bitken.ss/io.bitken.ss.cli.Shipsmooth "$@"
 </echo>
-                                        <chmod file="${project.build.directory}/scc-launcher/shipsmooth-tasks" perm="755"/>
+                                        <chmod file="${project.build.directory}/scc-launcher/shipsmooth" perm="755"/>
                                     </target>
                                 </configuration>
                             </execution>
@@ -430,7 +430,7 @@ exec ${jlink.jre.home}/bin/java \
                                 <goals><goal>run</goal></goals>
                                 <configuration>
                                     <target>
-                                        <exec executable="${project.build.directory}/scc-launcher/shipsmooth-tasks"
+                                        <exec executable="${project.build.directory}/scc-launcher/shipsmooth"
                                               failonerror="true">
                                             <arg value="--help"/>
                                         </exec>
@@ -443,7 +443,7 @@ exec ${jlink.jre.home}/bin/java \
                                 <goals><goal>run</goal></goals>
                                 <configuration>
                                     <target>
-                                        <exec executable="${project.build.directory}/scc-launcher/shipsmooth-tasks"
+                                        <exec executable="${project.build.directory}/scc-launcher/shipsmooth"
                                               failonerror="true"
                                               dir="${project.basedir}/..">
                                             <arg value="show"/>

@@ -50,7 +50,7 @@ echo "==> Building jlink image WITH openj9.sharedclasses..."
 "${JDK_HOME}/bin/jlink" \
   --module-path "$MODULE_PATH" \
   --add-modules com.github.pramodbiligiri.shipsmooth.tasks,openj9.sharedclasses \
-  --launcher "shipsmooth-tasks=com.github.pramodbiligiri.shipsmooth.tasks/com.github.pramodbiligiri.shipsmooth.tasks.TasksCli" \
+  --launcher "shipsmooth=com.github.pramodbiligiri.shipsmooth.tasks/com.github.pramodbiligiri.shipsmooth.tasks.TasksCli" \
   --no-header-files --no-man-pages \
   --compress zip-9 \
   --output "$IMAGE"

@@ -57,7 +57,7 @@ class BuildProfileTest {
     void prodProfile_cliBin_usesShipsmooth() {
         var p = new BuildProfile("claude", "prod", "shipsmooth");
         assertEquals(
-            "${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.3/bin/shipsmooth-tasks",
+            "${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.3/bin/shipsmooth",
             p.cliBin("0.3.3")
         );
     }
@@ -66,7 +66,7 @@ class BuildProfileTest {
     void devProfile_cliBin_usesShipsmoothDev() {
         var p = new BuildProfile("claude", "dev", "shipsmooth");
         assertEquals(
-            "${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-0.3.3/bin/shipsmooth-tasks",
+            "${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-0.3.3/bin/shipsmooth",
             p.cliBin("0.3.3")
         );
     }
@@ -99,7 +99,7 @@ class BuildProfileTest {
     void windowsProfile_cliBin_usesLocalAppData() {
         var p = new BuildProfile("windows", "prod", "shipsmooth");
         assertEquals(
-            "%LOCALAPPDATA%\\shipsmooth\\0.3.10\\runtime\\bin\\shipsmooth-tasks.bat",
+            "%LOCALAPPDATA%\\shipsmooth\\0.3.10\\runtime\\bin\\shipsmooth.bat",
             p.cliBin("0.3.10")
         );
     }

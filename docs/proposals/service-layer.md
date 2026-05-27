@@ -123,7 +123,7 @@ The `reconcile` command (see `goal-oriented-impl.md`) is the recovery primitive;
 
 The architecture explicitly enables:
 
-- **Web UI.** A Spring Boot controller injects `WorkflowService` and exposes a REST endpoint. A "Start Task" button calls the exact same code path as `shipsmooth-tasks worker-init`. Same invariants, same transactional guarantees.
+- **Web UI.** A Spring Boot controller injects `WorkflowService` and exposes a REST endpoint. A "Start Task" button calls the exact same code path as `shipsmooth worker-init`. Same invariants, same transactional guarantees.
 - **Desktop app.** A JavaFX or Compose for Desktop frontend invokes the service directly. No JVM cold-start per click.
 - **Automated agents.** Orchestrators (including future versions of ShipSmooth itself) call the service API to manage parallel subagents without going through a shell. The Anthropic SDK lives in the same process as the service, so tool-use round-trips are method calls, not subprocess spawns.
 

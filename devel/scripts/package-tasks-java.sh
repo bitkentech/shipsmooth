@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # package-tasks-java.sh — Build a self-contained shippable zip of app.
 #
-# Output: app/target/dist/shipsmooth-tasks-<version>-linux-x64.zip
+# Output: app/target/dist/shipsmooth-<version>-linux-x64.zip
 #
 # The zip contains:
 #   - runtime/    jlink image with openj9.sharedclasses (~85MB)
 #   - bin/        install-relative launcher with -Xquickstart and -Xshareclasses
 #
-# Recipient extracts the zip and runs bin/shipsmooth-tasks. SCC cache is written
+# Recipient extracts the zip and runs bin/shipsmooth. SCC cache is written
 # under ${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth/scc/ on first invocation.
 #
 # Prerequisites:
@@ -28,7 +28,7 @@ JLINK_IMAGE="${TARGET_DIR}/jlink-image"
 cd "$REPO_ROOT"
 
 VERSION=$(mvn -pl app -q help:evaluate -Dexpression=project.version -DforceStdout 2>/dev/null | tail -1)
-STAGE_NAME="shipsmooth-tasks-${VERSION}"
+STAGE_NAME="shipsmooth-${VERSION}"
 STAGE_DIR="${DIST_DIR}/${STAGE_NAME}"
 ZIP_PATH="${DIST_DIR}/${STAGE_NAME}-linux-x64.zip"
 
@@ -50,7 +50,7 @@ echo "==> Copying jlink image as runtime/..."
 cp -r "$JLINK_IMAGE" "$STAGE_DIR/runtime"
 
 echo "==> Writing install-relative launcher..."
-cat > "$STAGE_DIR/bin/shipsmooth-tasks" <<'LAUNCHER'
+cat > "$STAGE_DIR/bin/shipsmooth" <<'LAUNCHER'
 #!/bin/sh
 DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTALL="$(cd "$DIR/.." && pwd)"
@@ -63,11 +63,11 @@ exec "$INSTALL/runtime/bin/java" \
   -m com.github.pramodbiligiri.shipsmooth.tasks/com.github.pramodbiligiri.shipsmooth.tasks.TasksCli "$@"
 LAUNCHER
 
-sed -i "s/__VERSION__/${VERSION}/" "$STAGE_DIR/bin/shipsmooth-tasks"
-chmod 755 "$STAGE_DIR/bin/shipsmooth-tasks"
+sed -i "s/__VERSION__/${VERSION}/" "$STAGE_DIR/bin/shipsmooth"
+chmod 755 "$STAGE_DIR/bin/shipsmooth"
 
 echo "==> Smoke-testing the staged launcher..."
-"$STAGE_DIR/bin/shipsmooth-tasks" --help > /dev/null
+"$STAGE_DIR/bin/shipsmooth" --help > /dev/null
 
 echo "==> Creating ${ZIP_PATH}..."
 ( cd "$DIST_DIR" && zip -qr "$(basename "$ZIP_PATH")" "$STAGE_NAME" )

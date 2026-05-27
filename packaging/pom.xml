@@ -340,7 +340,7 @@
                   <target>
                     <fail message="jlink image not found. Run: mvn -pl app -am -Pjlink package">
                       <condition>
-                        <not><available file="${maven.multiModuleProjectDirectory}/app/target/jlink-image/bin/shipsmooth-tasks"/></not>
+                        <not><available file="${maven.multiModuleProjectDirectory}/app/target/jlink-image/bin/shipsmooth"/></not>
                       </condition>
                     </fail>
                   </target>

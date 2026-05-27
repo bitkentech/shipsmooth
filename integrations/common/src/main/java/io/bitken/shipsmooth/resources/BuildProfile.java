@@ -11,9 +11,9 @@ public record BuildProfile(String platform, String env, String basePluginName) {
     public String cacheSubdir()            { return isDev() ? basePluginName + "-dev" : basePluginName; }
     public String cliBin(String version)   {
         if (isWindows()) {
-            return "%LOCALAPPDATA%\\" + basePluginName + "\\" + version + "\\runtime\\bin\\shipsmooth-tasks.bat";
+            return "%LOCALAPPDATA%\\" + basePluginName + "\\" + version + "\\runtime\\bin\\shipsmooth.bat";
         }
-        return "${XDG_CACHE_HOME:-~/.cache}/" + cacheSubdir() + "/runtime-" + version + "/bin/shipsmooth-tasks";
+        return "${XDG_CACHE_HOME:-~/.cache}/" + cacheSubdir() + "/runtime-" + version + "/bin/shipsmooth";
     }
 
     public static BuildProfile fromProperties() {

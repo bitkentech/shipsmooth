@@ -1,4 +1,4 @@
-module io.bitken.shipsmooth.tasks {
+module io.bitken.ss {
     requires info.picocli;
     requires jakarta.xml.bind;
     requires java.xml;
@@ -9,9 +9,8 @@ module io.bitken.shipsmooth.tasks {
     requires jakarta.inject;
     requires static java.compiler;
 
-    opens io.bitken.shipsmooth.tasks to info.picocli;
-    opens io.bitken.shipsmooth.tasks.cmd to info.picocli;
-    opens io.bitken.shipsmooth.tasks.jaxb to jakarta.xml.bind;
-    opens io.bitken.shipsmooth.tasks.ledger to com.fasterxml.jackson.databind;
-    opens io.bitken.shipsmooth.tasks.integration to com.fasterxml.jackson.databind;
+    opens io.bitken.ss.cli to info.picocli;
+    opens io.bitken.ss.jaxb to jakarta.xml.bind;
+    opens io.bitken.ss.ledger to com.fasterxml.jackson.databind;
+    opens io.bitken.ss.workflow.integration to com.fasterxml.jackson.databind;
 }

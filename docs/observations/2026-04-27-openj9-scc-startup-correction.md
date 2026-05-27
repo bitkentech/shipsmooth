@@ -24,7 +24,7 @@ This document records the follow-up investigation and corrected numbers.
 
 - Isolated SCC cache per configuration (no cross-contamination with production cache)
 - 5 warmup runs to populate AOT cache
-- 100 timed runs of `bin/shipsmooth-tasks --help` via bash `time`, wall-clock milliseconds
+- 100 timed runs of `bin/shipsmooth --help` via bash `time`, wall-clock milliseconds
 - All runs in a single session on the same machine
 
 ## Results
