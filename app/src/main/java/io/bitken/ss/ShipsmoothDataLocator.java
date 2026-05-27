@@ -4,17 +4,27 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 /**
- * Canonical path conventions for the {@code .agents/} layout inside a repo.
+ * Registry of filesystem paths for all shipsmooth data under {@code .agents/}.
  *
- * <p>All path templates live here so callers don't reconstruct strings manually.
+ * <p>Single source of truth for path construction — no other class should
+ * hardcode {@code .agents/} strings. Named "Locator" to anticipate a future
+ * option to relocate the data tree outside the repo.
  */
-public final class AgentsLayout {
+public final class ShipsmoothDataLocator {
+
+    public static final List<String> GITIGNORE_ENTRIES = List.of(
+        ".agents/tasks/*",
+        ".agents/integration/*",
+        ".agents/objects/",
+        ".agents/ledger.jsonl"
+    );
 
     private final Path repoRoot;
 
-    public AgentsLayout(Path repoRoot) {
+    public ShipsmoothDataLocator(Path repoRoot) {
         this.repoRoot = repoRoot;
     }
 

@@ -1,5 +1,6 @@
 package io.bitken.ss.gw;
 
+import io.bitken.ss.ShipsmoothDataLocator;
 import io.bitken.ss.jaxb.*;
 import io.bitken.ss.svc.plan.PlanMarkdown;
 import io.bitken.ss.svc.plan.PlanMarkdownParser;
@@ -26,20 +27,23 @@ import java.util.List;
 
 public class TaskStore {
 
+    private final ShipsmoothDataLocator locator;
     private final ObjectFactory factory = new ObjectFactory();
 
     public record Task(int id, String name, String risk, String dependsOn) {
         public Task(int id, String name, String risk) { this(id, name, risk, ""); }
     }
 
-    /** Canonical path of the plan's tasks XML file, relative to the working directory. */
-    public File planTasksFile(int planId) {
-        return new File(".agents/plans/plan-" + planId + "-tasks.xml");
+    public TaskStore(ShipsmoothDataLocator locator) {
+        this.locator = locator;
     }
 
-    /** Canonical path of the plan's narrative markdown file, relative to the working directory. */
-    public File planMarkdownFile(int planId) {
-        return new File(".agents/plans/plan-" + planId + ".md");
+    private File planTasksFile(int planId) {
+        return locator.planTasksFile(planId);
+    }
+
+    private File planMarkdownFile(int planId) {
+        return locator.planMarkdownFile(planId);
     }
 
     /** Convenience: load the plan's XML by plan id using the canonical layout. */
@@ -76,7 +80,7 @@ public class TaskStore {
 
     /** @see PlanMarkdown#sliceTaskSection(int, int) */
     public String sliceTaskMarkdown(int planId, int taskId) {
-        return new PlanMarkdown(this).sliceTaskSection(planId, taskId);
+        return new PlanMarkdown(locator).sliceTaskSection(planId, taskId);
     }
 
     // Retry papers over a race with concurrent writers: writePlanTasks uses
@@ -105,6 +109,7 @@ public class TaskStore {
     }
 
     public void writePlanTasks(PlanTasks planTasks, File file) throws JAXBException {
+        file.getParentFile().mkdirs();
         File tempFile = new File(file.getAbsolutePath() + ".tmp");
         JAXBContext context = JAXBContext.newInstance(PlanTasks.class);
         Marshaller marshaller = context.createMarshaller();

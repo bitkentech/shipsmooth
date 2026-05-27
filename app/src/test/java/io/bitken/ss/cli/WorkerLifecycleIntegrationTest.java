@@ -1,4 +1,5 @@
 package io.bitken.ss.cli;
+import io.bitken.ss.ShipsmoothDataLocator;
 
 import io.bitken.ss.cli.Shipsmooth;
 import io.bitken.ss.conf.AppComponents;
@@ -59,7 +60,7 @@ public class WorkerLifecycleIntegrationTest {
 
         // Plan markdown + XML so worker-finish can resolve the task name.
         Files.writeString(mdFile.toPath(), "### Task 1: Worker lifecycle smoke [Low]\n");
-        TaskStore xmlService = new TaskStore();
+        TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         List<TaskStore.Task> tasks = List.of(
                 new TaskStore.Task(1, "Worker lifecycle smoke", "low")
         );

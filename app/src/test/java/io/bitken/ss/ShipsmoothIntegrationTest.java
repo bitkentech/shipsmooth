@@ -1,4 +1,5 @@
 package io.bitken.ss;
+import io.bitken.ss.ShipsmoothDataLocator;
 
 import io.bitken.ss.cli.Shipsmooth;
 import io.bitken.ss.conf.AppComponents;
@@ -36,7 +37,7 @@ public class ShipsmoothIntegrationTest {
         Files.writeString(mdFile.toPath(), "### Task 1: CLI test task [High]\n");
 
         List<TaskStore.Task> tasks = List.of(new TaskStore.Task(1, "CLI test task", "high"));
-        TaskStore xmlService = new TaskStore();
+        TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xmlService.writePlanTasks(planTasks, xmlFile);
 
@@ -120,7 +121,7 @@ public class ShipsmoothIntegrationTest {
         int exit = tasksCli.execute("add-comment", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "via Shipsmooth");
         assertEquals(0, exit);
 
-        TaskStore xmlService = new TaskStore();
+        TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
         var comments = planTasks.getTasks().getTask().get(0).getComments().getComment();
         assertEquals(1, comments.size());

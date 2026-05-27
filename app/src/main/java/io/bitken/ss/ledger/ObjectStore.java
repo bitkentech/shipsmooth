@@ -14,8 +14,8 @@ public class ObjectStore {
 
     private final Path root;
 
-    public ObjectStore(Path repoRoot) {
-        this.root = repoRoot.resolve(".agents").resolve("objects");
+    public ObjectStore(Path objectStoreRoot) {
+        this.root = objectStoreRoot;
     }
 
     public String writeObject(byte[] bytes) throws IOException {

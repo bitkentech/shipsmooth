@@ -1,4 +1,5 @@
 package io.bitken.ss.workflow;
+import io.bitken.ss.ShipsmoothDataLocator;
 
 import io.bitken.ss.conf.DaggerAppComponents;
 import io.bitken.ss.conf.ServicesModule;
@@ -56,7 +57,7 @@ class WorkflowServiceFinalizeWorkerTest {
         cleanup();
 
         Files.writeString(mdFile.toPath(), "### Task 1: Finalize test [Low]\n");
-        TaskStore xs = new TaskStore();
+        TaskStore xs = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         List<TaskStore.Task> tasks = List.of(new TaskStore.Task(1, "Finalize test", "low"));
         PlanTasks planTasks = xs.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xs.writePlanTasks(planTasks, xmlFile);

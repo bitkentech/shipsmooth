@@ -1,4 +1,5 @@
 package io.bitken.ss.svc.plan;
+import io.bitken.ss.ShipsmoothDataLocator;
 
 import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.ledger.EventLedger;
@@ -18,7 +19,7 @@ public class PlanServiceTest {
     Path tempDir;
 
     private PlanService planService() {
-        TaskStore xml = new TaskStore();
+        TaskStore xml = new TaskStore(new ShipsmoothDataLocator(tempDir));
         EventLedger ledger = new EventLedger(tempDir);
         return new PlanService(xml, ledger);
     }
@@ -64,7 +65,7 @@ public class PlanServiceTest {
     @Test
     public void ledgerFailureDoesNotRollBackXmlMutation() throws Exception {
         // Simulate ledger failure by pointing EventLedger at a read-only path
-        TaskStore xml = new TaskStore();
+        TaskStore xml = new TaskStore(new ShipsmoothDataLocator(tempDir));
         Path readOnlyDir = tempDir.resolve("ro");
         readOnlyDir.toFile().mkdirs();
         readOnlyDir.toFile().setReadOnly();

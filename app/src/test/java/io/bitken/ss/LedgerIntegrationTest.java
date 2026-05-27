@@ -1,4 +1,5 @@
 package io.bitken.ss;
+import io.bitken.ss.ShipsmoothDataLocator;
 
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
@@ -42,7 +43,7 @@ public class LedgerIntegrationTest {
         xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
         Files.writeString(mdFile.toPath(), "### Task 1: Test task [High]\n");
 
-        TaskStore xmlService = new TaskStore();
+        TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(tempDir));
         List<TaskStore.Task> tasks = List.of(new TaskStore.Task(1, "Test task", "high"));
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xmlService.writePlanTasks(planTasks, xmlFile);
