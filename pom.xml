@@ -14,7 +14,7 @@
     <module>plugin-resources</module>
     <module>plugin-skill</module>
     <module>plugin-dist</module>
-    <module>plugin-devel</module>
+    <module>devel</module>
     <module>plugin-tasks-java</module>
   </modules>
 
