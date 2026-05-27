@@ -71,7 +71,7 @@ class ResourceBuilderIntegrationTest {
     }
 
     @Test
-    void sessionStartConfigIsWrittenForDevProfileWithNoCacheDir() throws Exception {
+    void sessionStartConfigIsWrittenForDevProfile() throws Exception {
         setDevProps();
         ResourceBuilder.main(new String[]{});
 
@@ -80,8 +80,8 @@ class ResourceBuilderIntegrationTest {
 
         String content = Files.readString(output);
         assertTrue(content.contains("\"version\" : \"0.2.0\""), "config should contain version");
-        assertFalse(content.contains("cacheDir"),
-            "dev session-start-config.json must not contain cacheDir — resolveCache() handles it at runtime");
+        assertTrue(content.contains("\"name\" : \"shipsmooth-dev\""), "dev config should contain plugin name for cache subdir resolution");
+        assertFalse(content.contains("cacheDir"), "config must not contain cacheDir");
     }
 
     @Test
@@ -146,7 +146,7 @@ class ResourceBuilderIntegrationTest {
     }
 
     @Test
-    void sessionStartConfigForProdHasNoCacheDir() throws Exception {
+    void sessionStartConfigForProdContainsName() throws Exception {
         setProdProps();
         ResourceBuilder.main(new String[]{});
 
@@ -154,9 +154,8 @@ class ResourceBuilderIntegrationTest {
         assertTrue(Files.exists(output), "session-start-config.json should be written");
 
         String content = Files.readString(output);
-        assertFalse(content.contains("cacheDir"),
-            "prod session-start-config.json must not contain a hardcoded cacheDir — " +
-            "the runtime resolves it via XDG_CACHE_HOME at install time");
+        assertTrue(content.contains("\"name\" : \"shipsmooth\""), "prod config should contain plugin name for cache subdir resolution");
+        assertFalse(content.contains("cacheDir"), "config must not contain cacheDir");
     }
 
     @Test
@@ -191,13 +190,15 @@ class ResourceBuilderIntegrationTest {
 
         String content = Files.readString(output);
         assertTrue(content.contains("cmd.exe"), "Windows hook must use cmd.exe");
-        assertTrue(content.contains("xcopy"), "Windows hook must use xcopy");
-        assertTrue(content.contains("LOCALAPPDATA"), "Windows hook must reference LOCALAPPDATA");
         assertTrue(content.contains("0.3.10"), "Windows hook must contain version");
         assertTrue(content.contains("shipsmooth-windows"), "hook source path must use repo name (shipsmooth-windows)");
-        assertTrue(content.contains("\\shipsmooth\\"), "hook destination path must use plugin name (shipsmooth)");
         assertFalse(content.contains("session-start.js"), "Windows hook must not reference session-start.js");
         assertFalse(content.contains("CLAUDE_PLUGIN_ROOT"), "Windows hook must not reference CLAUDE_PLUGIN_ROOT");
+
+        String bat = Files.readString(tempDir.resolve("hooks/install-runtime.bat"));
+        assertTrue(bat.contains("xcopy"), "install-runtime.bat must use xcopy");
+        assertTrue(bat.contains("LOCALAPPDATA"), "install-runtime.bat must reference LOCALAPPDATA");
+        assertTrue(bat.contains("\\shipsmooth\\"), "install-runtime.bat destination must use plugin name (shipsmooth)");
     }
 
     @Test

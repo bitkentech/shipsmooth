@@ -161,19 +161,15 @@ function sendGet(url: string): Promise<http.IncomingMessage> {
   });
 }
 
-function expandHome(p: string): string {
-  return p.startsWith('~/') ? path.join(os.homedir(), p.slice(2)) : p;
-}
-
 // If you change this logic, update the cliBin expression in plugin-skill/src/main/jte-src/skills/_partials/base-workflow.jte.md
-export function resolveCache(config: { cacheDir?: string }): string {
-  if (config.cacheDir) return expandHome(config.cacheDir);
+export function resolveCache(config: { name?: string }): string {
+  const subdir = config.name ?? 'shipsmooth';
   if (process.platform === 'win32') {
     const localAppData = process.env['LOCALAPPDATA'] ?? path.join(os.homedir(), 'AppData', 'Local');
-    return path.join(localAppData, 'shipsmooth');
+    return path.join(localAppData, subdir);
   }
   const xdgCache = process.env['XDG_CACHE_HOME'] ?? path.join(os.homedir(), '.cache');
-  return path.join(xdgCache, 'shipsmooth');
+  return path.join(xdgCache, subdir);
 }
 
 // CLI entrypoint — invoked as `node dist/session-start.js` from hooks.json (SessionStart).

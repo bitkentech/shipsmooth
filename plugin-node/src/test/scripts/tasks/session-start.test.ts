@@ -70,20 +70,20 @@ test('darwin-arm64: installs from jlinkDir without error', async () => {
   assert.ok(fs.existsSync(destBin), 'darwin-arm64 binary should be installed from jlinkDir');
 });
 
-test('resolveCache: uses XDG_CACHE_HOME when cacheDir is absent', () => {
+test('resolveCache: uses XDG_CACHE_HOME with name from config', () => {
   const { resolveCache } = require('../../../main/scripts/tasks/session-start');
   const orig = process.env['XDG_CACHE_HOME'];
   try {
     process.env['XDG_CACHE_HOME'] = '/tmp/xdg-cache-test';
-    assert.equal(resolveCache({}), '/tmp/xdg-cache-test/shipsmooth');
-    assert.equal(resolveCache({ cacheDir: '' }), '/tmp/xdg-cache-test/shipsmooth');
+    assert.equal(resolveCache({ name: 'shipsmooth' }), '/tmp/xdg-cache-test/shipsmooth');
+    assert.equal(resolveCache({ name: 'shipsmooth-dev' }), '/tmp/xdg-cache-test/shipsmooth-dev');
   } finally {
     if (orig === undefined) delete process.env['XDG_CACHE_HOME'];
     else process.env['XDG_CACHE_HOME'] = orig;
   }
 });
 
-test('resolveCache: falls back to ~/.cache/shipsmooth when XDG_CACHE_HOME unset', () => {
+test('resolveCache: falls back to ~/.cache/shipsmooth when name absent', () => {
   const { resolveCache } = require('../../../main/scripts/tasks/session-start');
   const orig = process.env['XDG_CACHE_HOME'];
   try {
@@ -94,14 +94,15 @@ test('resolveCache: falls back to ~/.cache/shipsmooth when XDG_CACHE_HOME unset'
   }
 });
 
-test('resolveCache: uses LOCALAPPDATA on win32', () => {
+test('resolveCache: uses LOCALAPPDATA on win32 with name from config', () => {
   const { resolveCache } = require('../../../main/scripts/tasks/session-start');
   const origPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
   const origLocalAppData = process.env['LOCALAPPDATA'];
   try {
     Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
     process.env['LOCALAPPDATA'] = '/fake/LocalAppData';
-    assert.equal(resolveCache({}), path.join('/fake/LocalAppData', 'shipsmooth'));
+    assert.equal(resolveCache({ name: 'shipsmooth' }), path.join('/fake/LocalAppData', 'shipsmooth'));
+    assert.equal(resolveCache({ name: 'shipsmooth-dev' }), path.join('/fake/LocalAppData', 'shipsmooth-dev'));
   } finally {
     if (origPlatform) Object.defineProperty(process, 'platform', origPlatform);
     if (origLocalAppData === undefined) delete process.env['LOCALAPPDATA'];
@@ -116,19 +117,11 @@ test('resolveCache: falls back to AppData/Local when LOCALAPPDATA unset on win32
   try {
     Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
     delete process.env['LOCALAPPDATA'];
-    assert.equal(resolveCache({}), path.join(os.homedir(), 'AppData', 'Local', 'shipsmooth'));
+    assert.equal(resolveCache({ name: 'shipsmooth' }), path.join(os.homedir(), 'AppData', 'Local', 'shipsmooth'));
   } finally {
     if (origPlatform) Object.defineProperty(process, 'platform', origPlatform);
     if (origLocalAppData !== undefined) process.env['LOCALAPPDATA'] = origLocalAppData;
   }
-});
-
-test('resolveCache: expands tilde cacheDir for dev builds', () => {
-  const { resolveCache } = require('../../../main/scripts/tasks/session-start');
-  assert.equal(
-    resolveCache({ cacheDir: '~/.cache/shipsmooth-dev' }),
-    path.join(os.homedir(), '.cache', 'shipsmooth-dev'),
-  );
 });
 
 test('zip extraction: runtime/bin/* files are chmod 0755 after install', async () => {

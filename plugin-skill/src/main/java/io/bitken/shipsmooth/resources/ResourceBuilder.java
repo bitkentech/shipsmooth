@@ -152,7 +152,8 @@ public class ResourceBuilder {
 
     static void writeSessionStartConfig(ObjectMapper mapper, PluginModel model, Path outputFile) throws IOException {
         ObjectNode config = mapper.createObjectNode()
-            .put("version", model.pluginVersion());
+            .put("version", model.pluginVersion())
+            .put("name", model.pluginName());
         if (model.jlinkDir() != null && !model.jlinkDir().isBlank()) {
             config.put("jlinkDir", model.jlinkDir());
         }
