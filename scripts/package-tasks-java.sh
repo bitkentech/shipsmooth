@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# package-tasks-java.sh — Build a self-contained shippable zip of plugin-tasks-java.
+# package-tasks-java.sh — Build a self-contained shippable zip of app.
 #
-# Output: plugin-tasks-java/target/dist/shipsmooth-tasks-<version>-linux-x64.zip
+# Output: app/target/dist/shipsmooth-tasks-<version>-linux-x64.zip
 #
 # The zip contains:
 #   - runtime/    jlink image with openj9.sharedclasses (~85MB)
@@ -11,7 +11,7 @@
 # under ${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth/scc/ on first invocation.
 #
 # Prerequisites:
-#   mvn -pl plugin-tasks-java -am -Pjlink package
+#   mvn -pl app -am -Pjlink package
 #
 # Usage: ./scripts/package-tasks-java.sh
 
@@ -19,7 +19,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-MODULE_DIR="${REPO_ROOT}/plugin-tasks-java"
+MODULE_DIR="${REPO_ROOT}/app"
 TARGET_DIR="${MODULE_DIR}/target"
 DIST_DIR="${TARGET_DIR}/dist"
 
@@ -27,14 +27,14 @@ JLINK_IMAGE="${TARGET_DIR}/jlink-image"
 
 cd "$REPO_ROOT"
 
-VERSION=$(mvn -pl plugin-tasks-java -q help:evaluate -Dexpression=project.version -DforceStdout 2>/dev/null | tail -1)
+VERSION=$(mvn -pl app -q help:evaluate -Dexpression=project.version -DforceStdout 2>/dev/null | tail -1)
 STAGE_NAME="shipsmooth-tasks-${VERSION}"
 STAGE_DIR="${DIST_DIR}/${STAGE_NAME}"
 ZIP_PATH="${DIST_DIR}/${STAGE_NAME}-linux-x64.zip"
 
 echo "==> Verifying prerequisites..."
 [[ -x "${JLINK_IMAGE}/bin/java" ]] || {
-  echo "Error: jlink image not found at ${JLINK_IMAGE}. Run 'mvn -pl plugin-tasks-java -am -Pjlink package' first." >&2
+  echo "Error: jlink image not found at ${JLINK_IMAGE}. Run 'mvn -pl app -am -Pjlink package' first." >&2
   exit 1
 }
 find "${JLINK_IMAGE}/lib" -name 'libj9shr*.so' | grep -q . 2>/dev/null || {

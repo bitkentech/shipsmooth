@@ -10,7 +10,7 @@
         <version>0.3.10</version>
     </parent>
 
-    <artifactId>plugin-tasks-java</artifactId>
+    <artifactId>app</artifactId>
 
     <properties>
         <picocli.version>4.7.5</picocli.version>

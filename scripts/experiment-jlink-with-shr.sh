@@ -8,9 +8,9 @@
 # possibly hit the ~2ms median startup the decision doc reports.
 #
 # Outputs:
-#   plugin-tasks-java/target/jlink-experiment/image/    — the jlink image
-#   plugin-tasks-java/target/jlink-experiment/scc/      — isolated SCC cache
-#   plugin-tasks-java/target/jlink-experiment/timings.txt
+#   app/target/jlink-experiment/image/    — the jlink image
+#   app/target/jlink-experiment/scc/      — isolated SCC cache
+#   app/target/jlink-experiment/timings.txt
 #
 # This script does NOT modify pom.xml or scripts/package-tasks-java.sh.
 
@@ -18,7 +18,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-MODULE_DIR="${REPO_ROOT}/plugin-tasks-java"
+MODULE_DIR="${REPO_ROOT}/app"
 TARGET_DIR="${MODULE_DIR}/target"
 EXP_DIR="${TARGET_DIR}/jlink-experiment"
 
@@ -27,14 +27,14 @@ JMODS="${JDK_HOME}/jmods"
 
 cd "$REPO_ROOT"
 
-VERSION=$(mvn -pl plugin-tasks-java -q help:evaluate -Dexpression=project.version -DforceStdout 2>/dev/null | tail -1)
-APP_JAR="${TARGET_DIR}/plugin-tasks-java-${VERSION}.jar"
-[[ -f "$APP_JAR" ]] || { echo "Error: $APP_JAR not found. Run 'mvn -pl plugin-tasks-java -am -Pjlink package' first." >&2; exit 1; }
+VERSION=$(mvn -pl app -q help:evaluate -Dexpression=project.version -DforceStdout 2>/dev/null | tail -1)
+APP_JAR="${TARGET_DIR}/app-${VERSION}.jar"
+[[ -f "$APP_JAR" ]] || { echo "Error: $APP_JAR not found. Run 'mvn -pl app -am -Pjlink package' first." >&2; exit 1; }
 
 echo "==> Resolving runtime dependencies..."
 DEPS_FILE=$(mktemp)
 trap 'rm -f "$DEPS_FILE"' EXIT
-mvn -pl plugin-tasks-java -q dependency:build-classpath \
+mvn -pl app -q dependency:build-classpath \
   -DincludeScope=runtime \
   -Dmdep.outputFile="$DEPS_FILE"
 DEP_JARS=$(cat "$DEPS_FILE")
