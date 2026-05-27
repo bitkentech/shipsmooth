@@ -1,4 +1,4 @@
-package io.bitken.ss;
+package io.bitken.ss.conf;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,6 +1,6 @@
 package io.bitken.ss.cli;
 
-import io.bitken.ss.ShipsmoothDataLocator;
+import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.gw.TaskStore;

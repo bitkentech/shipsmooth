@@ -3,6 +3,7 @@ package io.bitken.ss;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;
 import io.bitken.ss.conf.ServicesModule;
+import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.jaxb.PlanTasks;
 import org.junit.jupiter.api.Test;

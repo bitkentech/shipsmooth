@@ -1,6 +1,6 @@
 package io.bitken.ss.gw;
 
-import io.bitken.ss.ShipsmoothDataLocator;
+import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.jaxb.*;
 import io.bitken.ss.svc.plan.PlanMarkdown;
 import io.bitken.ss.svc.plan.PlanMarkdownParser;
@@ -17,7 +17,6 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;

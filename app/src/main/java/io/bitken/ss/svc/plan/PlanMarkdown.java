@@ -1,6 +1,6 @@
 package io.bitken.ss.svc.plan;
 
-import io.bitken.ss.ShipsmoothDataLocator;
+import io.bitken.ss.conf.ShipsmoothDataLocator;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;

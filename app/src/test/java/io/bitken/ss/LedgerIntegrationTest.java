@@ -1,17 +1,15 @@
 package io.bitken.ss;
-import io.bitken.ss.ShipsmoothDataLocator;
+import io.bitken.ss.conf.ShipsmoothDataLocator;
 
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
-import io.bitken.ss.ledger.ObjectStore;
 import io.bitken.ss.gw.TaskStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import picocli.CommandLine;
 
 import java.io.File;
 import java.nio.file.Files;

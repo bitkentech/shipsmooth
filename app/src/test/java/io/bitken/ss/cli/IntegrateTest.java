@@ -1,7 +1,6 @@
 package io.bitken.ss.cli;
-import io.bitken.ss.ShipsmoothDataLocator;
+import io.bitken.ss.conf.ShipsmoothDataLocator;
 
-import io.bitken.ss.cli.Shipsmooth;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;
 import io.bitken.ss.conf.ServicesModule;

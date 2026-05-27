@@ -1,6 +1,6 @@
 package io.bitken.ss.workflow;
 
-import io.bitken.ss.ShipsmoothDataLocator;
+import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.git.MergeResult;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.workflow.integration.IntegrationDefaults;

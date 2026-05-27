@@ -2,7 +2,6 @@ package io.bitken.ss.conf;
 
 import dagger.Module;
 import dagger.Provides;
-import io.bitken.ss.ShipsmoothDataLocator;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.EventLedger;
