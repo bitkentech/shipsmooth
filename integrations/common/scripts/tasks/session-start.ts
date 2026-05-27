@@ -17,7 +17,7 @@ export interface InstallOptions {
 
 export function runtimeBin(runtimeDir: string, platform: string): string {
   return path.join(runtimeDir, 'bin',
-    platform.startsWith('win32') ? 'shipsmooth-tasks.cmd' : 'shipsmooth-tasks');
+    platform.startsWith('win32') ? 'shipsmooth.cmd' : 'shipsmooth');
 }
 
 export async function installRuntime(opts: InstallOptions): Promise<void> {
@@ -72,7 +72,7 @@ function detectPlatform(): string {
 
 async function downloadAndInstall(version: string, runtimeDir: string, platform: string, urlBase?: string): Promise<void> {
   const base = urlBase ?? `https://github.com/bitkentech/shipsmooth/releases/download/v${version}`;
-  const url = `${base}/shipsmooth-tasks-${version}-${platform}.zip`;
+  const url = `${base}/shipsmooth-${version}-${platform}.zip`;
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shipsmooth-'));
   const zipFile = path.join(tmp, 'runtime.zip');
   const extractDir = `${runtimeDir}.tmp`;
