@@ -118,22 +118,22 @@ public class PublishRelease {
         if (Files.exists(buildDir)) deleteDirectory(buildDir);
 
         runCommand(List.of("mvn", "-f", repoRoot.resolve("pom.xml").toString(),
-                "-pl", "plugin-tasks-java", "-am", "-Pjlink",
+                "-pl", "app", "-am", "-Pjlink",
                 "-Dexperimental.enabled=false",
                 "package"), repoRoot);
 
         runCommand(List.of("mvn", "-f", repoRoot.resolve("pom.xml").toString(), "compile", "-Pprod", "-P!dev"), repoRoot);
         maybeValidateBuildOutput(buildDir, skipValidation);
 
-        Path outputDir = repoRoot.resolve("plugin-dist/target/dist");
+        Path outputDir = repoRoot.resolve("packaging/target/dist");
         Files.createDirectories(outputDir);
-        new PackageRuntime("linux-x64", linuxJdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-linux-x64"), outputDir, version).run();
+        new PackageRuntime("linux-x64", linuxJdkHome, repoRoot.resolve("app/target/jlink-image-linux-x64"), outputDir, version).run();
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-" + version + "-linux-x64.zip"));
-        new PackageRuntime("darwin-x64", darwinX64JdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-darwin-x64"), outputDir, version).run();
+        new PackageRuntime("darwin-x64", darwinX64JdkHome, repoRoot.resolve("app/target/jlink-image-darwin-x64"), outputDir, version).run();
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-" + version + "-darwin-x64.zip"));
-        new PackageRuntime("darwin-arm64", darwinArm64JdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-darwin-arm64"), outputDir, version).run();
+        new PackageRuntime("darwin-arm64", darwinArm64JdkHome, repoRoot.resolve("app/target/jlink-image-darwin-arm64"), outputDir, version).run();
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-" + version + "-darwin-arm64.zip"));
-        new PackageRuntime("win32-x64", windowsX64JdkHome, repoRoot.resolve("plugin-tasks-java/target/jlink-image-windows-x64"), outputDir, version).run();
+        new PackageRuntime("win32-x64", windowsX64JdkHome, repoRoot.resolve("app/target/jlink-image-windows-x64"), outputDir, version).run();
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-" + version + "-win32-x64.zip"));
     }
 
@@ -162,7 +162,7 @@ public class PublishRelease {
         copyRecursive(buildDir.resolve(".claude-plugin"), windowsRepoPath.resolve(".claude-plugin"));
         copyRecursive(buildDir.resolve("hooks"),          windowsRepoPath.resolve("hooks"));
         copyRecursive(buildDir.resolve("skills"),         windowsRepoPath.resolve("skills"));
-        copyRecursive(repoRoot.resolve("plugin-tasks-java/target/jlink-image-windows-x64"),
+        copyRecursive(repoRoot.resolve("app/target/jlink-image-windows-x64"),
                       windowsRepoPath.resolve("runtime"));
 
         runCommand(List.of("git", "add", "."), windowsRepoPath);
@@ -190,7 +190,7 @@ public class PublishRelease {
         git("tag", "v" + version);
         git("push", "origin", "releases", "v" + version);
 
-        Path distDir2 = repoRoot.resolve("plugin-dist/target/dist");
+        Path distDir2 = repoRoot.resolve("packaging/target/dist");
         runCommand(List.of("gh", "release", "create", "v" + version,
                 "--target", "releases", "--title", "v" + version,
                 "--notes", "Release v" + version + " (main: " + mainSha + ")"), repoRoot);
