@@ -108,7 +108,7 @@ Changes to source files are reflected immediately after the next `mvn process-re
 ### Run smoke tests
 
 ```bash
-./scripts/smoke-gemini.sh
+./devel/scripts/smoke-gemini.sh
 ```
 
 Verifies the build layout, links the extension, and runs the hook logic test.
@@ -180,9 +180,9 @@ The `releases` branch is an orphan — it shares no history with `main`.
 Gemini CLI installs extensions by cloning a repo where `gemini-extension.json` lives at the root (see [Gemini CLI extension releasing docs](https://geminicli.com/docs/extensions/releasing/)). This is incompatible with the layout of the `releases` branch, where Claude's `.claude-plugin/` metadata sits at the root of `dist/`. Rather than add branch-switching complexity here, Gemini releases are published to a dedicated repo — [`bitkentech/shipsmooth-gemini`](https://github.com/bitkentech/shipsmooth-gemini) — whose `main` branch is a pure publish artifact fully replaced on each release.
 
 ```bash
-./scripts/release-gemini.sh <version>
+./devel/scripts/release-gemini.sh <version>
 # Example:
-./scripts/release-gemini.sh 0.0.1
+./devel/scripts/release-gemini.sh 0.0.1
 ```
 
 The script:
@@ -196,7 +196,7 @@ The script:
 
 Pass `--force` to skip the clean-tree check (useful during iterative testing):
 ```bash
-./scripts/release-gemini.sh 0.0.2 --force
+./devel/scripts/release-gemini.sh 0.0.2 --force
 ```
 
 Structure of the `shipsmooth-gemini` repo after release:
