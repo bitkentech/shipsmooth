@@ -40,8 +40,8 @@ public class PackageRuntime {
             System.exit(1);
         }
         Path repoRoot = Path.of(repoRootProp);
-        Path jlinkImage = repoRoot.resolve("plugin-tasks-java/target/jlink-image");
-        Path outputDir = repoRoot.resolve("plugin-dist/target/dist");
+        Path jlinkImage = repoRoot.resolve("app/target/jlink-image");
+        Path outputDir = repoRoot.resolve("packaging/target/dist");
         String version = System.getProperty("project.version", "0.3.0");
 
         Files.createDirectories(outputDir);
