@@ -2,6 +2,7 @@ package io.bitken.ss.cli;
 
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.EventLedger;
+import io.bitken.ss.service.PlanService;
 import io.bitken.ss.service.XmlService;
 
 import java.nio.file.Paths;
@@ -60,7 +61,7 @@ public class CommandsTest {
 
     @Test
     public void testUpdateStatusCommand() throws Exception {
-        int exitCode = new CommandLine(new UpdateStatus(xmlService, ledgerService).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "in-progress");
+        int exitCode = new CommandLine(new UpdateStatus(new PlanService(xmlService, ledgerService)).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "in-progress");
         assertEquals(0, exitCode);
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
         assertEquals("in-progress", planTasks.getTasks().getTask().get(0).getStatus().value());

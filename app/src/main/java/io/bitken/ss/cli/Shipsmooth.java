@@ -7,6 +7,7 @@ import io.bitken.ss.conf.DaggerAppComponents;
 import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.EventLedger;
+import io.bitken.ss.service.PlanService;
 import io.bitken.ss.service.XmlService;
 import io.bitken.ss.conf.FeatureFlags;
 import io.bitken.ss.workflow.WorkflowService;
@@ -34,6 +35,7 @@ public class Shipsmooth {
     public Shipsmooth(AppComponents app) {
         XmlService xml = app.xmlService();
         EventLedger ledger = app.eventLedger();
+        PlanService planService = app.planService();
         WorktreeService worktree = app.worktreeService();
         WorkflowService workflow = app.workflowService();
         WorkflowServiceImpl workflowImpl = app.workflowServiceImpl();
@@ -61,7 +63,7 @@ public class Shipsmooth {
             boolean enableExperimental;
         }));
 
-        for (Callable<?> command : buildCommands(xml, ledger, worktree, workflow, workflowImpl)) {
+        for (Callable<?> command : buildCommands(xml, ledger, planService, worktree, workflow, workflowImpl)) {
             if (command instanceof FeatureFlags ff && ff.isExperimental()) {
                 experimentalCommands.add(command);
             } else {
@@ -73,8 +75,8 @@ public class Shipsmooth {
         cmd = new CommandLine(rootSpec);
     }
 
-    private Callable<?>[] buildCommands(XmlService xml, EventLedger ledger, WorktreeService worktree,
-            WorkflowService workflow, WorkflowServiceImpl workflowImpl) {
+    private Callable<?>[] buildCommands(XmlService xml, EventLedger ledger, PlanService planService,
+            WorktreeService worktree, WorkflowService workflow, WorkflowServiceImpl workflowImpl) {
         return new Callable<?>[] {
             new Init(xml, ledger),
             new AddComment(xml, ledger),
@@ -89,7 +91,7 @@ public class Shipsmooth {
             new ProjectUpdate(xml, ledger),
             new SetCommit(xml, ledger),
             new Show(xml),
-            new UpdateStatus(xml, ledger),
+            new UpdateStatus(planService),
             new WorkerBase(xml, ledger),
             new WorkerCleanup(worktree, ledger),
             new WorkerFinish(workflowImpl),

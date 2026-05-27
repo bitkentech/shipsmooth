@@ -22,9 +22,9 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Introduce PlanService</name>
-            <commit></commit>
+            <commit>746e66e233a3437f4aa20012c3cb823c5f1d92c8</commit>
             <created-from>plan-59-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
