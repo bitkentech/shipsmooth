@@ -111,6 +111,42 @@
             <deviations/>
             <depends-on>1,2,3,4,5,6,7,8</depends-on>
         </task>
+        <task>
+            <id>10</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Rename packaging/ module package to io.bitken.ss.dist</name>
+            <commit></commit>
+            <created-from>plan-57-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>9</depends-on>
+        </task>
+        <task>
+            <id>11</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Rename integrations/common/ module package to io.bitken.ss.resources</name>
+            <commit></commit>
+            <created-from>plan-57-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>9</depends-on>
+        </task>
+        <task>
+            <id>12</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Update remaining docs and stragglers</name>
+            <commit></commit>
+            <created-from>plan-57-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>10,11</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
