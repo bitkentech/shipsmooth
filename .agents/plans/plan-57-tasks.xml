@@ -23,7 +23,7 @@
             <id>2</id>
             <risk>medium</risk>
             <status>pending</status>
-            <name>Move `di/` to `conf/` and dissolve `stability/` into `conf/`</name>
+            <name>Rename `cmd/` to `cli/` and move `TasksCli` into it</name>
             <commit></commit>
             <created-from>plan-57-v1</created-from>
             <closed-at-version></closed-at-version>
@@ -33,21 +33,21 @@
         </task>
         <task>
             <id>3</id>
-            <risk>low</risk>
+            <risk>medium</risk>
             <status>pending</status>
-            <name>Update `module-info.java`</name>
+            <name>Move `di/` to `conf/` and dissolve `stability/` into `conf/`</name>
             <commit></commit>
             <created-from>plan-57-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>1,2</depends-on>
+            <depends-on>1</depends-on>
         </task>
         <task>
             <id>4</id>
-            <risk>low</risk>
+            <risk>medium</risk>
             <status>pending</status>
-            <name>Update `app/pom.xml`</name>
+            <name>Move `integration/` under `workflow/` as a sub-package</name>
             <commit></commit>
             <created-from>plan-57-v1</created-from>
             <closed-at-version></closed-at-version>
@@ -58,6 +58,42 @@
             <id>5</id>
             <risk>low</risk>
             <status>pending</status>
+            <name>Rename CLI command to `shipsmooth`</name>
+            <commit></commit>
+            <created-from>plan-57-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Update `module-info.java`</name>
+            <commit></commit>
+            <created-from>plan-57-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2,3,4</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Update `app/pom.xml`</name>
+            <commit></commit>
+            <created-from>plan-57-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>low</risk>
+            <status>pending</status>
             <name>Rename and update native-image resource directory</name>
             <commit></commit>
             <created-from>plan-57-v1</created-from>
@@ -66,7 +102,7 @@
             <deviations/>
         </task>
         <task>
-            <id>6</id>
+            <id>9</id>
             <risk>low</risk>
             <status>pending</status>
             <name>Verify full build and tests pass</name>
@@ -75,12 +111,12 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>1,2,3,4,5</depends-on>
+            <depends-on>1,2,3,4,5,6,7,8</depends-on>
         </task>
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-05-27T15:11:18.975+05:30</timestamp>
+            <timestamp>2026-05-27T15:22:51.876+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
