@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.AgentsLayout;
 import io.bitken.shipsmooth.tasks.git.GitTagService;
@@ -17,19 +17,19 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class InitCommand implements Callable<Integer>, HasSpec {
+public class Init implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
     private final XmlService xmlService;
     private final LedgerService ledgerService;
     private final GitTagService gitTagService;
 
-    public InitCommand(XmlService xmlService, LedgerService ledgerService) {
+    public Init(XmlService xmlService, LedgerService ledgerService) {
         this(xmlService, ledgerService, new GitTagService());
     }
 
     @Inject
-    public InitCommand(XmlService xmlService, LedgerService ledgerService, GitTagService gitTagService) {
+    public Init(XmlService xmlService, LedgerService ledgerService, GitTagService gitTagService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.xmlService = xmlService;
         this.ledgerService = ledgerService;

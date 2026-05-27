@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
@@ -11,14 +11,14 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class LedgerResolverCompleteCommand implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
+public class LedgerResolverComplete implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
     @Override public boolean isExperimental() { return true; }
 
     private final CommandSpec spec;
     private final LedgerService ledgerService;
 
     @Inject
-    public LedgerResolverCompleteCommand(LedgerService ledgerService) {
+    public LedgerResolverComplete(LedgerService ledgerService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.ledgerService = ledgerService;
         this.spec.name("ledger-resolver-complete");

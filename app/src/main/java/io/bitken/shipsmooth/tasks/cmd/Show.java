@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
 import io.bitken.shipsmooth.tasks.service.XmlService;
@@ -9,13 +9,13 @@ import picocli.CommandLine.Model.OptionSpec;
 import java.io.File;
 import java.util.concurrent.Callable;
 
-public class ShowCommand implements Callable<Integer>, HasSpec {
+public class Show implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
     private final XmlService xmlService;
 
     @Inject
-    public ShowCommand(XmlService xmlService) {
+    public Show(XmlService xmlService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("show");
         this.spec.usageMessage().description("Show plan tasks.");

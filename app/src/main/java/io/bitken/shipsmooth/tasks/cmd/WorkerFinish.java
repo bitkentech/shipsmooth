@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.workflow.WorkflowException;
 import io.bitken.shipsmooth.tasks.workflow.WorkflowServiceImpl;
@@ -9,14 +9,14 @@ import picocli.CommandLine.Model.OptionSpec;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-public class WorkerFinishCommand implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
+public class WorkerFinish implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
     @Override public boolean isExperimental() { return true; }
 
     private final CommandSpec spec;
     private final WorkflowServiceImpl workflow;
 
     @Inject
-    public WorkerFinishCommand(WorkflowServiceImpl workflow) {
+    public WorkerFinish(WorkflowServiceImpl workflow) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.workflow = workflow;
         this.spec.name("worker-finish");

@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.TasksCli;
 import io.bitken.shipsmooth.tasks.di.AppComponents;
@@ -13,7 +13,7 @@ import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LedgerRecordPatchIntegratedCommandTest {
+public class LedgerRecordPatchIntegratedTest {
 
     private final AppComponents app = DaggerAppComponents.builder()
             .servicesModule(new ServicesModule(Paths.get(".")))

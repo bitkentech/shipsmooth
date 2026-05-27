@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.TasksCli;
 import io.bitken.shipsmooth.tasks.di.AppComponents;
@@ -27,12 +27,12 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Integration tests for IntegrateCommand resume and --force behaviour.
+ * Integration tests for Integrate resume and --force behaviour.
  *
  * These tests run against the real git repo (plugin-tasks-java/ is inside shipsmooth/).
  * Plan 992 is reserved for these tests.
  */
-public class IntegrateCommandTest {
+public class IntegrateTest {
 
     private static final int PLAN_NUM = 992;
     private static final String INTEGRATION_BRANCH = "integration/plan-" + PLAN_NUM;
@@ -210,7 +210,7 @@ public class IntegrateCommandTest {
         // A resolver that does nothing (leaves conflict markers in place)
         Resolver noOpResolver = (dir, ctx) -> {};
 
-        IntegrateCommand cmd = new IntegrateCommand(app.workflowService());
+        Integrate cmd = new Integrate(app.workflowService());
         cmd.setResolverFactory((taskId, integrationAbs) -> noOpResolver);
 
         CommandLine cli = new CommandLine(cmd.getSpec());

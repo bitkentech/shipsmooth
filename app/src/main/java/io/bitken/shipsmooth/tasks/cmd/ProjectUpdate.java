@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
 import io.bitken.shipsmooth.tasks.ledger.Event;
@@ -13,14 +13,14 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-public class ProjectUpdateCommand implements Callable<Integer>, HasSpec {
+public class ProjectUpdate implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
     private final XmlService xmlService;
     private final LedgerService ledgerService;
 
     @Inject
-    public ProjectUpdateCommand(XmlService xmlService, LedgerService ledgerService) {
+    public ProjectUpdate(XmlService xmlService, LedgerService ledgerService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.xmlService = xmlService;
         this.ledgerService = ledgerService;

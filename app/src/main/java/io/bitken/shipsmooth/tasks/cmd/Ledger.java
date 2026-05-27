@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.LedgerService;
@@ -9,13 +9,13 @@ import picocli.CommandLine.Model.PositionalParamSpec;
 
 import java.util.concurrent.Callable;
 
-public class LedgerCommand implements Callable<Integer>, HasSpec {
+public class Ledger implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
     private final LedgerService ledgerService;
 
     @Inject
-    public LedgerCommand(LedgerService ledgerService) {
+    public Ledger(LedgerService ledgerService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.ledgerService = ledgerService;
         this.spec.name("ledger");

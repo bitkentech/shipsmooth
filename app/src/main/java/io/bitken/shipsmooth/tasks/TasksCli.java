@@ -1,6 +1,6 @@
 package io.bitken.shipsmooth.tasks;
 
-import io.bitken.shipsmooth.tasks.commands.*;
+import io.bitken.shipsmooth.tasks.cmd.*;
 import io.bitken.shipsmooth.tasks.di.AppComponents;
 import io.bitken.shipsmooth.tasks.di.DaggerAppComponents;
 import io.bitken.shipsmooth.tasks.di.ServicesModule;
@@ -14,7 +14,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ParseResult;
 
-import io.bitken.shipsmooth.tasks.commands.HasSpec;
+import io.bitken.shipsmooth.tasks.cmd.HasSpec;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ public class TasksCli {
 
     private final CommandLine cmd;
     private final CommandSpec rootSpec;
-    private final IntegrateCommand integrateCmd;
+    private final Integrate integrateCmd;
     private final List<Callable<?>> experimentalCommands = new ArrayList<>();
 
     public TasksCli(AppComponents app) {
@@ -37,7 +37,7 @@ public class TasksCli {
         WorkflowService workflow = app.workflowService();
         WorkflowServiceImpl workflowImpl = app.workflowServiceImpl();
 
-        integrateCmd = new IntegrateCommand(workflow);
+        integrateCmd = new Integrate(workflow);
 
         rootSpec = CommandSpec.wrapWithoutInspection(this);
         rootSpec.name("tasks");
@@ -75,29 +75,29 @@ public class TasksCli {
     private Callable<?>[] buildCommands(XmlService xml, LedgerService ledger, WorktreeService worktree,
             WorkflowService workflow, WorkflowServiceImpl workflowImpl) {
         return new Callable<?>[] {
-            new InitCommand(xml, ledger),
-            new AddCommentCommand(xml, ledger),
-            new AddDeviationCommand(xml, ledger),
-            new ClaimCommand(xml, worktree, ledger),
+            new Init(xml, ledger),
+            new AddComment(xml, ledger),
+            new AddDeviation(xml, ledger),
+            new Claim(xml, worktree, ledger),
             integrateCmd,
-            new LedgerCommand(ledger),
-            new LedgerRecordCommitCommand(ledger),
-            new LedgerRecordPatchIntegratedCommand(ledger),
-            new LedgerResolverCompleteCommand(ledger),
-            new LedgerWatchCommand(),
-            new ProjectUpdateCommand(xml, ledger),
-            new SetCommitCommand(xml, ledger),
-            new ShowCommand(xml),
-            new UpdateStatusCommand(xml, ledger),
-            new WorkerBaseCommand(xml, ledger),
-            new WorkerCleanupCommand(worktree, ledger),
-            new WorkerFinishCommand(workflowImpl),
-            new WorkerInitCommand(workflow),
+            new Ledger(ledger),
+            new LedgerRecordCommit(ledger),
+            new LedgerRecordPatchIntegrated(ledger),
+            new LedgerResolverComplete(ledger),
+            new LedgerWatch(),
+            new ProjectUpdate(xml, ledger),
+            new SetCommit(xml, ledger),
+            new Show(xml),
+            new UpdateStatus(xml, ledger),
+            new WorkerBase(xml, ledger),
+            new WorkerCleanup(worktree, ledger),
+            new WorkerFinish(workflowImpl),
+            new WorkerInit(workflow),
         };
     }
 
     /** Test seam for integration command. */
-    public IntegrateCommand integrateCommand() {
+    public Integrate integrateCommand() {
         return integrateCmd;
     }
 

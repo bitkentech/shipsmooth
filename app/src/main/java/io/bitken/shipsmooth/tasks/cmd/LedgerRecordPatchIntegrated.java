@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
@@ -11,14 +11,14 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class LedgerRecordPatchIntegratedCommand implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
+public class LedgerRecordPatchIntegrated implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
     @Override public boolean isExperimental() { return true; }
 
     private final CommandSpec spec;
     private final LedgerService ledger;
 
     @Inject
-    public LedgerRecordPatchIntegratedCommand(LedgerService ledger) {
+    public LedgerRecordPatchIntegrated(LedgerService ledger) {
         this.ledger = ledger;
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("ledger-record-patch-integrated");

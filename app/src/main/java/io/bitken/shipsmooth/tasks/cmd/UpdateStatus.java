@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
 import io.bitken.shipsmooth.tasks.ledger.Event;
@@ -13,14 +13,14 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-public class UpdateStatusCommand implements Callable<Integer>, HasSpec {
+public class UpdateStatus implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
     private final XmlService xmlService;
     private final LedgerService ledgerService;
 
     @Inject
-    public UpdateStatusCommand(XmlService xmlService, LedgerService ledgerService) {
+    public UpdateStatus(XmlService xmlService, LedgerService ledgerService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("update-status");
         this.spec.usageMessage().description("Update the status of a task.");

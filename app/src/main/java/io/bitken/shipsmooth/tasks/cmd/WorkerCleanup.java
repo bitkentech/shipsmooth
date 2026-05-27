@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.git.WorktreeService;
 import io.bitken.shipsmooth.tasks.ledger.Event;
@@ -12,7 +12,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class WorkerCleanupCommand implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
+public class WorkerCleanup implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
     @Override public boolean isExperimental() { return true; }
 
     private final CommandSpec spec;
@@ -20,7 +20,7 @@ public class WorkerCleanupCommand implements Callable<Integer>, HasSpec, io.bitk
     private final LedgerService ledger;
 
     @Inject
-    public WorkerCleanupCommand(WorktreeService git, LedgerService ledger) {
+    public WorkerCleanup(WorktreeService git, LedgerService ledger) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("worker-cleanup");
         this.spec.usageMessage().description("Remove the worktree for a task, keeping the branch ref.");

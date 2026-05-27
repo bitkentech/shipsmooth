@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.git.WorktreeService;
 import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
@@ -15,7 +15,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class ClaimCommand implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
+public class Claim implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
     @Override public boolean isExperimental() { return true; }
 
     private final CommandSpec spec;
@@ -24,7 +24,7 @@ public class ClaimCommand implements Callable<Integer>, HasSpec, io.bitken.ships
     private final LedgerService ledger;
 
     @Inject
-    public ClaimCommand(XmlService xmlService, WorktreeService git, LedgerService ledger) {
+    public Claim(XmlService xmlService, WorktreeService git, LedgerService ledger) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("claim");
         this.spec.usageMessage().description("Claim a task for subagent execution and record AGENT_START.");

@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.jaxb.PlanTasks;
 import io.bitken.shipsmooth.tasks.ledger.Event;
@@ -14,14 +14,14 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class SetCommitCommand implements Callable<Integer>, HasSpec {
+public class SetCommit implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
     private final XmlService xmlService;
     private final LedgerService ledgerService;
 
     @Inject
-    public SetCommitCommand(XmlService xmlService, LedgerService ledgerService) {
+    public SetCommit(XmlService xmlService, LedgerService ledgerService) {
         this.xmlService = xmlService;
         this.ledgerService = ledgerService;
         this.spec = CommandSpec.wrapWithoutInspection(this);

@@ -1,4 +1,4 @@
-package io.bitken.shipsmooth.tasks.commands;
+package io.bitken.shipsmooth.tasks.cmd;
 
 import io.bitken.shipsmooth.tasks.ledger.Event;
 import io.bitken.shipsmooth.tasks.ledger.EventType;
@@ -10,7 +10,7 @@ import picocli.CommandLine.Model.OptionSpec;
 
 import java.util.concurrent.Callable;
 
-public class WorkerBaseCommand implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
+public class WorkerBase implements Callable<Integer>, HasSpec, io.bitken.shipsmooth.tasks.stability.FeatureFlags {
     @Override public boolean isExperimental() { return true; }
 
     private final CommandSpec spec;
@@ -18,7 +18,7 @@ public class WorkerBaseCommand implements Callable<Integer>, HasSpec, io.bitken.
     private final LedgerService ledgerService;
 
     @Inject
-    public WorkerBaseCommand(XmlService xmlService, LedgerService ledgerService) {
+    public WorkerBase(XmlService xmlService, LedgerService ledgerService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("worker-base");
         this.spec.usageMessage().description("Print the base commit SHA for a dependent task (from parent's COMMIT_RECORDED event).");
