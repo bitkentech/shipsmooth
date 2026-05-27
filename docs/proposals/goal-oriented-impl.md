@@ -18,7 +18,7 @@ This proposal moves Shipsmooth to a **hybrid model**:
 - **Git and the filesystem are the primary source of state.** What exists, exists. What was merged, was merged.
 - **A thinned ledger remains the primary source of coordination.** Cross-process handshakes, audit, intent — the things the filesystem cannot represent — stay where they are.
 
-The mechanism is a new diagnostic command, `shipsmooth-tasks reconcile`, which collapses the SKILL's recovery decision tree into a deterministic state-and-payload return value. The LLM stops walking branches; it asks the kernel where it is, and acts on the answer.
+The mechanism is a new diagnostic command, `shipsmooth reconcile`, which collapses the SKILL's recovery decision tree into a deterministic state-and-payload return value. The LLM stops walking branches; it asks the kernel where it is, and acts on the answer.
 
 ---
 
@@ -98,7 +98,7 @@ The retained events share two properties: either no single process can observe t
 ### 5.1 Invocation
 
 ```bash
-runtime-0.2.0/bin/shipsmooth-tasks reconcile --plan {N}
+runtime-0.2.0/bin/shipsmooth reconcile --plan {N}
 ```
 
 Optional flags:
@@ -185,7 +185,7 @@ The current SKILL session-resume pre-flight has a four-branch decision tree with
 **Session-resume pre-flight [Local]** — If you are picking up a plan that
 was started in a previous session, run reconcile and follow its output:
 
-  runtime-0.2.0/bin/shipsmooth-tasks reconcile --plan {N}
+  runtime-0.2.0/bin/shipsmooth reconcile --plan {N}
 
 The output is a JSON object with `state` and `payload`. Act according to
 the state:
@@ -239,7 +239,7 @@ Roughly two days of focused work. Task 1 is the bulk; Task 2 is small but contra
 
 **Heartbeat staleness on legitimately long operations.** A `verify` command that takes >5 minutes will cause `reconcile` to report the integrate process as stalled while it is in fact running. Mitigation: the heartbeat wrapper writes the heartbeat in its own thread on a 60s timer, independent of what the foreground process is doing. The wrapper exits cleanly only when its child exits, so heartbeats continue throughout long subcommands.
 
-**XML re-materialization races.** If `reconcile` detects drift and rewrites the XML while another `shipsmooth-tasks` mutation is also rewriting it, the file can be torn. Mitigation: the CLI already uses atomic XML writes (per the plan-36 project update). `reconcile`'s rewrite goes through the same `XmlService` path; no new race surface is introduced.
+**XML re-materialization races.** If `reconcile` detects drift and rewrites the XML while another `shipsmooth` mutation is also rewriting it, the file can be torn. Mitigation: the CLI already uses atomic XML writes (per the plan-36 project update). `reconcile`'s rewrite goes through the same `XmlService` path; no new race surface is introduced.
 
 **`reconcile` returns `CLEAN_START` when the environment is actually corrupt.** False-clean is the worst failure mode — the LLM proceeds and steps on existing state. Mitigation: `reconcile` validates a small set of invariants before returning `CLEAN_START` (no orphan agent-work branches without `COMMIT_RECORDED`, no integration worktree without `INTEGRATION_PLAN`, no heartbeat files without a matching task). Any invariant violation produces a diagnostic state instead, even if no existing state code fits — fall through to a new `INVARIANT_VIOLATION` state with a descriptive payload.
 

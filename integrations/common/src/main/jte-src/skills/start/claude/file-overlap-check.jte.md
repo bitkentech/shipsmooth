@@ -1,4 +1,4 @@
-@param io.bitken.shipsmooth.resources.PluginModel model
+@param io.bitken.ss.resources.PluginModel model
 
 ```bash
 for branch in $(git branch -l 'agent-work/*' --format '%(refname:short)'); do

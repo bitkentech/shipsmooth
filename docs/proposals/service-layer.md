@@ -14,7 +14,7 @@ As Shipsmooth evolves from a local-first CLI tool toward a broader ecosystem (We
 
 ## 2. The Problem: The "Thick Command" Trap
 
-Several commands in `io.bitken.shipsmooth.tasks.commands` today act as mini-orchestrators. `WorkerInitCommand`, for instance, is responsible for calculating branch names, coordinating with `WorktreeService` to modify the filesystem, and determining the state to record via `LedgerService`. The PicoCLI `call()` method is the orchestrator.
+Several commands in `io.bitken.ss.commands` today act as mini-orchestrators. `WorkerInitCommand`, for instance, is responsible for calculating branch names, coordinating with `WorktreeService` to modify the filesystem, and determining the state to record via `LedgerService`. The PicoCLI `call()` method is the orchestrator.
 
 This coupling produces three concrete failure modes:
 
@@ -123,7 +123,7 @@ The `reconcile` command (see `goal-oriented-impl.md`) is the recovery primitive;
 
 The architecture explicitly enables:
 
-- **Web UI.** A Spring Boot controller injects `WorkflowService` and exposes a REST endpoint. A "Start Task" button calls the exact same code path as `shipsmooth-tasks worker-init`. Same invariants, same transactional guarantees.
+- **Web UI.** A Spring Boot controller injects `WorkflowService` and exposes a REST endpoint. A "Start Task" button calls the exact same code path as `shipsmooth worker-init`. Same invariants, same transactional guarantees.
 - **Desktop app.** A JavaFX or Compose for Desktop frontend invokes the service directly. No JVM cold-start per click.
 - **Automated agents.** Orchestrators (including future versions of ShipSmooth itself) call the service API to manage parallel subagents without going through a shell. The Anthropic SDK lives in the same process as the service, so tool-use round-trips are method calls, not subprocess spawns.
 

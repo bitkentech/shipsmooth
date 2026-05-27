@@ -42,7 +42,7 @@ if [[ ! -x "$IMAGE_C/bin/java" ]]; then
   "${JDK_HOME}/bin/jlink" \
     --module-path "${JMODS}:${APP_JAR}:${DEP_JARS}" \
     --add-modules com.github.pramodbiligiri.shipsmooth.tasks,openj9.sharedclasses \
-    --launcher "shipsmooth-tasks=com.github.pramodbiligiri.shipsmooth.tasks/com.github.pramodbiligiri.shipsmooth.tasks.TasksCli" \
+    --launcher "shipsmooth=com.github.pramodbiligiri.shipsmooth.tasks/com.github.pramodbiligiri.shipsmooth.tasks.TasksCli" \
     --no-header-files --no-man-pages \
     --output "$IMAGE_C"
   du -sh "$IMAGE_C"

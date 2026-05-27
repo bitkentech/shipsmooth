@@ -1,4 +1,4 @@
-@param io.bitken.shipsmooth.resources.PluginModel model
+@param io.bitken.ss.resources.PluginModel model
 
 3. After the `invoke_agent` call returns, signal integrate to continue:
    ```bash

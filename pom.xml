@@ -131,7 +131,7 @@
         <plugin.hook.base>node "${CLAUDE_PLUGIN_ROOT}/dist/session-start.js"</plugin.hook.base>
         <shipsmooth.dist.path>\${CLAUDE_PLUGIN_DATA}/dist</shipsmooth.dist.path>
         <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/app/target/jlink-image</shipsmooth.jlink.dir>
-        <shipsmooth.cli.bin>${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-@project.version@/bin/shipsmooth-tasks</shipsmooth.cli.bin>
+        <shipsmooth.cli.bin>${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-@project.version@/bin/shipsmooth</shipsmooth.cli.bin>
         <skill.frontmatter></skill.frontmatter>
         <experimental.enabled>true</experimental.enabled>
       </properties>
@@ -174,7 +174,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
         <build.outputDir>${maven.multiModuleProjectDirectory}/build</build.outputDir>
         <shipsmooth.dist.path>\${CLAUDE_PLUGIN_DATA}/dist</shipsmooth.dist.path>
         <shipsmooth.jlink.dir>/dev/null</shipsmooth.jlink.dir>
-        <shipsmooth.cli.bin>${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-@project.version@/bin/shipsmooth-tasks</shipsmooth.cli.bin>
+        <shipsmooth.cli.bin>${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-@project.version@/bin/shipsmooth</shipsmooth.cli.bin>
         <plugin.hook.base>node "${CLAUDE_PLUGIN_ROOT}/dist/session-start.js"</plugin.hook.base>
         <skill.frontmatter></skill.frontmatter>
         <experimental.enabled>false</experimental.enabled>

@@ -1,4 +1,4 @@
-@param io.bitken.shipsmooth.resources.PluginModel model
+@param io.bitken.ss.resources.PluginModel model
 
 ```
 1. ${model.cliBin()} --enable-experimental claim --plan {N} --task {id}

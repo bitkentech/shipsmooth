@@ -1,9 +1,9 @@
-# Proposal: Install shipsmooth-tasks launcher to $HOME/.local/bin
+# Proposal: Install shipsmooth launcher to $HOME/.local/bin
 
 ## Background
 
 The XDG Base Directory spec designates `$HOME/.local/bin` for user-specific executables.
-Distributions are expected to include it in `$PATH`. Currently the `shipsmooth-tasks`
+Distributions are expected to include it in `$PATH`. Currently the `shipsmooth`
 launcher lives only inside `$XDG_CACHE_HOME/shipsmooth/runtime-{version}/bin/`, which
 means users must know the full cache path or rely on the SKILL.md-embedded absolute path.
 
@@ -13,7 +13,7 @@ After `installRuntime()` places the runtime under `cacheDir/runtime-{version}/`,
 write a symlink:
 
 ```
-$HOME/.local/bin/shipsmooth-tasks -> $HOME/.cache/shipsmooth/runtime-{version}/bin/shipsmooth-tasks
+$HOME/.local/bin/shipsmooth -> $HOME/.cache/shipsmooth/runtime-{version}/bin/shipsmooth
 ```
 
 Changes required in `session-start.ts`:
@@ -41,6 +41,6 @@ non-essential files.
 ## Note on shared home directories
 
 The XDG spec cautions against placing architecture-specific compiled binaries in
-`~/.local/bin` on NFS-shared homes. The `shipsmooth-tasks` launcher is a plain shell
+`~/.local/bin` on NFS-shared homes. The `shipsmooth` launcher is a plain shell
 script, so this concern does not apply. The JVM itself stays in the cache, not in
 `~/.local/bin`.

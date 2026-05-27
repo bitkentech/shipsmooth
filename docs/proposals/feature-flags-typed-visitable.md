@@ -8,7 +8,7 @@
 
 ## 1. Why revisit plan-41?
 
-Plan-41 shipped a hard gate for the 10 experimental `shipsmooth-tasks`
+Plan-41 shipped a hard gate for the 10 experimental `shipsmooth`
 subcommands via a single marker method:
 
 ```java
@@ -244,10 +244,10 @@ existing experimental loop picks up `FeatureXCommand` automatically.
 
 ```
 # Without flag: unmatched argument, exit 2
-shipsmooth-tasks feature-x --help
+shipsmooth feature-x --help
 
 # With flag: registers and runs normally
-shipsmooth-tasks --enable-experimental feature-x --help
+shipsmooth --enable-experimental feature-x --help
 ```
 
 The flag decides this entirely via `ExperimentalFlag.isEnabled()`, which

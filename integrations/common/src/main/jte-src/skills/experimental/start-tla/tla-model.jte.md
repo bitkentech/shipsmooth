@@ -1,4 +1,4 @@
-@import io.bitken.shipsmooth.resources.PluginModel
+@import io.bitken.ss.resources.PluginModel
 @param PluginModel model
 ```tla
 --------------------------- MODULE ShipSmooth_Milestones ---------------------------

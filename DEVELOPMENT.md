@@ -11,7 +11,7 @@ This repo uses a multi-module Maven layout:
 - `integrations/common/` — JTE skill templates, Java `ResourceBuilder`, and TypeScript hook scripts
 - `integrations/claude/` — Claude plugin metadata (`claude-plugin/`, `windows/`)
 - `integrations/gemini/` — Gemini extension metadata (`gemini-extension/`)
-- `app/` — Java CLI (`shipsmooth-tasks`) and domain logic
+- `app/` — Java CLI (`shipsmooth`) and domain logic
 - `packaging/` — assembles the final `build/` output from the other modules
 - `devel/` — development-time helper scripts
 
@@ -154,7 +154,7 @@ mvn exec:java@publish-release -pl packaging -Dshipsmooth.release.version=0.3.2 -
 1. Asserts clean working tree and that tag `v<version>` does not exist
 2. Runs `mvn versions:set -DnewVersion=<version>` and commits all `pom.xml` files
 3. Builds the full plugin (`mvn compile -Pprod -P!dev`)
-4. Packages the runtime zip (`shipsmooth-tasks-<version>-linux-x64.zip`)
+4. Packages the runtime zip (`shipsmooth-<version>-linux-x64.zip`)
 5. Checks out the `releases` branch, replaces `dist/` with the new build output
 6. Commits, tags `v<version>`, pushes `releases` branch and tag
 7. Creates a GitHub Release and uploads the runtime zip as an asset
@@ -248,7 +248,7 @@ The `-fixN` suffix is only a label in the release commit message — do **not** 
 as it bumps all pom.xml files and bakes the suffix into the build artifacts.
 
 ```bash
-# Step 1: rebuild the jlink image (only needed if shipsmooth-tasks changed)
+# Step 1: rebuild the jlink image (only needed if shipsmooth changed)
 mvn package -pl app -Pjlink -DskipTests
 
 # Step 2: build the Windows plugin artifacts (pom version stays at e.g. 0.3.10)
@@ -287,5 +287,5 @@ Structure of the `shipsmooth-windows` repo after release:
 │   └── marketplace.json
 ├── hooks/hooks.json
 ├── skills/start/SKILL.md
-└── runtime/                (bundled Windows jlink JRE + shipsmooth-tasks.bat)
+└── runtime/                (bundled Windows jlink JRE + shipsmooth.bat)
 ```

@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>57</plan>
+    <plan-version>plan-57-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-05-27</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Rename package declarations in all Java source files</name>
+            <commit></commit>
+            <created-from>plan-57-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Rename `cmd/` to `cli/`, move and rename `TasksCli` → `Shipsmooth`</name>
+            <commit></commit>
+            <created-from>plan-57-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Move `di/` to `conf/` and dissolve `stability/` into `conf/`</name>
+            <commit></commit>
+            <created-from>plan-57-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Move `integration/` under `workflow/` as a sub-package</name>
+            <commit></commit>
+            <created-from>plan-57-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename `shipsmooth-tasks` → `shipsmooth` everywhere</name>
+            <commit></commit>
+            <created-from>plan-57-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Update `module-info.java`</name>
+            <commit></commit>
+            <created-from>plan-57-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2,3,4</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Update `app/pom.xml`</name>
+            <commit></commit>
+            <created-from>plan-57-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename and update native-image resource directory</name>
+            <commit></commit>
+            <created-from>plan-57-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Verify full build and tests pass</name>
+            <commit>8f4257e0bf923606f1bf6b9cccef0efb1834a722</commit>
+            <created-from>plan-57-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2,3,4,5,6,7,8</depends-on>
+        </task>
+        <task>
+            <id>10</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename packaging/ module package to io.bitken.ss.dist</name>
+            <commit></commit>
+            <created-from>plan-57-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>9</depends-on>
+        </task>
+        <task>
+            <id>11</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename integrations/common/ module package to io.bitken.ss.resources</name>
+            <commit></commit>
+            <created-from>plan-57-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>9</depends-on>
+        </task>
+        <task>
+            <id>12</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Update remaining docs and stragglers</name>
+            <commit></commit>
+            <created-from>plan-57-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>10,11</depends-on>
+        </task>
+        <task>
+            <id>13</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Delete unused TypeScript files from integrations/common/scripts/tasks/</name>
+            <commit>f1655d393c62c5b931aff8b3df339a85dbec741d</commit>
+            <created-from>plan-57-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>12</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-05-27T15:28:39.260+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-27T16:15:24.343+05:30</timestamp>
+            <message>Plan complete. All 13 tasks agent-coded: renamed io.bitken.shipsmooth.tasks → io.bitken.ss, restructured cmd→cli, di→conf, stability→conf, integration→workflow/integration, renamed CLI binary to shipsmooth, updated module-info, pom.xml, native-image resources, packaging and integrations/common modules, docs, and deleted unused TypeScript files.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
