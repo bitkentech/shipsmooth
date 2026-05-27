@@ -3,7 +3,7 @@ package io.bitken.ss.cli;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
-import io.bitken.ss.service.PlanService;
+import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.gw.TaskStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

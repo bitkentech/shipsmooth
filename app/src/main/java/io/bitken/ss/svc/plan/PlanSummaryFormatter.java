@@ -1,4 +1,4 @@
-package io.bitken.ss.service;
+package io.bitken.ss.svc.plan;
 
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.jaxb.TaskType;

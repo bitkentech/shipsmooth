@@ -5,7 +5,7 @@ import dagger.Provides;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.EventLedger;
-import io.bitken.ss.service.PlanService;
+import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.workflow.DefaultProcessRunner;
 import io.bitken.ss.workflow.ProcessRunner;

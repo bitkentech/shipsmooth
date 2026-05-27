@@ -2,7 +2,7 @@ package io.bitken.ss.cli;
 
 import io.bitken.ss.AgentsLayout;
 import io.bitken.ss.gw.GitTags;
-import io.bitken.ss.service.PlanService;
+import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.gw.TaskStore;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;

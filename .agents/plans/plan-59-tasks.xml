@@ -69,9 +69,9 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Rename GitTagService → GitTags and move to gw/</name>
-            <commit></commit>
+            <commit>2511cccabc80a77bc1ba962616f8918766a61c67</commit>
             <created-from>plan-59-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>

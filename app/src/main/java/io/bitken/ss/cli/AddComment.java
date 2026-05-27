@@ -1,6 +1,6 @@
 package io.bitken.ss.cli;
 
-import io.bitken.ss.service.PlanService;
+import io.bitken.ss.svc.plan.PlanService;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;

@@ -1,9 +1,9 @@
 package io.bitken.ss.gw;
 
 import io.bitken.ss.jaxb.*;
-import io.bitken.ss.service.PlanMarkdown;
-import io.bitken.ss.service.PlanMarkdownParser;
-import io.bitken.ss.service.PlanSummaryFormatter;
+import io.bitken.ss.svc.plan.PlanMarkdown;
+import io.bitken.ss.svc.plan.PlanMarkdownParser;
+import io.bitken.ss.svc.plan.PlanSummaryFormatter;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
