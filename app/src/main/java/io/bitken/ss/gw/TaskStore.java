@@ -28,7 +28,8 @@ import java.util.List;
 public class TaskStore {
 
     private final ShipsmoothDataLocator locator;
-    private final ObjectFactory factory = new ObjectFactory();
+    private final ObjectFactory factory;
+    private final JAXBContext jaxbContext;
 
     public record Task(int id, String name, String risk, String dependsOn) {
         public Task(int id, String name, String risk) { this(id, name, risk, ""); }
@@ -36,6 +37,12 @@ public class TaskStore {
 
     public TaskStore(ShipsmoothDataLocator locator) {
         this.locator = locator;
+        this.factory = new ObjectFactory();
+        try {
+            this.jaxbContext = JAXBContext.newInstance(PlanTasks.class);
+        } catch (JAXBException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private File planTasksFile(int planId) {
@@ -90,8 +97,7 @@ public class TaskStore {
         int retries = 5;
         while (retries > 0) {
             try {
-                JAXBContext context = JAXBContext.newInstance(PlanTasks.class);
-                Unmarshaller unmarshaller = context.createUnmarshaller();
+                Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
                 return (PlanTasks) unmarshaller.unmarshal(file);
             } catch (JAXBException e) {
                 retries--;
@@ -111,8 +117,7 @@ public class TaskStore {
     public void writePlanTasks(PlanTasks planTasks, File file) throws JAXBException {
         file.getParentFile().mkdirs();
         File tempFile = new File(file.getAbsolutePath() + ".tmp");
-        JAXBContext context = JAXBContext.newInstance(PlanTasks.class);
-        Marshaller marshaller = context.createMarshaller();
+        Marshaller marshaller = jaxbContext.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
         marshaller.marshal(planTasks, tempFile);
         try {

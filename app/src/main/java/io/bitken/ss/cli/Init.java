@@ -17,18 +17,18 @@ public class Init implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
     private final PlanService planService;
-    private final TaskStore xmlService;
+    private final TaskStore taskStore;
     private final GitTags gitTagService;
 
-    public Init(PlanService planService, TaskStore xmlService) {
-        this(planService, xmlService, new GitTags());
+    public Init(PlanService planService, TaskStore taskStore) {
+        this(planService, taskStore, new GitTags());
     }
 
     @Inject
-    public Init(PlanService planService, TaskStore xmlService, GitTags gitTagService) {
+    public Init(PlanService planService, TaskStore taskStore, GitTags gitTagService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.planService = planService;
-        this.xmlService = xmlService;
+        this.taskStore = taskStore;
         this.gitTagService = gitTagService;
 
         spec.name("init");
@@ -61,7 +61,7 @@ public class Init implements Callable<Integer>, HasSpec {
             return 1;
         }
         var markdown = Files.readString(markdownPath);
-        var tasks = xmlService.parseTasksFromPlan(markdown);
+        var tasks = taskStore.parseTasksFromPlan(markdown);
         var planVersion = gitTagService.getPlanVersion(plan);
 
         planService.initPlan(plan, planVersion, tasks);
