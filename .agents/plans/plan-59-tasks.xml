@@ -4,7 +4,7 @@
     <plan-version>plan-59-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-05-27</created>
     </metadata>
     <tasks>
@@ -81,9 +81,9 @@
         <task>
             <id>7</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Move PlanService and friends to svc/plan/</name>
-            <commit></commit>
+            <commit>56751f33ea45bc6af1fbc8c3a25a6b81907d6a45</commit>
             <created-from>plan-59-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -95,6 +95,11 @@
         <update>
             <timestamp>2026-05-27T18:42:12.090+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-27T19:37:25.611+05:30</timestamp>
+            <message>Plan complete. All 7 tasks agent-coded, 89 tests passing.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
