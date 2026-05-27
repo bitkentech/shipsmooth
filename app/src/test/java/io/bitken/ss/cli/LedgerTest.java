@@ -2,7 +2,7 @@ package io.bitken.ss.cli;
 
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
@@ -15,12 +15,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class LedgerTest {
 
-    private LedgerService ledger;
+    private EventLedger ledger;
     private String recordedSha;
 
     @BeforeEach
     public void setUp() throws Exception {
-        ledger = new LedgerService(Paths.get("."));
+        ledger = new EventLedger(Paths.get("."));
         ledger.ensureLedgerFile();
         recordedSha = ledger.record(Event.forTask(EventType.COMMENT_ADDED, "42", null, "LedgerTest probe", null));
     }

@@ -1,6 +1,9 @@
-package io.bitken.ss.service;
+package io.bitken.ss.gw;
 
 import io.bitken.ss.jaxb.*;
+import io.bitken.ss.svc.plan.PlanMarkdown;
+import io.bitken.ss.svc.plan.PlanMarkdownParser;
+import io.bitken.ss.svc.plan.PlanSummaryFormatter;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
@@ -21,7 +24,7 @@ import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.List;
 
-public class XmlService {
+public class TaskStore {
 
     private final ObjectFactory factory = new ObjectFactory();
 

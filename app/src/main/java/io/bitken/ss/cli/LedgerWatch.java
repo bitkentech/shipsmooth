@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
@@ -53,7 +53,7 @@ public class LedgerWatch implements Callable<Integer>, HasSpec, io.bitken.ss.con
         var after = pr.matchedOptionValue("after", 0);
 
         var repoRoot = repo != null ? Paths.get(repo) : Paths.get(".");
-        var ledger = new LedgerService(repoRoot);
+        var ledger = new EventLedger(repoRoot);
         var ledgerPath = ledger.ledgerPath();
 
         Files.createDirectories(ledgerPath.getParent());

@@ -6,8 +6,8 @@ import io.bitken.ss.workflow.integration.IntegrationLedger;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.ledger.EventLedger;
+import io.bitken.ss.gw.TaskStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,7 +51,7 @@ class WorkflowServiceRunIntegrationTest {
         planDir.mkdirs();
         xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
         mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
-        new LedgerService(repoRoot).ensureLedgerFile();
+        new EventLedger(repoRoot).ensureLedgerFile();
         cleanup();
     }
 
@@ -69,16 +69,16 @@ class WorkflowServiceRunIntegrationTest {
         Files.writeString(mdFile.toPath(),
                 "### Task 2: Add file A [Low]\n\n" +
                 "### Task 3: Add file B [Low]\n");
-        XmlService xmlService = new XmlService();
+        TaskStore xmlService = new TaskStore();
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1",
-                List.of(new XmlService.Task(2, "Add file A", "low"),
-                        new XmlService.Task(3, "Add file B", "low")));
+                List.of(new TaskStore.Task(2, "Add file A", "low"),
+                        new TaskStore.Task(3, "Add file B", "low")));
         xmlService.writePlanTasks(planTasks, xmlFile);
 
         createAgentWorkBranch("2", "fileA-996.txt", "content-A");
         createAgentWorkBranch("3", "fileB-996.txt", "content-B");
 
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         recordCommitEvent(ledger, "2", "agent-work/2");
         recordCommitEvent(ledger, "3", "agent-work/3");
 
@@ -120,9 +120,9 @@ class WorkflowServiceRunIntegrationTest {
     @Test
     void runIntegration_throwsWhenNothingToIntegrate() throws Exception {
         Files.writeString(mdFile.toPath(), "### Task 9: Empty plan [Low]\n");
-        XmlService xmlService = new XmlService();
+        TaskStore xmlService = new TaskStore();
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1",
-                List.of(new XmlService.Task(9, "Empty plan", "low")));
+                List.of(new TaskStore.Task(9, "Empty plan", "low")));
         xmlService.writePlanTasks(planTasks, xmlFile);
 
         IntegrationOptions opts = new IntegrationOptions().verifyCmd("echo ok");
@@ -148,7 +148,7 @@ class WorkflowServiceRunIntegrationTest {
         git(repoRoot.toFile(), "worktree", "remove", "--force", wtRel);
     }
 
-    private void recordCommitEvent(LedgerService ledger, String taskId, String branch)
+    private void recordCommitEvent(EventLedger ledger, String taskId, String branch)
             throws IOException, InterruptedException {
         String sha = git(repoRoot.toFile(), "rev-parse", branch).trim();
         ledger.record(Event.forTask(EventType.COMMIT_RECORDED, taskId, null, sha,

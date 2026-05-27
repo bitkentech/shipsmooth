@@ -7,8 +7,8 @@ import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.ledger.EventLedger;
+import io.bitken.ss.gw.TaskStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,16 +47,16 @@ public class WorkerDependencyIntegrationTest {
         Files.writeString(mdFile.toPath(),
                 "### Task 1: Foundation task [Low]\n### Task 2: Dependent task [Low]\n");
 
-        XmlService xmlService = new XmlService();
-        List<XmlService.Task> tasks = List.of(
-                new XmlService.Task(1, "Foundation task", "low"),
-                new XmlService.Task(2, "Dependent task", "low")
+        TaskStore xmlService = new TaskStore();
+        List<TaskStore.Task> tasks = List.of(
+                new TaskStore.Task(1, "Foundation task", "low"),
+                new TaskStore.Task(2, "Dependent task", "low")
         );
         PlanTasks planTasks = xmlService.generatePlanTasks(PLAN_NUM, "plan-" + PLAN_NUM + "-v1", tasks);
         xmlService.setDependsOn(planTasks, 2, "1");
         xmlService.writePlanTasks(planTasks, xmlFile);
 
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         ledger.ensureLedgerFile();
 
         cleanupWorktrees();
@@ -72,7 +72,7 @@ public class WorkerDependencyIntegrationTest {
     @Test
     void dependentTask_inheritsParentCommit() throws Exception {
         Shipsmooth cli = new Shipsmooth(app);
-        LedgerService ledger = new LedgerService(repoRoot);
+        EventLedger ledger = new EventLedger(repoRoot);
         int beforeCount = ledger.readHashes().size();
 
         // --- Task 1: full lifecycle ---
@@ -122,7 +122,7 @@ public class WorkerDependencyIntegrationTest {
         assertTrue(branchExists("agent-work/" + TASK_2), "branch agent-work/2 should survive");
 
         // Both XML <commit> fields populated
-        XmlService xmlService = new XmlService();
+        TaskStore xmlService = new TaskStore();
         PlanTasks result = xmlService.readPlanTasks(xmlFile);
         String commit1 = result.getTasks().getTask().stream()
                 .filter(t -> t.getId().intValue() == 1).findFirst().orElseThrow().getCommit();

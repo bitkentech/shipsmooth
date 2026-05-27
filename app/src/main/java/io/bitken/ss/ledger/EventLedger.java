@@ -20,14 +20,14 @@ import java.util.List;
  * Each line is a SHA-1 hash of a JSON event blob stored in {@code .agents/objects/}.
  * Thread-safe via OS advisory lock + JVM monitor.
  */
-public class LedgerService {
+public class EventLedger {
 
     private final Path ledgerPath;
     private final ObjectStore store;
     private final ObjectMapper mapper;
     private final Object appendMonitor = new Object();
 
-    public LedgerService(Path repoRoot) {
+    public EventLedger(Path repoRoot) {
         this.store = new ObjectStore(repoRoot);
         this.ledgerPath = repoRoot.resolve(".agents").resolve("ledger.jsonl");
         this.mapper = new ObjectMapper()

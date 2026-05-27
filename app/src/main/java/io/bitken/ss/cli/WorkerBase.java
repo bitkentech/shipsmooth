@@ -1,9 +1,7 @@
 package io.bitken.ss.cli;
 
-import io.bitken.ss.ledger.Event;
-import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.svc.plan.PlanService;
+import io.bitken.ss.gw.TaskStore;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
@@ -14,18 +12,18 @@ public class WorkerBase implements Callable<Integer>, HasSpec, io.bitken.ss.conf
     @Override public boolean isExperimental() { return true; }
 
     private final CommandSpec spec;
-    private final XmlService xmlService;
-    private final LedgerService ledgerService;
+    private final PlanService planService;
+    private final TaskStore xmlService;
 
     @Inject
-    public WorkerBase(XmlService xmlService, LedgerService ledgerService) {
+    public WorkerBase(PlanService planService, TaskStore xmlService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("worker-base");
         this.spec.usageMessage().description("Print the base commit SHA for a dependent task (from parent's COMMIT_RECORDED event).");
         this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         this.spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());
+        this.planService = planService;
         this.xmlService = xmlService;
-        this.ledgerService = ledgerService;
     }
 
     public CommandSpec getSpec() {
@@ -38,8 +36,7 @@ public class WorkerBase implements Callable<Integer>, HasSpec, io.bitken.ss.conf
         var plan = (int) pr.matchedOption("plan").getValue();
         var task = (String) pr.matchedOption("task").getValue();
 
-        var xmlFile = xmlService.planTasksFile(plan);
-        var planTasks = xmlService.readPlanTasks(xmlFile);
+        var planTasks = planService.loadPlan(plan);
 
         var dependsOnStr = xmlService.getDependsOn(planTasks, Integer.parseInt(task));
         if (dependsOnStr.isBlank()) {
@@ -50,16 +47,14 @@ public class WorkerBase implements Callable<Integer>, HasSpec, io.bitken.ss.conf
         var parentIds = xmlService.parseDependsOn(dependsOnStr).stream()
             .map(String::valueOf).toList();
 
-        var ledger = this.ledgerService;
         String latestSha = null;
         for (var parentId : parentIds) {
-            var ev = ledger.findLastEvent(parentId, EventType.COMMIT_RECORDED);
-            if (ev == null) {
+            var sha = planService.findCommitSha(parentId);
+            if (sha == null) {
                 System.err.println("worker-base: parent task " + parentId + " has no COMMIT_RECORDED event yet");
                 return 1;
             }
-            var sha = ev.metadata().getOrDefault("commit_sha", ev.payload());
-            if (sha == null || sha.isBlank()) {
+            if (sha.isBlank()) {
                 System.err.println("worker-base: parent task " + parentId + " COMMIT_RECORDED event has no commit SHA");
                 return 1;
             }

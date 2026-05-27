@@ -2,10 +2,11 @@ package io.bitken.ss.conf;
 
 import dagger.Module;
 import dagger.Provides;
-import io.bitken.ss.git.GitTagService;
+import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.git.WorktreeService;
-import io.bitken.ss.ledger.LedgerService;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.ledger.EventLedger;
+import io.bitken.ss.svc.plan.PlanService;
+import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.workflow.DefaultProcessRunner;
 import io.bitken.ss.workflow.ProcessRunner;
 import io.bitken.ss.workflow.WorkflowService;
@@ -31,14 +32,14 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    XmlService provideXmlService() {
-        return new XmlService();
+    TaskStore provideTaskStore() {
+        return new TaskStore();
     }
 
     @Provides
     @Singleton
-    LedgerService provideLedgerService(Path repoRoot) {
-        return new LedgerService(repoRoot);
+    EventLedger provideEventLedger(Path repoRoot) {
+        return new EventLedger(repoRoot);
     }
 
     @Provides
@@ -55,8 +56,8 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    GitTagService provideGitTagService() {
-        return new GitTagService();
+    GitTags provideGitTags() {
+        return new GitTags();
     }
 
     @Provides
@@ -65,16 +66,22 @@ public class ServicesModule {
             Path repoRoot,
             ProcessRunner processes,
             WorktreeService worktreeService,
-            LedgerService ledgerService,
-            XmlService xmlService,
+            EventLedger ledgerService,
+            TaskStore taskStore,
             io.bitken.ss.workflow.ProgressReporter reporter) {
-        return new WorkflowServiceImpl(repoRoot, processes, worktreeService, ledgerService, xmlService, reporter);
+        return new WorkflowServiceImpl(repoRoot, processes, worktreeService, ledgerService, taskStore, reporter);
     }
 
     @Provides
     @Singleton
     io.bitken.ss.workflow.ProgressReporter provideProgressReporter() {
         return new io.bitken.ss.workflow.ConsoleProgressReporter();
+    }
+
+    @Provides
+    @Singleton
+    PlanService providePlanService(TaskStore taskStore, EventLedger ledger) {
+        return new PlanService(taskStore, ledger);
     }
 
     @Provides

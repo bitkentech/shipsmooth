@@ -1,27 +1,20 @@
 package io.bitken.ss.cli;
 
-import io.bitken.ss.jaxb.PlanTasks;
-import io.bitken.ss.ledger.Event;
-import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.svc.plan.PlanService;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
-import java.io.File;
 import java.util.concurrent.Callable;
 
 public class AddComment implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
-    private final XmlService xmlService;
-    private final LedgerService ledgerService;
+    private final PlanService planService;
 
     @Inject
-    public AddComment(XmlService xmlService, LedgerService ledgerService) {
-        this.xmlService = xmlService;
-        this.ledgerService = ledgerService;
+    public AddComment(PlanService planService) {
+        this.planService = planService;
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("add-comment");
         spec.usageMessage().description("Add a comment to a task.");
@@ -41,18 +34,8 @@ public class AddComment implements Callable<Integer>, HasSpec {
         int task = pr.matchedOption("task").getValue();
         String message = pr.matchedOption("message").getValue();
 
-        File file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
-        PlanTasks planTasks = xmlService.readPlanTasks(file);
-        xmlService.addComment(planTasks, task, message);
-        xmlService.writePlanTasks(planTasks, file);
+        planService.addComment(plan, task, message);
         System.out.println("Comment added to task " + task);
-
-        try {
-            ledgerService.ensureLedgerFile();
-            ledgerService.record(Event.forTask(EventType.COMMENT_ADDED, String.valueOf(task), null, message, null));
-        } catch (Exception e) {
-            System.err.println("Warning: ledger record failed (XML mutation preserved): " + e.getMessage());
-        }
         return 0;
     }
 }

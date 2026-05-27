@@ -2,8 +2,9 @@ package io.bitken.ss.cli;
 
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.ledger.EventLedger;
+import io.bitken.ss.svc.plan.PlanService;
+import io.bitken.ss.gw.TaskStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
@@ -22,12 +23,14 @@ public class InitLedgerTest {
     private final File planDir = new File(".agents/plans");
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
-    private final XmlService xmlService = new XmlService();
-    private LedgerService ledgerService;
+    private final TaskStore xmlService = new TaskStore();
+    private EventLedger ledgerService;
+    private PlanService planService;
 
     @BeforeEach
     public void setUp() throws Exception {
-        ledgerService = new LedgerService(Paths.get("."));
+        ledgerService = new EventLedger(Paths.get("."));
+        planService = new PlanService(xmlService, ledgerService);
         planDir.mkdirs();
         Files.writeString(mdFile.toPath(),
                 "### Task 1: Alpha task [High]\n### Task 2: Beta task [Low]\n");
@@ -42,7 +45,7 @@ public class InitLedgerTest {
 
     @Test
     public void initCreatesObjectsDirAndLedgerFile() throws Exception {
-        int exit = new CommandLine(new Init(xmlService, ledgerService).getSpec())
+        int exit = new CommandLine(new Init(planService, xmlService).getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
         assertEquals(0, exit);
 
@@ -52,11 +55,11 @@ public class InitLedgerTest {
 
     @Test
     public void initEmitsOneTaskRegistrationEventPerTask() throws Exception {
-        LedgerService ledger = new LedgerService(Paths.get("."));
+        EventLedger ledger = new EventLedger(Paths.get("."));
         ledger.ensureLedgerFile();
         int before = ledger.readHashes().size();
 
-        new CommandLine(new Init(xmlService, ledgerService).getSpec())
+        new CommandLine(new Init(planService, xmlService).getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
 
         List<String> hashes = ledger.readHashes();
@@ -79,10 +82,10 @@ public class InitLedgerTest {
 
         try {
             // Run twice — entries must not be duplicated
-            new CommandLine(new Init(xmlService, ledgerService).getSpec())
+            new CommandLine(new Init(planService, xmlService).getSpec())
                     .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
             xmlFile.delete();
-            new CommandLine(new Init(xmlService, ledgerService).getSpec())
+            new CommandLine(new Init(planService, xmlService).getSpec())
                     .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
 
             String content = Files.readString(gitignore);
@@ -91,7 +94,6 @@ public class InitLedgerTest {
             assertEquals(1, content.lines().filter(l -> l.trim().equals(".agents/ledger.jsonl")).count());
             assertEquals(1, content.lines().filter(l -> l.trim().equals(".agents/objects/")).count());
         } finally {
-            // Restore .gitignore to its original state
             if (originalContent == null) {
                 Files.deleteIfExists(gitignore);
             } else {

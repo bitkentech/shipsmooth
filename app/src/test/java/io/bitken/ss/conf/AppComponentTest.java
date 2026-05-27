@@ -14,8 +14,8 @@ public class AppComponentTest {
                 .servicesModule(new ServicesModule(Paths.get(".")))
                 .build();
 
-        assertNotNull(app.xmlService());
-        assertNotNull(app.ledgerService());
+        assertNotNull(app.taskStore());
+        assertNotNull(app.eventLedger());
         assertNotNull(app.worktreeService());
         assertNotNull(app.workflowService());
         assertNotNull(app.workflowServiceImpl());
@@ -27,8 +27,8 @@ public class AppComponentTest {
                 .servicesModule(new ServicesModule(Paths.get(".")))
                 .build();
 
-        assertSame(app.xmlService(), app.xmlService());
-        assertSame(app.ledgerService(), app.ledgerService());
+        assertSame(app.taskStore(), app.taskStore());
+        assertSame(app.eventLedger(), app.eventLedger());
         assertSame(app.worktreeService(), app.worktreeService());
         assertSame(app.workflowService(), app.workflowService());
         assertSame(app.workflowServiceImpl(), app.workflowServiceImpl());

@@ -4,16 +4,16 @@
     <plan-version>plan-59-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-05-27</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Rename LedgerService → EventLedger</name>
-            <commit></commit>
+            <commit>1633e3588b00adced52fe5ca4fba59312f891810</commit>
             <created-from>plan-59-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -22,9 +22,9 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Introduce PlanService</name>
-            <commit></commit>
+            <commit>746e66e233a3437f4aa20012c3cb823c5f1d92c8</commit>
             <created-from>plan-59-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -33,9 +33,9 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Migrate UpdateStatus to PlanService (tracer bullet)</name>
-            <commit></commit>
+            <commit>446e305d87b186381e3d355e74dede47b791b6f5</commit>
             <created-from>plan-59-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -45,20 +45,61 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Migrate remaining CLI commands to PlanService</name>
-            <commit></commit>
+            <commit>15542d13f2b809c0061e2b9f80f468664a52d10f</commit>
             <created-from>plan-59-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
             <depends-on>3</depends-on>
         </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename XmlService → TaskStore and move to gw/</name>
+            <commit>45fc496964a7b1250540740374bf1425f14a09bd</commit>
+            <created-from>plan-59-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename GitTagService → GitTags and move to gw/</name>
+            <commit>2511cccabc80a77bc1ba962616f8918766a61c67</commit>
+            <created-from>plan-59-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Move PlanService and friends to svc/plan/</name>
+            <commit>56751f33ea45bc6af1fbc8c3a25a6b81907d6a45</commit>
+            <created-from>plan-59-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>6</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-05-27T17:10:55.311+05:30</timestamp>
+            <timestamp>2026-05-27T18:42:12.090+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-05-27T19:37:25.611+05:30</timestamp>
+            <message>Plan complete. All 7 tasks agent-coded, 89 tests passing.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>

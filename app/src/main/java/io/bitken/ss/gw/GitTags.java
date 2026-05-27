@@ -1,4 +1,4 @@
-package io.bitken.ss.git;
+package io.bitken.ss.gw;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,7 +9,7 @@ import java.io.InputStreamReader;
  * because it shells out to {@code git} — the most stable code (XML marshalling)
  * shouldn't depend on the git runtime.
  */
-public class GitTagService {
+public class GitTags {
 
     /**
      * Returns the highest-numbered {@code plan-{planNum}-v*} tag in the repo,

@@ -6,8 +6,9 @@ import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;
 import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.git.WorktreeService;
-import io.bitken.ss.ledger.LedgerService;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.ledger.EventLedger;
+import io.bitken.ss.svc.plan.PlanService;
+import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.conf.FeatureFlags;
 import io.bitken.ss.workflow.WorkflowService;
 import io.bitken.ss.workflow.WorkflowServiceImpl;
@@ -32,8 +33,9 @@ public class Shipsmooth {
     private final List<Callable<?>> experimentalCommands = new ArrayList<>();
 
     public Shipsmooth(AppComponents app) {
-        XmlService xml = app.xmlService();
-        LedgerService ledger = app.ledgerService();
+        TaskStore taskStore = app.taskStore();
+        EventLedger ledger = app.eventLedger();
+        PlanService planService = app.planService();
         WorktreeService worktree = app.worktreeService();
         WorkflowService workflow = app.workflowService();
         WorkflowServiceImpl workflowImpl = app.workflowServiceImpl();
@@ -61,7 +63,7 @@ public class Shipsmooth {
             boolean enableExperimental;
         }));
 
-        for (Callable<?> command : buildCommands(xml, ledger, worktree, workflow, workflowImpl)) {
+        for (Callable<?> command : buildCommands(taskStore, ledger, planService, worktree, workflow, workflowImpl)) {
             if (command instanceof FeatureFlags ff && ff.isExperimental()) {
                 experimentalCommands.add(command);
             } else {
@@ -73,12 +75,12 @@ public class Shipsmooth {
         cmd = new CommandLine(rootSpec);
     }
 
-    private Callable<?>[] buildCommands(XmlService xml, LedgerService ledger, WorktreeService worktree,
-            WorkflowService workflow, WorkflowServiceImpl workflowImpl) {
+    private Callable<?>[] buildCommands(TaskStore xml, EventLedger ledger, PlanService planService,
+            WorktreeService worktree, WorkflowService workflow, WorkflowServiceImpl workflowImpl) {
         return new Callable<?>[] {
-            new Init(xml, ledger),
-            new AddComment(xml, ledger),
-            new AddDeviation(xml, ledger),
+            new Init(planService, xml),
+            new AddComment(planService),
+            new AddDeviation(planService),
             new Claim(xml, worktree, ledger),
             integrateCmd,
             new Ledger(ledger),
@@ -86,11 +88,11 @@ public class Shipsmooth {
             new LedgerRecordPatchIntegrated(ledger),
             new LedgerResolverComplete(ledger),
             new LedgerWatch(),
-            new ProjectUpdate(xml, ledger),
-            new SetCommit(xml, ledger),
+            new ProjectUpdate(planService),
+            new SetCommit(planService),
             new Show(xml),
-            new UpdateStatus(xml, ledger),
-            new WorkerBase(xml, ledger),
+            new UpdateStatus(planService),
+            new WorkerBase(planService, xml),
             new WorkerCleanup(worktree, ledger),
             new WorkerFinish(workflowImpl),
             new WorkerInit(workflow),

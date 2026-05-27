@@ -3,7 +3,7 @@ package io.bitken.ss.cli;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
+import io.bitken.ss.ledger.EventLedger;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
@@ -17,10 +17,10 @@ public class WorkerCleanup implements Callable<Integer>, HasSpec, io.bitken.ss.c
 
     private final CommandSpec spec;
     private final WorktreeService git;
-    private final LedgerService ledger;
+    private final EventLedger ledger;
 
     @Inject
-    public WorkerCleanup(WorktreeService git, LedgerService ledger) {
+    public WorkerCleanup(WorktreeService git, EventLedger ledger) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("worker-cleanup");
         this.spec.usageMessage().description("Remove the worktree for a task, keeping the branch ref.");

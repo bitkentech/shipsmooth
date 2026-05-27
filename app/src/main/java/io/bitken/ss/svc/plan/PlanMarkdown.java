@@ -1,5 +1,6 @@
-package io.bitken.ss.service;
+package io.bitken.ss.svc.plan;
 
+import io.bitken.ss.gw.TaskStore;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -9,9 +10,9 @@ import java.nio.file.Files;
  */
 public class PlanMarkdown {
 
-    private final XmlService xmlService;
+    private final TaskStore xmlService;
 
-    public PlanMarkdown(XmlService xmlService) {
+    public PlanMarkdown(TaskStore xmlService) {
         this.xmlService = xmlService;
     }
 

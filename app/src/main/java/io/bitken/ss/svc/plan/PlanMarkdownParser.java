@@ -1,14 +1,15 @@
-package io.bitken.ss.service;
+package io.bitken.ss.svc.plan;
 
+import io.bitken.ss.gw.TaskStore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Parses plan-{N}.md narrative markdown into {@link XmlService.Task} records.
+ * Parses plan-{N}.md narrative markdown into {@link TaskStore.Task} records.
  *
- * <p>Split out from {@code XmlService} because Markdown parsing has nothing to do
+ * <p>Split out from {@code TaskStore} because Markdown parsing has nothing to do
  * with XML marshalling — and the regex patterns are stable while the JAXB schema
  * evolves on a different cadence.
  */
@@ -23,8 +24,8 @@ public class PlanMarkdownParser {
             "^\\*Depends-on:\\s*([\\d,\\s]+)\\*\\s*$",
             Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
 
-    public List<XmlService.Task> parse(String markdown) {
-        List<XmlService.Task> tasks = new ArrayList<>();
+    public List<TaskStore.Task> parse(String markdown) {
+        List<TaskStore.Task> tasks = new ArrayList<>();
         Matcher matcher = HEADING.matcher(markdown);
         while (matcher.find()) {
             int id = Integer.parseInt(matcher.group(1));
@@ -36,7 +37,7 @@ public class PlanMarkdownParser {
             String region = markdown.substring(matcher.end(), regionEnd);
             Matcher depMatcher = DEPENDS_ON.matcher(region);
             String dependsOn = depMatcher.find() ? depMatcher.group(1).replaceAll("\\s", "") : "";
-            tasks.add(new XmlService.Task(id, name, risk, dependsOn));
+            tasks.add(new TaskStore.Task(id, name, risk, dependsOn));
         }
         return tasks;
     }

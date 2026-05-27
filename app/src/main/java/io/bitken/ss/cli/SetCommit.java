@@ -1,29 +1,20 @@
 package io.bitken.ss.cli;
 
-import io.bitken.ss.jaxb.PlanTasks;
-import io.bitken.ss.ledger.Event;
-import io.bitken.ss.ledger.EventType;
-import io.bitken.ss.ledger.LedgerService;
-import io.bitken.ss.service.XmlService;
+import io.bitken.ss.svc.plan.PlanService;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
-import java.io.File;
-import java.nio.file.Paths;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 public class SetCommit implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
-    private final XmlService xmlService;
-    private final LedgerService ledgerService;
+    private final PlanService planService;
 
     @Inject
-    public SetCommit(XmlService xmlService, LedgerService ledgerService) {
-        this.xmlService = xmlService;
-        this.ledgerService = ledgerService;
+    public SetCommit(PlanService planService) {
+        this.planService = planService;
         this.spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("set-commit");
         spec.usageMessage().description("Set the commit hash for a task.");
@@ -45,22 +36,8 @@ public class SetCommit implements Callable<Integer>, HasSpec {
         String commit = pr.matchedOption("commit").getValue();
         String branch = pr.matchedOptionValue("branch", null);
 
-        var file = new File(".agents/plans/plan-" + plan + "-tasks.xml");
-        var planTasks = xmlService.readPlanTasks(file);
-        xmlService.setCommit(planTasks, task, commit);
-        xmlService.writePlanTasks(planTasks, file);
+        planService.setTaskCommit(plan, task, commit, branch);
         System.out.println("Commit set for task " + task);
-
-        try {
-            ledgerService.ensureLedgerFile();
-            var integrationMode = branch != null && branch.startsWith("agent-work/") ? "worktree" : "direct";
-            var meta = branch != null && !branch.isBlank()
-                ? Map.of("branch", branch, "commit_sha", commit, "integration_mode", integrationMode)
-                : Map.of("commit_sha", commit, "integration_mode", integrationMode);
-            ledgerService.record(Event.forTask(EventType.COMMIT_RECORDED, String.valueOf(task), commit, commit, meta));
-        } catch (Exception e) {
-            System.err.println("Warning: ledger record failed (XML mutation preserved): " + e.getMessage());
-        }
         return 0;
     }
 }
