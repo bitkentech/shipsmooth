@@ -13,17 +13,17 @@ import java.util.Map;
 
 public class PlanService {
 
-    private final TaskStore xml;
+    private final TaskStore taskStore;
     private final EventLedger ledger;
 
-    public PlanService(TaskStore xml, EventLedger ledger) {
-        this.xml = xml;
+    public PlanService(TaskStore taskStore, EventLedger ledger) {
+        this.taskStore = taskStore;
         this.ledger = ledger;
     }
 
     public void initPlan(int planId, String planVersion, List<TaskStore.Task> tasks) throws Exception {
-        PlanTasks plan = xml.generatePlanTasks(planId, planVersion, tasks);
-        xml.savePlan(planId, plan);
+        PlanTasks plan = taskStore.generatePlanTasks(planId, planVersion, tasks);
+        taskStore.savePlan(planId, plan);
         recordBestEffort(() -> {
             ledger.ensureLedgerFile();
             for (var t : tasks) {
@@ -34,13 +34,13 @@ public class PlanService {
     }
 
     public void updateTaskStatus(int planId, int taskId, String status) throws Exception {
-        mutateAndRecord(planId, plan -> xml.updateTaskStatus(plan, taskId, status),
+        mutateAndRecord(planId, plan -> taskStore.updateTaskStatus(plan, taskId, status),
                 Event.forTask(EventType.STATUS_UPDATED, String.valueOf(taskId),
                         null, "status=" + status, null));
     }
 
     public void setTaskCommit(int planId, int taskId, String commit, String branch) throws Exception {
-        mutateAndRecord(planId, plan -> xml.setCommit(plan, taskId, commit), () -> {
+        mutateAndRecord(planId, plan -> taskStore.setCommit(plan, taskId, commit), () -> {
             var integrationMode = branch != null && branch.startsWith("agent-work/") ? "worktree" : "direct";
             var meta = branch != null && !branch.isBlank()
                     ? Map.of("branch", branch, "commit_sha", commit, "integration_mode", integrationMode)
@@ -50,12 +50,12 @@ public class PlanService {
     }
 
     public void addComment(int planId, int taskId, String message) throws Exception {
-        mutateAndRecord(planId, plan -> xml.addComment(plan, taskId, message),
+        mutateAndRecord(planId, plan -> taskStore.addComment(plan, taskId, message),
                 Event.forTask(EventType.COMMENT_ADDED, String.valueOf(taskId), null, message, null));
     }
 
     public void addDeviation(int planId, int taskId, String type, String message) throws Exception {
-        mutateAndRecord(planId, plan -> xml.addDeviation(plan, taskId, type, message),
+        mutateAndRecord(planId, plan -> taskStore.addDeviation(plan, taskId, type, message),
                 Event.forTask(EventType.DEVIATION_ADDED, String.valueOf(taskId),
                         null, type + ": " + message, null));
     }
@@ -64,7 +64,7 @@ public class PlanService {
         var payload = (status != null ? "status=" + status : "")
                 + (Boolean.TRUE.equals(blocked) ? " blocked=true" : "")
                 + (message != null ? " " + message : "");
-        mutateAndRecord(planId, plan -> xml.projectUpdate(plan, status, blocked, message),
+        mutateAndRecord(planId, plan -> taskStore.projectUpdate(plan, status, blocked, message),
                 Event.system(EventType.PROJECT_UPDATE, null, payload.strip(), null));
     }
 
@@ -75,7 +75,7 @@ public class PlanService {
     }
 
     public PlanTasks loadPlan(int planId) throws JAXBException {
-        return xml.loadPlan(planId);
+        return taskStore.loadPlan(planId);
     }
 
     public String recordEvent(Event event) throws IOException {
@@ -100,9 +100,9 @@ public class PlanService {
     }
 
     private void mutateAndRecord(int planId, XmlMutation mutation, EventSupplier eventSupplier) throws Exception {
-        var plan = xml.loadPlan(planId);
+        var plan = taskStore.loadPlan(planId);
         mutation.apply(plan);
-        xml.savePlan(planId, plan);
+        taskStore.savePlan(planId, plan);
         recordBestEffort(() -> {
             ledger.ensureLedgerFile();
             ledger.record(eventSupplier.get());
