@@ -27,7 +27,7 @@ This coupling produces three concrete failure modes:
 ## 3. Proposed Architecture: The Workflow Service
 
 The solution follows the Service Layer pattern, establishing a clear boundary between application logic and delivery mechanism.
-
+archived
 ### 3.1 The new hierarchy
 
 1. **Interface Layer (Thin).** `TasksCLI`, future Web controllers, future desktop event handlers. Parses input, formats output. No business logic.

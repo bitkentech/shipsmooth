@@ -22,3 +22,4 @@ model/states/
 .claude/settings.local.json
 .idea/
 .serena/
+**/*.iml
