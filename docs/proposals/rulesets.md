@@ -15,14 +15,17 @@
 ShipSmooth executes autonomous AI coding and refinement workflows based on structured
 engineering principles (e.g. Single Responsibility Principle, Primitive Obsession elimination,
 strict nesting depth limits). Today these rules live hardcoded as Markdown sections inside a
-single skill template (`refine/SKILL.jte.md`). To deploy across varied codebases and integrate
-with developer IDEs, the engine needs a configuration subsystem that breaks this monolith into
-individual, selectively toggled rules.
+single skill template (`refine/SKILL.jte.md`). To deploy across varied codebases — including
+polyglot projects that mix Java, TypeScript, CSS, and more — and to integrate with developer
+IDEs, the engine needs a configuration subsystem that breaks this monolith into individual,
+selectively toggled, per-language rules.
 
-All access to the rules file — both reads and writes — goes through the Java CLI (the jlink
-image). The Cursor / VSCode extension does not parse or rewrite the file itself; it invokes the
+All access to the rules — both reads and writes — goes through the Java CLI (the jlink
+image). The Cursor / VSCode extension does not parse or rewrite the files itself; it invokes the
 existing `shipsmooth` command, which performs the read or the toggle. There is no JavaScript in
-the access path.
+the access path. A consequence used throughout this proposal: the UI is a **projection** the CLI
+computes over the stored rules, not a mirror of on-disk layout. How rules are grouped or split on
+disk is therefore independent of how they are presented (e.g. one UI tab per language).
 
 ### Goals (ranked)
 
@@ -37,20 +40,31 @@ the access path.
 
 * **Polymorphic inlining freedom.** Short rules may stay fully inline in the central file;
   longer rules may be extracted to a standalone external asset — per rule, the author's choice.
+  During early rollout the preferred experience is inline-for-short-rules in a single file; this
+  is the main advantage the hybrid format buys over a mandatory file-per-rule scheme.
 * **Zero-escaping content authoring.** Rules contain multi-line freeform text, raw Markdown, and
   code snippets (e.g. Java blocks). The format must hold these natively, without manual escaping.
 * **Unambiguous structure and a validatable, correct file.** Because the UI is the primary
   author and the engine consumes the result, the format must have explicit, unambiguous rule
   boundaries and must be machine-validatable for correctness. Convention-based parsing that can
   misread a rule body is not acceptable.
+* **Polyglot, multi-file capable.** A single project enables rules for several languages at once.
+  The storage must hold rules for all of them, let the engine filter by language, and let a
+  registry that grows unwieldy be split across multiple files — without that split being a format
+  change or a migration event.
+* **Graded correctness, not just pass/fail.** Hand-editing is a transitional concern (common
+  during rollout, rare once the plugin matures), so the engine must tolerate an imperfect file
+  during that window: some problems are warnings it proceeds past, some are errors it refuses,
+  with an opt-in strict mode that hardens the former into the latter.
 
 ---
 
 ## 2. The Selected Solution: Hybrid XML Architecture
 
-The proposed architecture is a **Hybrid XML Storage Strategy**. A centralized XML file functions
-as a structured rule registry, storing configuration state, rule metadata, and rule content. It
-operates polymorphically per rule:
+The proposed architecture is a **Hybrid XML Storage Strategy**. The rule registry is a
+**directory of XML files**, each holding `<rule>` elements that store configuration state, rule
+metadata, and rule content. One file is the common case; the directory is the unit. It operates
+polymorphically per rule:
 
 * **Inline Rules:** Shorter rules — or rules requiring immediate locality — hold their text and
   multi-line sample fragments directly inside a structured tag wrapped in a `<![CDATA[ ... ]]>`
@@ -72,8 +86,8 @@ This is selected for two reasons that hold under the goals above:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<rules>
-    <rule id="550e8400-e29b-41d4-a716-446655440001" language="java" enabled="true">
+<rules enabled="true">
+    <rule id="java-if-nesting" language="java" enabled="true">
         <name>if nesting</name>
         <content><![CDATA[
 Never more than 2 levels of nesting in a single method. Extract third level to separate method with a descriptive name.
@@ -91,9 +105,19 @@ if (user.isActive()) {
         ]]></content>
     </rule>
 
-    <rule id="550e8400-e29b-41d4-a716-446655440002" language="java" enabled="true">
+    <rule id="java-srp" language="java" enabled="true">
         <name>Single Responsibility Principle</name>
         <source type="external" file_ref="./rules/java/srp.md"/>
+    </rule>
+
+    <rule id="ts-no-any" language="typescript" enabled="false">
+        <name>No implicit any</name>
+        <content><![CDATA[ Avoid `any`; prefer `unknown` and narrow. ]]></content>
+    </rule>
+
+    <rule id="naming-descriptive" language="any" enabled="true">
+        <name>Descriptive names</name>
+        <content><![CDATA[ Names reveal intent; no single-letter identifiers outside loops. ]]></content>
     </rule>
 </rules>
 ```
@@ -101,6 +125,19 @@ if (user.isActive()) {
 A rule is inline when it carries a `<content>` block, and external when it points at a file —
 the two are mutually exclusive per rule. (The exact schema and validation rules are out of scope
 for this proposal, which evaluates the storage *format*.)
+
+The blueprint shows the four attributes that carry behaviour:
+
+* **`id`** — human-readable and hand-tweakable, with a collision-resistant value auto-suggested
+  by the UI on creation (slugify the name; suffix if the slug already exists in the directory).
+  The XML is the **source of truth** for ids; the UI projects them and persists none of its own,
+  so renaming an id stays a free edit (see §6).
+* **`language`** — the filter dimension. The engine emits only rules whose language matches the
+  file under refinement; the UI groups by this attribute to render one tab per language. A
+  cross-cutting rule that applies to every language uses `language="any"` (a multi-value list is
+  an equivalent option deferred to implementation).
+* **`enabled` (on `<rule>`)** — the per-rule toggle, the primary UI path.
+* **`enabled` (on `<rules>`)** — disables the whole file at once (see §4.2).
 
 ---
 
@@ -122,7 +159,80 @@ Goal 2 allows hand-editing: a toggle from the UI should not reformat a rule a hu
 
 ---
 
-## 4. Architectural Evaluation: Pros and Cons
+## 4. Polyglot Projects, Splitting, and Whole-File Disable
+
+### 4.1 Multi-language and the registry directory
+
+A polyglot project enables rules for several languages at once. These live as a flat set of
+`<rule>` elements, each carrying a `language` attribute, with no per-language container element.
+The engine filters by `language` (and `enabled`) when building a prompt; the UI projects the same
+set grouped by `language` into one tab per language. Adding a language is therefore not a
+structural change — it is more rules with a different `language` value.
+
+The registry is a **directory of XML files, not a single file**. The engine loads every `<rule>`
+found under the rules directory (a glob over the directory's `*.xml`); one file is simply the
+smallest, most common case. Two consequences are load-bearing and are fixed from day one so that
+later growth is a non-event:
+
+* **Splitting is not a format feature.** When a single file grows unwieldy, a human moves some
+  `<rule>` elements into a second file in the same directory. There is no include/import element,
+  no file-to-file reference, no cross-file machinery — the loader already globs the directory, so
+  the split file is picked up with no change to the engine, CLI, or UI. The single-file case is
+  the degenerate one-file glob.
+* **Identity spans the directory.** A rule's `id` is unique across the whole directory, not
+  merely within its file. Duplicate-id checking, UI grouping, and engine filtering all operate on
+  the union of `*.xml`. Baking this in now is what keeps "split the file later" free.
+
+Note that **external rules are the primary relief for an unwieldy file**, and physical file
+splitting is the secondary backstop. Under the rollout discipline of inline-only-for-short-rules,
+a rule large enough to bloat the file is exactly one that would be made external — its bulk moves
+to a Markdown asset and the registry keeps a one-line stub. Reaching a file size that genuinely
+warrants splitting therefore requires a large *count* of rules, not large rules.
+
+### 4.2 Whole-file disable
+
+A file is disabled with a single top-level attribute, `<rules enabled="false">`. This is the
+file-level analogue of the per-rule `enabled` flag and is preferred over encoding state in the
+filename (e.g. `disabled-foo.xml`), which was considered and rejected: a filename prefix moves
+state out of the validatable document into a parsing convention — the same fragility that
+disqualified header-delimited Markdown (§7.1) — it collides with the directory glob, and it turns
+a toggle into a filesystem rename rather than the byte-stable in-place edit of §3.
+
+Disable is **hard, not a default**: a disabled file disables every rule inside it regardless of
+each rule's own flag. The precedence is one line —
+
+> a rule is emitted only if its file is enabled **and** the rule is enabled
+> (`effective = file.enabled && rule.enabled`); absent attributes default to `true`.
+
+A disabled file is treated as **not part of the system for now**: its rules are not emitted and
+take no part in cross-file concerns — in particular they do not participate in the directory-wide
+`id` namespace, so a disabled file's ids cannot clash with an enabled file's. Re-enabling a file
+is therefore a validating operation that can newly surface a clash (see §4.3).
+
+### 4.3 Graded validation
+
+Validation is graded, not binary. Three severities, and an opt-in `strict` mode:
+
+* **Malformed XML.** In an *enabled* file this is an **error** — the engine refuses to load.
+  In a *disabled* file it is a **warning** only (surfaced in the UI's warnings view, file
+  ignored); the broken file cannot break the system because it is not part of it.
+* **Duplicate `id` across the directory (enabled files).** A **warning** by default, resolved by
+  a precedence rule, escalating to an **error** under `strict`. Because clashes are rare —
+  UI-created ids are auto-suggested collision-resistantly, so clashes arise mainly from
+  hand-edit copy-paste — strict mode forces the user to disambiguate, typically by adding a
+  suffix to one id. (The exact default precedence is deferred; the requirement is only that it be
+  predictable to a human and not depend on filesystem glob order.)
+* **Other structural problems** (dangling `file_ref`, a rule that is neither inline nor external,
+  missing required fields) are warnings by default and errors under `strict`.
+
+A disabled file's problems are **always warnings, never errors, even under `strict`** — strict
+mode hardens enabled-file checks only, consistent with §4.2's "not part of the system". Surfacing
+warnings implies a CLI validate path the extension can call to populate a per-file / per-tab
+warnings view without running a prompt cycle.
+
+---
+
+## 5. Architectural Evaluation: Pros and Cons
 
 ### Pros
 * **Unambiguous rule boundaries.** `<rule>...</rule>` delimits each rule explicitly, so rule
@@ -133,6 +243,9 @@ Goal 2 allows hand-editing: a toggle from the UI should not reformat a rule a hu
   snippets verbatim, so authors can paste complex content inline without escaping.
 * **Clean inline/external polymorphism.** A single layout supports both fully-inline rules and
   rules extracted to external files, decided per rule, satisfying both goals.
+* **Polyglot without restructuring.** A `language` attribute plus directory-wide identity lets one
+  registry hold many languages, filter per language, and split across files later — all without a
+  format change or migration (§4).
 
 ### Cons
 * **Hand-editing is heavier than plain Markdown.** Tag balancing and the CDATA wrapper make a
@@ -145,9 +258,25 @@ Goal 2 allows hand-editing: a toggle from the UI should not reformat a rule a hu
 
 ---
 
-## 5. Alternatives Considered
+## 6. Deferred Decision: ID Storage and Tweakability
 
-### 5.1 Header-delimited Markdown (single file, many rules)
+The starting position is **human-tweakable ids with a UI-auto-suggested default**, and the XML as
+the sole **source of truth** — the UI is a pure projection that persists no id state of its own.
+Under that model, tweaking an id is a free edit: nothing else references the old value, so the
+next projection simply shows the new one.
+
+This freedom has one explicit boundary worth marking for future work. The day an id is stored
+**outside** the XML — UI state, a cache, per-user enabled-sets keyed by id, analytics — that store
+becomes a second reference, and tweaking an id becomes a *rename* requiring re-binding (the same
+class of concern as the rejected filename-disable). Until such external storage is introduced,
+ids remain freely tweakable; introducing it is the moment to revisit "tweakable". Whether to store
+ids elsewhere is left open.
+
+---
+
+## 7. Alternatives Considered
+
+### 7.1 Header-delimited Markdown (single file, many rules)
 
 A single Markdown file where each rule is a section (e.g. `## [x] <id> (<language>)`), the body
 is the raw Markdown beneath it, an `[x]`/`[ ]` marker encodes enabled state, and an optional
@@ -161,7 +290,7 @@ the start of a new rule, and the format has no inherent structural contract to v
 Given that the UI is the primary author and correctness is a stated goal, convention-based
 parsing was judged too fragile, despite Markdown's superior hand-editing ergonomics.
 
-### 5.2 Hybrid JSON Configuration Model
+### 7.2 Hybrid JSON Configuration Model
 
 A JSON file with the same inline/external split, parsed via a standard JSON library. JSON is a
 familiar, widely-tooled configuration format.
