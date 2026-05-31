@@ -20,6 +20,8 @@ You must:
 4. Ask if the user wants a high level preview of suggested changes. If yes, show preview 
 with *actual* fragments of code inter-mixed with pseudo-code (a "BEFORE" version and "AFTER" version),
 with bits of prose. Do *not* show only English prose explanations!
+5. If there's no easy choice between different options, always ask the user. Provide them the 
+various options and a free form text field where they can provide their own input.
 
 ### Single Responsibility Principle
 - For methods: A method or function should have only one responsibility, usually indicated 
@@ -93,6 +95,9 @@ iii) Update internal state (very rare, because most fields are final)
 
 **Good:**
 ```
+/**
+ * Represents an order to be processed by the system.
+ */
 class Order {
   private final Vendor vendor;
   private final Rejections rejections;
@@ -172,6 +177,9 @@ Concepts should be represented using a single source of truth, ideally only at o
 referred to by different places, injected either via constructor or DI.  
 **Good:**
 ```
+/**
+ * Provides specific functionality needed by the app
+ */
 class SomeClass {
 
   private static final String CLASS_NAME = "SomeClass";
@@ -217,6 +225,9 @@ appropriate. The constructor should consist mostly of assignments, private stati
 and fail-fast w.r.t initializing things.  
 **Good:**
 ```
+/**
+ * Provides specific functionality needed by the app
+ */
 class SomeClass {
 
   private final Class1 obj1;
@@ -263,10 +274,7 @@ Check if an appropriate class type already exists in the codebase, or in librari
 ```
 public boolean canOpen(String dir, String filename) {
   Path fullPath = new Path(dir, filename);
-  if (!notExists(fullPath)) {
-    return false;
-  }
-  return true;
+  return !notExists(fullPath);
 }
 ```
 

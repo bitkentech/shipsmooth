@@ -1,5 +1,9 @@
 package io.bitken.ss.resources;
 
+/**
+ * Encapsulates the build-time configuration (platform, environment, plugin name) used
+ * to derive environment-specific paths and naming conventions for rendered resources.
+ */
 public record BuildProfile(String platform, String env, String basePluginName) {
 
     public boolean isDev()     { return "dev".equals(env); }
