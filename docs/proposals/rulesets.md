@@ -84,7 +84,7 @@ This is selected for two reasons that hold under the goals above:
 
 ### Structural Reference Blueprint
 
-```xml
+````xml
 <?xml version="1.0" encoding="UTF-8"?>
 <rules enabled="true">
     <rule id="java-if-nesting" language="java" enabled="true">
@@ -120,7 +120,7 @@ if (user.isActive()) {
         <content><![CDATA[ Names reveal intent; no single-letter identifiers outside loops. ]]></content>
     </rule>
 </rules>
-```
+````
 
 A rule is inline when it carries a `<content>` block, and external when it points at a file —
 the two are mutually exclusive per rule. (The exact schema and validation rules are out of scope
@@ -156,6 +156,46 @@ one attribute on one rule. This can be applied as a targeted edit to that rule's
 than a full parse-and-reserialize of the document, which keeps the rest of the file (including
 hand-authored inline content) byte-stable across toggles. This matters specifically because
 Goal 2 allows hand-editing: a toggle from the UI should not reformat a rule a human inlined.
+
+### 3.1 Interactive UI access (tab browsing)
+
+The §3 read-cost reasoning above covers the *engine's* path — one read per refinement run. A
+second access pattern is **interactive UI browsing**: a user clicking between per-language tabs in
+Cursor / VSCode or a webapp, where reads could occur repeatedly. Even split across several files —
+say 5–6 files of ~20 rules each — the directory is still the same tens-to-a-few-hundred KB, which
+Java's native XML parser handles in low single-digit milliseconds; the directory glob adds
+nothing meaningful. So a worst-case "re-scan every file on every tab switch" would still sit well
+under the threshold of perceptible UI latency. The cost that would actually be *felt* is not file
+scanning but the **CLI process spawn** (JVM/jlink startup) incurred each time the extension
+invokes `shipsmooth` — tens of ms per spawn, dwarfing the parse.
+
+That cost is avoided by the §1 projection model: the extension calls the CLI **once** to obtain
+the grouped-by-language projection, caches it, and renders tab switches purely in memory. Tab
+browsing therefore costs **zero** file scans and zero spawns, independent of how many rule files
+the directory has grown to. The "is scanning many files a perf hit" concern does not arise,
+because browsing never re-scans.
+
+This caching is safe under one stated **assumption: nothing mutates the rules directory behind
+the CLI's back** — no external editor, tool, or `git checkout` rewriting the files while the UI
+holds a cached projection. Under that assumption the only writer is the CLI itself, driven by the
+extension, so the cache cannot go stale from the outside and no staleness-detection machinery
+(modified-since checks, file watchers) is required for reads.
+
+The assumption does **not**, however, cover **concurrent writers through the CLI** — two extension
+windows on the same project, or a webapp tab and a Cursor window both open, each holding its own
+cached projection. Here one window's toggle silently makes the other's cache stale. This residual
+case is handled with **optimistic concurrency on the write path only**: the cached projection
+carries a version stamp (a directory stamp of `*.xml` filenames plus each file's mtime and size,
+or a content hash), and a toggle is sent as *"apply this change, expected-state = `<stamp>`"*. The
+CLI re-stamps the directory before writing; on mismatch it rejects the write and returns the fresh
+projection for the extension to reconcile, rather than clobbering a concurrent change. This needs
+no locking and no watching, and it folds into the single spawn already paid for the write — and
+into the byte-stable targeted edit above (check stamp → flip one attribute → done). The CLI
+validate path implied by §4.3 is the natural home for computing this stamp without running a
+prompt cycle.
+
+Net: reads (browsing) are load-once-then-cached with no re-scan; only writes (toggles) pay a
+concurrency check, and only at the moment they would actually conflict.
 
 ---
 
@@ -228,7 +268,11 @@ Validation is graded, not binary. Three severities, and an opt-in `strict` mode:
 A disabled file's problems are **always warnings, never errors, even under `strict`** — strict
 mode hardens enabled-file checks only, consistent with §4.2's "not part of the system". Surfacing
 warnings implies a CLI validate path the extension can call to populate a per-file / per-tab
-warnings view without running a prompt cycle.
+warnings view without running a prompt cycle. This same validate path is the natural place to
+compute the directory stamp used for the write-path optimistic-concurrency check of §3.1: a
+stale-stamp toggle is rejected and surfaces as a **conflict** the extension reconciles against the
+returned fresh projection — distinct from the structural severities above, since it concerns
+concurrent writers rather than file correctness.
 
 ---
 
