@@ -6,6 +6,7 @@ import io.bitken.ss.cli.task.AddComment;
 import io.bitken.ss.cli.task.AddDeviation;
 import io.bitken.ss.cli.task.SetCommit;
 import io.bitken.ss.cli.task.UpdateStatus;
+import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 
 import io.bitken.ss.jaxb.PlanTasks;
@@ -40,7 +41,7 @@ public class CommandsTest {
     @BeforeEach
     public void setUp() throws Exception {
         ledgerService = new EventLedger(Paths.get("."));
-        planService = new PlanService(xmlService, ledgerService);
+        planService = new PlanService(xmlService, ledgerService, new ExperimentalMode(false));
         planDir.mkdirs();
         Files.writeString(mdFile.toPath(), "### Task 1: Test task [High]\n");
 
@@ -58,14 +59,14 @@ public class CommandsTest {
     @Test
     public void testInitCommand() {
         xmlFile.delete();
-        int exitCode = new CommandLine(new Init(planService, xmlService).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
+        int exitCode = new CommandLine(new Init(planService, xmlService, new ExperimentalMode(false)).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
         assertEquals(0, exitCode);
         assertTrue(xmlFile.exists());
     }
 
     @Test
     public void testInitCommandFileNotFound() {
-        int exitCode = new CommandLine(new Init(planService, xmlService).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", "non-existent.md");
+        int exitCode = new CommandLine(new Init(planService, xmlService, new ExperimentalMode(false)).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", "non-existent.md");
         assertEquals(1, exitCode);
     }
 

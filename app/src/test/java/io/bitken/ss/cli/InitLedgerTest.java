@@ -1,5 +1,6 @@
 package io.bitken.ss.cli;
 import io.bitken.ss.cli.plan.Init;
+import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 
 import io.bitken.ss.ledger.Event;
@@ -32,7 +33,7 @@ public class InitLedgerTest {
     @BeforeEach
     public void setUp() throws Exception {
         ledgerService = new EventLedger(Paths.get("."));
-        planService = new PlanService(xmlService, ledgerService);
+        planService = new PlanService(xmlService, ledgerService, new ExperimentalMode(true));
         planDir.mkdirs();
         Files.writeString(mdFile.toPath(),
                 "### Task 1: Alpha task [High]\n### Task 2: Beta task [Low]\n");
@@ -47,7 +48,7 @@ public class InitLedgerTest {
 
     @Test
     public void initCreatesObjectsDirAndLedgerFile() throws Exception {
-        int exit = new CommandLine(new Init(planService, xmlService).getSpec())
+        int exit = new CommandLine(new Init(planService, xmlService, new ExperimentalMode(true)).getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
         assertEquals(0, exit);
 
@@ -61,7 +62,7 @@ public class InitLedgerTest {
         ledger.ensureLedgerFile();
         int before = ledger.readHashes().size();
 
-        new CommandLine(new Init(planService, xmlService).getSpec())
+        new CommandLine(new Init(planService, xmlService, new ExperimentalMode(true)).getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
 
         List<String> hashes = ledger.readHashes();
@@ -84,10 +85,10 @@ public class InitLedgerTest {
 
         try {
             // Run twice — entries must not be duplicated
-            new CommandLine(new Init(planService, xmlService).getSpec())
+            new CommandLine(new Init(planService, xmlService, new ExperimentalMode(true)).getSpec())
                     .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
             xmlFile.delete();
-            new CommandLine(new Init(planService, xmlService).getSpec())
+            new CommandLine(new Init(planService, xmlService, new ExperimentalMode(true)).getSpec())
                     .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
 
             String content = Files.readString(gitignore);

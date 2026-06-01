@@ -1,4 +1,5 @@
 package io.bitken.ss.svc.plan;
+import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 
 import io.bitken.ss.gw.TaskStore;
@@ -21,7 +22,7 @@ public class PlanServiceTest {
     private PlanService planService() {
         TaskStore xml = new TaskStore(new ShipsmoothDataLocator(tempDir));
         EventLedger ledger = new EventLedger(tempDir);
-        return new PlanService(xml, ledger);
+        return new PlanService(xml, ledger, new ExperimentalMode(true));
     }
 
     @Test
@@ -63,6 +64,25 @@ public class PlanServiceTest {
     }
 
     @Test
+    public void mutationRecordsNoLedgerEventWhenExperimentalDisabled() throws Exception {
+        TaskStore xml = new TaskStore(new ShipsmoothDataLocator(tempDir));
+        EventLedger ledger = new EventLedger(tempDir);
+        PlanService svc = new PlanService(xml, ledger, new ExperimentalMode(false));
+
+        svc.initPlan(1, "plan-1-v1", List.of(new TaskStore.Task(1, "a task", "low")));
+        svc.updateTaskStatus(1, 1, "agent-coded");
+
+        // XML mutation still happens
+        assertEquals("agent-coded",
+            svc.loadPlan(1).getTasks().getTask().get(0).getStatus().value());
+        // ...but no ledger.jsonl / objects are written
+        assertFalse(tempDir.resolve(".agents/ledger.jsonl").toFile().exists(),
+            "ledger must not be written when experimental is disabled");
+        assertFalse(tempDir.resolve(".agents/objects").toFile().exists(),
+            "object store must not be created when experimental is disabled");
+    }
+
+    @Test
     public void ledgerFailureDoesNotRollBackXmlMutation() throws Exception {
         // Simulate ledger failure by pointing EventLedger at a read-only path
         TaskStore xml = new TaskStore(new ShipsmoothDataLocator(tempDir));
@@ -71,7 +91,7 @@ public class PlanServiceTest {
         readOnlyDir.toFile().setReadOnly();
 
         EventLedger brokenLedger = new EventLedger(readOnlyDir);
-        PlanService svc = new PlanService(xml, brokenLedger);
+        PlanService svc = new PlanService(xml, brokenLedger, new ExperimentalMode(true));
 
         // initPlan uses a valid xml location — override xml file path via System property isn't available,
         // so just verify no exception is thrown and the call degrades gracefully

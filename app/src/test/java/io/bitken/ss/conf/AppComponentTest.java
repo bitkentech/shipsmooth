@@ -16,6 +16,7 @@ public class AppComponentTest {
 
         assertNotNull(app.taskStore());
         assertNotNull(app.eventLedger());
+        assertNotNull(app.experimentalMode());
         assertNotNull(app.worktreeService());
         assertNotNull(app.workflowService());
         assertNotNull(app.workflowServiceImpl());

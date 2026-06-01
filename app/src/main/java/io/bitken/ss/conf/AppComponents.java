@@ -13,6 +13,7 @@ import jakarta.inject.Singleton;
 @Component(modules = ServicesModule.class)
 public interface AppComponents {
     ShipsmoothDataLocator dataLocator();
+    ExperimentalMode experimentalMode();
     TaskStore taskStore();
     EventLedger eventLedger();
     PlanService planService();

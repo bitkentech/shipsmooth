@@ -19,15 +19,27 @@ import java.nio.file.Path;
 public class ServicesModule {
 
     private final Path repoRoot;
+    private final ExperimentalMode experimentalMode;
 
     public ServicesModule(Path repoRoot) {
+        this(repoRoot, new ExperimentalMode(false));
+    }
+
+    public ServicesModule(Path repoRoot, ExperimentalMode experimentalMode) {
         this.repoRoot = repoRoot;
+        this.experimentalMode = experimentalMode;
     }
 
     @Provides
     @Singleton
     Path provideRepoRoot() {
         return repoRoot;
+    }
+
+    @Provides
+    @Singleton
+    ExperimentalMode provideExperimentalMode() {
+        return experimentalMode;
     }
 
     @Provides
@@ -87,8 +99,8 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    PlanService providePlanService(TaskStore taskStore, EventLedger ledger) {
-        return new PlanService(taskStore, ledger);
+    PlanService providePlanService(TaskStore taskStore, EventLedger ledger, ExperimentalMode mode) {
+        return new PlanService(taskStore, ledger, mode);
     }
 
     @Provides

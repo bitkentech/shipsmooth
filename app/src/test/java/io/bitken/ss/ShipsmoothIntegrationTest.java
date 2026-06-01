@@ -4,6 +4,7 @@ import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.cli.Shipsmooth;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;
+import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
@@ -27,7 +28,7 @@ public class ShipsmoothIntegrationTest {
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
     private final AppComponents app = DaggerAppComponents.builder()
-            .servicesModule(new ServicesModule(Paths.get(".")))
+            .servicesModule(new ServicesModule(Paths.get("."), new ExperimentalMode(true)))
             .build();
     private Shipsmooth tasksCli;
 

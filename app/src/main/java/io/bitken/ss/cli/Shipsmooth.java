@@ -12,6 +12,7 @@ import io.bitken.ss.cli.task.UpdateStatus;
 import io.bitken.ss.cli.worker.*;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;
+import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.EventLedger;
@@ -29,13 +30,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class Shipsmooth {
+public class Shipsmooth implements FeatureFlags {
 
     private static final String ENABLE_EXPERIMENTAL_FLAG = "--enable-experimental";
 
     private final CommandLine cmd;
     private final CommandSpec rootSpec;
     private final Integrate integrateCmd;
+    private final ExperimentalMode mode;
     private final List<Callable<?>> experimentalCommands = new ArrayList<>();
 
     public Shipsmooth(AppComponents app) {
@@ -45,6 +47,7 @@ public class Shipsmooth {
         WorktreeService worktree = app.worktreeService();
         WorkflowService workflow = app.workflowService();
         WorkflowServiceImpl workflowImpl = app.workflowServiceImpl();
+        mode = app.experimentalMode();
 
         integrateCmd = new Integrate(workflow);
 
@@ -84,7 +87,7 @@ public class Shipsmooth {
     private Callable<?>[] buildCommands(TaskStore xml, EventLedger ledger, PlanService planService,
             WorktreeService worktree, WorkflowService workflow, WorkflowServiceImpl workflowImpl) {
         return new Callable<?>[] {
-            new Init(planService, xml),
+            new Init(planService, xml, mode),
             new AddComment(planService),
             new AddDeviation(planService),
             new Claim(xml, worktree, ledger),
@@ -110,7 +113,15 @@ public class Shipsmooth {
         return integrateCmd;
     }
 
+    @Override
+    public boolean isExperimental() {
+        return mode.enabled();
+    }
+
     public int execute(String... args) {
+        // Command registration follows the flag as passed to THIS invocation,
+        // so callers that pass --enable-experimental in args get the experimental
+        // subcommands regardless of how the process-wide mode was configured.
         if (probeEnableExperimental(args)) {
             registerExperimentals();
         }
@@ -138,8 +149,9 @@ public class Shipsmooth {
     }
 
     public static void main(String[] args) {
+        ExperimentalMode mode = ExperimentalMode.fromArgs(args);
         AppComponents app = DaggerAppComponents.builder()
-            .servicesModule(new ServicesModule(Paths.get(".")))
+            .servicesModule(new ServicesModule(Paths.get("."), mode))
             .build();
 
         int exitCode = new Shipsmooth(app).execute(args);

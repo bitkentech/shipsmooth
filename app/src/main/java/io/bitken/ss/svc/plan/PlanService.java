@@ -1,5 +1,6 @@
 package io.bitken.ss.svc.plan;
 
+import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
@@ -15,10 +16,12 @@ public class PlanService {
 
     private final TaskStore taskStore;
     private final EventLedger ledger;
+    private final ExperimentalMode mode;
 
-    public PlanService(TaskStore taskStore, EventLedger ledger) {
+    public PlanService(TaskStore taskStore, EventLedger ledger, ExperimentalMode mode) {
         this.taskStore = taskStore;
         this.ledger = ledger;
+        this.mode = mode;
     }
 
     public void initPlan(int planId, String planVersion, List<TaskStore.Task> tasks) throws Exception {
@@ -79,6 +82,7 @@ public class PlanService {
     }
 
     public String recordEvent(Event event) throws IOException {
+        if (!mode.enabled()) return null;
         ledger.ensureLedgerFile();
         return ledger.record(event);
     }
@@ -110,6 +114,7 @@ public class PlanService {
     }
 
     private void recordBestEffort(LedgerAction action) {
+        if (!mode.enabled()) return;
         try {
             action.run();
         } catch (Exception e) {

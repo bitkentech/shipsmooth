@@ -1,6 +1,7 @@
 package io.bitken.ss.cli.plan;
 
 import io.bitken.ss.cli.HasSpec;
+import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.svc.plan.PlanService;
@@ -20,17 +21,19 @@ public class Init implements Callable<Integer>, HasSpec {
     private final PlanService planService;
     private final TaskStore taskStore;
     private final GitTags gitTagService;
+    private final ExperimentalMode mode;
 
-    public Init(PlanService planService, TaskStore taskStore) {
-        this(planService, taskStore, new GitTags());
+    public Init(PlanService planService, TaskStore taskStore, ExperimentalMode mode) {
+        this(planService, taskStore, new GitTags(), mode);
     }
 
     @Inject
-    public Init(PlanService planService, TaskStore taskStore, GitTags gitTagService) {
+    public Init(PlanService planService, TaskStore taskStore, GitTags gitTagService, ExperimentalMode mode) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.planService = planService;
         this.taskStore = taskStore;
         this.gitTagService = gitTagService;
+        this.mode = mode;
 
         spec.name("init");
         spec.usageMessage().description("Initialize task tracking XML for a plan");
@@ -70,8 +73,10 @@ public class Init implements Callable<Integer>, HasSpec {
         ShipsmoothDataLocator locator = new ShipsmoothDataLocator(Paths.get("."));
         System.out.println("Written " + tasks.size() + " tasks to " + locator.planTasksFile(plan).getPath());
 
-        locator.bootstrap();
-        ensureGitignore(Paths.get("."));
+        if (mode.enabled()) {
+            locator.bootstrap();
+            ensureGitignore(Paths.get("."));
+        }
         return 0;
     }
 
