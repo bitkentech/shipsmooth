@@ -214,6 +214,46 @@ class TargetIntegrationTest {
             "Windows SKILL.md must not reference XDG_CACHE_HOME");
     }
 
+    @Test
+    void refineSkillRendersTwoPhaseContractWithProvenanceSplit() throws Exception {
+        setDevProps();
+        Target.main(new String[]{});
+
+        Path refineSkill = tempDir.resolve("skills/experimental-refine-dev/SKILL.md");
+        assertTrue(Files.exists(refineSkill),
+            "experimental-refine-dev/SKILL.md should be rendered");
+
+        String content = Files.readString(refineSkill);
+        assertTrue(content.contains("PHASE 1"),
+            "refine skill should mandate a two-phase contract (Phase 1)");
+        assertTrue(content.contains("PHASE 2"),
+            "refine skill should mandate a two-phase contract (Phase 2)");
+        assertTrue(content.contains("Requirements from production code"),
+            "Phase 1 must split extraction by provenance (production code subsection)");
+        assertTrue(content.contains("Requirements from tests"),
+            "Phase 1 must split extraction by provenance (tests subsection)");
+    }
+
+    @Test
+    void refineSkillRendersScratchpadAndPriorityOrder() throws Exception {
+        setDevProps();
+        Target.main(new String[]{});
+
+        String content = Files.readString(
+            tempDir.resolve("skills/experimental-refine-dev/SKILL.md"));
+
+        assertTrue(content.contains(".agents/tmp/refine-"),
+            "refine skill should direct Phase-1 extraction to the .agents/tmp scratchpad");
+
+        // Judgment-level rules must precede mechanical rules in the rendered output.
+        int richDomain = content.indexOf("Prefer Rich Domain Models");
+        int methodLength = content.indexOf("### Method length");
+        assertTrue(richDomain >= 0, "rich-domain rule should still be present");
+        assertTrue(methodLength >= 0, "method-length rule should be retained (no linter yet)");
+        assertTrue(richDomain < methodLength,
+            "judgment-level rules must render before mechanical rules");
+    }
+
     private void setProdProps() {
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "prod");
