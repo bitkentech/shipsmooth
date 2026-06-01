@@ -34,7 +34,16 @@ Then state the proposed structure and the dependency direction. Identify the tar
 boundary (`cli/`, `conf/`, `workflow/`) for the provided parameters; if a file belongs to a
 legacy unorganized package, plan to move it to its correct target package.
 
+Write this entire PHASE 1 extraction to an ephemeral scratchpad at
+`.agents/tmp/refine-<target>.md` (where `<target>` names the file or folder being refined).
+The scratchpad is throwaway — do not commit it. It is the point at which the user may
+review and approve the extraction before any code is generated.
+
 ### PHASE 2 — Clean-Slate Generation
+**Begin by re-reading the `.agents/tmp/refine-<target>.md` scratchpad** and treat it as the
+design of record for this generation. (Re-reading it here re-establishes the design in
+context after the PHASE 1 discussion, so the generation stays anchored to the plan rather
+than drifting back toward the original code.)
 Generate the new code from the PHASE 1 *production* requirements alone. Treat the *tests*
 subsection as a behaviour checklist to preserve. Do **not** keep a production method or
 constructor solely because a test calls it. Apply the rule priority below throughout. If you

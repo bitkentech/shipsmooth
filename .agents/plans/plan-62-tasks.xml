@@ -51,9 +51,9 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Authorize new domain types in the primitive-obsession rule</name>
-            <commit></commit>
+            <commit>c18e5b28b5d62c76491919201425e8e63e946a71</commit>
             <created-from>plan-62-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
