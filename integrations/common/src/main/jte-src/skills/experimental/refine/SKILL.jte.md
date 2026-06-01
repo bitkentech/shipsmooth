@@ -70,12 +70,6 @@ constructed with `null` fields just to call one method) to satisfy a lower-prior
 - If there's no easy choice between different options, always ask the user. Provide the
   various options and a free form text field where they can provide their own input.
 
-@*
- * Rule fragments are ordered by the priority declared in the Execution Contract:
- * judgment-level rules first, then the mechanical limits last. The mechanical rules
- * are retained (no deterministic linter exists yet) but rendered lowest so they do
- * not crowd the high-priority region.
- *@
 @template.skills.experimental.refine.rules.rich-domain(model = model)
 @template.skills.experimental.refine.rules.class-structure(model = model)
 @template.skills.experimental.refine.rules.srp(model = model)
