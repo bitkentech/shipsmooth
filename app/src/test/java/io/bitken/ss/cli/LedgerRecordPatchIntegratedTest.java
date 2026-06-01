@@ -3,6 +3,7 @@ package io.bitken.ss.cli;
 import io.bitken.ss.cli.Shipsmooth;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;
+import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
@@ -24,13 +25,14 @@ public class LedgerRecordPatchIntegratedTest {
         EventLedger ledger = new EventLedger(Paths.get("."));
         ledger.ensureLedgerFile();
 
-        int exit = new Shipsmooth(app).execute(
+        String[] args = {
                 "--enable-experimental", "ledger-record-patch-integrated",
                 "--plan", "993",
                 "--task", "7",
                 "--commit", "abc1234",
                 "--agent-work-sha", "def5678"
-        );
+        };
+        int exit = new Shipsmooth(app, ExperimentalMode.fromArgs(args), args).execute();
 
         assertEquals(0, exit);
 

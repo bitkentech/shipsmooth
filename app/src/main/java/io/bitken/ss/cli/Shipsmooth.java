@@ -23,31 +23,27 @@ import io.bitken.ss.workflow.WorkflowService;
 import io.bitken.ss.workflow.WorkflowServiceImpl;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
-import picocli.CommandLine.ParseResult;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 
-public class Shipsmooth implements FeatureFlags {
+public class Shipsmooth {
 
     private static final String ENABLE_EXPERIMENTAL_FLAG = "--enable-experimental";
 
     private final CommandLine cmd;
     private final CommandSpec rootSpec;
     private final Integrate integrateCmd;
-    private final ExperimentalMode mode;
-    private final List<Callable<?>> experimentalCommands = new ArrayList<>();
+    private final String[] args;
 
-    public Shipsmooth(AppComponents app) {
+    public Shipsmooth(AppComponents app, ExperimentalMode mode, String[] args) {
+        this.args = args;
         TaskStore taskStore = app.taskStore();
         EventLedger ledger = app.eventLedger();
         PlanService planService = app.planService();
         WorktreeService worktree = app.worktreeService();
         WorkflowService workflow = app.workflowService();
         WorkflowServiceImpl workflowImpl = app.workflowServiceImpl();
-        mode = app.experimentalMode();
 
         integrateCmd = new Integrate(workflow);
 
@@ -72,20 +68,28 @@ public class Shipsmooth implements FeatureFlags {
             boolean enableExperimental;
         }));
 
-        for (Callable<?> command : buildCommands(taskStore, ledger, planService, worktree, workflow, workflowImpl)) {
-            if (command instanceof FeatureFlags ff && ff.isExperimental()) {
-                experimentalCommands.add(command);
-            } else {
-                CommandSpec subSpec = ((HasSpec) command).getSpec();
-                rootSpec.addSubcommand(subSpec.name(), subSpec);
+        for (Callable<?> command : buildCommands(taskStore, ledger, planService, worktree, workflow, workflowImpl, mode)) {
+            if (!isExperimental(command) || mode.enabled()) {
+                addSubcommand(command);
             }
         }
 
         cmd = new CommandLine(rootSpec);
     }
 
+    private static boolean isExperimental(Callable<?> command) {
+        return command instanceof FeatureFlags ff && ff.isExperimental();
+    }
+
+    private void addSubcommand(Callable<?> command) {
+        CommandSpec subSpec = ((HasSpec) command).getSpec();
+        subSpec.mixinStandardHelpOptions(true);
+        rootSpec.addSubcommand(subSpec.name(), subSpec);
+    }
+
     private Callable<?>[] buildCommands(TaskStore xml, EventLedger ledger, PlanService planService,
-            WorktreeService worktree, WorkflowService workflow, WorkflowServiceImpl workflowImpl) {
+            WorktreeService worktree, WorkflowService workflow, WorkflowServiceImpl workflowImpl,
+            ExperimentalMode mode) {
         return new Callable<?>[] {
             new Init(planService, xml, mode),
             new AddComment(planService),
@@ -113,39 +117,8 @@ public class Shipsmooth implements FeatureFlags {
         return integrateCmd;
     }
 
-    @Override
-    public boolean isExperimental() {
-        return mode.enabled();
-    }
-
-    public int execute(String... args) {
-        // Command registration follows the flag as passed to THIS invocation,
-        // so callers that pass --enable-experimental in args get the experimental
-        // subcommands regardless of how the process-wide mode was configured.
-        if (probeEnableExperimental(args)) {
-            registerExperimentals();
-        }
+    public int execute() {
         return cmd.execute(args);
-    }
-
-    private boolean probeEnableExperimental(String[] args) {
-        CommandLine probe = new CommandLine(rootSpec);
-        probe.setUnmatchedArgumentsAllowed(true);
-        probe.setUnmatchedOptionsArePositionalParams(true);
-        try {
-            ParseResult result = probe.parseArgs(args);
-            return result.matchedOptionValue(ENABLE_EXPERIMENTAL_FLAG, false);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private void registerExperimentals() {
-        for (Callable<?> c : experimentalCommands) {
-            CommandSpec sub = ((HasSpec) c).getSpec();
-            if (rootSpec.subcommands().containsKey(sub.name())) continue;
-            rootSpec.addSubcommand(sub.name(), sub);
-        }
     }
 
     public static void main(String[] args) {
@@ -154,7 +127,7 @@ public class Shipsmooth implements FeatureFlags {
             .servicesModule(new ServicesModule(Paths.get("."), mode))
             .build();
 
-        int exitCode = new Shipsmooth(app).execute(args);
+        int exitCode = new Shipsmooth(app, mode, args).execute();
         System.exit(exitCode);
     }
 }

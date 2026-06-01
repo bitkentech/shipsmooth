@@ -4,6 +4,7 @@ import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.cli.Shipsmooth;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;
+import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.Event;
@@ -44,6 +45,11 @@ public class WorkerLifecycleIntegrationTest {
             .servicesModule(new ServicesModule(repoRoot))
             .build();
 
+    /** One-shot CLI bound to these args, mirroring main(). */
+    private int run(String... args) {
+        return new Shipsmooth(app, ExperimentalMode.fromArgs(args), args).execute();
+    }
+
     @BeforeEach
     void setUp() throws Exception {
         planDir.mkdirs();
@@ -81,16 +87,15 @@ public class WorkerLifecycleIntegrationTest {
      */
     @Test
     void happyPath_workerLifecycleLeavesCommitAndBranch() throws Exception {
-        Shipsmooth cli = new Shipsmooth(app);
         EventLedger ledger = new EventLedger(repoRoot);
         int beforeCount = ledger.readHashes().size();
 
         int exit;
 
-        exit = cli.execute("--enable-experimental", "claim","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        exit = run("--enable-experimental", "claim","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, exit, "claim should exit 0");
 
-        exit = cli.execute("--enable-experimental", "worker-init","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        exit = run("--enable-experimental", "worker-init","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, exit, "worker-init should exit 0");
 
         Path worktreePath = repoRoot.resolve(".agents/tasks/" + TASK_ID).toAbsolutePath();
@@ -99,10 +104,10 @@ public class WorkerLifecycleIntegrationTest {
         // Simulate subagent editing files inside the worktree (no git operations).
         Files.writeString(worktreePath.resolve("output.txt"), "subagent output");
 
-        exit = cli.execute("--enable-experimental", "worker-finish","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        exit = run("--enable-experimental", "worker-finish","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, exit, "worker-finish should exit 0");
 
-        exit = cli.execute("--enable-experimental", "worker-cleanup","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        exit = run("--enable-experimental", "worker-cleanup","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, exit, "worker-cleanup should exit 0");
 
         // --- assertions ---
@@ -154,11 +159,10 @@ public class WorkerLifecycleIntegrationTest {
      */
     @Test
     void workerFinish_abortsWhenSubagentCommitted() throws Exception {
-        Shipsmooth cli = new Shipsmooth(app);
         EventLedger ledger = new EventLedger(repoRoot);
 
-        cli.execute("--enable-experimental", "claim","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
-        cli.execute("--enable-experimental", "worker-init","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        run("--enable-experimental", "claim","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        run("--enable-experimental", "worker-init","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
 
         Path worktreePath = repoRoot.resolve(".agents/tasks/" + TASK_ID).toAbsolutePath();
         assertTrue(worktreePath.toFile().isDirectory(), "worktree should exist");
@@ -170,7 +174,7 @@ public class WorkerLifecycleIntegrationTest {
 
         int beforeCount = ledger.readHashes().size();
 
-        int exit = cli.execute("--enable-experimental", "worker-finish","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+        int exit = run("--enable-experimental", "worker-finish","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertNotEquals(0, exit, "worker-finish should exit non-zero when subagent committed");
 
         int afterCount = ledger.readHashes().size();

@@ -3,6 +3,7 @@ import io.bitken.ss.conf.ShipsmoothDataLocator;
 
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;
+import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.workflow.integration.IntegrationLedger;
 import io.bitken.ss.workflow.integration.Resolver;
@@ -42,6 +43,12 @@ public class IntegrateTest {
     private final AppComponents app = DaggerAppComponents.builder()
             .servicesModule(new ServicesModule(repoRoot))
             .build();
+
+    /** One-shot CLI bound to these args, mirroring main(). */
+    private int run(String... args) {
+        return new Shipsmooth(app, ExperimentalMode.fromArgs(args), args).execute();
+    }
+
     private final File planDir = new File(".agents/plans");
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
@@ -115,7 +122,7 @@ public class IntegrateTest {
 
         // At this point: integration branch exists with task 2, but not task 3.
         // Running integrate should resume from task 3.
-        int exit = new Shipsmooth(app).execute(
+        int exit = run(
                 "--enable-experimental", "integrate",
                 "--plan", String.valueOf(PLAN_NUM),
                 "--task-branch", currentBranch(),
@@ -161,7 +168,7 @@ public class IntegrateTest {
         git(repoRoot.toFile(), "worktree", "add", INTEGRATION_REL, "-b", INTEGRATION_BRANCH, headSha);
 
         // Without --force this would fail; with --force it should succeed
-        int exit = new Shipsmooth(app).execute(
+        int exit = run(
                 "--enable-experimental", "integrate",
                 "--plan", String.valueOf(PLAN_NUM),
                 "--task-branch", currentBranch(),

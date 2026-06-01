@@ -30,7 +30,6 @@ public class ShipsmoothIntegrationTest {
     private final AppComponents app = DaggerAppComponents.builder()
             .servicesModule(new ServicesModule(Paths.get("."), new ExperimentalMode(true)))
             .build();
-    private Shipsmooth tasksCli;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -44,7 +43,15 @@ public class ShipsmoothIntegrationTest {
 
         EventLedger ledger = new EventLedger(Paths.get("."));
         ledger.ensureLedgerFile();
-        tasksCli = new Shipsmooth(app);
+    }
+
+    /**
+     * One-shot CLI bound to these args. Registration follows the flag in args
+     * (via fromArgs); the services' ledger gate comes from {@code app}, which is
+     * built experimental-enabled so non-experimental commands still record.
+     */
+    private int run(String... args) {
+        return new Shipsmooth(app, ExperimentalMode.fromArgs(args), args).execute();
     }
 
     @AfterEach
@@ -55,7 +62,7 @@ public class ShipsmoothIntegrationTest {
 
     @Test
     public void cliHelpRuns() {
-        assertEquals(0, tasksCli.execute(new String[]{"--help"}));
+        assertEquals(0, run("--help"));
     }
 
     @Test
@@ -63,7 +70,7 @@ public class ShipsmoothIntegrationTest {
         EventLedger ledger = new EventLedger(Paths.get("."));
         int before = ledger.readHashes().size();
 
-        int exit = tasksCli.execute("update-status", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "agent-coded");
+        int exit = run("update-status", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "agent-coded");
         assertEquals(0, exit);
 
         List<String> hashes = ledger.readHashes();
@@ -76,13 +83,13 @@ public class ShipsmoothIntegrationTest {
 
     @Test
     public void ledgerListViaCliExitsZero() throws Exception {
-        int exit = tasksCli.execute("ledger", "list");
+        int exit = run("ledger", "list");
         assertEquals(0, exit);
     }
 
     @Test
     public void ledgerVerifyViaCliExitsZero() throws Exception {
-        int exit = tasksCli.execute("ledger", "verify");
+        int exit = run("ledger", "verify");
         assertEquals(0, exit);
     }
 
@@ -93,7 +100,7 @@ public class ShipsmoothIntegrationTest {
         // exit code). Today this passes accidentally because integrate's
         // sub-spec rejects --help; after plan-41 it passes because integrate
         // is not registered at all.
-        int exit = tasksCli.execute("integrate", "--plan", "1");
+        int exit = run("integrate", "--plan", "1");
         assertEquals(2, exit,
             "experimental subcommand 'integrate' must be refused (exit 2) without --enable-experimental");
     }
@@ -106,7 +113,7 @@ public class ShipsmoothIntegrationTest {
         // its own --help support OR we rely on picocli's standard help mixin
         // being applied to it.) For now, just assert that the top-level
         // parse accepts the subcommand name without complaining.
-        int exit = tasksCli.execute("--enable-experimental", "integrate", "--plan", "0");
+        int exit = run("--enable-experimental", "integrate", "--plan", "0");
         // 'integrate' should at least be recognised as a subcommand; the
         // command itself may return non-zero from --plan 0, but a return of
         // 2 (unmatched argument) means the flag isn't working.
@@ -119,7 +126,7 @@ public class ShipsmoothIntegrationTest {
         EventLedger ledger = new EventLedger(Paths.get("."));
         int before = ledger.readHashes().size();
 
-        int exit = tasksCli.execute("add-comment", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "via Shipsmooth");
+        int exit = run("add-comment", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "via Shipsmooth");
         assertEquals(0, exit);
 
         TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
