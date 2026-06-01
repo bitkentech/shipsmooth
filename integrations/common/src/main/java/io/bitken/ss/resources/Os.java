@@ -14,6 +14,11 @@ public sealed interface Os permits Os.Posix, Os.Windows {
     String cliBinPath(String pluginName, String version, String cacheSubdir);
     String hookCommand(Path hooksDir, String repoName, String pluginName, String version) throws IOException;
 
+    /** Resolves Os from the build.os property ("windows" → WINDOWS, anything else → POSIX). */
+    static Os from(String prop) {
+        return "windows".equals(prop) ? WINDOWS : POSIX;
+    }
+
     /** Resolves Os from a packaging target string (e.g. "win32-x64" → WINDOWS, "linux-x64" → POSIX). */
     static Os fromPackagingTarget(String target) {
         return target.startsWith("win32") ? WINDOWS : POSIX;

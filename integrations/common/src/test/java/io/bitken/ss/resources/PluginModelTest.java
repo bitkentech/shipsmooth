@@ -7,13 +7,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class PluginModelTest {
 
     private static PluginModel claudeProd() {
-        Target target = Target.from("claude", "prod");
+        Target target = Target.from("claude", "posix", "prod");
         return new PluginModel("shipsmooth", "0.3.10", "desc", "start",
             target.cliBin("shipsmooth", "0.3.10"), "", target, "", "shipsmooth");
     }
 
     private static PluginModel windowsProd() {
-        Target target = Target.from("windows", "prod");
+        Target target = Target.from("claude", "windows", "prod");
         return new PluginModel("shipsmooth", "0.3.10", "desc", "start",
             target.cliBin("shipsmooth", "0.3.10"), "", target, "", "shipsmooth-windows");
     }
@@ -57,7 +57,7 @@ class PluginModelTest {
 
     @Test
     void gemini_isGemini_true() {
-        Target target = Target.from("gemini", "prod");
+        Target target = Target.from("gemini", "posix", "prod");
         PluginModel m = new PluginModel("shipsmooth", "0.3.10", "desc", "start",
             target.cliBin("shipsmooth", "0.3.10"), "", target, "", "shipsmooth");
         assertTrue(m.isGemini());

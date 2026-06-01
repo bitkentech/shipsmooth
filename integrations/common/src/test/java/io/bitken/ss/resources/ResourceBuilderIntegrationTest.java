@@ -16,7 +16,7 @@ class ResourceBuilderIntegrationTest {
     Path tempDir;
 
     private static final List<String> PROPS = List.of(
-        "build.outputDir", "build.env", "build.platform", "plugin.base.name",
+        "build.outputDir", "build.env", "build.platform", "build.os", "plugin.base.name",
         "plugin.skill.start.basename", "plugin.version", "plugin.description",
         "skill.frontmatter", "shipsmooth.jlink.dir", "experimental.enabled", "plugin.hook.command",
         "plugin.repo.name"
@@ -91,6 +91,7 @@ class ResourceBuilderIntegrationTest {
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "prod");
         System.setProperty("build.platform", "gemini");
+        System.setProperty("build.os", "posix");
         System.setProperty("plugin.base.name", "shipsmooth");
         System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.2.0");
@@ -217,6 +218,7 @@ class ResourceBuilderIntegrationTest {
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "prod");
         System.setProperty("build.platform", "claude");
+        System.setProperty("build.os", "posix");
         System.setProperty("plugin.base.name", "shipsmooth");
         System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.2.0");
@@ -229,7 +231,8 @@ class ResourceBuilderIntegrationTest {
     private void setWindowsProps() {
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "prod");
-        System.setProperty("build.platform", "windows");
+        System.setProperty("build.platform", "claude");
+        System.setProperty("build.os", "windows");
         System.setProperty("plugin.base.name", "shipsmooth");
         System.setProperty("plugin.repo.name", "shipsmooth-windows");
         System.setProperty("plugin.skill.start.basename", "start");
@@ -244,6 +247,7 @@ class ResourceBuilderIntegrationTest {
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "dev");
         System.setProperty("build.platform", "claude");
+        System.setProperty("build.os", "posix");
         System.setProperty("plugin.base.name", "shipsmooth");
         System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.2.0");

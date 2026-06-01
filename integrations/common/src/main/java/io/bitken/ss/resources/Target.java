@@ -2,11 +2,8 @@ package io.bitken.ss.resources;
 
 public record Target(Platform platform, Os os, Env env) {
 
-    public static Target from(String platformProp, String envProp) {
-        Env env = Env.from(envProp);
-        Platform platform = Platform.from(platformProp);
-        Os os = "windows".equals(platformProp) ? Os.WINDOWS : Os.POSIX;
-        return new Target(platform, os, env);
+    public static Target from(String platformProp, String osProp, String envProp) {
+        return new Target(Platform.from(platformProp), Os.from(osProp), Env.from(envProp));
     }
 
     public String cliBin(String pluginName, String version) {

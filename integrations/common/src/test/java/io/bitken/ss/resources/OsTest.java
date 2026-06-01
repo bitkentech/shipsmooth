@@ -80,6 +80,16 @@ class OsTest {
     }
 
     @Test
+    void from_windows_isWindows() {
+        assertEquals(Os.WINDOWS, Os.from("windows"));
+    }
+
+    @Test
+    void from_posix_isPosix() {
+        assertEquals(Os.POSIX, Os.from("posix"));
+    }
+
+    @Test
     void fromPackagingTarget_win32_isWindows() {
         assertEquals(Os.WINDOWS, Os.fromPackagingTarget("win32-x64"));
     }

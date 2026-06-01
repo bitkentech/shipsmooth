@@ -18,8 +18,9 @@ public record PluginModel(
 ) {
     static PluginModel fromProperties() {
         String platformProp = System.getProperty("build.platform", "claude");
+        String osProp       = System.getProperty("build.os", "posix");
         String envProp      = System.getProperty("build.env", "prod");
-        Target target       = Target.from(platformProp, envProp);
+        Target target       = Target.from(platformProp, osProp, envProp);
         Env env             = target.env();
 
         String basePluginName = System.getProperty("plugin.base.name");

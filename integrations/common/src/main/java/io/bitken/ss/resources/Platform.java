@@ -7,8 +7,8 @@ public sealed interface Platform permits Platform.Claude, Platform.Gemini {
 
     static Platform from(String prop) {
         return switch (prop) {
-            case "claude", "windows" -> CLAUDE;
-            case "gemini"            -> GEMINI;
+            case "claude"  -> CLAUDE;
+            case "gemini"  -> GEMINI;
             default -> throw new IllegalArgumentException("Unknown platform: " + prop);
         };
     }
