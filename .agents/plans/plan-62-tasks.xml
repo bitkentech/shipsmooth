@@ -27,9 +27,9 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Reorder rule includes into priority order (mechanical rules last)</name>
-            <commit></commit>
+            <commit>14e6056c7fa16ad141efe9d98ba87a78a092599d</commit>
             <created-from>plan-62-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -39,9 +39,9 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add mechanism ("Why this matters") blocks to high-value exemplars</name>
-            <commit></commit>
+            <commit>d961e028ab711fc32ba6e43798018ae65429250b</commit>
             <created-from>plan-62-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
