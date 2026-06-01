@@ -2,7 +2,8 @@
 @param PluginModel model
 ### Single source of truth
 Concepts should be represented using a single source of truth, ideally only at one place, and
-referred to by different places, injected either via constructor or DI.  
+referred to by different places, injected either via constructor or DI. Applies to string 
+literals as well.
 **Good:**
 ```
 /**
