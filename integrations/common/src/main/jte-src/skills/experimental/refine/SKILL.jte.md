@@ -10,8 +10,8 @@ When this skill is invoked, the user will provide one or more parameters under a
 Above all, be very ambitious, especially when the change is only across a handful of files.
 The code can look *very different* after you're done with it. Only the logic should continue
 to be the same. Do not patch the files in place. Instead, perform a clean-slate
-re-derivation in two strictly separated phases. **You must complete PHASE 1 in natural
-language and not write a single line of new code until it is done.**
+re-derivation in two strictly separated phases. **You must write out the PHASE 1 extraction
+in natural language and must not write a single line of new code until PHASE 1 is done.**
 
 ### PHASE 1 — Architectural Extraction (natural language only)
 Read the target code **once** and extract its requirements. Split the extraction into two
@@ -26,8 +26,9 @@ labelled subsections so it is always explicit *where* each requirement came from
 **Requirements from tests**
 - The invariants the tests assert (guards, defaults, error cases).
 - These constrain **behaviour only**. Test structure is **not** a template for the class's
-  constructor or method shape. If your re-derived structure changes the surface the tests
-  touch, the tests get rewritten to match — and you never delete a test without surfacing it.
+  constructor or method shape. If your re-derived structure changes the methods or
+  constructors the tests call, rewrite the tests to match — and never delete a test
+  without surfacing it to the user first.
 
 Then state the proposed structure and the dependency direction. Identify the target package
 boundary (`cli/`, `conf/`, `workflow/`) for the provided parameters; if a file belongs to a
@@ -36,9 +37,9 @@ legacy unorganized package, plan to move it to its correct target package.
 ### PHASE 2 — Clean-Slate Generation
 Generate the new code from the PHASE 1 *production* requirements alone. Treat the *tests*
 subsection as a behaviour checklist to preserve. Do **not** keep a production method or
-constructor solely because a test calls it. If you notice yourself making a chain of small
-edits that each fix the previous one — **STOP**: that is hill-climbing. Discard the partial
-result and re-derive from the requirements.
+constructor solely because a test calls it. Apply the rule priority below throughout. If you
+notice yourself making a chain of small edits that each fix the previous one — **STOP**:
+that is hill-climbing. Discard the partial result and re-derive from the requirements.
 
 ### Rule priority (when rules conflict, higher wins)
 1. Prefer Rich Domain Models over anemic objects — behaviour lives on the object that owns the data.
