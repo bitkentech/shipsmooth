@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>61</plan>
+    <plan-version>plan-61-v1</plan-version>
+    <metadata>
+        <backlog-issue>local: typed-build-target-axes</backlog-issue>
+        <status>active</status>
+        <created>2026-06-01</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Introduce Env enum and fold suffix logic into it</name>
+            <commit></commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Introduce sealed Os (Posix, Windows) owning path/launcher shape</name>
+            <commit></commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Introduce sealed Platform (Claude, Gemini) owning agent-axis behaviour</name>
+            <commit></commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Compose axes into Target with a boundary factory</name>
+            <commit></commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2,3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Move the runtime-install command onto Os; collapse HooksRenderer branch</name>
+            <commit></commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Let packaging's PackageRuntime consume Os</name>
+            <commit></commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Cut over PluginModel and delete BuildProfile</name>
+            <commit></commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Replace template platform branching with Platform.skillFragmentDir()</name>
+            <commit></commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>7</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-01T12:31:44.349+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
