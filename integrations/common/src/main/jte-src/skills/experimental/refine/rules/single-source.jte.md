@@ -43,3 +43,8 @@ class SomeClass {
 
 } 
 ```
+**Why this matters:** The Bad version repeats the literal `"~/.cache/app"` in two methods, so
+changing the base path means finding and editing every copy — and missing one silently
+produces two different paths. The Good version holds the concept once (`basePath`, `CLASS_NAME`)
+and derives everything from it, so there is exactly one place to change and no way for the
+copies to drift apart.

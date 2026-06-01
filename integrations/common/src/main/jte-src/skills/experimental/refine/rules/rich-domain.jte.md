@@ -90,3 +90,8 @@ class OrderValidator {
   }
 }
 ```
+**Why this matters:** The Bad version strips behaviour out of `Order`, leaving a passive
+data bag, and scatters the order's own logic across `OrderProcessor`/`OrderValidator` that
+must reach in via getters/setters. The Good version keeps the state (`item`) and the
+behaviour (`process`) together, so the invariant "an order is filled at most once" is
+enforced *inside* the object that owns it and cannot be bypassed by a careless caller.

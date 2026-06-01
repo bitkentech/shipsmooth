@@ -57,3 +57,9 @@ class CustomerUtils {
    }
 }
 ```
+**Why this matters:** `CustomerUtils` in the Bad version has two unrelated responsibilities
+(validation *and* display) and depends on the whole `CurrentContext` just to call one of its
+methods — so it recompiles/changes for reasons that have nothing to do with each other, and
+a test must construct a full `CurrentContext`. The Good version names one responsibility
+(`ValidateCustomerLocation`) and depends only on the `Geo` slice it actually uses, so it is
+trivially testable with a tiny `Geo` stub and changes only when validation changes.

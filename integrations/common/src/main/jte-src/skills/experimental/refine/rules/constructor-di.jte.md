@@ -47,3 +47,9 @@ class SomeClass {
   }
  }
 ```
+**Why this matters:** The Bad constructor mixes branching, logging, and two different
+construction paths inline, so the decision logic is trapped where it can't be tested or
+reused and the constructor is hard to read at a glance. The Good version pushes that logic
+into a named `private static createObj3(...)` helper: the constructor stays a flat list of
+assignments, the construction decision gets a name and a single tested location, and
+fail-fast still happens at construction time.

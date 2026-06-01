@@ -65,3 +65,9 @@ class SomeClass {
   
 }
 ```
+**Why this matters:** In the Bad version `calculateSomething` is `static` and re-creates the
+object on every call (`create(...).helper1(...)`), so collaborators are resolved lazily and
+repeatedly instead of once at construction. The Good version resolves everything in the
+constructor (`createObj3`) and leaves the instance methods to do work against already-built
+fields — construction failures surface immediately (fail-fast) and the object is valid for
+its whole lifetime rather than re-assembled per call.
