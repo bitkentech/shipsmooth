@@ -63,9 +63,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add scratchpad / phase-boundary instruction to the contract</name>
-            <commit></commit>
+            <commit>76ce78f3c5b4fbccb60315dda5c0fd5ae50282af</commit>
             <created-from>plan-62-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -75,12 +75,17 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add render assertion to TargetIntegrationTest</name>
-            <commit></commit>
+            <commit>d461682</commit>
             <created-from>plan-62-v3</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-01T18:50:51.611+05:30</timestamp>
+                    <message>Render assertions delivered in preamble commit d461682 (refineSkillRendersTwoPhaseContractWithProvenanceSplit + refineSkillRendersScratchpadAndPriorityOrder); both green after tasks 1-5.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1,2,5</depends-on>
         </task>
