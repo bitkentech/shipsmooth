@@ -1,4 +1,5 @@
 package io.bitken.ss.cli;
+import io.bitken.ss.cli.plan.Init;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 
 import io.bitken.ss.ledger.Event;

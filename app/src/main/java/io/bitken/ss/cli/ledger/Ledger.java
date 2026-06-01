@@ -1,5 +1,6 @@
-package io.bitken.ss.cli;
+package io.bitken.ss.cli.ledger;
 
+import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventLedger;
 import jakarta.inject.Inject;

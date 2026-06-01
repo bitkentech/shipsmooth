@@ -1,8 +1,9 @@
-package io.bitken.ss.cli;
+package io.bitken.ss.cli.ledger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
@@ -11,10 +12,8 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 public class LedgerWatch implements Callable<Integer>, HasSpec, io.bitken.ss.conf.FeatureFlags {

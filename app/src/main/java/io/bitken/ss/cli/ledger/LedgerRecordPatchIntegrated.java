@@ -1,5 +1,6 @@
-package io.bitken.ss.cli;
+package io.bitken.ss.cli.ledger;
 
+import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
@@ -7,7 +8,6 @@ import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.Callable;
 

@@ -1,13 +1,12 @@
-package io.bitken.ss.cli;
+package io.bitken.ss.cli.worker;
 
+import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.workflow.WorkflowException;
 import io.bitken.ss.workflow.WorkflowService;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 public class WorkerInit implements Callable<Integer>, HasSpec, io.bitken.ss.conf.FeatureFlags {

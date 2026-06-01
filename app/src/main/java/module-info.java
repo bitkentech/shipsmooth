@@ -13,4 +13,8 @@ module io.bitken.ss {
     opens io.bitken.ss.jaxb to jakarta.xml.bind;
     opens io.bitken.ss.ledger to com.fasterxml.jackson.databind;
     opens io.bitken.ss.workflow.integration to com.fasterxml.jackson.databind;
+  opens io.bitken.ss.cli.ledger to info.picocli;
+    opens io.bitken.ss.cli.worker to info.picocli;
+    opens io.bitken.ss.cli.task to info.picocli;
+    opens io.bitken.ss.cli.plan to info.picocli;
 }

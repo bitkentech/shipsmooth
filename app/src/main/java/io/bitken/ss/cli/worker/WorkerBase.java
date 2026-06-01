@@ -1,5 +1,6 @@
-package io.bitken.ss.cli;
+package io.bitken.ss.cli.worker;
 
+import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.gw.TaskStore;
 import jakarta.inject.Inject;

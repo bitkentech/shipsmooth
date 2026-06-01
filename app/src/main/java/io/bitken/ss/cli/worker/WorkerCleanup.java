@@ -1,5 +1,6 @@
-package io.bitken.ss.cli;
+package io.bitken.ss.cli.worker;
 
+import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.Event;
