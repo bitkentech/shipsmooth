@@ -33,7 +33,13 @@
             <created-from>plan-62-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-01T18:54:23.389+05:30</timestamp>
+                    <message>JTE @*...*@ comment leaked verbatim into rendered SKILL.md (not supported in this .md template flavor); removed it — ordering rationale lives in the plan, not the rendered skill.</message>
+                </deviation>
+            </deviations>
             <depends-on>1</depends-on>
         </task>
         <task>
