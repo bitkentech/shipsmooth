@@ -35,4 +35,19 @@ class EnvTest {
     void dev_isDev_true() {
         assertTrue(Env.DEV.isDev());
     }
+
+    @Test
+    void from_dev_isDev() {
+        assertEquals(Env.DEV, Env.from("dev"));
+    }
+
+    @Test
+    void from_prod_isProd() {
+        assertEquals(Env.PROD, Env.from("prod"));
+    }
+
+    @Test
+    void from_unknown_defaultsToProd() {
+        assertEquals(Env.PROD, Env.from("anything-else"));
+    }
 }
