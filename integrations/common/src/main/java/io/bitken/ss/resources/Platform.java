@@ -5,6 +5,14 @@ public sealed interface Platform permits Platform.Claude, Platform.Gemini {
     Platform CLAUDE = new Claude();
     Platform GEMINI = new Gemini();
 
+    static Platform from(String prop) {
+        return switch (prop) {
+            case "claude", "windows" -> CLAUDE;
+            case "gemini"            -> GEMINI;
+            default -> throw new IllegalArgumentException("Unknown platform: " + prop);
+        };
+    }
+
     String id();
     String skillFragmentDir();
 

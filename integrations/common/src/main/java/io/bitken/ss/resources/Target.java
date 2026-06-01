@@ -4,12 +4,9 @@ public record Target(Platform platform, Os os, Env env) {
 
     public static Target from(String platformProp, String envProp) {
         Env env = "dev".equals(envProp) ? Env.DEV : Env.PROD;
-        return switch (platformProp) {
-            case "claude"   -> new Target(Platform.CLAUDE, Os.POSIX,    env);
-            case "windows"  -> new Target(Platform.CLAUDE, Os.WINDOWS,  env);
-            case "gemini"   -> new Target(Platform.GEMINI, Os.POSIX,    env);
-            default -> throw new IllegalArgumentException("Unknown platform: " + platformProp);
-        };
+        Platform platform = Platform.from(platformProp);
+        Os os = "windows".equals(platformProp) ? Os.WINDOWS : Os.POSIX;
+        return new Target(platform, os, env);
     }
 
     public String cliBin(String pluginName, String version) {
