@@ -16,13 +16,11 @@ class HooksRenderer {
 
     private final ObjectMapper mapper;
     private final PluginModel model;
-    private final Os os;
     private final Path outputDir;
 
-    HooksRenderer(ObjectMapper mapper, PluginModel model, Os os, Path outputDir) {
+    HooksRenderer(ObjectMapper mapper, PluginModel model, Path outputDir) {
         this.mapper = mapper;
         this.model = model;
-        this.os = os;
         this.outputDir = outputDir;
     }
 
@@ -30,7 +28,7 @@ class HooksRenderer {
         Path hooksDir = outputDir.resolve("hooks");
         Files.createDirectories(hooksDir);
 
-        String command = os.hookCommand(hooksDir, model.repoName(), model.pluginName(), model.pluginVersion());
+        String command = model.os().hookCommand(hooksDir, model.repoName(), model.pluginName(), model.pluginVersion());
 
         ObjectNode hook = mapper.createObjectNode()
             .put("type", "command")

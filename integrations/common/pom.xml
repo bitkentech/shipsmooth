@@ -96,13 +96,13 @@
             </configuration>
           </execution>
 
-          <!-- 4. Run ResourceBuilder to render JTE templates into ${build.outputDir} -->
+          <!-- 4. Run Target to render JTE templates into ${build.outputDir} -->
           <execution>
             <id>render-plugin-resources</id>
             <phase>compile</phase>
             <goals><goal>java</goal></goals>
             <configuration>
-              <mainClass>io.bitken.ss.resources.ResourceBuilder</mainClass>
+              <mainClass>io.bitken.ss.resources.Target</mainClass>
               <systemProperties>
                 <systemProperty>
                   <key>build.outputDir</key>

@@ -10,7 +10,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ResourceBuilderIntegrationTest {
+class TargetIntegrationTest {
 
     @TempDir
     Path tempDir;
@@ -30,7 +30,7 @@ class ResourceBuilderIntegrationTest {
     @Test
     void skillMdIsRenderedForDevProfile() throws Exception {
         setDevProps();
-        ResourceBuilder.main(new String[]{});
+        Target.main(new String[]{});
 
         Path output = tempDir.resolve("skills/start-dev/SKILL.md");
         assertTrue(Files.exists(output), "SKILL.md should be written");
@@ -47,7 +47,7 @@ class ResourceBuilderIntegrationTest {
     @Test
     void hooksJsonIsRenderedForDevProfile() throws Exception {
         setDevProps();
-        ResourceBuilder.main(new String[]{});
+        Target.main(new String[]{});
 
         Path output = tempDir.resolve("hooks/hooks.json");
         assertTrue(Files.exists(output), "hooks.json should be written");
@@ -60,7 +60,7 @@ class ResourceBuilderIntegrationTest {
     @Test
     void hooksJsonIsRenderedForProdProfile() throws Exception {
         setProdProps();
-        ResourceBuilder.main(new String[]{});
+        Target.main(new String[]{});
 
         Path output = tempDir.resolve("hooks/hooks.json");
         assertTrue(Files.exists(output), "hooks.json should be written");
@@ -73,7 +73,7 @@ class ResourceBuilderIntegrationTest {
     @Test
     void sessionStartConfigIsWrittenForDevProfile() throws Exception {
         setDevProps();
-        ResourceBuilder.main(new String[]{});
+        Target.main(new String[]{});
 
         Path output = tempDir.resolve("dist/session-start-config.json");
         assertTrue(Files.exists(output), "session-start-config.json should be written");
@@ -100,7 +100,7 @@ class ResourceBuilderIntegrationTest {
         System.setProperty("shipsmooth.jlink.dir", "");
         System.setProperty("experimental.enabled", "false");
 
-        ResourceBuilder.main(new String[]{});
+        Target.main(new String[]{});
 
         Path output = tempDir.resolve("skills/start/SKILL.md");
         assertTrue(Files.exists(output), "SKILL.md should be written");
@@ -115,7 +115,7 @@ class ResourceBuilderIntegrationTest {
     @Test
     void parallelContentIsRemovedFromBaseSkill() throws Exception {
         setDevProps();
-        ResourceBuilder.main(new String[]{});
+        Target.main(new String[]{});
 
         Path baseSkill = tempDir.resolve("skills/start-dev/SKILL.md");
         assertTrue(Files.exists(baseSkill), "base SKILL.md should be written");
@@ -131,7 +131,7 @@ class ResourceBuilderIntegrationTest {
     @Test
     void experimentalParallelSkillIsRendered() throws Exception {
         setDevProps();
-        ResourceBuilder.main(new String[]{});
+        Target.main(new String[]{});
 
         Path parallelSkill = tempDir.resolve("skills/experimental-start-parallel-dev/SKILL.md");
         assertTrue(Files.exists(parallelSkill),
@@ -149,7 +149,7 @@ class ResourceBuilderIntegrationTest {
     @Test
     void sessionStartConfigForProdContainsName() throws Exception {
         setProdProps();
-        ResourceBuilder.main(new String[]{});
+        Target.main(new String[]{});
 
         Path output = tempDir.resolve("dist/session-start-config.json");
         assertTrue(Files.exists(output), "session-start-config.json should be written");
@@ -162,7 +162,7 @@ class ResourceBuilderIntegrationTest {
     @Test
     void cliBinInSkillMdUsesProdSubdir() throws Exception {
         setProdProps();
-        ResourceBuilder.main(new String[]{});
+        Target.main(new String[]{});
 
         String content = Files.readString(tempDir.resolve("skills/start/SKILL.md"));
         assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.2.0/bin/shipsmooth"),
@@ -174,7 +174,7 @@ class ResourceBuilderIntegrationTest {
     @Test
     void cliBinInSkillMdUsesDevSubdir() throws Exception {
         setDevProps();
-        ResourceBuilder.main(new String[]{});
+        Target.main(new String[]{});
 
         String content = Files.readString(tempDir.resolve("skills/start-dev/SKILL.md"));
         assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth"),
@@ -184,7 +184,7 @@ class ResourceBuilderIntegrationTest {
     @Test
     void hooksJsonForWindowsProfile_usesCmdExeXcopy() throws Exception {
         setWindowsProps();
-        ResourceBuilder.main(new String[]{});
+        Target.main(new String[]{});
 
         Path output = tempDir.resolve("hooks/hooks.json");
         assertTrue(Files.exists(output), "hooks.json should be written");
@@ -205,7 +205,7 @@ class ResourceBuilderIntegrationTest {
     @Test
     void skillMdForWindowsProfile_usesLocalAppDataPath() throws Exception {
         setWindowsProps();
-        ResourceBuilder.main(new String[]{});
+        Target.main(new String[]{});
 
         String content = Files.readString(tempDir.resolve("skills/start/SKILL.md"));
         assertTrue(content.contains("%LOCALAPPDATA%\\shipsmooth\\0.3.10\\runtime\\bin\\shipsmooth.cmd"),

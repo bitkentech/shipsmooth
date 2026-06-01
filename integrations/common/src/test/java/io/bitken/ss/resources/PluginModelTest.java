@@ -7,28 +7,23 @@ import static org.junit.jupiter.api.Assertions.*;
 class PluginModelTest {
 
     private static PluginModel claudeProd() {
-        Target target = Target.from("claude", "posix", "prod");
-        return new PluginModel("shipsmooth", "0.3.10", "desc", "start",
-            target.cliBin("shipsmooth", "0.3.10"), "", target, "", "shipsmooth");
+        return Target.from("claude", "posix", "prod")
+            .buildPluginModel("shipsmooth", "0.3.10", "desc", "start", "", "", null);
     }
 
     private static PluginModel windowsProd() {
-        Target target = Target.from("claude", "windows", "prod");
-        return new PluginModel("shipsmooth", "0.3.10", "desc", "start",
-            target.cliBin("shipsmooth", "0.3.10"), "", target, "", "shipsmooth-windows");
+        return Target.from("claude", "windows", "prod")
+            .buildPluginModel("shipsmooth", "0.3.10", "desc", "start", "", "", "shipsmooth-windows");
     }
 
     @Test
-    void target_returnsPlatformAndOs() {
-        PluginModel m = claudeProd();
-        assertEquals(Platform.CLAUDE, m.target().platform());
-        assertEquals(Os.POSIX, m.target().os());
+    void posix_os_isCorrect() {
+        assertEquals(Os.POSIX, claudeProd().os());
     }
 
     @Test
-    void windows_target_hasWindowsOs() {
-        PluginModel m = windowsProd();
-        assertEquals(Os.WINDOWS, m.target().os());
+    void windows_os_isCorrect() {
+        assertEquals(Os.WINDOWS, windowsProd().os());
     }
 
     @Test
@@ -57,9 +52,8 @@ class PluginModelTest {
 
     @Test
     void gemini_isGemini_true() {
-        Target target = Target.from("gemini", "posix", "prod");
-        PluginModel m = new PluginModel("shipsmooth", "0.3.10", "desc", "start",
-            target.cliBin("shipsmooth", "0.3.10"), "", target, "", "shipsmooth");
+        PluginModel m = Target.from("gemini", "posix", "prod")
+            .buildPluginModel("shipsmooth", "0.3.10", "desc", "start", "", "", null);
         assertTrue(m.isGemini());
     }
 
