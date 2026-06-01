@@ -22,6 +22,11 @@ public enum Os {
         return "${XDG_CACHE_HOME:-~/.cache}/" + cacheSubdir + "/runtime-" + version + "/bin/" + launcherFileName();
     }
 
+    /** Resolves Os from a packaging target string (e.g. "win32-x64" → WINDOWS, "linux-x64" → POSIX). */
+    public static Os fromPackagingTarget(String target) {
+        return target.startsWith("win32") ? WINDOWS : POSIX;
+    }
+
     /** Writes any OS-specific hook files to hooksDir and returns the hook command string. */
     public String hookCommand(Path hooksDir, String repoName, String pluginName, String version) throws IOException {
         if (this == POSIX) {

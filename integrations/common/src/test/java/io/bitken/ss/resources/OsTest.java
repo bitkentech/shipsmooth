@@ -78,4 +78,19 @@ class OsTest {
         assertTrue(cmd.contains("session-start.js"), "Posix hook must reference session-start.js");
         assertFalse(Files.list(hooksDir).findAny().isPresent(), "Posix hook must not write any files");
     }
+
+    @Test
+    void fromPackagingTarget_win32_isWindows() {
+        assertEquals(Os.WINDOWS, Os.fromPackagingTarget("win32-x64"));
+    }
+
+    @Test
+    void fromPackagingTarget_linux_isPosix() {
+        assertEquals(Os.POSIX, Os.fromPackagingTarget("linux-x64"));
+    }
+
+    @Test
+    void fromPackagingTarget_macOs_isPosix() {
+        assertEquals(Os.POSIX, Os.fromPackagingTarget("darwin-arm64"));
+    }
 }
