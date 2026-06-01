@@ -38,16 +38,14 @@ public class ResourceBuilder {
     }
 
     private static ResourceBuilder fromProperties() {
-        BuildProfile profile = BuildProfile.fromProperties();
-        PluginModel baseModel = PluginModel.fromProperties(profile);
+        PluginModel baseModel = PluginModel.fromProperties();
         Path outputDir = Path.of(System.getProperty("build.outputDir"));
         String startBase = System.getProperty("plugin.skill.start.basename");
         ObjectMapper mapper = new ObjectMapper();
-        Os os = profile.isWindows() ? Os.WINDOWS : Os.POSIX;
 
         return new ResourceBuilder(
-            new SkillRenderer(profile, baseModel, outputDir, startBase),
-            new HooksRenderer(mapper, baseModel, os, outputDir),
+            new SkillRenderer(baseModel, outputDir, startBase),
+            new HooksRenderer(mapper, baseModel, baseModel.target().os(), outputDir),
             new SessionStartConfigRenderer(mapper, baseModel, outputDir),
             Boolean.parseBoolean(System.getProperty("experimental.enabled", "false"))
         );

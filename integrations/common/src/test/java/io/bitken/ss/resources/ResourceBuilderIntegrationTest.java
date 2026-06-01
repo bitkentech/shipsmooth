@@ -207,8 +207,8 @@ class ResourceBuilderIntegrationTest {
         ResourceBuilder.main(new String[]{});
 
         String content = Files.readString(tempDir.resolve("skills/start/SKILL.md"));
-        assertTrue(content.contains("%LOCALAPPDATA%\\shipsmooth\\0.3.10\\runtime\\bin\\shipsmooth.bat"),
-            "Windows SKILL.md must reference LOCALAPPDATA stable path");
+        assertTrue(content.contains("%LOCALAPPDATA%\\shipsmooth\\0.3.10\\runtime\\bin\\shipsmooth.cmd"),
+            "Windows SKILL.md must reference LOCALAPPDATA stable path with .cmd launcher");
         assertFalse(content.contains("XDG_CACHE_HOME"),
             "Windows SKILL.md must not reference XDG_CACHE_HOME");
     }

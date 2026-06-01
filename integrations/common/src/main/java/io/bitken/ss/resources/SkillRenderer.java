@@ -16,14 +16,12 @@ import java.util.List;
 class SkillRenderer {
 
     private final TemplateEngine engine;
-    private final BuildProfile profile;
     private final PluginModel baseModel;
     private final Path outputDir;
     private final String startBase;
 
-    SkillRenderer(BuildProfile profile, PluginModel baseModel, Path outputDir, String startBase) {
+    SkillRenderer(PluginModel baseModel, Path outputDir, String startBase) {
         this.engine = TemplateEngine.createPrecompiled(ContentType.Plain);
-        this.profile = profile;
         this.baseModel = baseModel;
         this.outputDir = outputDir;
         this.startBase = startBase;
@@ -51,7 +49,7 @@ class SkillRenderer {
     }
 
     private SkillVariant skillVariant(String template, String baseName, String description) {
-        String skillName = profile.skillName(baseName);
+        String skillName = baseModel.skillName(baseName);
         return new SkillVariant(template, skillName, frontmatter(skillName, description));
     }
 
