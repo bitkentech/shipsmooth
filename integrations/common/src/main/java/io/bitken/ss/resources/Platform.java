@@ -7,7 +7,10 @@ public sealed interface Platform permits Platform.Claude, Platform.Gemini {
 
     String id();
     String skillFragmentDir();
-    String cacheSubdir(String basePluginName, Env env);
+
+    default String cacheSubdir(String basePluginName, Env env) {
+        return env.decorate(basePluginName);
+    }
 
     record Claude() implements Platform {
 
@@ -19,11 +22,6 @@ public sealed interface Platform permits Platform.Claude, Platform.Gemini {
         @Override
         public String skillFragmentDir() {
             return "start/claude";
-        }
-
-        @Override
-        public String cacheSubdir(String basePluginName, Env env) {
-            return env.decorate(basePluginName);
         }
     }
 
@@ -37,11 +35,6 @@ public sealed interface Platform permits Platform.Claude, Platform.Gemini {
         @Override
         public String skillFragmentDir() {
             return "start/gemini";
-        }
-
-        @Override
-        public String cacheSubdir(String basePluginName, Env env) {
-            return env.decorate(basePluginName);
         }
     }
 }
