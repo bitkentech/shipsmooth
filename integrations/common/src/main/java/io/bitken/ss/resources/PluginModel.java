@@ -57,7 +57,7 @@ public record PluginModel(
     }
 
     public boolean isGemini() {
-        return target.platform() == Platform.GEMINI;
+        return target.platform() instanceof Platform.Gemini;
     }
 
     public String skillFragmentDir() {

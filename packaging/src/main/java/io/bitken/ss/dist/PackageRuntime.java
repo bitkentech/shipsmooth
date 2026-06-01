@@ -63,7 +63,7 @@ public class PackageRuntime {
 
             byte[] launcher = buildLauncher().getBytes();
             ZipArchiveEntry launcherEntry = new ZipArchiveEntry(launcherName);
-            if (os == Os.POSIX) {
+            if (os instanceof Os.Posix) {
                 launcherEntry.setUnixMode(UnixStat.FILE_FLAG | 0755);
             }
             launcherEntry.setSize(launcher.length);
@@ -89,7 +89,7 @@ public class PackageRuntime {
     }
 
     private String buildLauncher() {
-        if (os == Os.WINDOWS) {
+        if (os instanceof Os.Windows) {
             return buildWindowsLauncher();
         }
         return buildPosixLauncher();
