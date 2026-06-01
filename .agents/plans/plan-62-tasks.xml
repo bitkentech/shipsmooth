@@ -4,18 +4,18 @@
     <plan-version>plan-62-v4</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-01</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Add two-phase execution contract + rule-priority block to the top-level template</name>
             <commit>4e6e4a5693131aaf6f3ff7863277561bb53ec21f</commit>
             <created-from>plan-62-v3</created-from>
-            <closed-at-version></closed-at-version>
+            <closed-at-version>plan-62-v4</closed-at-version>
             <comments>
                 <comment>
                     <timestamp>2026-06-01T18:30:05.651+05:30</timestamp>
@@ -27,11 +27,11 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Reorder rule includes into priority order (mechanical rules last)</name>
             <commit>14e6056c7fa16ad141efe9d98ba87a78a092599d</commit>
             <created-from>plan-62-v3</created-from>
-            <closed-at-version></closed-at-version>
+            <closed-at-version>plan-62-v4</closed-at-version>
             <comments/>
             <deviations>
                 <deviation>
@@ -45,11 +45,11 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Add mechanism ("Why this matters") blocks to high-value exemplars</name>
             <commit>d961e028ab711fc32ba6e43798018ae65429250b</commit>
             <created-from>plan-62-v3</created-from>
-            <closed-at-version></closed-at-version>
+            <closed-at-version>plan-62-v4</closed-at-version>
             <comments/>
             <deviations/>
             <depends-on>1</depends-on>
@@ -57,11 +57,11 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Authorize new domain types in the primitive-obsession rule</name>
             <commit>c18e5b28b5d62c76491919201425e8e63e946a71</commit>
             <created-from>plan-62-v3</created-from>
-            <closed-at-version></closed-at-version>
+            <closed-at-version>plan-62-v4</closed-at-version>
             <comments/>
             <deviations/>
             <depends-on>1</depends-on>
@@ -69,11 +69,11 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Add scratchpad / phase-boundary instruction to the contract</name>
             <commit>76ce78f3c5b4fbccb60315dda5c0fd5ae50282af</commit>
             <created-from>plan-62-v3</created-from>
-            <closed-at-version></closed-at-version>
+            <closed-at-version>plan-62-v4</closed-at-version>
             <comments/>
             <deviations/>
             <depends-on>1</depends-on>
@@ -81,11 +81,11 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Add render assertion to TargetIntegrationTest</name>
             <commit>d461682</commit>
             <created-from>plan-62-v3</created-from>
-            <closed-at-version></closed-at-version>
+            <closed-at-version>plan-62-v4</closed-at-version>
             <comments>
                 <comment>
                     <timestamp>2026-06-01T18:50:51.611+05:30</timestamp>
@@ -98,11 +98,11 @@
         <task>
             <id>7</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Add caller's-eye-view reframe to Phase 1 + SRP rule to defeat ownership/naming anchor</name>
             <commit>910093a</commit>
             <created-from>plan-62-v4</created-from>
-            <closed-at-version></closed-at-version>
+            <closed-at-version>plan-62-v4</closed-at-version>
             <comments>
                 <comment>
                     <timestamp>2026-06-01T19:30:00.000+05:30</timestamp>
@@ -122,6 +122,11 @@
         <update>
             <timestamp>2026-06-01T19:30:00.000+05:30</timestamp>
             <message>v4: post-implementation validation of the v3 skill against the original Target.java surfaced a residual anchor (ownership/naming, not structure). Added Task 7 to add a caller's-eye-view reframe to Phase 1 + SRP. Scope addition beyond the original structural-anchoring fixes, hence version bump.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-01T22:30:00.000+05:30</timestamp>
+            <message>Plan closed out as complete at plan-62-v4. All 7 tasks closed. Skill restructure shipped and merged to main (9a3b3f0); v4 caller's-eye reframe behaviorally confirmed on the original Target.java (model reaches the orchestrator extraction unprompted). Deferred follow-up unchanged: wire a deterministic linter to replace the retained mechanical rules.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
