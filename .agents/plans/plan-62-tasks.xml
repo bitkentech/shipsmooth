@@ -11,12 +11,17 @@
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add two-phase execution contract + rule-priority block to the top-level template</name>
-            <commit></commit>
+            <commit>4e6e4a5693131aaf6f3ff7863277561bb53ec21f</commit>
             <created-from>plan-62-v3</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-01T18:30:05.651+05:30</timestamp>
+                    <message>De-risk draft ready for review: two-phase provenance-split contract + priority block renders, integration test green</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>

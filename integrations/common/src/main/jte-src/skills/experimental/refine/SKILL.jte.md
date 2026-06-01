@@ -61,19 +61,25 @@ constructed with `null` fields just to call one method) to satisfy a lower-prior
 - If there's no easy choice between different options, always ask the user. Provide the
   various options and a free form text field where they can provide their own input.
 
-@template.skills.experimental.refine.rules.srp(model = model)
-@template.skills.experimental.refine.rules.class-structure(model = model)
+@*
+ * Rule fragments are ordered by the priority declared in the Execution Contract:
+ * judgment-level rules first, then the mechanical limits last. The mechanical rules
+ * are retained (no deterministic linter exists yet) but rendered lowest so they do
+ * not crowd the high-priority region.
+ *@
 @template.skills.experimental.refine.rules.rich-domain(model = model)
+@template.skills.experimental.refine.rules.class-structure(model = model)
+@template.skills.experimental.refine.rules.srp(model = model)
 @template.skills.experimental.refine.rules.single-source(model = model)
-@template.skills.experimental.refine.rules.private-final-fields(model = model)
 @template.skills.experimental.refine.rules.constructor-di(model = model)
+@template.skills.experimental.refine.rules.private-final-fields(model = model)
 @template.skills.experimental.refine.rules.avoid-primitives(model = model)
 @template.skills.experimental.refine.rules.static-rare(model = model)
 @template.skills.experimental.refine.rules.method-ordering(model = model)
 @template.skills.experimental.refine.rules.method-structure(model = model)
-@template.skills.experimental.refine.rules.method-length(model = model)
 @template.skills.experimental.refine.rules.ternaries-booleans(model = model)
-@template.skills.experimental.refine.rules.file-length(model = model)
-@template.skills.experimental.refine.rules.if-nesting(model = model)
-@template.skills.experimental.refine.rules.if-block-length(model = model)
 @template.skills.experimental.refine.rules.package-structure(model = model)
+@template.skills.experimental.refine.rules.method-length(model = model)
+@template.skills.experimental.refine.rules.if-block-length(model = model)
+@template.skills.experimental.refine.rules.if-nesting(model = model)
+@template.skills.experimental.refine.rules.file-length(model = model)
