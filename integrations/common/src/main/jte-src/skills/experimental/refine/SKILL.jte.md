@@ -17,11 +17,20 @@ in natural language and must not write a single line of new code until PHASE 1 i
 Read the target code **once** and extract its requirements. Split the extraction into two
 labelled subsections so it is always explicit *where* each requirement came from:
 
+**Caller's-eye view (do this first, before reading for structure)**
+Ignore the existing class and method names. From the perspective of the code that *calls*
+this — what single object does the caller want to name, and what verb do they want to call on
+it? Write that call site as one line, e.g. `new BuildTarget(settings).build()`. The existing
+top-level type may turn out to be an *internal collaborator* of that object rather than the
+public surface — do **not** assume the current top-level class is the object the caller wants.
+
 **Requirements from production code**
 - Inputs, state mutations, outputs, and downstream collaborators/renderers.
 - Invariants enforced by the code itself.
-- From *this* subsection — and only this one — derive the proposed new class shape: which
-  parameters move into the constructor, what each method does, and the dependency direction.
+- From *this* subsection — and only this one — derive the class shape that serves the
+  caller's-eye view above: which class is the public surface and which become its private
+  collaborators, which parameters move into the constructor, what each method does, and the
+  dependency direction.
 
 **Requirements from tests**
 - The invariants the tests assert (guards, defaults, error cases).

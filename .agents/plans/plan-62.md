@@ -17,7 +17,7 @@ The rendered artifact lands at `build/skills/experimental-refine-dev/SKILL.md` v
 
 ### What went wrong (evidence)
 
-`docs/observations/2026-06-01-refine-session-1.md` records a refine session on
+`docs/observations/2026-06-01-refine-session-1/01-v3-baseline.md` records a refine session on
 `Target.java` that reached good final code but took **11 user interventions** to get
 there. The LLM hill-climbed through small, anchored edits — the exact opposite of the
 skill's headline instruction ("be very ambitious… clean-slate re-derivation"). Two
@@ -194,6 +194,32 @@ the two provenance subsection headings (*requirements from production code* /
 *requirements from tests*) and the scratchpad-path marker (`.agents/tmp/refine-`). Proves
 the restructured JTE assembly renders and guards against regressions. (No "must-not-contain"
 check for mechanical-rule headings, since those rules are retained.)
+
+### Task 7: Add caller's-eye-view reframe to Phase 1 + SRP rule [Low] (added in v4)
+*Depends-on: 1*
+
+**Why (validation finding, 2026-06-01):** A post-implementation validation run of the v3
+skill against the *original* `Target.java` (commit `8aac5c5`, isolated worktree at
+`~/tmp/shipsmooth`) showed the restructure defeats **structural** anchoring as designed —
+the model produced a one-shot Phase-1 architectural extraction, correctly surfaced the
+validation-bypass trade-off before generating, and held its recommendation under user
+override instead of caving. But it did **not** defeat **ownership/naming** anchoring: it
+inherited the existing code's premise that `Target`-the-`(Platform,Os,Env)`-triple is the
+central value object to protect, and asked only *how should `Target` be shaped*, never *what
+object/verb does the caller actually want*. The user had to supply the reframe manually
+(`new BuildTarget(settings).build()` — the triple is an internal collaborator, not the
+public surface). This is the §III.4 autoregressive anchor surviving in a subtler form: the
+model escaped the code's *structure* but not its *naming/ownership decisions*.
+
+**Change:** Add a "Caller's-eye view (do this first, before reading for structure)" step at
+the top of Phase 1 in `SKILL.jte.md` that forces the model to name the caller's object and
+verb — and write the call site as one line — *before* reading the existing class for
+structure, explicitly warning that the current top-level type may be an internal
+collaborator rather than the public surface. Reword the production-code class-shape
+derivation to ask which class is the public surface vs which become private collaborators.
+Amend `rules/srp.jte.md` so its class-validation test also asks whether the class name is
+the one a *caller* would reach for. Phase-1-only framing change plus a one-line SRP tweak —
+**no new rule**, preserving the attention budget (consistent with the anti-dilution goal).
 
 ## Open questions
 

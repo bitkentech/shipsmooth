@@ -4,7 +4,9 @@
 - For methods: A method or function should have only one responsibility, usually indicated 
 by the name itself
 - How to validate this for classes: 1) Guess its publicly facing functionality based on its 
-name, and the guess should turn out largely correct 2) Anything you missed should be conveyable in 2-3 lines 
+name, and the guess should turn out largely correct — and ask whether that name is the one a 
+*caller* would reach for; if the caller wants a different object/verb, the public surface 
+belongs on that object and this class may be its internal collaborator 2) Anything you missed should be conveyable in 2-3 lines 
 of comments above the class name. 3) Is it taking too many constructor parameters 4) Are its public 
 facing method names wildly different? 4) If you're receiving another object as collaborator,
 and using only one slice of its overall cohesive functionality, then you can receive it as an
