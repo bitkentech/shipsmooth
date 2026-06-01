@@ -56,9 +56,8 @@ public record PluginModel(
         return target.env().decorate(base);
     }
 
-    /** Bridge for JTE templates until Task 8 replaces model.platform() calls with skillFragmentDir(). */
-    public String platform() {
-        return target.platform().id();
+    public boolean isGemini() {
+        return target.platform() == Platform.GEMINI;
     }
 
     public String skillFragmentDir() {

@@ -49,4 +49,22 @@ class PluginModelTest {
     void hasJlinkDir_false_whenBlank() {
         assertFalse(claudeProd().hasJlinkDir());
     }
+
+    @Test
+    void claude_isGemini_false() {
+        assertFalse(claudeProd().isGemini());
+    }
+
+    @Test
+    void gemini_isGemini_true() {
+        Target target = Target.from("gemini", "prod");
+        PluginModel m = new PluginModel("shipsmooth", "0.3.10", "desc", "start",
+            target.cliBin("shipsmooth", "0.3.10"), "", target, "", "shipsmooth");
+        assertTrue(m.isGemini());
+    }
+
+    @Test
+    void skillFragmentDir_claude_isStartClaude() {
+        assertEquals("start/claude", claudeProd().skillFragmentDir());
+    }
 }
