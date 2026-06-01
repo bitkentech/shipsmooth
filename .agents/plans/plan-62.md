@@ -53,8 +53,11 @@ independent analyses (this session's, and a second AI's, both grounded in
 Turn the skill from a passive rule list into an active forcing function by:
 
 1. Replacing the abstract "clean-slate re-derivation" instruction with a mandatory
-   two-phase output contract (Phase 1: architectural extraction in natural language;
-   Phase 2: clean-slate generation from the Phase-1 proposal only).
+   two-phase output contract (Phase 1: architectural extraction in natural language,
+   split by provenance into *requirements from production code* vs *requirements from
+   tests* so the model is explicit about where each requirement came from and test
+   structure cannot anchor the design; Phase 2: clean-slate generation from the Phase-1
+   production requirements only).
 2. Adding an explicit rule-priority ordering and reordering the `@template` includes so
    the highest-priority rules (rich domain, class structure) render first.
 3. Removing the mechanical/linter-checkable rule fragments from the skill
@@ -86,13 +89,36 @@ Turn the skill from a passive rule list into an active forcing function by:
 ### Task 1: Add two-phase execution contract + rule-priority block to the top-level template [Medium]
 *Depends-on:*
 
-Rewrite the Execution Contract in `SKILL.jte.md` to mandate the two-phase output format
-(Phase 1 architectural extraction in natural language — requirements, proposed class
-shape, which params move to constructor, dependency direction; Phase 2 clean-slate
-generation from the Phase-1 proposal only, with an explicit "if you find yourself making
-a chain of small edits, STOP and re-derive" clause). Add a Rule-Priority block listing
-the rules in precedence order with a tie-break instruction that forbids introducing a
-`static` factory or half-initialized object to satisfy a lower-priority rule.
+Rewrite the Execution Contract in `SKILL.jte.md` to mandate the two-phase output format.
+
+**Phase 1 — Architectural Extraction (natural language only).** The extraction is split
+by *provenance* into two labelled subsections so the model is explicit about where each
+requirement came from:
+
+- *Requirements from production code* — inputs, state mutations, outputs, downstream
+  collaborators/renderers, and invariants enforced by the code itself. The proposed new
+  class shape (which params move to the constructor, dependency direction) is derived from
+  **this** section.
+- *Requirements from tests* — invariants the tests assert (guards, defaults, error cases).
+  A note states these constrain **behaviour only**; test structure is **not** a template
+  for the class's constructor/method shape. If the re-derived structure changes the
+  surface tests touch, the tests are rewritten to match — and no test is deleted without
+  surfacing it to the user.
+
+The provenance split is the anti-anchoring mechanism: separating "came from production"
+from "came from a test" forces the model to notice when test structure is leaking into the
+design (code-quality §III.4). It de-anchors without blinding the model to the invariants
+tests encode.
+
+**Phase 2 — Clean-Slate Generation.** Derive the ideal production structure from the
+*production* requirements subsection alone; treat the *tests* subsection as a behaviour
+checklist to preserve. Generate from the Phase-1 proposal only — do not preserve a
+production method or constructor solely because a test calls it. Include an explicit "if
+you find yourself making a chain of small edits, STOP and re-derive" clause.
+
+Also add a Rule-Priority block listing the rules in precedence order with a tie-break
+instruction that forbids introducing a `static` factory or half-initialized object to
+satisfy a lower-priority rule.
 
 Medium risk: this is the core behavioural change; wording must steer without bloating the
 attention budget, and it interacts with the include reordering in Task 2.
@@ -128,9 +154,10 @@ conservative-edit anchor.
 *Depends-on: 1,2*
 
 Add an assertion in `TargetIntegrationTest` that the rendered
-`experimental-refine-dev/SKILL.md` contains the new two-phase contract marker and does not
-contain the removed mechanical-rule headings. Proves the restructured JTE assembly renders
-and guards against regressions.
+`experimental-refine-dev/SKILL.md` contains the new two-phase contract markers — including
+the two provenance subsection headings (*requirements from production code* /
+*requirements from tests*) — and does not contain the removed mechanical-rule headings.
+Proves the restructured JTE assembly renders and guards against regressions.
 
 ## Open questions
 
@@ -139,3 +166,6 @@ and guards against regressions.
 - ~~Whether to also add mechanism blocks to `single-source` and `constructor-di`~~ —
   resolved during calibration: yes, five exemplars total (rich-domain, class-structure,
   srp, single-source, constructor-di).
+- ~~How to stop test code from anchoring the re-derived structure~~ — resolved: Phase 1
+  extraction is split by provenance (production vs tests); structure derives from the
+  production subsection, tests contribute behaviour-only invariants. Folded into Task 1.
