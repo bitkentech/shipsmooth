@@ -55,6 +55,16 @@ class TargetTest {
         assertThrows(IllegalArgumentException.class, () -> Target.from("unknown", "posix", "prod"));
     }
 
+    @Test
+    void windows_gemini_throws() {
+        assertThrows(IllegalArgumentException.class, () -> Target.from("gemini", "windows", "prod"));
+    }
+
+    @Test
+    void windows_dev_throws() {
+        assertThrows(IllegalArgumentException.class, () -> Target.from("claude", "windows", "dev"));
+    }
+
     // --- convenience delegators ---
 
     @Test
