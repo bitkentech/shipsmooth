@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>61</plan>
+    <plan-version>plan-61-v1</plan-version>
+    <metadata>
+        <backlog-issue>local: typed-build-target-axes</backlog-issue>
+        <status>complete</status>
+        <created>2026-06-01</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Introduce Env enum and fold suffix logic into it</name>
+            <commit>b65917cfc8a6d68c3a1d6f4e315f737963a56117</commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Introduce sealed Os (Posix, Windows) owning path/launcher shape</name>
+            <commit>684b752eb77b8e2930213153d7b161d6f6b1f90c</commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Introduce sealed Platform (Claude, Gemini) owning agent-axis behaviour</name>
+            <commit>540448187b0af7bdd900cf9199eeda4cf7630eb2</commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Compose axes into Target with a boundary factory</name>
+            <commit>eed82ef9d2e21e259108a501463011ff8823fea6</commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2,3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Move the runtime-install command onto Os; collapse HooksRenderer branch</name>
+            <commit>22f85a4db6315f9a56850fe261f6782b9834d8c3</commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Let packaging's PackageRuntime consume Os</name>
+            <commit>70f61353e02a1a92751889c6c68be3cb67195d41</commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Cut over PluginModel and delete BuildProfile</name>
+            <commit>6a57f858d13f92392134637512201f6526ef6ee1</commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Replace template platform branching with Platform.skillFragmentDir()</name>
+            <commit>7238869f0eafd680a244c948ed66c6ea178dc780</commit>
+            <created-from>plan-61-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>7</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-01T12:31:44.349+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-01T16:39:13.820+05:30</timestamp>
+            <message>Plan complete. All 8 tasks agent-coded. Typed build-target axes (Env, Os, Platform, Target) fully implemented; BuildProfile deleted; template branching replaced.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

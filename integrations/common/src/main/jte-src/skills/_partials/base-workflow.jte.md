@@ -265,7 +265,7 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
   ```
   This creates a stable rollback point. A human reviewing the PR can check out this commit to inspect each task in isolation.
 - `[Linear]` Mark the Linear issue **Agent Coded**.
-@if("gemini".equals(model.platform()))
+@if(model.isGemini())
 @template.skills.start.gemini.set-commit-hardening(model = model)
 @else
 @template.skills.start.claude.set-commit-hardening(model = model)
@@ -287,7 +287,7 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
    git push origin t/{issue-id}-{short-description}
    ```
    - `[Linear]` Mark the Linear issue **Agent Coded**. No draft review needed.
-@if("gemini".equals(model.platform()))
+@if(model.isGemini())
 @template.skills.start.gemini.set-commit-low-risk(model = model)
 @else
 @template.skills.start.claude.set-commit-low-risk(model = model)

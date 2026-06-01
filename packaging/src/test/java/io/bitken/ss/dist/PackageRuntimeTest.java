@@ -1,5 +1,6 @@
 package io.bitken.ss.dist;
 
+import io.bitken.ss.resources.Os;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -133,6 +134,27 @@ public class PackageRuntimeTest {
             assertNotNull(entry);
             String launcherContent = new String(zf.getInputStream(entry).readAllBytes());
             assertTrue(launcherContent.contains("shipsmooth_v0.3.0"), "launcher must embed version in SCC name");
+        }
+    }
+
+    @Test
+    void windowsLauncherEntryNameMatchesOsWindowsLauncherFileName() throws IOException {
+        // Locks packaging and skill-renderer to the same single source of truth
+        Path fakeJdkHome = tempDir.resolve("jdk");
+        Path fakeJlinkImage = tempDir.resolve("jlink-image");
+        Files.createDirectories(fakeJlinkImage.resolve("bin"));
+        Files.writeString(fakeJlinkImage.resolve("bin/shipsmooth"), "fake");
+
+        Path outputDir = tempDir.resolve("dist");
+        Files.createDirectories(outputDir);
+
+        PackageRuntime pr = new PackageRuntime("win32-x64", fakeJdkHome, fakeJlinkImage, outputDir, "0.3.0");
+        pr.run();
+
+        try (var zf = new java.util.zip.ZipFile(outputDir.resolve("shipsmooth-0.3.0-win32-x64.zip").toFile())) {
+            String expectedEntry = "bin/" + Os.WINDOWS.launcherFileName();
+            assertNotNull(zf.getEntry(expectedEntry),
+                "Windows zip launcher entry must equal 'bin/' + Os.WINDOWS.launcherFileName() = " + expectedEntry);
         }
     }
 }

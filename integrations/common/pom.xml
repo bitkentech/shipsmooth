@@ -87,22 +87,22 @@
               <goal>exec</goal>
             </goals>
             <configuration>
-              <executable>npm</executable>
+              <executable>bash</executable>
               <workingDirectory>${project.basedir}/scripts</workingDirectory>
               <arguments>
-                <argument>run</argument>
-                <argument>build</argument>
+                <argument>-c</argument>
+                <argument>[ -d dist ] &amp;&amp; [ dist -nt tasks/session-start.ts ] || npm run build</argument>
               </arguments>
             </configuration>
           </execution>
 
-          <!-- 4. Run ResourceBuilder to render JTE templates into ${build.outputDir} -->
+          <!-- 4. Run Target to render JTE templates into ${build.outputDir} -->
           <execution>
             <id>render-plugin-resources</id>
             <phase>compile</phase>
             <goals><goal>java</goal></goals>
             <configuration>
-              <mainClass>io.bitken.ss.resources.ResourceBuilder</mainClass>
+              <mainClass>io.bitken.ss.resources.Target</mainClass>
               <systemProperties>
                 <systemProperty>
                   <key>build.outputDir</key>

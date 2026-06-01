@@ -1,4 +1,11 @@
 package io.bitken.ss.cli;
+import io.bitken.ss.cli.plan.Init;
+import io.bitken.ss.cli.plan.ProjectUpdate;
+import io.bitken.ss.cli.plan.Show;
+import io.bitken.ss.cli.task.AddComment;
+import io.bitken.ss.cli.task.AddDeviation;
+import io.bitken.ss.cli.task.SetCommit;
+import io.bitken.ss.cli.task.UpdateStatus;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 
 import io.bitken.ss.jaxb.PlanTasks;

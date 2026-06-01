@@ -121,6 +121,7 @@
       <properties>
         <build.env>dev</build.env>
         <build.platform>claude</build.platform>
+        <build.os>posix</build.os>
         <skip.copy-dist>false</skip.copy-dist>
         <skip.copy-plugin-meta>false</skip.copy-plugin-meta>
         <plugin.name>${plugin.base.name}-dev</plugin.name>
@@ -142,6 +143,7 @@
       <properties>
         <build.env>dev</build.env>
         <build.platform>gemini</build.platform>
+        <build.os>posix</build.os>
         <skip.copy-dist>false</skip.copy-dist>
         <skip.copy-plugin-meta>false</skip.copy-plugin-meta>
 
@@ -165,6 +167,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
       <properties>
         <build.env>prod</build.env>
         <build.platform>claude</build.platform>
+        <build.os>posix</build.os>
         <skip.copy-dist>false</skip.copy-dist>
         <skip.copy-plugin-meta>false</skip.copy-plugin-meta>
         <plugin.name>${plugin.base.name}</plugin.name>
@@ -184,7 +187,8 @@ description: Use when starting any task — applies the shipsmooth agent coding 
       <id>windows</id>
       <properties>
         <build.env>prod</build.env>
-        <build.platform>windows</build.platform>
+        <build.platform>claude</build.platform>
+        <build.os>windows</build.os>
         <skip.copy-dist>true</skip.copy-dist>
         <skip.copy-plugin-meta>false</skip.copy-plugin-meta>
         <plugin.name>${plugin.base.name}</plugin.name>
@@ -204,6 +208,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
       <properties>
         <build.env>prod</build.env>
         <build.platform>gemini</build.platform>
+        <build.os>posix</build.os>
         <skip.copy-dist>false</skip.copy-dist>
         <skip.copy-plugin-meta>false</skip.copy-plugin-meta>
         <plugin.description>Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.</plugin.description>

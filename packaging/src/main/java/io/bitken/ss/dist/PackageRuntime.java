@@ -1,5 +1,6 @@
 package io.bitken.ss.dist;
 
+import io.bitken.ss.resources.Os;
 import org.apache.commons.compress.archivers.zip.UnixStat;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -11,15 +12,16 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class PackageRuntime {
 
-    private final String target;
-    // TODO: use jdkHome to smoke-test the staged launcher with `--help` on the native platform (Task 5)
+    private final Os os;
     private final Path jdkHome;
     private final Path jlinkImage;
     private final Path outputDir;
     private final String version;
+    private final String target;
 
     public PackageRuntime(String target, Path jdkHome, Path jlinkImage, Path outputDir, String version) {
         this.target = target;
+        this.os = Os.fromPackagingTarget(target);
         this.jdkHome = jdkHome;
         this.jlinkImage = jlinkImage;
         this.outputDir = outputDir;
@@ -53,17 +55,15 @@ public class PackageRuntime {
             throw new IllegalStateException("jlink image not found at: " + jlinkImage);
         }
 
-        boolean isWindows = target.startsWith("win32");
-        String launcherName = isWindows ? "bin/shipsmooth.cmd" : "bin/shipsmooth";
+        String launcherName = "bin/" + os.launcherFileName();
 
         Path zipPath = outputDir.resolve("shipsmooth-" + version + "-" + target + ".zip");
         try (OutputStream fos = Files.newOutputStream(zipPath);
              ZipArchiveOutputStream zos = new ZipArchiveOutputStream(fos)) {
 
-            // write launcher script
-            byte[] launcher = (isWindows ? buildWindowsLauncher() : buildLauncher()).getBytes();
+            byte[] launcher = buildLauncher().getBytes();
             ZipArchiveEntry launcherEntry = new ZipArchiveEntry(launcherName);
-            if (!isWindows) {
+            if (os instanceof Os.Posix) {
                 launcherEntry.setUnixMode(UnixStat.FILE_FLAG | 0755);
             }
             launcherEntry.setSize(launcher.length);
@@ -71,7 +71,6 @@ public class PackageRuntime {
             zos.write(launcher);
             zos.closeArchiveEntry();
 
-            // copy jlink image into runtime/
             Files.walkFileTree(jlinkImage, new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
@@ -89,29 +88,36 @@ public class PackageRuntime {
         }
     }
 
+    private String buildLauncher() {
+        if (os instanceof Os.Windows) {
+            return buildWindowsLauncher();
+        }
+        return buildPosixLauncher();
+    }
+
     private String buildWindowsLauncher() {
         return "@echo off\r\n"
              + "set \"DIR=%~dp0\"\r\n"
              + "set \"INSTALL=%DIR%..\"\r\n"
              + "set \"SCC_DIR=%LOCALAPPDATA%\\shipsmooth\\scc\"\r\n"
              + "if not exist \"%SCC_DIR%\" mkdir \"%SCC_DIR%\"\r\n"
-             + "\"%INSTALL%\\runtime\\bin\\java.exe\" ^\r\n"
+             + "\"%INSTALL%\\runtime\\bin\\" + os.javaExe() + "\" ^\r\n"
              + "  -Xquickstart ^\r\n"
              + "  -Xshareclasses:name=shipsmooth_v" + version + ",cacheDir=\"%SCC_DIR%\",nonfatal ^\r\n"
              + "  -m io.bitken.ss/io.bitken.ss.cli.Shipsmooth %*\r\n";
     }
 
-    private String buildLauncher() {
+    private String buildPosixLauncher() {
         return """
                 #!/bin/sh
                 DIR="$(cd "$(dirname "$0")" && pwd)"
                 INSTALL="$(cd "$DIR/.." && pwd)"
                 SCC_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth/scc"
                 mkdir -p "$SCC_DIR"
-                exec "$INSTALL/runtime/bin/java" \\
+                exec "$INSTALL/runtime/bin/%s" \\
                   -Xquickstart \\
                   -Xshareclasses:name=shipsmooth_v%s,cacheDir="$SCC_DIR",nonfatal \\
                   -m io.bitken.ss/io.bitken.ss.cli.Shipsmooth "$@"
-                """.formatted(version);
+                """.formatted(os.javaExe(), version);
     }
 }

@@ -1,0 +1,57 @@
+@import io.bitken.ss.resources.PluginModel
+@param PluginModel model
+### Package structure
+Pasting below an example of good and bad file structure for a codebase.  
+**Good:**
+```
+  cli/
+    AddComment.java
+    AddDeviation.java
+    Integrate.java
+  conf/
+    AppComponents.java
+    FeatureFlags.java
+    ServicesModule.java
+    ShipsmoothDataLocator.java
+  gw/
+    GitTags.java
+    TaskStore.java
+  ledger/
+    Event.java
+    EventLedger.java
+    EventType.java
+    ObjectStore.java
+  workflow/
+    WorkflowService.java
+    WorkflowServiceImpl.java
+    integration/
+      IntegrationDefaults.java
+      IntegrationLedger.java
+  module-info.java
+```
+**Bad:**
+``` 
+ TasksCli.java
+  AgentsLayout.java
+  commands/
+    AddCommentCommand.java
+    AddDeviationCommand.java
+    IntegrateCommand.java
+  di/
+    AppComponents.java
+    ServicesModule.java
+  integration/
+    IntegrationDefaults.java
+    IntegrationLedger.java
+  ledger/
+    Event.java
+    EventType.java
+    LedgerService.java
+    ObjectStore.java
+  stability/
+    FeatureFlags.java
+  workflow/
+    WorkflowService.java
+    WorkflowServiceImpl.java
+  module-info.java
+```
