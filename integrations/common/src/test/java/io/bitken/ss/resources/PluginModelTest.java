@@ -7,13 +7,21 @@ import static org.junit.jupiter.api.Assertions.*;
 class PluginModelTest {
 
     private static PluginModel claudeProd() {
-        return Target.from("claude", "posix", "prod")
-            .buildPluginModel("shipsmooth", "0.3.10", "desc", "start", "", "", null);
+        return new PluginModel(
+            "shipsmooth", "0.3.10", "desc", "start",
+            Os.POSIX.cliBinPath("shipsmooth", "0.3.10", Platform.CLAUDE.cacheSubdir("shipsmooth", Env.PROD)),
+            "", Platform.CLAUDE.skillFragmentDir(), false,
+            Os.POSIX, Env.PROD, "", null
+        );
     }
 
     private static PluginModel windowsProd() {
-        return Target.from("claude", "windows", "prod")
-            .buildPluginModel("shipsmooth", "0.3.10", "desc", "start", "", "", "shipsmooth-windows");
+        return new PluginModel(
+            "shipsmooth", "0.3.10", "desc", "start",
+            Os.WINDOWS.cliBinPath("shipsmooth", "0.3.10", Platform.CLAUDE.cacheSubdir("shipsmooth", Env.PROD)),
+            "", Platform.CLAUDE.skillFragmentDir(), false,
+            Os.WINDOWS, Env.PROD, "", "shipsmooth-windows"
+        );
     }
 
     @Test
@@ -52,8 +60,12 @@ class PluginModelTest {
 
     @Test
     void gemini_isGemini_true() {
-        PluginModel m = Target.from("gemini", "posix", "prod")
-            .buildPluginModel("shipsmooth", "0.3.10", "desc", "start", "", "", null);
+        PluginModel m = new PluginModel(
+            "shipsmooth", "0.3.10", "desc", "start",
+            Os.POSIX.cliBinPath("shipsmooth", "0.3.10", Platform.GEMINI.cacheSubdir("shipsmooth", Env.PROD)),
+            "", Platform.GEMINI.skillFragmentDir(), true,
+            Os.POSIX, Env.PROD, "", null
+        );
         assertTrue(m.isGemini());
     }
 

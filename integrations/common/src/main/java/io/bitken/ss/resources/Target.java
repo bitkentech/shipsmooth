@@ -5,88 +5,74 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public record Target(Platform platform, Os os, Env env) {
+public class Target {
 
-    public static void main(String[] args) throws IOException {
-        fromProperties().build();
-    }
+    private final SkillRenderer skillRenderer;
+    private final HooksRenderer hooksRenderer;
+    private final SessionStartConfigRenderer sessionStartConfigRenderer;
+    private final boolean experimentalEnabled;
 
-    private static Target fromProperties() {
-        return Target.from(
-            System.getProperty("build.platform", "claude"),
-            System.getProperty("build.os", "posix"),
-            System.getProperty("build.env", "prod")
-        );
-    }
-
-    public static Target from(String platformProp, String osProp, String envProp) {
-        Platform platform = Platform.from(platformProp);
-        Os os = Os.from(osProp);
-        if (os == Os.WINDOWS && platform != Platform.CLAUDE) {
-            throw new IllegalArgumentException("Windows is only supported with the Claude platform, got: " + platformProp);
-        }
-        Env env = Env.from(envProp);
-        if (os == Os.WINDOWS && env == Env.DEV) {
-            throw new IllegalArgumentException("Windows + Dev environment is not supported");
-        }
-        return new Target(platform, os, env);
-    }
-
-    private void build() throws IOException {
-        String basePluginName = System.getProperty("plugin.base.name");
-        String startBase      = System.getProperty("plugin.skill.start.basename");
-        PluginModel baseModel = buildPluginModel(
-            basePluginName,
-            System.getProperty("plugin.version"),
-            System.getProperty("plugin.description"),
-            startBase,
-            System.getProperty("skill.frontmatter", ""),
-            System.getProperty("shipsmooth.jlink.dir", ""),
-            System.getProperty("plugin.repo.name")
-        );
-        Path outputDir = Path.of(System.getProperty("build.outputDir"));
-        ObjectMapper mapper = new ObjectMapper();
-        boolean experimentalEnabled = Boolean.parseBoolean(System.getProperty("experimental.enabled", "false"));
-
-        SkillRenderer skills = new SkillRenderer(baseModel, outputDir, startBase);
-        skills.renderBase();
-        if (experimentalEnabled) {
-            skills.renderExperimental();
-        }
-        new HooksRenderer(mapper, baseModel, outputDir).write();
-        new SessionStartConfigRenderer(mapper, baseModel, outputDir).write();
-    }
-
-    public PluginModel buildPluginModel(
-            String basePluginName, String version, String description,
-            String startBase, String frontmatter, String jlinkDir, String repoName) {
-        String name        = env.decorate(basePluginName);
-        String cacheSubdir = platform.cacheSubdir(basePluginName, env);
-        return new PluginModel(
-            name,
-            version,
-            description,
+    Target(String platformProp, String osProp, String envProp,
+           String basePluginName, String version, String description,
+           String startBase, String frontmatter, String jlinkDir, String repoName,
+           String outputDir, boolean experimentalEnabled) {
+        Platform platform       = Platform.from(platformProp);
+        Os os                   = Os.from(osProp);
+        Env env                 = Env.from(envProp);
+        guard(os, platform, env);
+        String name             = env.decorate(basePluginName);
+        String cacheSubdir      = platform.cacheSubdir(basePluginName, env);
+        PluginModel baseModel   = new PluginModel(
+            name, version, description,
             env.decorate(startBase),
             os.cliBinPath(basePluginName, version, cacheSubdir),
             frontmatter,
-            skillFragmentDir(),
+            platform.skillFragmentDir(),
             platform instanceof Platform.Gemini,
-            os,
-            env,
-            jlinkDir,
+            os, env, jlinkDir,
             repoName != null ? repoName : name
         );
+        Path outDir             = Path.of(outputDir);
+        ObjectMapper mapper     = new ObjectMapper();
+        this.skillRenderer              = new SkillRenderer(baseModel, outDir, startBase);
+        this.hooksRenderer              = new HooksRenderer(mapper, baseModel, outDir);
+        this.sessionStartConfigRenderer = new SessionStartConfigRenderer(mapper, baseModel, outDir);
+        this.experimentalEnabled        = experimentalEnabled;
     }
 
-    public String cliBin(String pluginName, String version) {
-        return os.cliBinPath(pluginName, version, platform.cacheSubdir(pluginName, env));
+    public static void main(String[] args) throws IOException {
+        new Target(
+            System.getProperty("build.platform", "claude"),
+            System.getProperty("build.os", "posix"),
+            System.getProperty("build.env", "prod"),
+            System.getProperty("plugin.base.name"),
+            System.getProperty("plugin.version"),
+            System.getProperty("plugin.description"),
+            System.getProperty("plugin.skill.start.basename"),
+            System.getProperty("skill.frontmatter", ""),
+            System.getProperty("shipsmooth.jlink.dir", ""),
+            System.getProperty("plugin.repo.name"),
+            System.getProperty("build.outputDir"),
+            Boolean.parseBoolean(System.getProperty("experimental.enabled", "false"))
+        ).build();
     }
 
-    public String skillFragmentDir() {
-        return platform.skillFragmentDir();
+    void build() throws IOException {
+        skillRenderer.renderBase();
+        if (experimentalEnabled) {
+            skillRenderer.renderExperimental();
+        }
+        hooksRenderer.write();
+        sessionStartConfigRenderer.write();
     }
 
-    public String launcherFileName() {
-        return os.launcherFileName();
+    static void guard(Os os, Platform platform, Env env) {
+        if (os == Os.WINDOWS && platform != Platform.CLAUDE) {
+            throw new IllegalArgumentException(
+                "Windows is only supported with the Claude platform, got: " + platform.id());
+        }
+        if (os == Os.WINDOWS && env == Env.DEV) {
+            throw new IllegalArgumentException("Windows + Dev environment is not supported");
+        }
     }
 }
