@@ -33,7 +33,9 @@ independent analyses (this session's, and a second AI's, both grounded in
 3. **Mechanical, linter-checkable rules dilute the attention budget** (method length, file
    length, nesting depth, if-block length). The model cannot self-certify them and they
    pulled attention from the one rule that mattered, which surfaced only at step 7.
-   (code-quality §III.1)
+   (code-quality §III.1) — *Mitigation here is partial:* these rules are demoted to lowest
+   priority but retained, because no deterministic linter exists yet to replace them. Full
+   removal is deferred to a follow-up plan once a linter lands.
 4. **Good/Bad exemplars rely on the model to infer *why*** — risking "form without
    substance" copying of surface syntax. (code-quality §III.7, §Form Without Substance)
 5. **Primitive-obsession rule is anchored** — the model won't invent a new domain type
@@ -44,9 +46,12 @@ independent analyses (this session's, and a second AI's, both grounded in
 - **In scope:** edits to the JTE templates only (top-level + rule fragments), plus an
   integration-test assertion proving the restructured skill still renders.
 - **Out of scope / deferred (user instruction, 2026-06-01):** wiring a *deterministic
-  verifier* (Checkstyle/PMD/linter) into a generate-verify-repair loop. The mechanical
-  rules are being *removed* from the skill on the understanding that a deterministic check
-  will be added later. This plan does **not** add that check.
+  verifier* (Checkstyle/PMD/linter) into a generate-verify-repair loop. No mechanical
+  linter exists yet, so the mechanical rules (method-length, file-length, if-nesting,
+  if-block-length) **stay in the skill** for now — removing them before a linter exists
+  would lose the coverage entirely. They are reordered to lowest priority but kept. When a
+  deterministic check lands, a follow-up plan removes them. This plan does **not** add
+  that check or remove those rules.
 
 ## Goals
 
@@ -59,30 +64,33 @@ Turn the skill from a passive rule list into an active forcing function by:
    structure cannot anchor the design; Phase 2: clean-slate generation from the Phase-1
    production requirements only).
 2. Adding an explicit rule-priority ordering and reordering the `@template` includes so
-   the highest-priority rules (rich domain, class structure) render first.
-3. Removing the mechanical/linter-checkable rule fragments from the skill
-   (method-length, file-length, if-nesting, if-block-length), to be replaced later by a
-   deterministic verifier (out of scope here).
-4. Adding a short "Why this matters" / mechanism block to the high-value contrastive
-   exemplars (at minimum rich-domain; also class-structure and SRP).
-5. Authorizing creation of new domain types in the primitive-obsession rule.
+   the highest-priority rules (rich domain, class structure) render first and the
+   mechanical/linter-checkable rules render last.
+3. Adding a short "Why this matters" / mechanism block to the high-value contrastive
+   exemplars (rich-domain, class-structure, srp, single-source, constructor-di).
+4. Authorizing creation of new domain types in the primitive-obsession rule.
+
+The mechanical rules (method-length, file-length, if-nesting, if-block-length) are **kept**
+— see Scope/non-goals. They are demoted to lowest priority but not removed, because no
+deterministic linter exists yet to take over their job.
 
 ## Design decisions
 
 - **Edit fragments in place; reorder includes in the top-level template.** The priority
   ordering is expressed structurally (include order) *and* explicitly (a new priority
   block near the Execution Contract), so the two reinforce each other.
-- **Delete the four mechanical rule fragment files** rather than just unlinking them, to
-  avoid dead templates. Their `@template` include lines are removed from `SKILL.jte.md`.
-  A one-line pointer noting these limits are delegated to a (future) deterministic check
-  is added so intent is recorded without restating the numeric thresholds (avoids
-  re-introducing the high-frequency volatile tokens code-quality §III.10 warns against).
-- **Keep all surviving Good/Bad exemplars** — they are the skill's strongest asset.
+- **Keep the four mechanical rule fragment files and their includes**, but move their
+  `@template` lines to the bottom of `SKILL.jte.md` so they render after the
+  judgment-level rules. The priority block (below) explicitly ranks them lowest. This
+  preserves the coverage until a deterministic linter can take over, while still relieving
+  the attention-budget pressure by demoting them out of the high-priority region.
+- **Keep all Good/Bad exemplars** — they are the skill's strongest asset.
 - **Verification:** the existing `TargetIntegrationTest` renders skills but asserts
   nothing about refine content. Add one assertion that the rendered
-  `experimental-refine-dev/SKILL.md` contains the new Phase-1/Phase-2 contract heading and
-  does *not* contain the removed mechanical-rule headings. This proves the JTE assembly
-  still works after include removals and catches accidental regressions.
+  `experimental-refine-dev/SKILL.md` contains the new Phase-1/Phase-2 contract heading
+  (including the two provenance subsection markers). This proves the JTE assembly still
+  works after reordering and catches accidental regressions. (No "must-not-contain" check
+  for mechanical headings, since those rules are retained.)
 
 ## Tasks
 
@@ -116,24 +124,27 @@ checklist to preserve. Generate from the Phase-1 proposal only — do not preser
 production method or constructor solely because a test calls it. Include an explicit "if
 you find yourself making a chain of small edits, STOP and re-derive" clause.
 
-Also add a Rule-Priority block listing the rules in precedence order with a tie-break
-instruction that forbids introducing a `static` factory or half-initialized object to
-satisfy a lower-priority rule.
+Also add a Rule-Priority block listing the rules in precedence order — judgment-level
+rules (rich domain, class structure, SRP, …) highest, mechanical rules (method length,
+file/if-block length, nesting) explicitly lowest — with a tie-break instruction that
+forbids introducing a `static` factory or half-initialized object to satisfy a
+lower-priority rule.
 
 Medium risk: this is the core behavioural change; wording must steer without bloating the
 attention budget, and it interacts with the include reordering in Task 2.
 
-### Task 2: Reorder rule includes and remove mechanical-rule includes [Low]
+### Task 2: Reorder rule includes into priority order (mechanical rules last) [Low]
 *Depends-on: 1*
 
-In `SKILL.jte.md`, reorder the `@template` include lines into priority order (rich-domain,
-class-structure, srp, single-source, constructor-di, private-final-fields,
-avoid-primitives, static-rare, method-ordering, method-structure, ternaries-booleans,
-package-structure). Remove the includes for `method-length`, `file-length`, `if-nesting`,
-`if-block-length`, and add the one-line delegation pointer. Delete the four corresponding
-rule fragment files.
+In `SKILL.jte.md`, reorder all `@template` include lines into priority order:
+judgment-level rules first (rich-domain, class-structure, srp, single-source,
+constructor-di, private-final-fields, avoid-primitives, static-rare, method-ordering,
+method-structure, ternaries-booleans, package-structure), then the mechanical rules last
+(method-length, if-block-length, if-nesting, file-length). **Keep all includes and all
+rule fragment files** — nothing is removed or deleted; the mechanical rules are retained
+because no deterministic linter exists yet (see Scope/non-goals).
 
-Low risk: mechanical reorder/removal; correctness is proven by render.
+Low risk: pure reorder; correctness is proven by render.
 
 ### Task 3: Add mechanism ("Why this matters") blocks to high-value exemplars [Low]
 *Depends-on: 1*
@@ -156,8 +167,9 @@ conservative-edit anchor.
 Add an assertion in `TargetIntegrationTest` that the rendered
 `experimental-refine-dev/SKILL.md` contains the new two-phase contract markers — including
 the two provenance subsection headings (*requirements from production code* /
-*requirements from tests*) — and does not contain the removed mechanical-rule headings.
-Proves the restructured JTE assembly renders and guards against regressions.
+*requirements from tests*). Proves the restructured JTE assembly renders and guards against
+regressions. (No "must-not-contain" check for mechanical-rule headings, since those rules
+are retained.)
 
 ## Open questions
 

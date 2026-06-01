@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>62</plan>
-    <plan-version>plan-62-v1</plan-version>
+    <plan-version>plan-62-v2</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -14,7 +14,7 @@
             <status>pending</status>
             <name>Add two-phase execution contract + rule-priority block to the top-level template</name>
             <commit></commit>
-            <created-from>plan-62-v1</created-from>
+            <created-from>plan-62-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -23,9 +23,9 @@
             <id>2</id>
             <risk>low</risk>
             <status>pending</status>
-            <name>Reorder rule includes and remove mechanical-rule includes</name>
+            <name>Reorder rule includes into priority order (mechanical rules last)</name>
             <commit></commit>
-            <created-from>plan-62-v1</created-from>
+            <created-from>plan-62-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -37,7 +37,7 @@
             <status>pending</status>
             <name>Add mechanism ("Why this matters") blocks to high-value exemplars</name>
             <commit></commit>
-            <created-from>plan-62-v1</created-from>
+            <created-from>plan-62-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -49,7 +49,7 @@
             <status>pending</status>
             <name>Authorize new domain types in the primitive-obsession rule</name>
             <commit></commit>
-            <created-from>plan-62-v1</created-from>
+            <created-from>plan-62-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -61,7 +61,7 @@
             <status>pending</status>
             <name>Add render assertion to TargetIntegrationTest</name>
             <commit></commit>
-            <created-from>plan-62-v1</created-from>
+            <created-from>plan-62-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -70,7 +70,7 @@
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-06-01T17:24:51.880+05:30</timestamp>
+            <timestamp>2026-06-01T18:08:57.080+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
