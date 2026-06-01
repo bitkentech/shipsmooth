@@ -24,6 +24,7 @@ with bits of prose. Do *not* show only English prose explanations!
 various options and a free form text field where they can provide their own input.
 
 @template.skills.experimental.refine.rules.srp(model = model)
+@template.skills.experimental.refine.rules.class-structure(model = model)
 @template.skills.experimental.refine.rules.rich-domain(model = model)
 @template.skills.experimental.refine.rules.single-source(model = model)
 @template.skills.experimental.refine.rules.private-final-fields(model = model)
