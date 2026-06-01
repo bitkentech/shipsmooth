@@ -1,6 +1,10 @@
 package io.bitken.ss.resources;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -50,5 +54,28 @@ class OsTest {
     void windows_cliBinPath_launcherExtension_isCmd_notBat() {
         String result = Os.WINDOWS.cliBinPath("shipsmooth", "0.3.10", "shipsmooth");
         assertTrue(result.endsWith("shipsmooth.cmd"), "Windows cliBinPath must end with shipsmooth.cmd, not .bat");
+    }
+
+    @Test
+    void windows_hookCommand_writesBatAndReturnsCmdExe(@TempDir Path hooksDir) throws Exception {
+        String cmd = Os.WINDOWS.hookCommand(hooksDir, "shipsmooth-windows", "shipsmooth", "0.3.10");
+        assertTrue(cmd.contains("cmd.exe"), "Windows hook must use cmd.exe");
+        assertTrue(cmd.contains("install-runtime.bat"), "Windows hook must reference bat file");
+        assertTrue(cmd.contains("MSYS_NO_PATHCONV=1"), "Must set MSYS_NO_PATHCONV");
+        assertTrue(cmd.contains("shipsmooth-windows"), "Cache root must use repo name");
+
+        Path bat = hooksDir.resolve("install-runtime.bat");
+        assertTrue(Files.exists(bat), "install-runtime.bat must be written");
+        String batContent = Files.readString(bat);
+        assertTrue(batContent.contains("xcopy"), "bat must use xcopy");
+        assertTrue(batContent.contains("LOCALAPPDATA"), "bat destination must use LOCALAPPDATA");
+        assertTrue(batContent.contains("\\shipsmooth\\"), "bat destination must use plugin name");
+    }
+
+    @Test
+    void posix_hookCommand_returnsSystemPropertyDefault(@TempDir Path hooksDir) throws Exception {
+        String cmd = Os.POSIX.hookCommand(hooksDir, "shipsmooth", "shipsmooth", "0.3.3");
+        assertTrue(cmd.contains("session-start.js"), "Posix hook must reference session-start.js");
+        assertFalse(Files.list(hooksDir).findAny().isPresent(), "Posix hook must not write any files");
     }
 }
