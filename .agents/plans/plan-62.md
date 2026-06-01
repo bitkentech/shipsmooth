@@ -69,6 +69,9 @@ Turn the skill from a passive rule list into an active forcing function by:
 3. Adding a short "Why this matters" / mechanism block to the high-value contrastive
    exemplars (rich-domain, class-structure, srp, single-source, constructor-di).
 4. Authorizing creation of new domain types in the primitive-obsession rule.
+5. Giving the Phase-1 extraction an ephemeral scratchpad (`.agents/tmp/refine-<target>.md`)
+   that is re-read at the Phase-2 boundary, serving as both the human review gate and a
+   conditioning re-injection point.
 
 The mechanical rules (method-length, file-length, if-nesting, if-block-length) are **kept**
 — see Scope/non-goals. They are demoted to lowest priority but not removed, because no
@@ -85,6 +88,15 @@ deterministic linter exists yet to take over their job.
   preserves the coverage until a deterministic linter can take over, while still relieving
   the attention-budget pressure by demoting them out of the high-priority region.
 - **Keep all Good/Bad exemplars** — they are the skill's strongest asset.
+- **Phase-1 extraction is written to an ephemeral scratchpad.** The model writes the
+  provenance-split extraction to `.agents/tmp/refine-<target>.md` (per the repo's
+  `.agents/tmp/` scratch convention), then **re-reads it at the start of Phase 2** before
+  generating code. The scratchpad is throwaway — not committed, not an audit trail — and
+  exists for two reasons: (a) it is the natural human review/approval gate between the two
+  phases, and (b) re-reading it at the phase boundary re-injects the design conditioning,
+  countering influence decay (code-quality §III.6). The scratchpad is *execution* state,
+  so the instruction to write/read it lives in the **skill** (`SKILL.jte.md`); this plan
+  only documents the convention.
 - **Verification:** the existing `TargetIntegrationTest` renders skills but asserts
   nothing about refine content. Add one assertion that the rendered
   `experimental-refine-dev/SKILL.md` contains the new Phase-1/Phase-2 contract heading
@@ -161,15 +173,27 @@ Amend `rules/avoid-primitives.jte.md` to explicitly authorize and expect creatio
 `private record` or package-private class when no suitable type exists, removing the
 conservative-edit anchor.
 
-### Task 5: Add render assertion to TargetIntegrationTest [Low]
-*Depends-on: 1,2*
+### Task 5: Add scratchpad / phase-boundary instruction to the contract [Low]
+*Depends-on: 1*
+
+Extend the two-phase contract in `SKILL.jte.md` (added in Task 1) with the scratchpad
+protocol: at the end of Phase 1, write the provenance-split extraction to an ephemeral
+scratchpad at `.agents/tmp/refine-<target>.md`; at the **start of Phase 2, re-read that
+file** before generating code, and treat it as the design of record for the generation.
+State explicitly that the scratchpad is throwaway (not committed) and is the point at which
+the user may review/approve the extraction before code is generated. The re-read at the
+phase boundary re-injects the design conditioning to counter influence decay
+(code-quality §III.6).
+
+### Task 6: Add render assertion to TargetIntegrationTest [Low]
+*Depends-on: 1,2,5*
 
 Add an assertion in `TargetIntegrationTest` that the rendered
 `experimental-refine-dev/SKILL.md` contains the new two-phase contract markers — including
 the two provenance subsection headings (*requirements from production code* /
-*requirements from tests*). Proves the restructured JTE assembly renders and guards against
-regressions. (No "must-not-contain" check for mechanical-rule headings, since those rules
-are retained.)
+*requirements from tests*) and the scratchpad-path marker (`.agents/tmp/refine-`). Proves
+the restructured JTE assembly renders and guards against regressions. (No "must-not-contain"
+check for mechanical-rule headings, since those rules are retained.)
 
 ## Open questions
 
@@ -181,3 +205,6 @@ are retained.)
 - ~~How to stop test code from anchoring the re-derived structure~~ — resolved: Phase 1
   extraction is split by provenance (production vs tests); structure derives from the
   production subsection, tests contribute behaviour-only invariants. Folded into Task 1.
+- ~~Where the model records its Phase-1 findings / whether a scratchpad is used~~ —
+  resolved: ephemeral scratchpad at `.agents/tmp/refine-<target>.md`, re-read at the
+  Phase-2 boundary. Its own task (Task 5).
