@@ -9,19 +9,56 @@ When this skill is invoked, the user will provide one or more parameters under a
 
 Above all, be very ambitious, especially when the change is only across a handful of files.
 The code can look *very different* after you're done with it. Only the logic should continue
-to be the same. When changing, do not attempt to patch the files in place. Instead, perform a
-clean-slate re-derivation: treat the old code purely as a requirements document.
+to be the same. Do not patch the files in place. Instead, perform a clean-slate
+re-derivation in two strictly separated phases. **You must complete PHASE 1 in natural
+language and not write a single line of new code until it is done.**
 
-You must:
-1. Identify the target package boundary (`cli/`, `conf/`, `workflow/`) for the provided parameters.
-2. If a folder or file is passed that belongs to a legacy unorganized package, execute a clean-slate
- re-derivation to move it to its correct target package
-3. Prioritize architectural intent and dependency direction over minor, local code patches
-4. Ask if the user wants a high level preview of suggested changes. If yes, show preview 
-with *actual* fragments of code inter-mixed with pseudo-code (a "BEFORE" version and "AFTER" version),
-with bits of prose. Do *not* show only English prose explanations!
-5. If there's no easy choice between different options, always ask the user. Provide them the 
-various options and a free form text field where they can provide their own input.
+### PHASE 1 — Architectural Extraction (natural language only)
+Read the target code **once** and extract its requirements. Split the extraction into two
+labelled subsections so it is always explicit *where* each requirement came from:
+
+**Requirements from production code**
+- Inputs, state mutations, outputs, and downstream collaborators/renderers.
+- Invariants enforced by the code itself.
+- From *this* subsection — and only this one — derive the proposed new class shape: which
+  parameters move into the constructor, what each method does, and the dependency direction.
+
+**Requirements from tests**
+- The invariants the tests assert (guards, defaults, error cases).
+- These constrain **behaviour only**. Test structure is **not** a template for the class's
+  constructor or method shape. If your re-derived structure changes the surface the tests
+  touch, the tests get rewritten to match — and you never delete a test without surfacing it.
+
+Then state the proposed structure and the dependency direction. Identify the target package
+boundary (`cli/`, `conf/`, `workflow/`) for the provided parameters; if a file belongs to a
+legacy unorganized package, plan to move it to its correct target package.
+
+### PHASE 2 — Clean-Slate Generation
+Generate the new code from the PHASE 1 *production* requirements alone. Treat the *tests*
+subsection as a behaviour checklist to preserve. Do **not** keep a production method or
+constructor solely because a test calls it. If you notice yourself making a chain of small
+edits that each fix the previous one — **STOP**: that is hill-climbing. Discard the partial
+result and re-derive from the requirements.
+
+### Rule priority (when rules conflict, higher wins)
+1. Prefer Rich Domain Models over anemic objects — behaviour lives on the object that owns the data.
+2. Class Structure — all construction (`new`, parsing, derivation) happens in the constructor.
+3. Single Responsibility.
+4. Single source of truth.
+5. Everything else below, in the order presented.
+6. **Lowest priority — mechanical limits** (method length, file length, nesting depth,
+   if-block length). These are coarse heuristics; never sacrifice a higher rule to satisfy them.
+
+When two rules pull in opposite directions, resolve toward the higher rule and say which one
+you applied. Never introduce a `static` factory or a half-initialized object (e.g. an object
+constructed with `null` fields just to call one method) to satisfy a lower-priority rule.
+
+### Interaction
+- Ask if the user wants a high level preview of suggested changes. If yes, show the preview
+  with *actual* fragments of code inter-mixed with pseudo-code (a "BEFORE" version and
+  "AFTER" version), with bits of prose. Do *not* show only English prose explanations!
+- If there's no easy choice between different options, always ask the user. Provide the
+  various options and a free form text field where they can provide their own input.
 
 @template.skills.experimental.refine.rules.srp(model = model)
 @template.skills.experimental.refine.rules.class-structure(model = model)
