@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>63</plan>
-    <plan-version>plan-63-v2</plan-version>
+    <plan-version>plan-63-v4</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Extract CommandTree and shrink Shipsmooth; update all call sites</name>
-            <commit></commit>
+            <commit>999ae251ebf87dac616d745e6cf03ec246f984b0</commit>
             <created-from>plan-63-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -22,10 +22,22 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Refine-skill JTE tweaks surfaced by this session</name>
-            <commit></commit>
+            <commit>0aa428614b4038339832ef50b2ed71cf1665fca8</commit>
             <created-from>plan-63-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Source CLI version from Build.VERSION instead of a hardcoded literal</name>
+            <commit></commit>
+            <depends-on>1</depends-on>
+            <created-from>plan-63-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
