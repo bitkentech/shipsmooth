@@ -16,6 +16,8 @@ public record ExperimentalMode(boolean enabled) {
 
     private static final String FLAG = "--enable-experimental";
 
+    public static String flag() { return FLAG; }
+
     /**
      * Probe {@code args} for {@code --enable-experimental} using a minimal
      * picocli spec declaring only that flag, with unmatched args allowed so real

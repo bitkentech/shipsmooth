@@ -37,12 +37,12 @@ class CommandTree {
     private final CommandLine commandLine;
 
     CommandTree(AppComponents app) {
-        ExperimentalMode mode = app.experimentalMode();
+        ExperimentalMode experimentalMode = app.experimentalMode();
         integrate = new Integrate(app.workflowService());
 
         CommandSpec rootSpec = buildRootSpec();
         for (Callable<?> command : buildCommands(app, integrate)) {
-            if (!isExperimental(command) || mode.enabled()) {
+            if (!isExperimental(command) || experimentalMode.enabled()) {
                 register(rootSpec, command);
             }
         }
