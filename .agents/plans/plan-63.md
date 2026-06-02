@@ -125,7 +125,26 @@ regenerates `build/skills/experimental-refine-dev/SKILL.md`). No behavioural cod
 existing `TargetIntegrationTest` render assertions (plan-62 Task 6) guard against assembly
 regressions.
 
+### Task 3: Source CLI version from Build.VERSION instead of a hardcoded literal [Low]
+*Depends-on: 1*
+
+**Why (added 2026-06-02):** While refining `CommandTree.buildRootSpec()`, the PHASE 1 caller's-eye
+view found a single-source-of-truth violation: `spec.version("0.1.0")` is a hardcoded literal in
+`CommandTree.java`, yet the canonical version already lives in `pom.xml` as `${project.version}`
+(currently `0.3.11`). `Build.java` — the `templating-maven-plugin` template already used for
+`EXPERIMENTAL_BUILD` — is the established bridge between Maven properties and compiled Java.
+
+Changes:
+- `app/src/main/java-templates/io/bitken/ss/Build.java` — add
+  `public static final String VERSION = "${project.version}";`
+- `app/src/main/java/io/bitken/ss/cli/CommandTree.java` — replace `spec.version("0.1.0")` with
+  `spec.version(Build.VERSION)`
+
+Low risk: two-line change; `Build.VERSION` resolves at compile time via the same mechanism already
+proven by `EXPERIMENTAL_BUILD`. No test asserts the literal `"0.1.0"`. Verified by `mvn compile`
+and `ShipsmoothTest.experimentalFlagVisibilityMatchesBuild` (which reads `Build.EXPERIMENTAL_BUILD`,
+confirming the template pipeline is healthy).
+
 ## Open questions
 
-- None outstanding. Scope confirmed with the user (full re-derivation, `buildCommands` static,
-  skill tweaks as Task 2) on 2026-06-02.
+- None outstanding.
