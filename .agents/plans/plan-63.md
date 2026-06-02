@@ -98,8 +98,10 @@ is subtle (graph mode must match the flag), and a wrong seeding silently breaks 
 gating rather than failing to compile. Mitigated by the per-file resolution already worked out
 in the diffs scratchpad and the existing `ShipsmoothTest` gating assertions.
 
-### Task 2: Refine-skill JTE tweaks surfaced by this session [Low] (added in v2)
+### Task 2: Refine-skill JTE tweaks surfaced by this session [Low]
 *Depends-on:*
+
+*(Added in v2.)*
 
 **Why (added 2026-06-02):** While applying the refine skill to `Shipsmooth.java`, two prose
 improvements to the skill's own JTE templates were in progress in the working tree. The user
