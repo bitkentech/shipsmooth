@@ -33,14 +33,14 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Source CLI version from Build.VERSION instead of a hardcoded literal</name>
-            <commit></commit>
-            <depends-on>1</depends-on>
+            <commit>f5934bf85e8573372b291b69861b0fe908a5d7b9</commit>
             <created-from>plan-63-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
+            <depends-on>1</depends-on>
         </task>
     </tasks>
     <project-updates>
