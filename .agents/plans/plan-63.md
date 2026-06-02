@@ -31,7 +31,9 @@ code are the durable record.
 - **In scope:** extract a package-private `cli/CommandTree` that owns command-tree assembly;
   shrink `cli/Shipsmooth` to the runnable one-shot CLI reading mode from
   `app.experimentalMode()`; update the production `main()` call site and all ~6 test call
-  sites; preserve the `integrateCommand()` test seam.
+  sites; preserve the `integrateCommand()` test seam. Also (Task 2) two in-progress prose
+  tweaks to the `experimental-refine-dev` skill's JTE templates that this refine session
+  surfaced — see Task 2.
 - **Out of scope:** behavioural changes to any subcommand; changes to `ExperimentalMode`,
   `ServicesModule`, or `AppComponents` (the `experimentalMode()` accessor already exists);
   the other `cli/` classes (future refine passes).
@@ -96,7 +98,32 @@ is subtle (graph mode must match the flag), and a wrong seeding silently breaks 
 gating rather than failing to compile. Mitigated by the per-file resolution already worked out
 in the diffs scratchpad and the existing `ShipsmoothTest` gating assertions.
 
+### Task 2: Refine-skill JTE tweaks surfaced by this session [Low] (added in v2)
+*Depends-on:*
+
+**Why (added 2026-06-02):** While applying the refine skill to `Shipsmooth.java`, two prose
+improvements to the skill's own JTE templates were in progress in the working tree. The user
+is experimenting with the skill and wants them tracked alongside this refine session rather
+than left as stray edits. Independent of Task 1's code change.
+
+Edits to the `experimental-refine-dev` skill templates under
+`integrations/common/src/main/jte-src/skills/experimental/refine/`:
+- `SKILL.jte.md` — reword the **Caller's-eye view** step to frame it as "identify what the
+  calling code is *authentically trying to achieve* semantically," explicitly calling out
+  anemic loose-primitive / successive-procedural-call sites and asking for the *ideal unified
+  verb the caller should be using*, with the one-line ideal call site written last.
+- `rules/class-structure.jte.md` — add "Avoid calling class's own non-static methods in
+  constructor" to the rule text, and extend the Good/Bad exemplars with a fourth collaborator
+  (`obj4 = createObj4(obj3)`) showing a `private static` ctor helper (Good) vs an instance
+  method reading a possibly-uninitialized field (Bad), plus a closing note on the Bad
+  `createObj4` ordering hazard.
+
+Low risk: JTE prose/exemplar edits only; correctness proven by render (`mvn compile`
+regenerates `build/skills/experimental-refine-dev/SKILL.md`). No behavioural code change. The
+existing `TargetIntegrationTest` render assertions (plan-62 Task 6) guard against assembly
+regressions.
+
 ## Open questions
 
-- None outstanding. Scope confirmed with the user (full re-derivation, `buildCommands` static)
-  on 2026-06-02.
+- None outstanding. Scope confirmed with the user (full re-derivation, `buildCommands` static,
+  skill tweaks as Task 2) on 2026-06-02.
