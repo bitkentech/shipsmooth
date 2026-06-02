@@ -18,11 +18,12 @@ Read the target code **once** and extract its requirements. Split the extraction
 labelled subsections so it is always explicit *where* each requirement came from:
 
 **Caller's-eye view (do this first, before reading for structure)**
-Ignore the existing class and method names. From the perspective of the code that *calls*
-this — what single object does the caller want to name, and what verb do they want to call on
-it? Write that call site as one line, e.g. `new BuildTarget(settings).build()`. The existing
-top-level type may turn out to be an *internal collaborator* of that object rather than the
-public surface — do **not** assume the current top-level class is the object the caller wants.
+Ignore the existing class and method names. Identify what the calling code is *authentically 
+trying to achieve* semantically. If the caller is passing loose primitives or making successive 
+procedural calls (anemic behavior), design the ideal, unified verb the caller *should* be 
+using instead. The existing top-level type may turn out to be an *internal collaborator* of 
+that object rather than the public surface — do **not** assume the current top-level class 
+is the object the caller wants. Write that ideal call site as one line.
 
 **Requirements from production code**
 - Inputs, state mutations, outputs, and downstream collaborators/renderers.

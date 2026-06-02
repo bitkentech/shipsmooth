@@ -24,7 +24,6 @@ public class ShipsmoothTest {
         "ledger-record-commit", "ledger-record-patch-integrated"
     );
 
-    private AppComponents app;
     private ByteArrayOutputStream outBuf;
     private ByteArrayOutputStream errBuf;
     private PrintStream originalOut;
@@ -32,9 +31,6 @@ public class ShipsmoothTest {
 
     @BeforeEach
     public void setUp() {
-        app = DaggerAppComponents.builder()
-            .servicesModule(new ServicesModule(Paths.get(".")))
-            .build();
         outBuf = new ByteArrayOutputStream();
         errBuf = new ByteArrayOutputStream();
         originalOut = System.out;
@@ -54,7 +50,10 @@ public class ShipsmoothTest {
 
     /** Build a one-shot CLI bound to these args, mirroring main(), and run it. */
     private int run(String... args) {
-        return new Shipsmooth(app, ExperimentalMode.fromArgs(args), args).execute();
+        AppComponents app = DaggerAppComponents.builder()
+            .servicesModule(new ServicesModule(Paths.get("."), ExperimentalMode.fromArgs(args)))
+            .build();
+        return new Shipsmooth(app, args).execute();
     }
 
     @Test
@@ -131,6 +130,14 @@ public class ShipsmoothTest {
             assertFalse(stdout.contains("--enable-experimental"),
                 "prod build: --help must not mention --enable-experimental; got:\n" + stdout);
         }
+    }
+
+    @Test
+    public void versionFlagPrintsProjectVersion() {
+        int exit = run("--version");
+        assertEquals(0, exit);
+        assertTrue(out().contains(Build.VERSION),
+            "--version should print Build.VERSION (" + Build.VERSION + "); got: " + out());
     }
 
     private static boolean containsSubcommandLine(String helpOutput, String subcommand) {

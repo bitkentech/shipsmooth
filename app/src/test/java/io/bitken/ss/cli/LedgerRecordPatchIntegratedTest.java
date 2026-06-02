@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class LedgerRecordPatchIntegratedTest {
 
     private final AppComponents app = DaggerAppComponents.builder()
-            .servicesModule(new ServicesModule(Paths.get(".")))
+            .servicesModule(new ServicesModule(Paths.get("."), new ExperimentalMode(true)))
             .build();
 
     @Test
@@ -32,7 +32,7 @@ public class LedgerRecordPatchIntegratedTest {
                 "--commit", "abc1234",
                 "--agent-work-sha", "def5678"
         };
-        int exit = new Shipsmooth(app, ExperimentalMode.fromArgs(args), args).execute();
+        int exit = new Shipsmooth(app, args).execute();
 
         assertEquals(0, exit);
 

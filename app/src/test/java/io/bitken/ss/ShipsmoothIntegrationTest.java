@@ -27,9 +27,6 @@ public class ShipsmoothIntegrationTest {
     private final File planDir = new File(".agents/plans");
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
-    private final AppComponents app = DaggerAppComponents.builder()
-            .servicesModule(new ServicesModule(Paths.get("."), new ExperimentalMode(true)))
-            .build();
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -46,12 +43,14 @@ public class ShipsmoothIntegrationTest {
     }
 
     /**
-     * One-shot CLI bound to these args. Registration follows the flag in args
-     * (via fromArgs); the services' ledger gate comes from {@code app}, which is
-     * built experimental-enabled so non-experimental commands still record.
+     * One-shot CLI bound to these args, seeded from the flag in args.
+     * Registration and the services' ledger gate both follow the flag.
      */
     private int run(String... args) {
-        return new Shipsmooth(app, ExperimentalMode.fromArgs(args), args).execute();
+        AppComponents app = DaggerAppComponents.builder()
+                .servicesModule(new ServicesModule(Paths.get("."), ExperimentalMode.fromArgs(args)))
+                .build();
+        return new Shipsmooth(app, args).execute();
     }
 
     @AfterEach
@@ -70,7 +69,7 @@ public class ShipsmoothIntegrationTest {
         EventLedger ledger = new EventLedger(Paths.get("."));
         int before = ledger.readHashes().size();
 
-        int exit = run("update-status", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "agent-coded");
+        int exit = run("--enable-experimental", "update-status", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "agent-coded");
         assertEquals(0, exit);
 
         List<String> hashes = ledger.readHashes();
@@ -126,7 +125,7 @@ public class ShipsmoothIntegrationTest {
         EventLedger ledger = new EventLedger(Paths.get("."));
         int before = ledger.readHashes().size();
 
-        int exit = run("add-comment", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "via Shipsmooth");
+        int exit = run("--enable-experimental", "add-comment", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "via Shipsmooth");
         assertEquals(0, exit);
 
         TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));

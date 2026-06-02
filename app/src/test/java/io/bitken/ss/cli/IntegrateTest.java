@@ -41,12 +41,12 @@ public class IntegrateTest {
 
     private final Path repoRoot = Paths.get(".");
     private final AppComponents app = DaggerAppComponents.builder()
-            .servicesModule(new ServicesModule(repoRoot))
+            .servicesModule(new ServicesModule(repoRoot, new ExperimentalMode(true)))
             .build();
 
     /** One-shot CLI bound to these args, mirroring main(). */
     private int run(String... args) {
-        return new Shipsmooth(app, ExperimentalMode.fromArgs(args), args).execute();
+        return new Shipsmooth(app, args).execute();
     }
 
     private final File planDir = new File(".agents/plans");
