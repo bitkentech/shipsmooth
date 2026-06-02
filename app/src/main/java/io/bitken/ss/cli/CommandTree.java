@@ -23,6 +23,7 @@ import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.FeatureFlags;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
 
 import java.util.concurrent.Callable;
 
@@ -31,8 +32,6 @@ import java.util.concurrent.Callable;
  * only when it is non-experimental or experimental mode is enabled.
  */
 class CommandTree {
-
-    private static final String ENABLE_EXPERIMENTAL_FLAG = "--enable-experimental";
 
     private final Integrate integrate;
     private final CommandLine commandLine;
@@ -86,28 +85,18 @@ class CommandTree {
         CommandSpec spec = CommandSpec.create();
         spec.name("shipsmooth");
         spec.usageMessage().description("CLI to manage tasks, subagents and ledger for shipsmooth");
-        spec.version("0.1.0");
-        spec.addMixin("standardHelpOptions", standardOptions());
+        spec.version(Build.VERSION);
+        spec.mixinStandardHelpOptions(true);
+        // Build is generated at compile time from
+        // src/main/java-templates/io/bitken/shipsmooth/tasks/Build.java
+        // by templating-maven-plugin (see pom.xml). The output lands in
+        // target/generated-sources/java-templates/ and is on the compile path.
+        spec.addOption(OptionSpec.builder(ExperimentalMode.flag())
+            .type(boolean.class)
+            .description("Enable experimental subcommands.")
+            .hidden(!Build.EXPERIMENTAL_BUILD)
+            .build());
         return spec;
-    }
-
-    private static CommandSpec standardOptions() {
-        return CommandSpec.forAnnotatedObject(new Object() {
-            @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true, description = "Show this help message and exit.")
-            boolean help;
-
-            @CommandLine.Option(names = {"-V", "--version"}, versionHelp = true, description = "Print version information and exit.")
-            boolean version;
-
-            // Build is generated at compile time from
-            // src/main/java-templates/io/bitken/shipsmooth/tasks/Build.java
-            // by templating-maven-plugin (see pom.xml). The output lands in
-            // target/generated-sources/java-templates/ and is on the compile path.
-            @CommandLine.Option(names = ENABLE_EXPERIMENTAL_FLAG,
-                description = "Enable experimental subcommands.",
-                hidden = !Build.EXPERIMENTAL_BUILD)
-            boolean enableExperimental;
-        });
     }
 
     private static boolean isExperimental(Callable<?> command) {

@@ -132,6 +132,14 @@ public class ShipsmoothTest {
         }
     }
 
+    @Test
+    public void versionFlagPrintsProjectVersion() {
+        int exit = run("--version");
+        assertEquals(0, exit);
+        assertTrue(out().contains(Build.VERSION),
+            "--version should print Build.VERSION (" + Build.VERSION + "); got: " + out());
+    }
+
     private static boolean containsSubcommandLine(String helpOutput, String subcommand) {
         for (String line : helpOutput.split("\\R")) {
             if (line.trim().startsWith(subcommand + " ") || line.trim().equals(subcommand)) return true;
