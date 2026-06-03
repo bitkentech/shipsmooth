@@ -11,7 +11,7 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>plan preflight — read-only git-state oracle</name>
             <commit>21d1bcf865691f04ff414ef6c02e001a4e6b8ef2</commit>
             <created-from>plan-67-v1</created-from>
@@ -27,7 +27,7 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>plan tag — write-side tagging with refuse-on-exists</name>
             <commit>f130a163b330c76d2b4b2715f2072af81636535a</commit>
             <created-from>plan-67-v1</created-from>
@@ -39,7 +39,7 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>plan branch — local branch creation</name>
             <commit>f130a163b330c76d2b4b2715f2072af81636535a</commit>
             <created-from>plan-67-v1</created-from>
@@ -51,7 +51,7 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>plan resume — session-resume pre-flight composite</name>
             <commit>f130a163b330c76d2b4b2715f2072af81636535a</commit>
             <created-from>plan-67-v1</created-from>
@@ -63,7 +63,7 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>thin the skill fragments</name>
             <commit>dd97fa70bc5586a86289ab3c7f327c544b2e82f9</commit>
             <created-from>plan-67-v1</created-from>
