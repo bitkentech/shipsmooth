@@ -1,138 +1,132 @@
-# Plan 66 — thin deterministic recipes out of start-dev SKILL.md into the shipsmooth CLI
+# Plan 66 — regroup the shipsmooth CLI into noun subcommands
 
 ## Context
 
-Backlog issue: **PB-310 — Reduce size of SKILL.md.** The generated
-`build/skills/start-dev/SKILL.md` is ~25k chars (~6.2k tokens). PB-310's own checklist
-prescribes the fix used here: *"move logic from the Executive layer to the Mechanical
-layer"* — offload procedural recipes (git tag/branch/rev-list incantations, multi-command
-verifier blocks) from the skill prose into Java commands the model invokes by name.
+Backlog issue: **PB-310 — Reduce size of SKILL.md.**
 
-This is the natural successor to **plan-65**, which split the monolithic `base-workflow.jte`
-into per-section fragments under `_partials/workflow/`. Those fragments are now individually
-thinnable. This plan targets the *deterministic* ones — the bash recipes the skill currently
-spells out token-by-token — and replaces each with a single `shipsmooth <verb>` invocation.
+The `shipsmooth` CLI has grown a flat tree of ~19 top-level commands (`init`, `show`,
+`add-task`, `update-status`, `set-commit`, `project-update`, `worker-base`, `worker-init`, …).
+The Java packages already cluster them by noun (`cli/plan/`, `cli/task/`, `cli/worker/`,
+`cli/ledger/`), and `ledger` is *already* exposed as a group (`ledger list`, `ledger verify`,
+`ledger read`). The rest is flat. This plan brings the command surface in line with the package
+structure: noun groups with verb subcommands (`shipsmooth plan init`, `shipsmooth task add`),
+the conventional CLI shape (`git remote add`, `kubectl get pods`).
 
-The framing follows `docs/references/code-quality-1.md` Part III §1 (separate what the skill
-governs from what the deterministic tool governs), §2/§5 (generator–verifier asymmetry: the
-tool is the sound oracle, the model reads a verdict instead of self-certifying), and §10
-(volatile tokens — `plan-07-v1`, branch/URL formats — must live in exactly one place, not be
-repeated as high-frequency copy targets in the prompt).
+This is **preparatory work** for `docs/proposals/thin-skill-recipes-into-cli.md`, which adds
+new `plan tag|preflight|branch|resume` commands and thins the skill's deterministic recipes.
+Those commands should be born in a grouped tree rather than added flat and moved later; this
+plan establishes that tree first. Reducing the number of distinct top-level command names the
+skill must teach also directly serves PB-310.
 
-### Decision: print, don't push
+## Decision: clean break, no aliases
 
-Every new command performs the **local** mutation (create tag, create branch, compute URL)
-and **prints the exact `git push` line** to run. The irreversible outward action stays with
-the human/agent, mirroring the existing `init` command, which never pushes. No command in this
-plan calls `git push`.
+Old flat names are **removed**, not aliased. The only callers are the skill fragments under
+`_partials/workflow/`, the gemini `.toml` command files, and the CLI tests — all updated in
+this plan. A clean tree is worth more than transitional compatibility for an internal CLI.
 
-### Scope boundary
+## Target command tree
 
-In scope: `[Local]`/git-deterministic recipes in the fragments `git-tagging`, `phase1-plan`
-(step 6 verifier), `phase2-execute` (session-resume pre-flight + Step 0 branch), and
-`linear-structure` (permalink/rev-list). Out of scope: the `npm test --coverage` snippets
-(explicitly per-project, "adjust to your toolchain" — illustrative, not wrappable), all
-`[Linear]` MCP bookkeeping prose, and the genuine LLM-judgment fragments (`control-strategy`,
-`core-invariants`, calibration steps, de-risk/harden reasoning).
+```
+shipsmooth
+├── plan
+│   ├── init        ← init            (cli/plan/Init)
+│   ├── show        ← show            (cli/plan/Show)      keyed by --plan; the plan's task view
+│   └── update      ← project-update  (cli/plan/ProjectUpdate)
+├── task
+│   ├── add         ← add-task        (cli/task/AddTask)
+│   ├── comment     ← add-comment     (cli/task/AddComment)
+│   ├── deviation   ← add-deviation   (cli/task/AddDeviation)
+│   ├── status      ← update-status   (cli/task/UpdateStatus)
+│   └── set-commit  ← set-commit      (cli/task/SetCommit)
+├── ledger                            (unchanged — already a group)
+│   ├── list · verify · read
+│   ├── record-commit            ← ledger-record-commit
+│   ├── record-patch-integrated  ← ledger-record-patch-integrated
+│   ├── resolver-complete        ← ledger-resolver-complete
+│   └── watch                    ← ledger-watch
+├── worker                            (experimental)
+│   ├── base        ← worker-base
+│   ├── init        ← worker-init
+│   ├── finish      ← worker-finish
+│   └── cleanup     ← worker-cleanup
+├── claim                             (top-level verb — spans the parallel flow, not CRUD)
+└── integrate                         (top-level verb)
+```
 
-## Target commands (all print-don't-push)
+### Naming rationale (the non-obvious choices)
 
-| Command | Replaces in skill | Backing |
-|---|---|---|
-| `shipsmooth tag --plan N --kind version\|complete\|abandoned` | entire `git-tagging` fragment | extend `GitTags` (next-version compute already there) |
-| `shipsmooth preflight --plan N` | `phase1-plan` step 6 four-command verifier | new git gateway reads (clean tree, branch pushed, tag local+remote) |
-| `shipsmooth branch --issue ID --desc S` | `phase2-execute` Step 0 | new git gateway (create local branch, print push line) |
-| `shipsmooth resume --plan N` | `phase2-execute` session-resume pre-flight block | compose `show` + worktree-list reads |
-
-`permalink` was considered and **dropped**: it serves only `[Linear]` mode (immutable GitHub
-blob URL for Linear issue/project descriptions). This repo runs the workflow in `[Local]` mode,
-so the helper would never be exercised here. The `linear-structure` `rev-list` recipe stays as
-illustrative prose in Task 5.
+- `show → plan show`: keyed by `--plan`; it is the plan's task view (not `task list`, which
+  would imply a per-task selector that does not exist here).
+- `project-update → plan update`: "project" is Linear vocabulary; in `[Local]` it is the plan.
+- `claim` / `integrate` stay top-level: they are verbs spanning the parallel-execution flow,
+  not CRUD on a single noun. `ledger`/`worker` group cleanly; these do not.
+- `ledger-*` / `worker-*` drop the hyphen prefix and become true subcommands under their group.
 
 ## Approach
 
-Each command is a thin vertical slice: a `Callable<Integer> implements HasSpec` class (mirroring
-`plan/Show.java` and `plan/Init.java`), registered in `CommandTree.buildCommands`, backed by a
-gateway method, with a unit/integration test in the `io.bitken.ss.cli` test package. Git-shelling
-logic extends `gw/GitTags` (tag/rev-list) or a new small read-only git-state gateway; commands
-are hand-built in `CommandTree` and are **not** Dagger-managed (their constructors take gateways,
-not `@Inject`).
+`cli/ledger/Ledger.java` is the existing template for a noun group: a parent
+`Callable<Integer> implements HasSpec` whose constructor registers nested `HasSpec` subcommands
+via `spec.addSubcommand(...)`, with a `call()` that prints group usage. Replicate that for `plan`,
+`task`, and `worker` parents.
 
-Skill-source edits touch only `_partials/workflow/*.jte.md`. After each fragment is thinned,
-`mvn compile` regenerates `build/skills/`. Unlike plan-65 (which required byte-identical output),
-this plan **intentionally changes** the generated SKILL.md — the verification is that the
-generated file shrinks and the new `shipsmooth <verb>` references render correctly, not that it
-is unchanged.
+Each leaf command's `spec.name(...)` shortens to its verb (e.g. `Init` → `"init"` under `plan`,
+`UpdateStatus` → `"status"` under `task`). `CommandTree.buildCommands` stops registering leaves
+flat and instead registers the group parents (each parent constructed with the gateways its
+leaves need). Commands remain hand-built and **not** Dagger-managed. The experimental gating in
+`CommandTree` (worker/integrate) is preserved at the group or leaf level as appropriate.
 
 ## Risk-sorted tasks
 
-### Task 1: preflight command — precondition verifier as a sound gate [High]
+### Task 1: introduce group parents and re-nest existing leaves [High]
 *Depends-on:*
 
-Highest risk: it introduces a new read-only git-state gateway and is the load-bearing §2/§5
-oracle. Add `shipsmooth preflight --plan N` that checks (a) working tree clean, (b) current
-branch has an upstream and HEAD is not ahead of it, (c) `plan-N-v*` tag exists locally and on
-remote. A dirty tree or missing version tag is a hard **FAIL** (non-zero exit). An unpushed
-branch / HEAD-ahead-of-upstream is a **WARN** only — it still passes overall, since a committed
-local plan is sufficient. Prints `PASS` (optionally with warnings) or the specific first failure.
-New gateway method + command class + registration + integration test covering pass, pass-with-
-warning, and each FAIL mode. No skill edit yet (proves the oracle before prose depends on it).
+Highest risk: it restructures `CommandTree` registration and every leaf's `spec.name`. Create
+`Plan`, `Task`, and `Worker` group-parent classes modelled on `Ledger`. Shorten each leaf's
+`spec.name` to its verb per the target tree. Rewire `CommandTree.buildCommands` to register the
+group parents (passing through the gateways each leaf needs) instead of flat leaves; keep
+`claim`/`integrate` top-level and preserve experimental gating. Update `CommandsTest` and any
+other `io.bitken.ss.cli` tests that assert argv strings. `mvn test` green; `shipsmooth --help`
+shows the grouped tree; `shipsmooth plan --help` / `task --help` / `worker --help` list leaves.
 
-### Task 2: tag command — version/complete/abandoned, print-don't-push [Medium]
-*Depends-on:*
-
-Add `shipsmooth tag --plan N --kind version|complete|abandoned`. For `version`, compute the next
-`plan-N-vK` from existing tags (reuse `GitTags.getPlanVersion` read). If that tag already exists,
-**refuse**: print a clear message naming the existing version and exit non-zero — do not
-auto-bump. Otherwise create it locally and print the `git push origin <tag>` line.
-`complete`/`abandoned` create the fixed-name tag on HEAD and print the push line. Command class +
-`GitTags` write method + registration + test covering: version created, version-already-exists
-refusal, and complete/abandoned. No push performed.
-
-### Task 3: branch command — task branch create + print push [Low]
+### Task 2: fold ledger-* and worker-* prefixes into their groups [Medium]
 *Depends-on: 1*
 
-Add `shipsmooth branch --issue ID --desc S` that creates local branch `t/{ID}-{S}` (slugified
-desc) and prints `git push -u origin t/{ID}-{S}`. Reuses the read-only git gateway from Task 1.
-Command + gateway method + test asserting branch created and push line printed. No push.
+The `ledger-record-commit`, `ledger-record-patch-integrated`, `ledger-resolver-complete`, and
+`ledger-watch` leaves currently register flat alongside the `ledger` group; move them **inside**
+it as `ledger record-commit` etc. Likewise ensure `worker-*` are `worker base|init|finish|cleanup`
+under the Worker parent from Task 1. Update tests. Verify `ledger --help` and `worker --help`
+enumerate all subcommands and the old flat forms no longer resolve.
 
-### Task 4: resume command — session-resume state summary [Low]
-*Depends-on: 1,3*
+### Task 3: update skill fragments to grouped command names [Low]
+*Depends-on: 1,2*
 
-Add `shipsmooth resume --plan N` composing existing reads: XML presence (or the `init` hint when
-absent), the `show` summary, `git worktree list`, and a flag for any stale `integration/plan-N`
-worktree — printing a single resume report ending in the next actionable task. Composes the
-Task 1 gateway and `TaskStore`; no new git primitive. Command + test.
+In `_partials/workflow/*.jte.md`, rewrite every `${cliBin()} <flat>` to its grouped form:
+`init→plan init`, `show→plan show`, `project-update→plan update`, `add-comment→task comment`,
+`add-deviation→task deviation`, `update-status→task status`, `set-commit→task set-commit`
+(`ledger …` already grouped — verify only). Keep all `${...}` interpolation and the Phase-2
+nested per-agent includes verbatim. `mvn compile`; grep the generated
+`build/skills/start-dev/SKILL.md` to confirm no flat name survives and grouped forms render.
 
-### Task 5: thin the fragments to invoke the new commands [Low]
-*Depends-on: 1,2,3,4*
+### Task 4: update gemini .toml callers [Low]
+*Depends-on: 1,2*
 
-Edit only after all commands exist and pass. Rewrite `_partials/workflow/git-tagging.jte.md`
-(→ `shipsmooth tag`), `phase1-plan.jte.md` step 6 (→ `shipsmooth preflight`), and
-`phase2-execute.jte.md` session-resume block (→ `shipsmooth resume`) and Step 0
-(→ `shipsmooth branch`). The `linear-structure.jte.md` `rev-list`/permalink block stays as
-illustrative `[Linear]`-only prose (no command to point at). Keep all `${...}` cliBin
-interpolation and the Phase-2 nested per-agent includes verbatim. `mvn compile`; assert the
-generated `build/skills/start-dev/SKILL.md` shrinks and the new invocations render. Record
-before/after `wc -c` in the commit message against PB-310.
+Update `integrations/gemini/.../commands/start.toml` and `start-dev.toml` for any embedded CLI
+invocations using the renamed commands. If they reference commands only via the shared skill body
+(not literal CLI lines), confirm there is nothing to change and record that. Build the gemini
+integration to confirm.
 
 ## Verification
 
-- Per command: integration test in `io.bitken.ss.cli` exercising the success path and (for
-  `preflight`/`tag`) each FAIL/refusal mode. `mvn test` green.
-- §6 note: commands never push — tests assert the printed push line, never that a remote moved.
-- Final: `mvn compile` regenerates skills; `wc -c build/skills/start-dev/SKILL.md` is smaller
-  than the pre-plan baseline; grep confirms the removed bash recipes are gone and the
-  `shipsmooth <verb>` references are present. Snapshot the baseline to `.agents/tmp/` before
-  Task 5 for the diff.
+- `mvn test` green; `CommandsTest` updated to the grouped argv.
+- `shipsmooth --help` lists `plan`, `task`, `ledger`, `worker`, `claim`, `integrate` and no flat
+  leaf names; each group's `--help` lists its verbs.
+- No old flat name resolves (e.g. `shipsmooth show` errors; `shipsmooth plan show` works).
+- `mvn compile` regenerates skills; grep confirms generated SKILL.md uses only grouped forms.
+- Snapshot the generated SKILL.md to `.agents/tmp/` before Task 3 for a before/after diff.
 
 ## Resolved decisions (calibration)
 
-- **`preflight` branch state → WARN, not FAIL.** A committed-but-unpushed branch (or HEAD ahead
-  of upstream) prints a warning and still passes overall. Only a dirty tree or a missing version
-  tag is a hard FAIL. As long as the plan commit exists locally, preflight passes.
-- **`tag --kind version` refuses to re-tag.** If the computed `plan-N-vK` already exists, the
-  command errors with a clear message naming the existing version and exits non-zero — it does
-  **not** silently auto-bump. The agent reads the message and decides what to do (e.g. re-run
-  after the next commit). No `--version` override flag is added.
-- **`permalink` dropped** — see Target commands above ([Linear]-only; repo is [Local]).
+- **Clean break, no aliases** — old flat command names are removed, not kept as aliases.
+- **`claim` and `integrate` stay top-level** — they are cross-cutting verbs, not noun CRUD.
+- **`show → plan show`, `project-update → plan update`** — chosen over `task list` / keeping
+  "project" vocabulary, per the naming rationale above.
