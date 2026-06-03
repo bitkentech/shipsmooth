@@ -152,17 +152,7 @@ public class TaskStore {
 
         TasksContainerType tasksContainer = factory.createTasksContainerType();
         for (Task t : tasks) {
-            TaskType taskType = factory.createTaskType();
-            taskType.setId(BigInteger.valueOf(t.id()));
-            taskType.setName(t.name());
-            taskType.setRisk(t.risk());
-            taskType.setStatus(TaskStatusType.PENDING);
-            taskType.setCommit("");
-            taskType.setCreatedFrom(planVersion);
-            taskType.setClosedAtVersion("");
-            taskType.setComments(factory.createCommentsContainerType());
-            taskType.setDeviations(factory.createDeviationsContainerType());
-            tasksContainer.getTask().add(taskType);
+            tasksContainer.getTask().add(newPendingTask(t.id(), t.name(), t.risk(), planVersion));
         }
         planTasks.setTasks(tasksContainer);
         for (Task t : tasks) {
@@ -190,26 +180,33 @@ public class TaskStore {
      * {@code task.dependsOn()} is non-blank. Returns the assigned id.
      */
     public int addTask(PlanTasks planTasks, Task task, String planVersion) throws Exception {
-        int nextId = planTasks.getTasks().getTask().stream()
+        int nextId = nextTaskId(planTasks);
+        planTasks.getTasks().getTask().add(newPendingTask(nextId, task.name(), task.risk(), planVersion));
+        if (task.dependsOn() != null && !task.dependsOn().isBlank()) {
+            setDependsOn(planTasks, nextId, task.dependsOn());
+        }
+        return nextId;
+    }
+
+    private int nextTaskId(PlanTasks planTasks) {
+        return planTasks.getTasks().getTask().stream()
                 .mapToInt(t -> t.getId().intValue())
                 .max().orElse(0) + 1;
+    }
 
+    /** Builds a fresh task element: pending, empty commit, createdFrom set, empty containers. */
+    private TaskType newPendingTask(int id, String name, String risk, String planVersion) {
         TaskType taskType = factory.createTaskType();
-        taskType.setId(BigInteger.valueOf(nextId));
-        taskType.setName(task.name());
-        taskType.setRisk(task.risk());
+        taskType.setId(BigInteger.valueOf(id));
+        taskType.setName(name);
+        taskType.setRisk(risk);
         taskType.setStatus(TaskStatusType.PENDING);
         taskType.setCommit("");
         taskType.setCreatedFrom(planVersion);
         taskType.setClosedAtVersion("");
         taskType.setComments(factory.createCommentsContainerType());
         taskType.setDeviations(factory.createDeviationsContainerType());
-        planTasks.getTasks().getTask().add(taskType);
-
-        if (task.dependsOn() != null && !task.dependsOn().isBlank()) {
-            setDependsOn(planTasks, nextId, task.dependsOn());
-        }
-        return nextId;
+        return taskType;
     }
 
     public void updateTaskStatus(PlanTasks planTasks, int taskId, String status) {
