@@ -11,24 +11,36 @@
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Snapshot current output and extract section fragments</name>
-            <commit></commit>
+            <commit>462f2554b0b038ec9c70c329e70f6673cb643429</commit>
             <created-from>plan-65-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-03T16:24:39.296+05:30</timestamp>
+                    <message>Renamed _partials/ to shared/ (per review) before extracting fragments; fragments live in shared/workflow/.</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Reduce `base-workflow.jte.md` to a TOC of includes</name>
-            <commit></commit>
+            <commit>462f2554b0b038ec9c70c329e70f6673cb643429</commit>
             <created-from>plan-65-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-03T16:25:15.874+05:30</timestamp>
+                    <message>TOC reduction committed together with Task 1 extraction as one atomic refactor; intermediate split state is not a meaningful checkpoint.</message>
+                </deviation>
+            </deviations>
             <depends-on>1</depends-on>
         </task>
     </tasks>
