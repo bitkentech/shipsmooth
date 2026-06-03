@@ -28,7 +28,7 @@ public class Plan implements Callable<Integer>, HasSpec {
             new Show(taskStore),
             new ProjectUpdate(planService),
             new Preflight(gitState, gitTags),
-            new Tag(gitTags, gitState),
+            new Tag(gitTags),
             new Branch(gitState),
             new Resume(taskStore, gitState));
     }

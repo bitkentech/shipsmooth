@@ -12,8 +12,7 @@ import java.util.concurrent.Callable;
  *
  * <p>Slugifies the description, constructs {@code t/{ID}-{slug}}, creates the
  * local branch via {@code git checkout -b}, and prints the push line.
- * Errors non-zero if the branch already exists.
- * Does not call {@code git push}.
+ * Errors non-zero if the branch already exists. Does not call {@code git push}.
  */
 public class Branch implements Callable<Integer>, HasSpec {
 
@@ -37,7 +36,6 @@ public class Branch implements Callable<Integer>, HasSpec {
         var pr = spec.commandLine().getParseResult();
         String issue = pr.matchedOption("issue").getValue();
         String desc = pr.matchedOption("desc").getValue();
-
         String branchName = "t/" + issue.toLowerCase() + "-" + slugify(desc);
 
         if (gitState.branchExists(branchName)) {
@@ -53,7 +51,7 @@ public class Branch implements Callable<Integer>, HasSpec {
         return 0;
     }
 
-    static String slugify(String desc) {
+    private static String slugify(String desc) {
         return desc.toLowerCase()
                    .replaceAll("[^a-z0-9]+", "-")
                    .replaceAll("^-|-$", "");

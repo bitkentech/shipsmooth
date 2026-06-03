@@ -1,7 +1,6 @@
 package io.bitken.ss.cli.plan;
 
 import io.bitken.ss.cli.HasSpec;
-import io.bitken.ss.gw.GitState;
 import io.bitken.ss.gw.GitTags;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
@@ -14,10 +13,9 @@ import java.util.concurrent.Callable;
  *
  * <p>Creates the appropriate local git tag and prints the push line.
  * For {@code --kind version}: computes the next vK, refuses if it already
- * exists, creates it, prints {@code git push origin plan-N-vK}.
- * For {@code complete} / {@code abandoned}: creates {@code plan-N-complete}
- * or {@code plan-N-abandoned} and prints the push line.
- * No command here calls {@code git push}.
+ * exists, creates it, and prints {@code git push origin plan-N-vK}.
+ * For {@code complete} / {@code abandoned}: creates the fixed tag and prints
+ * the push line. Does not call {@code git push}.
  */
 public class Tag implements Callable<Integer>, HasSpec {
 
@@ -26,7 +24,7 @@ public class Tag implements Callable<Integer>, HasSpec {
     private final CommandSpec spec;
     private final GitTags gitTags;
 
-    public Tag(GitTags gitTags, GitState gitState) {
+    public Tag(GitTags gitTags) {
         this.gitTags = gitTags;
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("tag");
@@ -57,26 +55,20 @@ public class Tag implements Callable<Integer>, HasSpec {
             System.out.println("ERROR: tag " + tag + " already exists — commit more changes before re-tagging");
             return 1;
         }
-        if (!gitTags.createTag(tag)) {
-            System.out.println("ERROR: failed to create tag " + tag);
-            return 1;
-        }
-        printPushLine(tag);
-        return 0;
+        return createAndPrint(tag);
     }
 
     private int createFixedTag(int plan, String kind) {
-        String tag = "plan-" + plan + "-" + kind;
+        return createAndPrint("plan-" + plan + "-" + kind);
+    }
+
+    private int createAndPrint(String tag) {
         if (!gitTags.createTag(tag)) {
             System.out.println("ERROR: failed to create tag " + tag);
             return 1;
         }
-        printPushLine(tag);
-        return 0;
-    }
-
-    private static void printPushLine(String tag) {
         System.out.println("Created tag: " + tag);
         System.out.println("Run: git push origin " + tag);
+        return 0;
     }
 }

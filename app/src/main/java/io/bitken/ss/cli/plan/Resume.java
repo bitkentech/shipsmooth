@@ -13,9 +13,9 @@ import java.util.concurrent.Callable;
 /**
  * {@code plan resume --plan N} — session-resume pre-flight composite.
  *
- * <p>Prints: (1) whether the XML task file exists, (2) plan show summary,
- * (3) any worktrees associated with this plan. Replaces the four-command
- * bash block in phase2-execute.
+ * <p>Prints: XML task file present check, plan task summary, and any
+ * integration worktrees for this plan. Replaces the four-command bash block
+ * in phase2-execute.
  */
 public class Resume implements Callable<Integer>, HasSpec {
 
@@ -37,24 +37,31 @@ public class Resume implements Callable<Integer>, HasSpec {
 
     @Override
     public Integer call() {
-        var pr = spec.commandLine().getParseResult();
-        int plan = pr.matchedOption("plan").getValue();
+        int plan = spec.commandLine().getParseResult().<Integer>matchedOption("plan").getValue();
 
         if (!taskStore.planTasksFileExists(plan)) {
             System.out.println("ERROR: task file not found for plan " + plan
                 + " — run: shipsmooth plan init --plan " + plan);
             return 1;
         }
+        if (printTaskSummary(plan) != 0) return 1;
+        printWorktrees(plan);
+        return 0;
+    }
 
+    private int printTaskSummary(int plan) {
         try {
             PlanTasks planTasks = taskStore.loadPlan(plan);
             System.out.println("=== Task state ===");
             System.out.print(taskStore.formatPlanSummary(planTasks));
+            return 0;
         } catch (Exception e) {
             System.out.println("ERROR reading plan XML: " + e.getMessage());
             return 1;
         }
+    }
 
+    private void printWorktrees(int plan) {
         System.out.println("\n=== Worktrees for plan " + plan + " ===");
         String marker = "integration/plan-" + plan;
         List<String> relevant = gitState.worktreeList().stream()
@@ -65,6 +72,5 @@ public class Resume implements Callable<Integer>, HasSpec {
         } else {
             relevant.forEach(System.out::println);
         }
-        return 0;
     }
 }

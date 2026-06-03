@@ -1,7 +1,6 @@
 package io.bitken.ss.cli;
 
 import io.bitken.ss.cli.plan.Tag;
-import io.bitken.ss.gw.GitState;
 import io.bitken.ss.gw.GitTags;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,9 +35,8 @@ public class PlanTagTest {
         System.setErr(originalErr);
     }
 
-    private int run(GitTags gitTags, GitState gitState, String... args) {
-        Tag cmd = new Tag(gitTags, gitState);
-        return new CommandLine(cmd.getSpec()).execute(args);
+    private int run(GitTags gitTags, String... args) {
+        return new CommandLine(new Tag(gitTags).getSpec()).execute(args);
     }
 
     @Test
@@ -49,7 +47,7 @@ public class PlanTagTest {
             @Override public boolean tagExists(String t) { return false; }
             @Override public boolean createTag(String t) { created.add(t); return true; }
         };
-        int exit = run(tags, stubState(), "--plan", "7", "--kind", "version");
+        int exit = run(tags, "--plan", "7", "--kind", "version");
         assertEquals(0, exit);
         assertEquals(List.of("plan-7-v2"), created);
         String output = out.toString();
@@ -64,7 +62,7 @@ public class PlanTagTest {
             @Override public boolean tagExists(String t) { return true; }
             @Override public boolean createTag(String t) { return false; }
         };
-        int exit = run(tags, stubState(), "--plan", "7", "--kind", "version");
+        int exit = run(tags, "--plan", "7", "--kind", "version");
         assertEquals(1, exit);
         assertTrue(out.toString().contains("plan-7-v2"), "error should name the existing tag");
     }
@@ -73,10 +71,9 @@ public class PlanTagTest {
     void completeKindCreatesCompleteTag() {
         List<String> created = new ArrayList<>();
         GitTags tags = new GitTags() {
-            @Override public boolean tagExists(String t) { return false; }
             @Override public boolean createTag(String t) { created.add(t); return true; }
         };
-        int exit = run(tags, stubState(), "--plan", "7", "--kind", "complete");
+        int exit = run(tags, "--plan", "7", "--kind", "complete");
         assertEquals(0, exit);
         assertEquals(List.of("plan-7-complete"), created);
         assertTrue(out.toString().contains("git push"));
@@ -86,22 +83,16 @@ public class PlanTagTest {
     void abandonedKindCreatesAbandonedTag() {
         List<String> created = new ArrayList<>();
         GitTags tags = new GitTags() {
-            @Override public boolean tagExists(String t) { return false; }
             @Override public boolean createTag(String t) { created.add(t); return true; }
         };
-        int exit = run(tags, stubState(), "--plan", "7", "--kind", "abandoned");
+        int exit = run(tags, "--plan", "7", "--kind", "abandoned");
         assertEquals(0, exit);
         assertEquals(List.of("plan-7-abandoned"), created);
     }
 
     @Test
     void unknownKindFails() {
-        GitTags tags = new GitTags();
-        int exit = run(tags, stubState(), "--plan", "7", "--kind", "bogus");
+        int exit = run(new GitTags(), "--plan", "7", "--kind", "bogus");
         assertEquals(1, exit);
-    }
-
-    private static GitState stubState() {
-        return new GitState(java.nio.file.Paths.get("."));
     }
 }
