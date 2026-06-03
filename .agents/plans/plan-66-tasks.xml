@@ -44,9 +44,9 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>update skill fragments to grouped command names</name>
-            <commit></commit>
+            <commit>d216e66243bda35d7c8a11c3645922a7d19e0172</commit>
             <created-from>plan-66-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -56,12 +56,17 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>update gemini .toml callers</name>
             <commit></commit>
             <created-from>plan-66-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-03T20:04:22.223+05:30</timestamp>
+                    <message>Verified no-op: gemini .toml commands (start.toml, start-dev.toml) only activate the skill by name; they carry no literal CLI invocations. Whole gemini integration has zero flat command references. Grouped names are delivered via the skill body updated in task 3.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1,2</depends-on>
         </task>
