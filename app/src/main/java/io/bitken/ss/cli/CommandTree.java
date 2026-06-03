@@ -7,12 +7,14 @@ import io.bitken.ss.cli.ledger.LedgerRecordPatchIntegrated;
 import io.bitken.ss.cli.ledger.LedgerResolverComplete;
 import io.bitken.ss.cli.ledger.LedgerWatch;
 import io.bitken.ss.cli.plan.Init;
+import io.bitken.ss.cli.plan.Plan;
 import io.bitken.ss.cli.plan.ProjectUpdate;
 import io.bitken.ss.cli.plan.Show;
 import io.bitken.ss.cli.task.AddComment;
 import io.bitken.ss.cli.task.AddDeviation;
 import io.bitken.ss.cli.task.AddTask;
 import io.bitken.ss.cli.task.SetCommit;
+import io.bitken.ss.cli.task.Task;
 import io.bitken.ss.cli.task.UpdateStatus;
 import io.bitken.ss.cli.worker.Claim;
 import io.bitken.ss.cli.worker.WorkerBase;
@@ -60,11 +62,19 @@ class CommandTree {
     }
 
     private static Callable<?>[] buildCommands(AppComponents app, Integrate integrate) {
-        return new Callable<?>[] {
+        Plan plan = new Plan(
             new Init(app.planService(), app.taskStore(), app.gitTags(), app.experimentalMode()),
+            new Show(app.taskStore()),
+            new ProjectUpdate(app.planService()));
+        Task task = new Task(
+            new AddTask(app.planService(), app.gitTags()),
             new AddComment(app.planService()),
             new AddDeviation(app.planService()),
-            new AddTask(app.planService(), app.gitTags()),
+            new UpdateStatus(app.planService()),
+            new SetCommit(app.planService()));
+        return new Callable<?>[] {
+            plan,
+            task,
             new Claim(app.taskStore(), app.worktreeService(), app.eventLedger()),
             integrate,
             new Ledger(app.eventLedger()),
@@ -72,10 +82,6 @@ class CommandTree {
             new LedgerRecordPatchIntegrated(app.eventLedger()),
             new LedgerResolverComplete(app.eventLedger()),
             new LedgerWatch(),
-            new ProjectUpdate(app.planService()),
-            new SetCommit(app.planService()),
-            new Show(app.taskStore()),
-            new UpdateStatus(app.planService()),
             new WorkerBase(app.planService(), app.taskStore()),
             new WorkerCleanup(app.worktreeService(), app.eventLedger()),
             new WorkerFinish(app.workflowServiceImpl()),

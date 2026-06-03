@@ -15,7 +15,7 @@ public class AddComment implements Callable<Integer>, HasSpec {
     public AddComment(PlanService planService) {
         this.planService = planService;
         spec = CommandSpec.wrapWithoutInspection(this);
-        spec.name("add-comment");
+        spec.name("comment");
         spec.usageMessage().description("Add a comment to a task.");
         spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID (integer)").type(int.class).build());

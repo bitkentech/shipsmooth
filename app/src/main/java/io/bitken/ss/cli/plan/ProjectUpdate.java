@@ -15,7 +15,7 @@ public class ProjectUpdate implements Callable<Integer>, HasSpec {
     public ProjectUpdate(PlanService planService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.planService = planService;
-        this.spec.name("project-update");
+        this.spec.name("update");
         this.spec.usageMessage().description("Add a project update.");
         this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         this.spec.addOption(OptionSpec.builder("--status").type(String.class).build());
