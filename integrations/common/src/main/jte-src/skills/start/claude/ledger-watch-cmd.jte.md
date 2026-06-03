@@ -2,5 +2,5 @@
 
 Use the Monitor tool with this command:
 ```bash
-${model.cliBin()} --enable-experimental ledger-watch --plan {N} --repo $(git rev-parse --show-toplevel) --after $LEDGER_SEQ
+${model.cliBin()} --enable-experimental ledger watch --plan {N} --repo $(git rev-parse --show-toplevel) --after $LEDGER_SEQ
 ```

@@ -6,10 +6,10 @@
 
 ```bash
 # 1. Confirm the XML task file exists (must not be missing)
-ls .agents/plans/plan-{N}-tasks.xml   # if absent, run: ${model.cliBin()} init --plan {N} --tasks-from .agents/plans/plan-{N}.md
+ls .agents/plans/plan-{N}-tasks.xml   # if absent, run: ${model.cliBin()} plan init --plan {N} --tasks-from .agents/plans/plan-{N}.md
 
 # 2. Review current task state
-${model.cliBin()} show --plan {N}
+${model.cliBin()} plan show --plan {N}
 
 # 3. Confirm no stray worktrees or background jobs remain
 git worktree list
@@ -60,7 +60,7 @@ Core Invariant #6).
 - Implement just enough to prove the approach works. Focus on the core complexity.
 - Commit as `draft(N): de-risk [task name]`.
 - `[Linear]` Post a comment on the Linear issue notifying the human the draft is ready.
-- `[Local]` Run `${model.cliBin()} update-status --plan {N} --task {id} --status de-risked` and `${model.cliBin()} add-comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
+- `[Local]` Run `${model.cliBin()} task status --plan {N} --task {id} --status de-risked` and `${model.cliBin()} task comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
 - **Wait for explicit approval of the approach.**
 
 ##### Step B: Hardening (Quality Phase)
@@ -114,10 +114,10 @@ quality conforms to its instructions):
 
 - **Minor deviation** (task split, reorder, clarification):
   - `[Linear]` Update the Linear issue(s), add a deviation comment explaining why, continue.
-  - `[Local]` Run `${model.cliBin()} add-deviation --plan {N} --task {id} --type minor --message "..."`, continue.
+  - `[Local]` Run `${model.cliBin()} task deviation --plan {N} --task {id} --type minor --message "..."`, continue.
 - **Major deviation** (fundamental plan problem, architecture issue, blocked): Stop immediately.
   - `[Linear]` Post a Linear project update. Set project health to **"At Risk"**.
-  - `[Local]` Run `${model.cliBin()} project-update --plan {N} --blocked --message "..."`.
+  - `[Local]` Run `${model.cliBin()} plan update --plan {N} --blocked --message "..."`.
   - Wait for the human to revise the plan file, commit, push, and give a new go-ahead.
 
 Never autonomously modify the `.agents/plans/` file during execution. If a plan change is needed, surface it and wait.
