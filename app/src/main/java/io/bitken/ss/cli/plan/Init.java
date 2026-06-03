@@ -6,7 +6,6 @@ import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.gw.TaskStore;
-import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -23,11 +22,6 @@ public class Init implements Callable<Integer>, HasSpec {
     private final GitTags gitTagService;
     private final ExperimentalMode mode;
 
-    public Init(PlanService planService, TaskStore taskStore, ExperimentalMode mode) {
-        this(planService, taskStore, new GitTags(), mode);
-    }
-
-    @Inject
     public Init(PlanService planService, TaskStore taskStore, GitTags gitTagService, ExperimentalMode mode) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.planService = planService;

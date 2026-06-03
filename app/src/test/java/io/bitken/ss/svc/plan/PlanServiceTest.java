@@ -64,6 +64,25 @@ public class PlanServiceTest {
     }
 
     @Test
+    public void addTaskAppendsToXmlAndReturnsNewIdWithoutLedgerEvent() throws Exception {
+        PlanService svc = planService();
+        svc.initPlan(2, "plan-2-v1", List.of(new TaskStore.Task(1, "first", "high")));
+        var ledger = new EventLedger(tempDir);
+        int before = ledger.readHashes().size();
+
+        int newId = svc.addTask(2, "second", "medium", "1", "plan-2-v1");
+
+        assertEquals(2, newId, "returned id should be the appended task's id");
+        PlanTasks plan = svc.loadPlan(2);
+        assertEquals(2, plan.getTasks().getTask().size());
+        assertEquals("second", plan.getTasks().getTask().get(1).getName());
+        assertEquals("medium", plan.getTasks().getTask().get(1).getRisk());
+
+        assertEquals(before, ledger.readHashes().size(),
+            "add-task must not record a ledger event");
+    }
+
+    @Test
     public void mutationRecordsNoLedgerEventWhenExperimentalDisabled() throws Exception {
         TaskStore xml = new TaskStore(new ShipsmoothDataLocator(tempDir));
         EventLedger ledger = new EventLedger(tempDir);

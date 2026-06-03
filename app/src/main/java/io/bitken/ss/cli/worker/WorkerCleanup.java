@@ -6,7 +6,6 @@ import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
-import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -21,7 +20,6 @@ public class WorkerCleanup implements Callable<Integer>, HasSpec, io.bitken.ss.c
     private final WorktreeService git;
     private final EventLedger ledger;
 
-    @Inject
     public WorkerCleanup(WorktreeService git, EventLedger ledger) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("worker-cleanup");

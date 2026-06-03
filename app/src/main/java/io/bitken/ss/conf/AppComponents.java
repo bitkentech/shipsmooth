@@ -2,6 +2,7 @@ package io.bitken.ss.conf;
 
 import dagger.Component;
 import io.bitken.ss.git.WorktreeService;
+import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.gw.TaskStore;
@@ -15,6 +16,7 @@ public interface AppComponents {
     ShipsmoothDataLocator dataLocator();
     ExperimentalMode experimentalMode();
     TaskStore taskStore();
+    GitTags gitTags();
     EventLedger eventLedger();
     PlanService planService();
     WorktreeService worktreeService();

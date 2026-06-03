@@ -7,7 +7,6 @@ import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.gw.TaskStore;
-import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -22,7 +21,6 @@ public class Claim implements Callable<Integer>, HasSpec, io.bitken.ss.conf.Feat
     private final WorktreeService git;
     private final EventLedger ledger;
 
-    @Inject
     public Claim(TaskStore xmlService, WorktreeService git, EventLedger ledger) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("claim");

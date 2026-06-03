@@ -243,7 +243,8 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
 
 ##### Step A: De-risking (Spiral Phase)
 - **Goal:** Validate logic and architectural direction. Ignore "Implementation Quality" rules.
-- Write at least one failing test that targets the core logic (preserving Core Invariant #6).
+- Write at least one failing test (and not more than 3) that targets the core logic (preserving 
+Core Invariant #6).
 - Implement just enough to prove the approach works. Focus on the core complexity.
 - Commit as `draft(N): de-risk [task name]`.
 - `[Linear]` Post a comment on the Linear issue notifying the human the draft is ready.
@@ -252,8 +253,12 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
 
 ##### Step B: Hardening (Quality Phase)
 - **Goal:** Achieve technical excellence, human readability, and coverage threshold.
-- Refactor the de-risked code for readability, performance, and project patterns.
-- Write full unit tests and ensure coverage meets the agreed threshold:
+- Refactor the de-risked code for readability, performance, and project patterns. If skill 
+"experimental-refine-dev" exists, then use it to improve the design.
+- Follow Test Driven Development if possible: Write only one test at a time, then the implementing code 
+and then refactor.
+- Keep doing Step B until coverage meets the agreed threshold (and if "experimental-refine-dev" skill exists,
+quality conforms to its instructions:
   ```bash
   # example — adjust to your toolchain:
   npm test -- --coverage --coverageThreshold='{"global":{"lines":95}}'

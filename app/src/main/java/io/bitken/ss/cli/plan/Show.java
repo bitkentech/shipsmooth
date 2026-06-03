@@ -3,7 +3,6 @@ package io.bitken.ss.cli.plan;
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.gw.TaskStore;
-import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -14,7 +13,6 @@ public class Show implements Callable<Integer>, HasSpec {
     private final CommandSpec spec;
     private final TaskStore xmlService;
 
-    @Inject
     public Show(TaskStore xmlService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("show");

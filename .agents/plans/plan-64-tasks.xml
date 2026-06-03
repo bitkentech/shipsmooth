@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>64</plan>
+    <plan-version>plan-64-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-03</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Add `TaskStore.addTask` method</name>
+            <commit>9086eea50a10590f34b376f2105ce6409d51b79c</commit>
+            <created-from>plan-64-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-03T12:23:28.648+05:30</timestamp>
+                    <message>De-risk draft ready for review: TaskStore.addTask computes next id, populates required fields, persists depends-on via round-trip.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Add `PlanService.addTask` method</name>
+            <commit>0552323ea87dcbbdea83afea769881c10fb3c0c3</commit>
+            <created-from>plan-64-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Add `AddTask` CLI command and register it</name>
+            <commit>92e7fce6a5c1b1e10fcbe37ecc37f81a1c8b037a</commit>
+            <created-from>plan-64-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-03T12:05:14.959+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-03T13:18:21.485+05:30</timestamp>
+            <message>Plan complete. All 3 tasks agent-coded.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

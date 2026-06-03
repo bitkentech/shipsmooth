@@ -3,7 +3,6 @@ package io.bitken.ss.cli.worker;
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.workflow.WorkflowException;
 import io.bitken.ss.workflow.WorkflowServiceImpl;
-import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -15,7 +14,6 @@ public class WorkerFinish implements Callable<Integer>, HasSpec, io.bitken.ss.co
     private final CommandSpec spec;
     private final WorkflowServiceImpl workflow;
 
-    @Inject
     public WorkerFinish(WorkflowServiceImpl workflow) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.workflow = workflow;

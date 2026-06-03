@@ -11,6 +11,7 @@ import io.bitken.ss.cli.plan.ProjectUpdate;
 import io.bitken.ss.cli.plan.Show;
 import io.bitken.ss.cli.task.AddComment;
 import io.bitken.ss.cli.task.AddDeviation;
+import io.bitken.ss.cli.task.AddTask;
 import io.bitken.ss.cli.task.SetCommit;
 import io.bitken.ss.cli.task.UpdateStatus;
 import io.bitken.ss.cli.worker.Claim;
@@ -60,9 +61,10 @@ class CommandTree {
 
     private static Callable<?>[] buildCommands(AppComponents app, Integrate integrate) {
         return new Callable<?>[] {
-            new Init(app.planService(), app.taskStore(), app.experimentalMode()),
+            new Init(app.planService(), app.taskStore(), app.gitTags(), app.experimentalMode()),
             new AddComment(app.planService()),
             new AddDeviation(app.planService()),
+            new AddTask(app.planService(), app.gitTags()),
             new Claim(app.taskStore(), app.worktreeService(), app.eventLedger()),
             integrate,
             new Ledger(app.eventLedger()),

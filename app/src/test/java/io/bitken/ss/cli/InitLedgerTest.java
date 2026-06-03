@@ -7,6 +7,7 @@ import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.svc.plan.PlanService;
+import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.gw.TaskStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,7 +49,7 @@ public class InitLedgerTest {
 
     @Test
     public void initCreatesObjectsDirAndLedgerFile() throws Exception {
-        int exit = new CommandLine(new Init(planService, xmlService, new ExperimentalMode(true)).getSpec())
+        int exit = new CommandLine(new Init(planService, xmlService, new GitTags(), new ExperimentalMode(true)).getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
         assertEquals(0, exit);
 
@@ -62,7 +63,7 @@ public class InitLedgerTest {
         ledger.ensureLedgerFile();
         int before = ledger.readHashes().size();
 
-        new CommandLine(new Init(planService, xmlService, new ExperimentalMode(true)).getSpec())
+        new CommandLine(new Init(planService, xmlService, new GitTags(), new ExperimentalMode(true)).getSpec())
                 .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
 
         List<String> hashes = ledger.readHashes();
@@ -85,10 +86,10 @@ public class InitLedgerTest {
 
         try {
             // Run twice — entries must not be duplicated
-            new CommandLine(new Init(planService, xmlService, new ExperimentalMode(true)).getSpec())
+            new CommandLine(new Init(planService, xmlService, new GitTags(), new ExperimentalMode(true)).getSpec())
                     .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
             xmlFile.delete();
-            new CommandLine(new Init(planService, xmlService, new ExperimentalMode(true)).getSpec())
+            new CommandLine(new Init(planService, xmlService, new GitTags(), new ExperimentalMode(true)).getSpec())
                     .execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
 
             String content = Files.readString(gitignore);
