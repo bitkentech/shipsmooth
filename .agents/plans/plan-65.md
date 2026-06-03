@@ -53,7 +53,7 @@ Source line ranges in `_partials/base-workflow.jte.md` (heading line → its tra
 | `core-invariants.jte.md`                 | Core Invariants                      | 13–22    |
 | `task-tracking-mode.jte.md`              | Task Tracking Mode                   | 24–35    |
 | `control-strategy.jte.md`                | Control Strategy: Risk-Quality Loop  | 37–50    |
-| `repository-structure.jte.md`            | Repository Structure                 | 52–63    |
+| `repo-structure.jte.md`                  | Repository Structure                 | 52–63    |
 | `git-tagging.jte.md`                     | Git Tagging Convention + lefthook    | 65–119   |
 | `linear-structure.jte.md`               | Linear Structure                     | 121–151  |
 | `phase1-plan.jte.md`                     | Phase 1 — Plan, Calibrate, Commit    | 153–189  |
