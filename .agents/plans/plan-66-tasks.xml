@@ -4,7 +4,7 @@
     <plan-version>plan-66-v2</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-03</created>
     </metadata>
     <tasks>
@@ -75,6 +75,11 @@
         <update>
             <timestamp>2026-06-03T17:42:16.091+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-03T20:14:57.966+05:30</timestamp>
+            <message>Plan complete. All 4 tasks agent-coded: plan/task/worker noun groups introduced, ledger-*/worker-* folded into groups, skill fragments updated to grouped command names, gemini .toml confirmed no-op (no literal CLI invocations).</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
