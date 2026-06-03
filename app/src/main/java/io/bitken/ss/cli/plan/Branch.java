@@ -7,6 +7,14 @@ import picocli.CommandLine.Model.OptionSpec;
 
 import java.util.concurrent.Callable;
 
+/**
+ * {@code plan branch --issue ID --desc S}
+ *
+ * <p>Slugifies the description, constructs {@code t/{ID}-{slug}}, creates the
+ * local branch via {@code git checkout -b}, and prints the push line.
+ * Errors non-zero if the branch already exists.
+ * Does not call {@code git push}.
+ */
 public class Branch implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
@@ -26,7 +34,28 @@ public class Branch implements Callable<Integer>, HasSpec {
 
     @Override
     public Integer call() {
-        System.out.println("plan branch: not yet implemented");
-        return 1;
+        var pr = spec.commandLine().getParseResult();
+        String issue = pr.matchedOption("issue").getValue();
+        String desc = pr.matchedOption("desc").getValue();
+
+        String branchName = "t/" + issue.toLowerCase() + "-" + slugify(desc);
+
+        if (gitState.branchExists(branchName)) {
+            System.out.println("ERROR: branch " + branchName + " already exists");
+            return 1;
+        }
+        if (!gitState.createBranch(branchName)) {
+            System.out.println("ERROR: failed to create branch " + branchName);
+            return 1;
+        }
+        System.out.println("Created branch: " + branchName);
+        System.out.println("Run: git push -u origin " + branchName);
+        return 0;
+    }
+
+    static String slugify(String desc) {
+        return desc.toLowerCase()
+                   .replaceAll("[^a-z0-9]+", "-")
+                   .replaceAll("^-|-$", "");
     }
 }

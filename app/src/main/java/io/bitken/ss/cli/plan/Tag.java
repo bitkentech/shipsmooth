@@ -6,17 +6,28 @@ import io.bitken.ss.gw.GitTags;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
+import java.util.Set;
 import java.util.concurrent.Callable;
 
+/**
+ * {@code plan tag --plan N --kind version|complete|abandoned}
+ *
+ * <p>Creates the appropriate local git tag and prints the push line.
+ * For {@code --kind version}: computes the next vK, refuses if it already
+ * exists, creates it, prints {@code git push origin plan-N-vK}.
+ * For {@code complete} / {@code abandoned}: creates {@code plan-N-complete}
+ * or {@code plan-N-abandoned} and prints the push line.
+ * No command here calls {@code git push}.
+ */
 public class Tag implements Callable<Integer>, HasSpec {
+
+    private static final Set<String> FIXED_KINDS = Set.of("complete", "abandoned");
 
     private final CommandSpec spec;
     private final GitTags gitTags;
-    private final GitState gitState;
 
     public Tag(GitTags gitTags, GitState gitState) {
         this.gitTags = gitTags;
-        this.gitState = gitState;
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("tag");
         spec.usageMessage().description("Create a plan version/complete/abandoned tag.");
@@ -29,7 +40,43 @@ public class Tag implements Callable<Integer>, HasSpec {
 
     @Override
     public Integer call() {
-        System.out.println("plan tag: not yet implemented");
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+        String kind = pr.matchedOption("kind").getValue();
+
+        if ("version".equals(kind)) return createVersionTag(plan);
+        if (FIXED_KINDS.contains(kind)) return createFixedTag(plan, kind);
+
+        System.out.println("ERROR: --kind must be one of: version, complete, abandoned");
         return 1;
+    }
+
+    private int createVersionTag(int plan) {
+        String tag = gitTags.nextPlanVersion(plan);
+        if (gitTags.tagExists(tag)) {
+            System.out.println("ERROR: tag " + tag + " already exists — commit more changes before re-tagging");
+            return 1;
+        }
+        if (!gitTags.createTag(tag)) {
+            System.out.println("ERROR: failed to create tag " + tag);
+            return 1;
+        }
+        printPushLine(tag);
+        return 0;
+    }
+
+    private int createFixedTag(int plan, String kind) {
+        String tag = "plan-" + plan + "-" + kind;
+        if (!gitTags.createTag(tag)) {
+            System.out.println("ERROR: failed to create tag " + tag);
+            return 1;
+        }
+        printPushLine(tag);
+        return 0;
+    }
+
+    private static void printPushLine(String tag) {
+        System.out.println("Created tag: " + tag);
+        System.out.println("Run: git push origin " + tag);
     }
 }

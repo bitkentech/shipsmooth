@@ -3,11 +3,20 @@ package io.bitken.ss.cli.plan;
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.gw.GitState;
 import io.bitken.ss.gw.TaskStore;
+import io.bitken.ss.jaxb.PlanTasks;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 
+/**
+ * {@code plan resume --plan N} — session-resume pre-flight composite.
+ *
+ * <p>Prints: (1) whether the XML task file exists, (2) plan show summary,
+ * (3) any worktrees associated with this plan. Replaces the four-command
+ * bash block in phase2-execute.
+ */
 public class Resume implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
@@ -28,7 +37,34 @@ public class Resume implements Callable<Integer>, HasSpec {
 
     @Override
     public Integer call() {
-        System.out.println("plan resume: not yet implemented");
-        return 1;
+        var pr = spec.commandLine().getParseResult();
+        int plan = pr.matchedOption("plan").getValue();
+
+        if (!taskStore.planTasksFileExists(plan)) {
+            System.out.println("ERROR: task file not found for plan " + plan
+                + " — run: shipsmooth plan init --plan " + plan);
+            return 1;
+        }
+
+        try {
+            PlanTasks planTasks = taskStore.loadPlan(plan);
+            System.out.println("=== Task state ===");
+            System.out.print(taskStore.formatPlanSummary(planTasks));
+        } catch (Exception e) {
+            System.out.println("ERROR reading plan XML: " + e.getMessage());
+            return 1;
+        }
+
+        System.out.println("\n=== Worktrees for plan " + plan + " ===");
+        String marker = "integration/plan-" + plan;
+        List<String> relevant = gitState.worktreeList().stream()
+                .filter(line -> line.contains(marker))
+                .toList();
+        if (relevant.isEmpty()) {
+            System.out.println("(none)");
+        } else {
+            relevant.forEach(System.out::println);
+        }
+        return 0;
     }
 }
