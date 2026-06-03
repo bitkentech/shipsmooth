@@ -71,6 +71,18 @@ public class PlanService {
                 Event.system(EventType.PROJECT_UPDATE, null, payload.strip(), null));
     }
 
+    /**
+     * Appends a new task to the plan's XML and returns the assigned id.
+     * No ledger event is recorded — adding a task is a plan-authoring action,
+     * not part of the execution trace.
+     */
+    public int addTask(int planId, String name, String risk, String dependsOn, String planVersion) throws Exception {
+        var plan = taskStore.loadPlan(planId);
+        int newId = taskStore.addTask(plan, new TaskStore.Task(0, name, risk, dependsOn), planVersion);
+        taskStore.savePlan(planId, plan);
+        return newId;
+    }
+
     public String findCommitSha(String taskId) throws IOException {
         var ev = ledger.findLastEvent(taskId, EventType.COMMIT_RECORDED);
         if (ev == null) return null;
