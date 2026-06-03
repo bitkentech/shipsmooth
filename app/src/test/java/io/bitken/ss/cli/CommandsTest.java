@@ -12,6 +12,7 @@ import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.svc.plan.PlanService;
+import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.gw.TaskStore;
 
 import java.nio.file.Paths;
@@ -59,14 +60,14 @@ public class CommandsTest {
     @Test
     public void testInitCommand() {
         xmlFile.delete();
-        int exitCode = new CommandLine(new Init(planService, xmlService, new ExperimentalMode(false)).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
+        int exitCode = new CommandLine(new Init(planService, xmlService, new GitTags(), new ExperimentalMode(false)).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
         assertEquals(0, exitCode);
         assertTrue(xmlFile.exists());
     }
 
     @Test
     public void testInitCommandFileNotFound() {
-        int exitCode = new CommandLine(new Init(planService, xmlService, new ExperimentalMode(false)).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", "non-existent.md");
+        int exitCode = new CommandLine(new Init(planService, xmlService, new GitTags(), new ExperimentalMode(false)).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", "non-existent.md");
         assertEquals(1, exitCode);
     }
 

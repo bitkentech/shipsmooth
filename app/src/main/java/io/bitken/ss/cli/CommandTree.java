@@ -61,10 +61,10 @@ class CommandTree {
 
     private static Callable<?>[] buildCommands(AppComponents app, Integrate integrate) {
         return new Callable<?>[] {
-            new Init(app.planService(), app.taskStore(), app.experimentalMode()),
+            new Init(app.planService(), app.taskStore(), app.gitTags(), app.experimentalMode()),
             new AddComment(app.planService()),
             new AddDeviation(app.planService()),
-            new AddTask(app.planService()),
+            new AddTask(app.planService(), app.gitTags()),
             new Claim(app.taskStore(), app.worktreeService(), app.eventLedger()),
             integrate,
             new Ledger(app.eventLedger()),

@@ -22,10 +22,6 @@ public class Init implements Callable<Integer>, HasSpec {
     private final GitTags gitTagService;
     private final ExperimentalMode mode;
 
-    public Init(PlanService planService, TaskStore taskStore, ExperimentalMode mode) {
-        this(planService, taskStore, new GitTags(), mode);
-    }
-
     public Init(PlanService planService, TaskStore taskStore, GitTags gitTagService, ExperimentalMode mode) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.planService = planService;

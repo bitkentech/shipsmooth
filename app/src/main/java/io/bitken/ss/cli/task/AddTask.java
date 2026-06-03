@@ -19,10 +19,6 @@ public class AddTask implements Callable<Integer>, HasSpec {
     private final PlanService planService;
     private final GitTags gitTags;
 
-    public AddTask(PlanService planService) {
-        this(planService, new GitTags());
-    }
-
     public AddTask(PlanService planService, GitTags gitTags) {
         this.planService = planService;
         this.gitTags = gitTags;
