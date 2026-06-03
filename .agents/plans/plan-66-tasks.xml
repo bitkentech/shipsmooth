@@ -11,7 +11,7 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>introduce group parents and re-nest existing leaves</name>
             <commit>b29bfb7cad33cbebf6f1a1a211839cb81f6fa192</commit>
             <created-from>plan-66-v2</created-from>
@@ -27,7 +27,7 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>fold ledger-* and worker-* prefixes into their groups</name>
             <commit>556335092878e390b0efb17b7158732f268e5f24</commit>
             <created-from>plan-66-v2</created-from>
@@ -44,7 +44,7 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>update skill fragments to grouped command names</name>
             <commit>d216e66243bda35d7c8a11c3645922a7d19e0172</commit>
             <created-from>plan-66-v2</created-from>
@@ -56,7 +56,7 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>update gemini .toml callers</name>
             <commit></commit>
             <created-from>plan-66-v2</created-from>
