@@ -1,6 +1,7 @@
 package io.bitken.ss.cli.ledger;
 
 import io.bitken.ss.cli.HasSpec;
+import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventLedger;
 import picocli.CommandLine.Model.CommandSpec;
@@ -14,15 +15,19 @@ public class Ledger implements Callable<Integer>, HasSpec {
     private final CommandSpec spec;
     private final EventLedger ledgerService;
 
-    public Ledger(EventLedger ledgerService) {
+    public Ledger(EventLedger ledgerService, ExperimentalMode mode) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.ledgerService = ledgerService;
         this.spec.name("ledger");
-        this.spec.usageMessage().description("Inspect the append-only task ledger.");
+        this.spec.usageMessage().description("Inspect and record entries in the append-only task ledger.");
 
-        HasSpec[] subcommands = { new ListCmd(ledgerService), new VerifyCmd(ledgerService), new ReadCmd(ledgerService) };
-        for (HasSpec sub : subcommands) {
-            this.spec.addSubcommand(sub.getSpec().name(), sub.getSpec());
+        addLeaves(spec, new ListCmd(ledgerService), new VerifyCmd(ledgerService), new ReadCmd(ledgerService));
+        if (mode.enabled()) {
+            addLeaves(spec,
+                new LedgerRecordCommit(ledgerService),
+                new LedgerRecordPatchIntegrated(ledgerService),
+                new LedgerResolverComplete(ledgerService),
+                new LedgerWatch());
         }
     }
 
@@ -32,8 +37,14 @@ public class Ledger implements Callable<Integer>, HasSpec {
 
     @Override
     public Integer call() {
-        System.err.println("Usage: ledger <list|verify|read>");
+        spec.commandLine().usage(System.err);
         return 0;
+    }
+
+    private static void addLeaves(CommandSpec parent, HasSpec... leaves) {
+        for (HasSpec leaf : leaves) {
+            parent.addSubcommand(leaf.getSpec().name(), leaf.getSpec());
+        }
     }
 
     public static class ListCmd implements Callable<Integer>, HasSpec {
@@ -157,7 +168,7 @@ public class Ledger implements Callable<Integer>, HasSpec {
                 ev = ledgerService.readEvent(sha);
             } catch (java.io.IOException e) {
                 System.err.printf("ERROR: '%s' not found in ledger object store (.agents/objects/).%n", sha);
-                System.err.println("       Git commit SHAs live in .git/ — use 'worker-base' to resolve a task's recorded commit SHA.");
+                System.err.println("       Git commit SHAs live in .git/ — use 'worker base' to resolve a task's recorded commit SHA.");
                 return 1;
             }
             System.out.println(ledgerService.renderEventJson(ev));

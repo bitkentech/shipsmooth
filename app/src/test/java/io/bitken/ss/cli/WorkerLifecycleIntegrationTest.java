@@ -94,7 +94,7 @@ public class WorkerLifecycleIntegrationTest {
 
         // 1. worker-init creates worktree + WORKTREE_CREATED event.
         int initExit = run(
-                "--enable-experimental", "worker-init","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+                "--enable-experimental", "worker", "init","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, initExit, "worker-init must exit 0");
 
         File worktreeDir = repoRoot.resolve(WORKTREE_REL).toFile();
@@ -112,7 +112,7 @@ public class WorkerLifecycleIntegrationTest {
 
         // 3. worker-finish captures diff, commits on the agent-work branch.
         int finishExit = run(
-                "--enable-experimental", "worker-finish","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+                "--enable-experimental", "worker", "finish","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, finishExit, "worker-finish must exit 0 on happy path");
 
         // 4. Ledger must contain PATCH_EMITTED and COMMIT_RECORDED written *during this test*.
@@ -146,7 +146,7 @@ public class WorkerLifecycleIntegrationTest {
         int snapshotIndex = ledger.readHashes().size() - 1; // -1 == "from the beginning is OK; we only care about after this"
 
         int initExit = run(
-                "--enable-experimental", "worker-init","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+                "--enable-experimental", "worker", "init","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertEquals(0, initExit);
 
         File worktreeDir = repoRoot.resolve(WORKTREE_REL).toFile();
@@ -158,7 +158,7 @@ public class WorkerLifecycleIntegrationTest {
                 "-c", "user.name=Test", "commit", "-m", "rogue commit");
 
         int finishExit = run(
-                "--enable-experimental", "worker-finish","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
+                "--enable-experimental", "worker", "finish","--plan", String.valueOf(PLAN_NUM), "--task", TASK_ID);
         assertNotEquals(0, finishExit, "worker-finish must reject worktree with subagent commits");
 
         Event newPatch = ledger.findLastEventAfter(TASK_ID, EventType.PATCH_EMITTED, snapshotIndex);

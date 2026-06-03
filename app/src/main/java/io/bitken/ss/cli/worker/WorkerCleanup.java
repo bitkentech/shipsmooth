@@ -22,7 +22,7 @@ public class WorkerCleanup implements Callable<Integer>, HasSpec, io.bitken.ss.c
 
     public WorkerCleanup(WorktreeService git, EventLedger ledger) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
-        this.spec.name("worker-cleanup");
+        this.spec.name("cleanup");
         this.spec.usageMessage().description("Remove the worktree for a task, keeping the branch ref.");
         this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         this.spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());

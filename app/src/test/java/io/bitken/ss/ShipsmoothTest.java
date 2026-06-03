@@ -18,10 +18,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ShipsmoothTest {
 
+    // Top-level experimental commands. After the noun-group regrouping the
+    // worker-* leaves live under the experimental `worker` group and the
+    // ledger record-*/watch leaves under the (non-experimental) `ledger` group,
+    // so only these names are experimental *at the top level*.
     private static final List<String> EXPERIMENTAL_NAMES = List.of(
-        "claim", "worker-init", "worker-finish", "worker-cleanup", "worker-base",
-        "integrate", "ledger-watch", "ledger-resolver-complete",
-        "ledger-record-commit", "ledger-record-patch-integrated"
+        "claim", "worker", "integrate"
     );
 
     private ByteArrayOutputStream outBuf;

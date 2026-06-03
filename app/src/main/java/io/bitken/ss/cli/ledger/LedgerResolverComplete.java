@@ -20,7 +20,7 @@ public class LedgerResolverComplete implements Callable<Integer>, HasSpec, io.bi
     public LedgerResolverComplete(EventLedger ledgerService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.ledgerService = ledgerService;
-        this.spec.name("ledger-resolver-complete");
+        this.spec.name("resolver-complete");
         this.spec.usageMessage().description("Signal that the Lead Agent's resolver subagent has finished (unblocks integrate).");
         this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         this.spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());

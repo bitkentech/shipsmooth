@@ -125,4 +125,62 @@ public class GroupedCommandTreeTest {
             System.setErr(originalErr);
         }
     }
+
+    /** {@code worker init} dispatches through the (all-experimental) worker group. */
+    @Test
+    void workerInitDispatchesThroughGroup() {
+        // worker group is experimental; app runs with ExperimentalMode(true).
+        // worker-init needs a --plan to do real work; here we only assert the
+        // grouped path is RECOGNISED, not that the old flat name resolves.
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        PrintStream originalErr = System.err;
+        System.setErr(new PrintStream(err));
+        try {
+            run("worker", "init");
+            String stderr = err.toString();
+            assertFalse(stderr.contains("Unmatched argument") && stderr.contains("'worker'"),
+                "worker group should be recognised under experimental mode; got: " + stderr);
+        } finally {
+            System.setErr(originalErr);
+        }
+    }
+
+    /** The old flat {@code worker-init} name no longer resolves at the top level. */
+    @Test
+    void flatWorkerInitNameRemoved() {
+        assertTrue(stderrOf("worker-init", "--plan", String.valueOf(PLAN_NUM)).contains("Unmatched argument"),
+            "flat 'worker-init' should be an unmatched top-level argument");
+    }
+
+    /** {@code ledger watch} dispatches through the group; the flat {@code ledger-watch} is gone. */
+    @Test
+    void ledgerWatchFoldsIntoGroup() {
+        assertTrue(stderrOf("ledger-watch").contains("Unmatched argument"),
+            "flat 'ledger-watch' should be an unmatched top-level argument");
+
+        // 'ledger watch' is experimental and lives under the ledger group; under
+        // experimental mode it must be recognised (not an unknown-subcommand error).
+        assertFalse(stderrOf("ledger", "watch", "--help").contains("Unmatched argument"),
+            "'ledger watch' should be recognised under the ledger group");
+    }
+
+    /** Run argv and capture what the CLI writes to stderr. */
+    private String stderrOf(String... args) {
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        PrintStream originalErr = System.err;
+        System.setErr(new PrintStream(err));
+        try {
+            run(args);
+            return err.toString();
+        } finally {
+            System.setErr(originalErr);
+        }
+    }
+
+    /** Non-experimental {@code ledger list} stays available under the group. */
+    @Test
+    void ledgerListRemainsNonExperimental() {
+        int exit = run("ledger", "list");
+        assertEquals(0, exit, "non-experimental 'ledger list' must work");
+    }
 }

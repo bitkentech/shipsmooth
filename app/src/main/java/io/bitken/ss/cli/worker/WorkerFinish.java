@@ -17,7 +17,7 @@ public class WorkerFinish implements Callable<Integer>, HasSpec, io.bitken.ss.co
     public WorkerFinish(WorkflowServiceImpl workflow) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.workflow = workflow;
-        this.spec.name("worker-finish");
+        this.spec.name("finish");
         this.spec.usageMessage().description("Capture subagent diff, commit on worktree branch, record ledger events.");
         this.spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         this.spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID").type(String.class).build());

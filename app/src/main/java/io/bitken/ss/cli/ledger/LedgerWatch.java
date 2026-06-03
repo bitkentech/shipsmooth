@@ -29,7 +29,7 @@ public class LedgerWatch implements Callable<Integer>, HasSpec, io.bitken.ss.con
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             .enable(SerializationFeature.INDENT_OUTPUT);
         this.spec = CommandSpec.wrapWithoutInspection(this);
-        this.spec.name("ledger-watch");
+        this.spec.name("watch");
         this.spec.usageMessage().description("Block until a RESOLVER_REQUESTED ledger event appears, then print it.");
         this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         this.spec.addOption(OptionSpec.builder("--repo").description("Repo root (default: current directory)").type(String.class).build());
