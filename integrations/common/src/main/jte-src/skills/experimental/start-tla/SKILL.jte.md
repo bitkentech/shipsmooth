@@ -30,17 +30,6 @@ transitions are formally specified by the `ShipSmooth_Milestones` TLA⁺ model
 
 ---
 
-## Task Tracking Mode
-
-This workflow supports two task tracking modes. Choose one at the start of each plan:
-
-- **`[Linear]`** — Uses Linear issues and projects. Requires a Linear account and the Linear MCP server configured in Claude Code.
-- **`[Local]`** — Uses a local XML file at `.agents/plans/plan-{N}-tasks.xml` plus the append-only ledger at `.agents/ledger.jsonl`. No external services and no Java runtime are required — the ledger is written directly with shell commands (see "Writing Ledger Events" below).
-
-Throughout this skill, instructions marked `[Linear]` apply only in Linear mode; instructions marked `[Local]` apply only in Local mode. Unmarked instructions apply to both.
-
----
-
 ## Control Strategy: The Risk-Quality Loop
 
 To maximize productivity while minimizing "hallucination drift," treat
@@ -59,6 +48,17 @@ quality rules. Once the approach is validated and approved, switch modes and
 harden the code to the quality bar. The per-task **De-risk & Harden Cycle**
 below operationalizes this; this section only explains *why* the two phases
 are kept separate.
+
+---
+
+## Task Tracking Mode
+
+This workflow supports two task tracking modes. Choose one at the start of each plan:
+
+- **`[Linear]`** — Uses Linear issues and projects. Requires a Linear account and the Linear MCP server configured in Claude Code.
+- **`[Local]`** — Uses a local XML file at `.agents/plans/plan-{N}-tasks.xml` plus the append-only ledger at `.agents/ledger.jsonl`. No external services and no Java runtime are required — the ledger is written directly with shell commands (see "Writing Ledger Events" below).
+
+Throughout this skill, instructions marked `[Linear]` apply only in Linear mode; instructions marked `[Local]` apply only in Local mode. Unmarked instructions apply to both.
 
 ---
 
