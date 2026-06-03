@@ -27,12 +27,17 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>fold ledger-* and worker-* prefixes into their groups</name>
-            <commit></commit>
+            <commit>556335092878e390b0efb17b7158732f268e5f24</commit>
             <created-from>plan-66-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-03T19:44:50.858+05:30</timestamp>
+                    <message>De-risk draft ready: Worker group + ledger experimental-leaf folding with mixed gating; all 105 tests green.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
