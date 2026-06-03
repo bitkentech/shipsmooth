@@ -11,12 +11,17 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>introduce group parents and re-nest existing leaves</name>
-            <commit></commit>
+            <commit>b29bfb7cad33cbebf6f1a1a211839cb81f6fa192</commit>
             <created-from>plan-66-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-03T18:02:51.903+05:30</timestamp>
+                    <message>De-risk draft ready for review: Plan/Task group parents added, leaves renamed, CommandTree rewired; grouped dispatch tests green.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
