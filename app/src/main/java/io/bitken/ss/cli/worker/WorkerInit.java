@@ -16,7 +16,7 @@ public class WorkerInit implements Callable<Integer>, HasSpec, io.bitken.ss.conf
 
     public WorkerInit(WorkflowService workflow) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
-        this.spec.name("worker-init");
+        this.spec.name("init");
         this.spec.usageMessage().description("Create a git worktree for a subagent task.");
         this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         this.spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());

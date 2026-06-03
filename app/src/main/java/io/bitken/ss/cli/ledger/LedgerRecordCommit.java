@@ -19,7 +19,7 @@ public class LedgerRecordCommit implements Callable<Integer>, HasSpec, io.bitken
     public LedgerRecordCommit(EventLedger ledger) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.ledger = ledger;
-        this.spec.name("ledger-record-commit");
+        this.spec.name("record-commit");
         this.spec.usageMessage().description("Write a COMMIT_RECORDED event directly to the ledger (recovery use only).");
         this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         this.spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());

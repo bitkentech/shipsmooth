@@ -19,7 +19,7 @@ public class LedgerRecordPatchIntegrated implements Callable<Integer>, HasSpec, 
     public LedgerRecordPatchIntegrated(EventLedger ledger) {
         this.ledger = ledger;
         this.spec = CommandSpec.wrapWithoutInspection(this);
-        this.spec.name("ledger-record-patch-integrated");
+        this.spec.name("record-patch-integrated");
         this.spec.usageMessage().description("Write a PATCH_INTEGRATED event directly to the ledger (recovery use only).");
         this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         this.spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());

@@ -23,7 +23,7 @@ public class AddTask implements Callable<Integer>, HasSpec {
         this.planService = planService;
         this.gitTags = gitTags;
         spec = CommandSpec.wrapWithoutInspection(this);
-        spec.name("add-task");
+        spec.name("add");
         spec.usageMessage().description("Append a new task to an existing plan.");
         spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         spec.addOption(OptionSpec.builder("--name").paramLabel("TEXT").required(true).description("Task name").type(String.class).build());

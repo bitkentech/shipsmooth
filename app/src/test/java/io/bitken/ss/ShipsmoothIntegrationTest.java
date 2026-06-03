@@ -69,7 +69,7 @@ public class ShipsmoothIntegrationTest {
         EventLedger ledger = new EventLedger(Paths.get("."));
         int before = ledger.readHashes().size();
 
-        int exit = run("--enable-experimental", "update-status", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "agent-coded");
+        int exit = run("--enable-experimental", "task", "status", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--status", "agent-coded");
         assertEquals(0, exit);
 
         List<String> hashes = ledger.readHashes();
@@ -125,7 +125,7 @@ public class ShipsmoothIntegrationTest {
         EventLedger ledger = new EventLedger(Paths.get("."));
         int before = ledger.readHashes().size();
 
-        int exit = run("--enable-experimental", "add-comment", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "via Shipsmooth");
+        int exit = run("--enable-experimental", "task", "comment", "--plan", String.valueOf(PLAN_NUM), "--task", "1", "--message", "via Shipsmooth");
         assertEquals(0, exit);
 
         TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));

@@ -58,9 +58,9 @@ public class AddTaskIntegrationTest {
 
     @Test
     public void addTaskViaCliAppendsTaskToXmlWithoutExperimentalFlag() throws Exception {
-        int exit = run("add-task", "--plan", String.valueOf(PLAN_NUM),
+        int exit = run("task", "add", "--plan", String.valueOf(PLAN_NUM),
                 "--name", "Newly added task", "--risk", "medium");
-        assertEquals(0, exit, "add-task must succeed without --enable-experimental");
+        assertEquals(0, exit, "task add must succeed without --enable-experimental");
 
         TaskStore store = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
         PlanTasks plan = store.readPlanTasks(xmlFile);
@@ -78,7 +78,7 @@ public class AddTaskIntegrationTest {
 
     @Test
     public void addTaskViaCliRecordsDependsOn() throws Exception {
-        int exit = run("add-task", "--plan", String.valueOf(PLAN_NUM),
+        int exit = run("task", "add", "--plan", String.valueOf(PLAN_NUM),
                 "--name", "Dependent task", "--risk", "low", "--depends-on", "1");
         assertEquals(0, exit);
 

@@ -6,11 +6,11 @@
 If `git worktree list` shows an `integration/plan-{N}` worktree from a prior session and `integrate` is not running, use this decision tree:
 
 - **A stale `RESOLVER_REQUESTED` exists in the ledger with no matching `RESOLVER_COMPLETE`:**
-  Check with: `${model.cliBin()} ledger list | grep RESOLVER_REQUESTED`. If found, integrate is dead and `ledger-resolver-complete` has no process to unblock — do **not** call it. Instead use this 5-step manual recovery:
+  Check with: `${model.cliBin()} ledger list | grep RESOLVER_REQUESTED`. If found, integrate is dead and `ledger resolver-complete` has no process to unblock — do **not** call it. Instead use this 5-step manual recovery:
   1. Read the payload: find the event index in `${model.cliBin()} ledger list`, then read the blob from `.agents/objects/<prefix>/<rest>` (the blob SHA is in the event's payload field).
   2. Dispatch a resolver `Agent` call with that payload — it fixes the conflict markers in the integration worktree.
   3. Commit in the worktree: `cd .agents/integration/plan-{N} && git add -A && git commit -m "task({task_id}): {name} [resolved]"`.
-  4. Record the integration from the **repo root**: `cd $(git rev-parse --show-toplevel) && ${model.cliBin()} --enable-experimental ledger-record-patch-integrated --plan {N} --task {task_id} --commit $(git -C .agents/integration/plan-{N} rev-parse HEAD) --agent-work-sha $(git rev-parse agent-work/{task_id})`.
+  4. Record the integration from the **repo root**: `cd $(git rev-parse --show-toplevel) && ${model.cliBin()} --enable-experimental ledger record-patch-integrated --plan {N} --task {task_id} --commit $(git -C .agents/integration/plan-{N} rev-parse HEAD) --agent-work-sha $(git rev-parse agent-work/{task_id})`.
   5. Re-run `integrate` (background + Monitor) — the resume logic sees the `PATCH_INTEGRATED` event and skips the resolved task, continuing from the next one. **Note:** re-running integrate does not write a new `INTEGRATION_PLAN` event when the worktree is still present, so the recovery event remains visible to the resume check.
 
 - **No pending resolver, but the integration branch is ahead of the task branch:**
@@ -31,8 +31,8 @@ The Lead Agent **may** delegate tasks to coding subagents instead of implementin
 
 Tasks may carry a `<depends-on>` field in the XML (comma-separated parent task IDs). Before dispatching such a task:
 
-1. Verify the parent task's `COMMIT_RECORDED` ledger event exists: `${model.cliBin()} --enable-experimental worker-base --plan {N} --task {id}` — this prints the parent's commit SHA or exits 1 if the parent hasn't finished yet.
-2. Pass that SHA as `--base` to `worker-init` so the worktree starts from the parent's commit, not repo HEAD.
+1. Verify the parent task's `COMMIT_RECORDED` ledger event exists: `${model.cliBin()} --enable-experimental worker base --plan {N} --task {id}` — this prints the parent's commit SHA or exits 1 if the parent hasn't finished yet.
+2. Pass that SHA as `--base` to `worker init` so the worktree starts from the parent's commit, not repo HEAD.
 
 A task with `<depends-on>` **must not** be dispatched in the same parallel batch as its parents — wait for the parent batch to complete first.
 
@@ -74,11 +74,11 @@ For tasks **with** `<depends-on>` (run after parent batch is complete):
 @template.skills.start.claude.agent-instruction(model = model)
 @endif 
 
-`worker-finish` aborts loudly if the subagent made any git commits inside the worktree (a contract violation). `worker-cleanup` removes the `.agents/tasks/{id}` directory but intentionally keeps the `agent-work/{id}` branch — that branch is the only input `integrate` needs. The disappearance of `.agents/tasks/{id}` before `integrate` runs is expected and correct.
+`worker finish` aborts loudly if the subagent made any git commits inside the worktree (a contract violation). `worker cleanup` removes the `.agents/tasks/{id}` directory but intentionally keeps the `agent-work/{id}` branch — that branch is the only input `integrate` needs. The disappearance of `.agents/tasks/{id}` before `integrate` runs is expected and correct.
 
-### Integration step (mandatory after all worker-cleanup calls)
+### Integration step (mandatory after all worker cleanup calls)
 
-**When to run:** once every task in the batch has status `agent-coded` (confirmed via `${model.cliBin()} show --plan {N}`) and their `agent-work/{id}` branches exist (confirmed via `git branch -l 'agent-work/*'`).
+**When to run:** once every task in the batch has status `agent-coded` (confirmed via `${model.cliBin()} plan show --plan {N}`) and their `agent-work/{id}` branches exist (confirmed via `git branch -l 'agent-work/*'`).
 
 **Before running integrate — probe the verify command:**
 
@@ -112,7 +112,7 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 `integrate` coordinates with the Lead Agent via the ledger: when a conflict or verify failure occurs it writes a `RESOLVER_REQUESTED` event to `.agents/ledger.jsonl` and polls for a `RESOLVER_COMPLETE` event.
 
-**Critical:** `integrate` must be run with `run_in_background: true` in the Bash tool. If run as a blocking Bash call, the Lead Agent cannot act on Monitor events while waiting for the command to finish — integrate will time out waiting for `ledger-resolver-complete` that never comes.
+**Critical:** `integrate` must be run with `run_in_background: true` in the Bash tool. If run as a blocking Bash call, the Lead Agent cannot act on Monitor events while waiting for the command to finish — integrate will time out waiting for `ledger resolver-complete` that never comes.
 
 **Monitor protocol — one call per resolver cycle:**
 
@@ -120,7 +120,7 @@ If two or more independent tasks (no `<depends-on>` between them) touch the same
 
 **Step 1 — arm Monitor (Cycle 1) before starting integrate** (so no event is missed in the startup window):
 
-First, snapshot the current event count so `ledger-watch` ignores stale events from prior runs:
+First, snapshot the current event count so `ledger watch` ignores stale events from prior runs:
 ```bash
 LEDGER_SEQ=$(${model.cliBin()} ledger list --count)
 ```
@@ -133,7 +133,7 @@ Then arm Monitor, passing `--after $LEDGER_SEQ`:
 @template.skills.start.claude.ledger-watch-cmd(model = model)
 @endif
 
-`ledger-watch` blocks until a `RESOLVER_REQUESTED` event appears in `.agents/ledger.jsonl`, prints its full JSON payload to stdout, and exits 0. It creates the ledger file if it does not yet exist, so it is safe to arm before `integrate` has started. Exit 1 means it timed out (default 30 minutes) without seeing an event.
+`ledger watch` blocks until a `RESOLVER_REQUESTED` event appears in `.agents/ledger.jsonl`, prints its full JSON payload to stdout, and exits 0. It creates the ledger file if it does not yet exist, so it is safe to arm before `integrate` has started. Exit 1 means it timed out (default 30 minutes) without seeing an event.
 
 @if(model.isGemini())
 @template.skills.start.gemini.background-execution(model = model)
@@ -156,10 +156,10 @@ Then arm Monitor, passing `--after $LEDGER_SEQ`:
 4. **Arm Monitor again (Cycle N+1)** — make a new Monitor tool call with the same command above (same `--after $LEDGER_SEQ` value) before waiting for the next event. Monitor has exited; you must re-arm it for each additional resolver cycle.
 
 @if(!model.isGemini())
-**When the Bash background-complete notification for `integrate` arrives with exit code 0:** stop the active Monitor tool call immediately (via TaskStop) — do not wait for it to time out. `ledger-watch` will eventually exit on its own when it sees the `INTEGRATION_COMPLETE` event, but only if Monitor was armed at that moment; if it was not re-armed yet, it will hang for the full 30-minute timeout. Stopping it explicitly on integrate exit-0 is the reliable fix.
+**When the Bash background-complete notification for `integrate` arrives with exit code 0:** stop the active Monitor tool call immediately (via TaskStop) — do not wait for it to time out. `ledger watch` will eventually exit on its own when it sees the `INTEGRATION_COMPLETE` event, but only if Monitor was armed at that moment; if it was not re-armed yet, it will hang for the full 30-minute timeout. Stopping it explicitly on integrate exit-0 is the reliable fix.
 @endif
 
-Integrate will unblock within 500 ms of the `ledger-resolver-complete` call and continue to the next task.
+Integrate will unblock within 500 ms of the `ledger resolver-complete` call and continue to the next task.
 
 **On success:** `integrate` prints the integration tip SHA and the fast-forward command:
 
@@ -187,21 +187,21 @@ If `git reset --hard` was run before `integrate` and the ledger no longer contai
 
 1. Detect the problem: `${model.cliBin()} ledger list` — if no `COMMIT_RECORDED` events appear for your tasks, the ledger was wiped.
 2. For each affected task, find its commit SHA on the `agent-work/{id}` branch: `git rev-parse agent-work/{id}`.
-3. Reconstruct the ledger event: `${model.cliBin()} --enable-experimental ledger-record-commit --plan {N} --task {id} --commit {sha} --branch agent-work/{id}`
+3. Reconstruct the ledger event: `${model.cliBin()} --enable-experimental ledger record-commit --plan {N} --task {id} --commit {sha} --branch agent-work/{id}`
 4. Repeat for all affected tasks, then re-run `integrate` normally.
 
 Note: this recovery path requires the `agent-work/{id}` branches to still exist. If they were also deleted, restore them from the known commit SHAs via `git branch agent-work/{id} {sha}` before step 3.
 
 ### Worker Instruction Block
 
-The Lead Agent pastes this verbatim into the agent tool call's prompt, filling in the five `{...}` slots: `{task-id}`, `{task-name}`, `{absolute-worktree-path}`, `{N}` (plan number), `{task-markdown-slice}`, `{coverage-pct}`. **Do not pass `isolation: worktree` if using Claude** — `worker-init` already created a real git worktree; Claude Code's built-in isolation would create a second, hidden one and the subagent's edits would never be captured.
+The Lead Agent pastes this verbatim into the agent tool call's prompt, filling in the five `{...}` slots: `{task-id}`, `{task-name}`, `{absolute-worktree-path}`, `{N}` (plan number), `{task-markdown-slice}`, `{coverage-pct}`. **Do not pass `isolation: worktree` if using Claude** — `worker init` already created a real git worktree; Claude Code's built-in isolation would create a second, hidden one and the subagent's edits would never be captured.
 
 > **WORKER: Task {task-id} — {task-name}** (say this as your first output line so the user knows which task this agent is working on)
 >
 > You are a ShipSmooth coding worker. Your only job is to implement the task scope below and exit.
 >
 > **Pre-flight check (do this before anything else):**
-> Run: `ls {absolute-worktree-path}` — if the directory is empty or does not exist, stop immediately with: `WORKER ABORT: worktree {absolute-worktree-path} is missing or empty — Lead Agent must run worker-init first.` Do not write any code.
+> Run: `ls {absolute-worktree-path}` — if the directory is empty or does not exist, stop immediately with: `WORKER ABORT: worktree {absolute-worktree-path} is missing or empty — Lead Agent must run worker init first.` Do not write any code.
 >
 > **Your working directory is `{absolute-worktree-path}`.** All file operations (Read/Edit/Write) must use absolute paths under that directory, and every Bash call must begin with `cd {absolute-worktree-path} &&`. Do not modify any file outside that directory.
 >

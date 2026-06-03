@@ -17,7 +17,7 @@ public class WorkerBase implements Callable<Integer>, HasSpec, io.bitken.ss.conf
 
     public WorkerBase(PlanService planService, TaskStore xmlService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
-        this.spec.name("worker-base");
+        this.spec.name("base");
         this.spec.usageMessage().description("Print the base commit SHA for a dependent task (from parent's COMMIT_RECORDED event).");
         this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
         this.spec.addOption(OptionSpec.builder("--task").required(true).type(String.class).build());

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>66</plan>
+    <plan-version>plan-66-v2</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-03</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>introduce group parents and re-nest existing leaves</name>
+            <commit>b29bfb7cad33cbebf6f1a1a211839cb81f6fa192</commit>
+            <created-from>plan-66-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-03T18:02:51.903+05:30</timestamp>
+                    <message>De-risk draft ready for review: Plan/Task group parents added, leaves renamed, CommandTree rewired; grouped dispatch tests green.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>fold ledger-* and worker-* prefixes into their groups</name>
+            <commit>556335092878e390b0efb17b7158732f268e5f24</commit>
+            <created-from>plan-66-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-03T19:44:50.858+05:30</timestamp>
+                    <message>De-risk draft ready: Worker group + ledger experimental-leaf folding with mixed gating; all 105 tests green.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>update skill fragments to grouped command names</name>
+            <commit>d216e66243bda35d7c8a11c3645922a7d19e0172</commit>
+            <created-from>plan-66-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>update gemini .toml callers</name>
+            <commit></commit>
+            <created-from>plan-66-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-03T20:04:22.223+05:30</timestamp>
+                    <message>Verified no-op: gemini .toml commands (start.toml, start-dev.toml) only activate the skill by name; they carry no literal CLI invocations. Whole gemini integration has zero flat command references. Grouped names are delivered via the skill body updated in task 3.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-03T17:42:16.091+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-03T20:14:57.966+05:30</timestamp>
+            <message>Plan complete. All 4 tasks agent-coded: plan/task/worker noun groups introduced, ledger-*/worker-* folded into groups, skill fragments updated to grouped command names, gemini .toml confirmed no-op (no literal CLI invocations).</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

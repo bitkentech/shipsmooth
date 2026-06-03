@@ -15,7 +15,7 @@ public class AddDeviation implements Callable<Integer>, HasSpec {
     public AddDeviation(PlanService planService) {
         this.planService = planService;
         this.spec = CommandSpec.wrapWithoutInspection(this);
-        this.spec.name("add-deviation");
+        this.spec.name("deviation");
         this.spec.usageMessage().description("Add a deviation to a task.");
         this.spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         this.spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID (integer)").type(int.class).build());

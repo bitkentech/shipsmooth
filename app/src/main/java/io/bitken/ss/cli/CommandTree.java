@@ -2,23 +2,10 @@ package io.bitken.ss.cli;
 
 import io.bitken.ss.Build;
 import io.bitken.ss.cli.ledger.Ledger;
-import io.bitken.ss.cli.ledger.LedgerRecordCommit;
-import io.bitken.ss.cli.ledger.LedgerRecordPatchIntegrated;
-import io.bitken.ss.cli.ledger.LedgerResolverComplete;
-import io.bitken.ss.cli.ledger.LedgerWatch;
-import io.bitken.ss.cli.plan.Init;
-import io.bitken.ss.cli.plan.ProjectUpdate;
-import io.bitken.ss.cli.plan.Show;
-import io.bitken.ss.cli.task.AddComment;
-import io.bitken.ss.cli.task.AddDeviation;
-import io.bitken.ss.cli.task.AddTask;
-import io.bitken.ss.cli.task.SetCommit;
-import io.bitken.ss.cli.task.UpdateStatus;
+import io.bitken.ss.cli.plan.Plan;
+import io.bitken.ss.cli.task.Task;
 import io.bitken.ss.cli.worker.Claim;
-import io.bitken.ss.cli.worker.WorkerBase;
-import io.bitken.ss.cli.worker.WorkerCleanup;
-import io.bitken.ss.cli.worker.WorkerFinish;
-import io.bitken.ss.cli.worker.WorkerInit;
+import io.bitken.ss.cli.worker.Worker;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.FeatureFlags;
@@ -60,26 +47,17 @@ class CommandTree {
     }
 
     private static Callable<?>[] buildCommands(AppComponents app, Integrate integrate) {
+        Plan plan = new Plan(app.planService(), app.taskStore(), app.gitTags(), app.experimentalMode());
+        Task task = new Task(app.planService(), app.gitTags());
+        Worker worker = new Worker(app.planService(), app.taskStore(), app.workflowService(),
+            app.workflowServiceImpl(), app.worktreeService(), app.eventLedger());
         return new Callable<?>[] {
-            new Init(app.planService(), app.taskStore(), app.gitTags(), app.experimentalMode()),
-            new AddComment(app.planService()),
-            new AddDeviation(app.planService()),
-            new AddTask(app.planService(), app.gitTags()),
+            plan,
+            task,
+            worker,
             new Claim(app.taskStore(), app.worktreeService(), app.eventLedger()),
             integrate,
-            new Ledger(app.eventLedger()),
-            new LedgerRecordCommit(app.eventLedger()),
-            new LedgerRecordPatchIntegrated(app.eventLedger()),
-            new LedgerResolverComplete(app.eventLedger()),
-            new LedgerWatch(),
-            new ProjectUpdate(app.planService()),
-            new SetCommit(app.planService()),
-            new Show(app.taskStore()),
-            new UpdateStatus(app.planService()),
-            new WorkerBase(app.planService(), app.taskStore()),
-            new WorkerCleanup(app.worktreeService(), app.eventLedger()),
-            new WorkerFinish(app.workflowServiceImpl()),
-            new WorkerInit(app.workflowService()),
+            new Ledger(app.eventLedger(), app.experimentalMode()),
         };
     }
 
