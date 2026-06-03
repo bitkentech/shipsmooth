@@ -183,4 +183,23 @@ public class GroupedCommandTreeTest {
         int exit = run("ledger", "list");
         assertEquals(0, exit, "non-experimental 'ledger list' must work");
     }
+
+    /** Bare {@code shipsmooth worker} (no subcommand) prints group usage listing its verbs. */
+    @Test
+    void bareWorkerGroupPrintsUsage() {
+        String usage = stderrOf("worker");
+        assertTrue(usage.contains("base"), "expected verb list in usage: " + usage);
+        assertTrue(usage.contains("init"), "expected verb list in usage: " + usage);
+        assertTrue(usage.contains("cleanup"), "expected verb list in usage: " + usage);
+    }
+
+    /** Bare {@code shipsmooth ledger} (no subcommand) prints group usage listing its verbs. */
+    @Test
+    void bareLedgerGroupPrintsUsage() {
+        String usage = stderrOf("ledger");
+        assertTrue(usage.contains("list"), "expected verb list in usage: " + usage);
+        assertTrue(usage.contains("verify"), "expected verb list in usage: " + usage);
+        // experimental verb is present because this app runs with ExperimentalMode(true)
+        assertTrue(usage.contains("watch"), "expected experimental verb in usage: " + usage);
+    }
 }
