@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>65</plan>
+    <plan-version>plan-65-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-03</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Snapshot current output and extract section fragments</name>
+            <commit>462f2554b0b038ec9c70c329e70f6673cb643429</commit>
+            <created-from>plan-65-v1</created-from>
+            <closed-at-version>plan-65-v1</closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-03T16:24:39.296+05:30</timestamp>
+                    <message>Renamed _partials/ to shared/ (per review) before extracting fragments; fragments live in shared/workflow/.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Reduce `base-workflow.jte.md` to a TOC of includes</name>
+            <commit>462f2554b0b038ec9c70c329e70f6673cb643429</commit>
+            <created-from>plan-65-v1</created-from>
+            <closed-at-version>plan-65-v1</closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-03T16:25:15.874+05:30</timestamp>
+                    <message>TOC reduction committed together with Task 1 extraction as one atomic refactor; intermediate split state is not a meaningful checkpoint.</message>
+                </deviation>
+            </deviations>
+            <depends-on>1</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-03T15:31:46.014+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-03T16:30:42.687+05:30</timestamp>
+            <message>Plan complete. base-workflow split into shared/workflow fragments; generated output byte-identical.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
