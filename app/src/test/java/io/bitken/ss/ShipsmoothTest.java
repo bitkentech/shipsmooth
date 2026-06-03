@@ -98,16 +98,16 @@ public class ShipsmoothTest {
 
     @Test
     public void nonExperimentalCommandRecognizedWithoutFlag() {
-        // 'show' is non-experimental: it must be parsed as a subcommand even
-        // without --enable-experimental. The command may complain about a
-        // missing --plan, but stderr should mention the show command, not
-        // surface an "unknown subcommand" usage banner.
-        run("show");
+        // 'plan show' is non-experimental: it must be parsed as a group
+        // subcommand even without --enable-experimental. The command may
+        // complain about a missing --plan, but stderr should not surface an
+        // "unknown subcommand" usage banner for the plan group.
+        run("plan", "show");
         String stderr = err();
-        // Either show ran (and complained about --plan) or the test would
-        // have shown "Missing required subcommand" at top level.
+        // Either 'plan show' ran (and complained about --plan) or the test
+        // would have shown "Missing required subcommand" at top level.
         assertFalse(stderr.contains("Missing required subcommand"),
-            "non-experimental 'show' should be parsed as a subcommand; got: " + stderr);
+            "non-experimental 'plan show' should be parsed as a subcommand; got: " + stderr);
     }
 
     @Test

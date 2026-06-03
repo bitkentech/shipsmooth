@@ -1,6 +1,8 @@
 package io.bitken.ss.cli.task;
 
 import io.bitken.ss.cli.HasSpec;
+import io.bitken.ss.gw.GitTags;
+import io.bitken.ss.svc.plan.PlanService;
 import picocli.CommandLine.Model.CommandSpec;
 
 import java.util.concurrent.Callable;
@@ -8,20 +10,23 @@ import java.util.concurrent.Callable;
 /**
  * {@code task} noun group: bundles the per-task subcommands ({@code add},
  * {@code comment}, {@code deviation}, {@code status}, {@code set-commit}) under
- * one parent, mirroring {@code ledger}. Leaves are constructed by
- * {@code CommandTree} and passed in.
+ * one parent, mirroring {@code ledger}. Builds its own leaves in the constructor
+ * from the gateways they need.
  */
 public class Task implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
-    public Task(HasSpec... subcommands) {
+    public Task(PlanService planService, GitTags gitTags) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("task");
         this.spec.usageMessage().description("Per-task commands (add, comment, deviation, status, set-commit).");
-        for (HasSpec sub : subcommands) {
-            this.spec.addSubcommand(sub.getSpec().name(), sub.getSpec());
-        }
+        addLeaves(spec,
+            new AddTask(planService, gitTags),
+            new AddComment(planService),
+            new AddDeviation(planService),
+            new UpdateStatus(planService),
+            new SetCommit(planService));
     }
 
     public CommandSpec getSpec() {
@@ -32,5 +37,11 @@ public class Task implements Callable<Integer>, HasSpec {
     public Integer call() {
         spec.commandLine().usage(System.err);
         return 0;
+    }
+
+    private static void addLeaves(CommandSpec parent, HasSpec... leaves) {
+        for (HasSpec leaf : leaves) {
+            parent.addSubcommand(leaf.getSpec().name(), leaf.getSpec());
+        }
     }
 }

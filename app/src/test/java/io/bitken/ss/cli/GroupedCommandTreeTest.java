@@ -89,4 +89,40 @@ public class GroupedCommandTreeTest {
         PlanTasks planTasks = xmlService.readPlanTasks(xmlFile);
         assertEquals("in-progress", planTasks.getTasks().getTask().get(0).getStatus().value());
     }
+
+    /** Bare {@code shipsmooth plan} (no subcommand) prints group usage listing its verbs. */
+    @Test
+    void barePlanGroupPrintsUsage() {
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        PrintStream originalErr = System.err;
+        System.setErr(new PrintStream(err));
+        try {
+            int exit = run("plan");
+            assertEquals(0, exit);
+            String usage = err.toString();
+            assertTrue(usage.contains("init"), "expected verb list in usage: " + usage);
+            assertTrue(usage.contains("show"), "expected verb list in usage: " + usage);
+            assertTrue(usage.contains("update"), "expected verb list in usage: " + usage);
+        } finally {
+            System.setErr(originalErr);
+        }
+    }
+
+    /** Bare {@code shipsmooth task} (no subcommand) prints group usage listing its verbs. */
+    @Test
+    void bareTaskGroupPrintsUsage() {
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        PrintStream originalErr = System.err;
+        System.setErr(new PrintStream(err));
+        try {
+            int exit = run("task");
+            assertEquals(0, exit);
+            String usage = err.toString();
+            assertTrue(usage.contains("add"), "expected verb list in usage: " + usage);
+            assertTrue(usage.contains("status"), "expected verb list in usage: " + usage);
+            assertTrue(usage.contains("set-commit"), "expected verb list in usage: " + usage);
+        } finally {
+            System.setErr(originalErr);
+        }
+    }
 }
