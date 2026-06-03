@@ -63,9 +63,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>thin the skill fragments</name>
-            <commit></commit>
+            <commit>dd97fa70bc5586a86289ab3c7f327c544b2e82f9</commit>
             <created-from>plan-67-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
