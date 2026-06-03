@@ -11,20 +11,25 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>plan preflight — read-only git-state oracle</name>
-            <commit></commit>
+            <commit>21d1bcf865691f04ff414ef6c02e001a4e6b8ef2</commit>
             <created-from>plan-67-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-03T20:54:18.370+05:30</timestamp>
+                    <message>De-risk draft ready: GitState gateway (7 git-shell methods) + Preflight command (dirty=FAIL, no-tag=FAIL, unpushed=WARN); 4 unit tests green.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>plan tag — write-side tagging with refuse-on-exists</name>
-            <commit></commit>
+            <commit>f130a163b330c76d2b4b2715f2072af81636535a</commit>
             <created-from>plan-67-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -34,9 +39,9 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>plan branch — local branch creation</name>
-            <commit></commit>
+            <commit>f130a163b330c76d2b4b2715f2072af81636535a</commit>
             <created-from>plan-67-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -46,9 +51,9 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>plan resume — session-resume pre-flight composite</name>
-            <commit></commit>
+            <commit>f130a163b330c76d2b4b2715f2072af81636535a</commit>
             <created-from>plan-67-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
