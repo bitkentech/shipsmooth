@@ -5,7 +5,6 @@ import io.bitken.ss.workflow.IntegrationOptions;
 import io.bitken.ss.workflow.IntegrationResult;
 import io.bitken.ss.workflow.WorkflowException;
 import io.bitken.ss.workflow.WorkflowService;
-import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -19,7 +18,6 @@ public class Integrate implements Callable<Integer>, HasSpec, io.bitken.ss.conf.
     private final WorkflowService workflowService;
     private IntegrationOptions.ResolverFactory resolverFactory;
 
-    @Inject
     public Integrate(WorkflowService workflowService) {
         this.workflowService = workflowService;
         this.spec = CommandSpec.wrapWithoutInspection(this);

@@ -3,7 +3,6 @@ package io.bitken.ss.cli.task;
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.svc.plan.PlanService;
-import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -24,7 +23,6 @@ public class AddTask implements Callable<Integer>, HasSpec {
         this(planService, new GitTags());
     }
 
-    @Inject
     public AddTask(PlanService planService, GitTags gitTags) {
         this.planService = planService;
         this.gitTags = gitTags;

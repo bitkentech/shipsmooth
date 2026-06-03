@@ -3,7 +3,6 @@ package io.bitken.ss.cli.ledger;
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventLedger;
-import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Model.PositionalParamSpec;
@@ -15,7 +14,6 @@ public class Ledger implements Callable<Integer>, HasSpec {
     private final CommandSpec spec;
     private final EventLedger ledgerService;
 
-    @Inject
     public Ledger(EventLedger ledgerService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.ledgerService = ledgerService;

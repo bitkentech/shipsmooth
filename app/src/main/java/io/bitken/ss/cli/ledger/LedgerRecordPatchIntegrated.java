@@ -4,7 +4,6 @@ import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
-import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -17,7 +16,6 @@ public class LedgerRecordPatchIntegrated implements Callable<Integer>, HasSpec, 
     private final CommandSpec spec;
     private final EventLedger ledger;
 
-    @Inject
     public LedgerRecordPatchIntegrated(EventLedger ledger) {
         this.ledger = ledger;
         this.spec = CommandSpec.wrapWithoutInspection(this);

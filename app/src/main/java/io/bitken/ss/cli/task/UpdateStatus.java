@@ -2,7 +2,6 @@ package io.bitken.ss.cli.task;
 
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.svc.plan.PlanService;
-import jakarta.inject.Inject;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -13,7 +12,6 @@ public class UpdateStatus implements Callable<Integer>, HasSpec {
     private final CommandSpec spec;
     private final PlanService planService;
 
-    @Inject
     public UpdateStatus(PlanService planService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("update-status");
