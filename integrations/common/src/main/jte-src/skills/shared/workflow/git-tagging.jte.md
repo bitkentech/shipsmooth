@@ -2,26 +2,25 @@
 @param PluginModel model
 ## Git Tagging Convention
 
-Every time a plan file is committed and pushed, immediately create and push a version tag:
+Every time a plan file is committed, immediately create and push a version tag:
 
 ```bash
-# After committing a plan file change:
-git tag plan-07-v1
-git push origin plan-07-v1
-
-# Subsequent revisions:
-git tag plan-07-v2
-git push origin plan-07-v2
-
-# On clean completion:
-git tag plan-07-complete
-git push origin plan-07-complete
-
-# On abandonment (tag the deletion commit too):
-git tag plan-07-abandoned
-git push origin plan-07-abandoned
+${model.cliBin()} plan tag --plan {N} --kind version
+# prints: git push origin plan-{N}-v{K}  — run that line to push
 ```
 
-Tag naming: `plan-{N}-v{version}` for iterations, `plan-{N}-complete` for clean closeout, `plan-{N}-abandoned` for abandonment.
+On clean completion:
+```bash
+${model.cliBin()} plan tag --plan {N} --kind complete
+# prints: git push origin plan-{N}-complete
+```
+
+On abandonment:
+```bash
+${model.cliBin()} plan tag --plan {N} --kind abandoned
+# prints: git push origin plan-{N}-abandoned
+```
+
+Tag naming: `plan-{N}-v{version}` for iterations, `plan-{N}-complete` for clean closeout, `plan-{N}-abandoned` for abandonment. `plan tag --kind version` refuses to re-tag if the computed tag already exists — commit more changes first.
 
 ---

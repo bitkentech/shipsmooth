@@ -52,6 +52,11 @@ public class TaskStore {
         return locator.planMarkdownFile(planId);
     }
 
+    /** True when the XML task file exists for this plan. */
+    public boolean planTasksFileExists(int planId) {
+        return locator.planTasksFile(planId).exists();
+    }
+
     /** Convenience: load the plan's XML by plan id using the canonical layout. */
     public PlanTasks loadPlan(int planId) throws JAXBException {
         return readPlanTasks(planTasksFile(planId));

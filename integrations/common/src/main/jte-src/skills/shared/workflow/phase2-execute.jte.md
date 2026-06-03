@@ -2,20 +2,11 @@
 @param PluginModel model
 ## Phase 2 — Execute
 
-**Session-resume pre-flight `[Local]`** — If you are picking up a plan that was started in a previous session, run these checks before doing anything else:
+**Session-resume pre-flight `[Local]`** — If you are picking up a plan that was started in a previous session, run this before doing anything else:
 
 ```bash
-# 1. Confirm the XML task file exists (must not be missing)
-ls .agents/plans/plan-{N}-tasks.xml   # if absent, run: ${model.cliBin()} plan init --plan {N} --tasks-from .agents/plans/plan-{N}.md
-
-# 2. Review current task state
-${model.cliBin()} plan show --plan {N}
-
-# 3. Confirm no stray worktrees or background jobs remain
-git worktree list
-
-# 4. Check for a stale integration worktree from a prior session
-git worktree list | grep "integration/plan-{N}"
+${model.cliBin()} plan resume --plan {N}
+# Prints: XML file present check, task state summary, any integration worktrees for this plan.
 ```
 
 Only proceed once you know which tasks are done and which are next.
@@ -24,13 +15,12 @@ Only proceed once you know which tasks are done and which are next.
 
 **Step 0: Create a branch**
 
-Create and push a branch named after the primary Linear issue for this plan:
+Create a branch named after the primary issue for this plan:
 ```bash
-git checkout -b t/{issue-id}-{short-description}
-# e.g. git checkout -b t/pb-149-branch-creation-step
-git push -u origin t/{issue-id}-{short-description}
+${model.cliBin()} plan branch --issue {issue-id} --desc "{short-description}"
+# prints: git push -u origin t/{issue-id}-{slug}  — run that line to push
 ```
-All task commits go on this branch. The `t/` prefix stands for "task" (covers features, bugs, chores, etc.). Usernames are intentionally omitted — the task identity is what matters long-term.
+All task commits go on this branch. The `t/` prefix stands for "task". Usernames are omitted — the task identity is what matters long-term.
 
 **Before writing any code**, confirm the test coverage threshold with the human (default: 95%). Record the agreed value before proceeding.
 

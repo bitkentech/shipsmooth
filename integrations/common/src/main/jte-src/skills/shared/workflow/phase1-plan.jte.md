@@ -22,10 +22,8 @@
    ```
 6. **Verify Preconditions:**
    ```bash
-   git status                          # must be clean
-   git log origin/t/{issue-id}-{short-description}..HEAD  # must be empty
-   git tag -l "plan-07-v1"             # must exist
-   git ls-remote origin "plan-07-v1"   # must be on remote
+   ${model.cliBin()} plan preflight --plan {N}
+   # Exits 0 (PASS) or 1 (FAIL: dirty tree / missing version tag). Warns on unpushed branch.
    ```
 7. **Create Task Tracking Infrastructure:**
    - `[Linear]` Create the `[agent]` Linear project. Create Linear issues from the **risk-sorted** plan tasks. Each issue description must include the **Risk Level** ($L/M/H$) and the tag-based GitHub URL of the specific plan version that generated it.

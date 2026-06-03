@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>67</plan>
+    <plan-version>plan-67-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-03</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>plan preflight — read-only git-state oracle</name>
+            <commit>21d1bcf865691f04ff414ef6c02e001a4e6b8ef2</commit>
+            <created-from>plan-67-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-03T20:54:18.370+05:30</timestamp>
+                    <message>De-risk draft ready: GitState gateway (7 git-shell methods) + Preflight command (dirty=FAIL, no-tag=FAIL, unpushed=WARN); 4 unit tests green.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>plan tag — write-side tagging with refuse-on-exists</name>
+            <commit>f130a163b330c76d2b4b2715f2072af81636535a</commit>
+            <created-from>plan-67-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>plan branch — local branch creation</name>
+            <commit>f130a163b330c76d2b4b2715f2072af81636535a</commit>
+            <created-from>plan-67-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>plan resume — session-resume pre-flight composite</name>
+            <commit>f130a163b330c76d2b4b2715f2072af81636535a</commit>
+            <created-from>plan-67-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>thin the skill fragments</name>
+            <commit>dd97fa70bc5586a86289ab3c7f327c544b2e82f9</commit>
+            <created-from>plan-67-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2,3,4</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-03T20:29:04.029+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-03T22:36:52.241+05:30</timestamp>
+            <message>Plan complete. All 5 tasks closed. SKILL.md reduced 18705→18562 bytes (-143). Four new CLI commands: plan preflight, plan tag, plan branch, plan resume.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

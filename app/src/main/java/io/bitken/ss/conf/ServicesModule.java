@@ -2,6 +2,7 @@ package io.bitken.ss.conf;
 
 import dagger.Module;
 import dagger.Provides;
+import io.bitken.ss.gw.GitState;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.EventLedger;
@@ -76,6 +77,12 @@ public class ServicesModule {
     @Singleton
     GitTags provideGitTags() {
         return new GitTags();
+    }
+
+    @Provides
+    @Singleton
+    GitState provideGitState(Path repoRoot) {
+        return new GitState(repoRoot);
     }
 
     @Provides
