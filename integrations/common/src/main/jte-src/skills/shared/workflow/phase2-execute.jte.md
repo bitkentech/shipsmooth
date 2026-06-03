@@ -70,7 +70,7 @@ Core Invariant #6).
 - Follow Test Driven Development if possible: Write only one test at a time, then the implementing code 
 and then refactor.
 - Keep doing Step B until coverage meets the agreed threshold (and if "experimental-refine-dev" skill exists,
-quality conforms to its instructions:
+quality conforms to its instructions):
   ```bash
   # example — adjust to your toolchain:
   npm test -- --coverage --coverageThreshold='{"global":{"lines":95}}'
