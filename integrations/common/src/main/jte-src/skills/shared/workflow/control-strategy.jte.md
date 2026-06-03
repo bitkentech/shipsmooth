@@ -2,15 +2,21 @@
 @param PluginModel model
 ## Control Strategy: The Risk-Quality Loop
 
-To maximize productivity while minimizing "hallucination drift," apply an adaptive control strategy.
+To maximize productivity while minimizing "hallucination drift," treat
+risk and quality as two pressures that peak at different times — and never
+chase both at once.
 
-**The Control Equation:**
-$$u[k] = K_S(R) \cdot \frac{\Delta e[k]}{T_s} + K_Q \cdot \frac{e[k]}{T_s}$$
+- **Spiral risk** — the chance that the architecture or core logic is
+  simply wrong. It is highest at the *start* of a task, when the approach
+  is unproven, and collapses once the logic is validated.
+- **Implementation quality** — readability, project-pattern conformance,
+  and test coverage. It matters only *after* the approach is proven; polishing
+  code that may be thrown away is wasted effort.
 
-- **$K_S(R)$ (Spiral Risk Gain):** Sensitivity to architectural or logic drift. High when risk is unknown.
-- **$K_Q$ (Implementation Quality Gain):** Sensitivity to code quality, readability, and test coverage.
-- **$T_s$ (Sampling Interval):** Frequency of human intervention. Smaller $T_s$ = tighter control.
-
-**Strategy:** De-risk aggressively first (High $K_S$, Low $K_Q$). Once logic is proven, harden the code (Low $K_S$, High $K_Q$).
+**Strategy:** De-risk aggressively first — prove the logic works and ignore
+quality rules. Once the approach is validated and approved, switch modes and
+harden the code to the quality bar. The per-task **De-risk & Harden Cycle**
+below operationalizes this; this section only explains *why* the two phases
+are kept separate.
 
 ---
