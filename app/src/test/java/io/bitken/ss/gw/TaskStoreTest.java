@@ -4,7 +4,9 @@ import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.jaxb.TaskStatusType;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -38,6 +40,33 @@ public class TaskStoreTest {
         assertEquals(3, tasks.get(2).id());
         assertEquals("Test", tasks.get(2).name());
         assertEquals("", tasks.get(2).risk());
+    }
+
+    @Test
+    public void addTaskAppendsWithNextIdAndPendingStatus(@TempDir Path tempDir) throws Exception {
+        TaskStore service = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
+        PlanTasks planTasks = service.generatePlanTasks(98, "plan-98-v3",
+                List.of(new TaskStore.Task(1, "First", "high"),
+                        new TaskStore.Task(2, "Second", "low")));
+
+        int newId = service.addTask(planTasks,
+                new TaskStore.Task(0, "Appended", "medium", "1,2"), "plan-98-v3");
+
+        assertEquals(3, newId, "next id should be max existing id + 1");
+        assertEquals(3, planTasks.getTasks().getTask().size());
+        var added = planTasks.getTasks().getTask().get(2);
+        assertEquals(3, added.getId().intValue());
+        assertEquals("Appended", added.getName());
+        assertEquals("medium", added.getRisk());
+        assertEquals(TaskStatusType.PENDING, added.getStatus());
+        assertEquals("", added.getCommit());
+        assertEquals("plan-98-v3", added.getCreatedFrom());
+
+        // depends-on is a wildcard DOM element; it only resolves a localName after
+        // a marshal/unmarshal round-trip, exactly as the production CLI path does.
+        File roundTrip = tempDir.resolve("plan-98-tasks.xml").toFile();
+        service.writePlanTasks(planTasks, roundTrip);
+        assertEquals("1,2", service.getDependsOn(service.readPlanTasks(roundTrip), 3));
     }
 
     @Test

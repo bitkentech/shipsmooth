@@ -182,6 +182,36 @@ public class TaskStore {
         return planTasks;
     }
 
+    /**
+     * Appends a new task to an existing plan. The id on {@code task} is ignored;
+     * the next id is computed as {@code max(existing ids) + 1} (or 1 if empty).
+     * The new task starts {@code pending} with an empty commit, {@code createdFrom}
+     * set to {@code planVersion}, and a {@code depends-on} element when
+     * {@code task.dependsOn()} is non-blank. Returns the assigned id.
+     */
+    public int addTask(PlanTasks planTasks, Task task, String planVersion) throws Exception {
+        int nextId = planTasks.getTasks().getTask().stream()
+                .mapToInt(t -> t.getId().intValue())
+                .max().orElse(0) + 1;
+
+        TaskType taskType = factory.createTaskType();
+        taskType.setId(BigInteger.valueOf(nextId));
+        taskType.setName(task.name());
+        taskType.setRisk(task.risk());
+        taskType.setStatus(TaskStatusType.PENDING);
+        taskType.setCommit("");
+        taskType.setCreatedFrom(planVersion);
+        taskType.setClosedAtVersion("");
+        taskType.setComments(factory.createCommentsContainerType());
+        taskType.setDeviations(factory.createDeviationsContainerType());
+        planTasks.getTasks().getTask().add(taskType);
+
+        if (task.dependsOn() != null && !task.dependsOn().isBlank()) {
+            setDependsOn(planTasks, nextId, task.dependsOn());
+        }
+        return nextId;
+    }
+
     public void updateTaskStatus(PlanTasks planTasks, int taskId, String status) {
         TaskType task = findTask(planTasks, taskId);
         task.setStatus(TaskStatusType.fromValue(status));
