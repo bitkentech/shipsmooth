@@ -4,7 +4,7 @@
     <plan-version>plan-65-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-03</created>
     </metadata>
     <tasks>
@@ -48,6 +48,11 @@
         <update>
             <timestamp>2026-06-03T15:31:46.014+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-03T16:30:42.687+05:30</timestamp>
+            <message>Plan complete. base-workflow split into shared/workflow fragments; generated output byte-identical.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
