@@ -79,6 +79,20 @@ Plans are markdown files. They contain: narrative, design decisions, architectur
 
 ---
 
+## What Lives Where — Quick Reference
+
+| Content | Location | Reason |
+|---|---|---|
+| Plan narrative, design decisions, references | `.agents/plans/*.md` in git | Needs diffs, version history, co-evolution with code |
+| Task state (done / not done) | `[Linear]` Linear `[agent]` project · `[Local]` `.agents/plans/plan-{N}-tasks.xml` | Needs status tracking and human review |
+| Machine-readable execution trace | `[Local]` `.agents/ledger.jsonl` + `.agents/objects/` | Content-addressed milestone history, TLA-checked |
+| Feature definitions | `[Linear]` Linear permanent backlog · `[Local]` Noted in plan file Context section | Permanent, human-curated |
+| Link between plan version and tasks | `[Linear]` Tag-based GitHub permalink in Linear issue description · `[Local]` plan version recorded in `TASK_CREATED` payload/metadata | Immutable, survives branch lifecycle |
+| This workflow | `~/.claude/skills/${model.skillName()}/SKILL.md` | Loaded by agent at task start |
+| Repo-specific overrides | `CLAUDE.md` in repo root | Workspace name, project conventions, etc. |
+
+---
+
 ## Git Tagging Convention
 
 Every time a plan file is committed and pushed, immediately create and push a version tag:
@@ -428,19 +442,5 @@ git push origin plan-07-complete
 `[Local]` The ledger (`.agents/ledger.jsonl` + `.agents/objects/`) is the machine-readable audit trail; the XML file is the human-readable one. Both are versioned in git, so `git diff` between two plan tags shows exactly what changed. Each task's milestone sequence in the ledger — `TASK_CREATED` → `DE_RISK_FINISHED` → `HARDEN_FINISHED` → `TASK_FINISHED` — is the immutable record of its lifecycle, and every event is content-addressed so the trail cannot be silently rewritten.
 
 Feature issues in the permanent backlog should accumulate references to every plan that contributed to them — this gives a full delivery history across the feature's lifetime.
-
----
-
-## What Lives Where — Quick Reference
-
-| Content | Location | Reason |
-|---|---|---|
-| Plan narrative, design decisions, references | `.agents/plans/*.md` in git | Needs diffs, version history, co-evolution with code |
-| Task state (done / not done) | `[Linear]` Linear `[agent]` project · `[Local]` `.agents/plans/plan-{N}-tasks.xml` | Needs status tracking and human review |
-| Machine-readable execution trace | `[Local]` `.agents/ledger.jsonl` + `.agents/objects/` | Content-addressed milestone history, TLA-checked |
-| Feature definitions | `[Linear]` Linear permanent backlog · `[Local]` Noted in plan file Context section | Permanent, human-curated |
-| Link between plan version and tasks | `[Linear]` Tag-based GitHub permalink in Linear issue description · `[Local]` plan version recorded in `TASK_CREATED` payload/metadata | Immutable, survives branch lifecycle |
-| This workflow | `~/.claude/skills/${model.skillName()}/SKILL.md` | Loaded by agent at task start |
-| Repo-specific overrides | `CLAUDE.md` in repo root | Workspace name, project conventions, etc. |
 
 ---
