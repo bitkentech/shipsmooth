@@ -546,7 +546,7 @@ if (project.hasProperty("jlinkBuild")) {
 
 ### `cli` — jlink image, SCC launcher, smoke tests
 
-This is the old `app` work in the proposal; it lives in `cli`. The launcher module is
+The jlink image lives in `cli` (not a separate `app` module). The launcher module is
 `io.bitken.ss.cli`, compression is `zip-9`, and the OpenJ9 SCC launcher
 (`-Xquickstart -Xshareclasses`) is mandatory — the smoke tests run *through it*.
 
