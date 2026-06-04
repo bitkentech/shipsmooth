@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>69</plan>
+    <plan-version>plan-69-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>active</status>
+        <created>2026-06-04</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Make the Gemini release run the renderer</name>
+            <commit></commit>
+            <created-from>plan-69-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Delete the fossil Gemini npm hook</name>
+            <commit></commit>
+            <created-from>plan-69-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Stop copying `package.json` into build output</name>
+            <commit></commit>
+            <created-from>plan-69-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Remove the dead `shipsmooth.dist.path` property</name>
+            <commit></commit>
+            <created-from>plan-69-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Drop the stale `fast-xml-parser` runtime dep</name>
+            <commit></commit>
+            <created-from>plan-69-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Fix smoke-gemini.sh assertions</name>
+            <commit></commit>
+            <created-from>plan-69-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-04T19:01:58.414+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
