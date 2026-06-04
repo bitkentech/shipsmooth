@@ -11,12 +11,17 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Split app into core and cli with jlink moved to cli</name>
-            <commit></commit>
+            <commit>97aad6b79d0c68fb723a8b57360b954e10befa2b</commit>
             <created-from>plan-68-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-04T15:09:06.695+05:30</timestamp>
+                    <message>De-risk draft ready: app split into core+cli as two JPMS modules; linux jlink image runs --version/--help/plan-show. Fixed picocli leak in ExperimentalMode and dagger-shade placement. Awaiting approval before Harden (test repackage, 5 cross-platform jlinks, packaging rewire).</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
