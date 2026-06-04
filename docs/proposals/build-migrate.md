@@ -25,8 +25,10 @@ places.
   cross-jlink + SCC launcher, JAXB/Dagger-APT/templated codegen, and the ~12-variable
   render matrix. `cli` and `packaging` (38% of build lines) barely shrink and are the
   riskiest to port.
-* **Most of the speed-up is available without migrating:** add `mvnd` (warm daemon) and
-  the Maven build-cache extension for ~none of the migration risk.
+* **Most of the speed-up is available without migrating:** `mvnd` (warm daemon) + the
+  Maven build-cache extension, plus a `skills/pkg` module split for fine-grained skips,
+  recover most of it at ~none of the migration risk. The Gradle-only residual (caching
+  outputs written outside `target/`) is narrow.
 
 **Recommended path:**
 
@@ -203,11 +205,38 @@ no build-cache extension configured** — so this is not a fair baseline. Adding
 most of the speed-up for ~none of the migration risk. If perf were the *only* goal, that
 is the cheaper path.
 
+Even for the skills loop specifically, much of the Maven slowness is fixable in Maven:
+
+* **Build-cache fixes the *reliability* hole.** Today the npm/tsc steps are gated by a
+  hand-rolled mtime check (`[ dist -nt tasks/session-start.ts ]`) that watches only one
+  `.ts` file, so editing any other script can be wrongly skipped. The build-cache
+  extension hashing all of `scripts/tasks/**` + `package.json` removes that stale-skip /
+  false-rebuild bug — the most valuable thing it buys here, and it is a correctness win,
+  not just speed.
+* **But build-cache is module-granular, which is the catch.** `skills/pkg` is one module
+  whose inputs include both the TS pipeline *and* the 61 sibling `.jte.md` files
+  (pulled in via the antrun reach-up). Changing any one input misses the cache for the
+  **whole module**, so editing skill content re-evaluates the npm/tsc steps too — the
+  exact bundling Gradle avoids with task-level granularity.
+* **That bundling is fixable without Gradle.** Splitting `skills/pkg` into a TS/npm
+  module and a JTE-render module gives each its own cache key, so a `.jte.md` edit busts
+  only the render module and the scripts module stays a hit. This recovers most of
+  Gradle's intra-module selectivity in plain Maven. Gradle gets the same granularity
+  "for free" (no split needed) — real convenience, but convenience, not a unique
+  capability.
+
+The residual gap Gradle uniquely closes is narrow: caching the `Target` render and the
+`scripts/dist`/`node_modules` outputs, which live **outside `target/`** and so are
+invisible to the build-cache extension regardless of module layout.
+
 Bottom line: performance is a **moderate** argument that is really the incrementality
 argument in different clothes. It lands squarely on the dev inner loop (the work you
-actually do most — `skills`/`cli`/`core`/web), not on the rarely-run release pipeline —
-and it is partly available without migrating via `mvnd` + the Maven build-cache
-extension.
+actually do most — `skills`/`cli`/`core`/web), not on the rarely-run release pipeline.
+And most of it is recoverable in Maven without migrating — `mvnd` + build-cache, plus a
+`skills/pkg` module split for fine granularity. The genuinely Gradle-only residual
+(caching outputs written outside `target/`, like the `Target` render and `scripts/dist`)
+is narrow. Weigh the skills trial against *that* residual, not against today's
+un-tuned Maven baseline.
 
 ---
 
