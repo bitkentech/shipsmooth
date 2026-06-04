@@ -55,9 +55,9 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Remove the dead `shipsmooth.dist.path` property</name>
-            <commit></commit>
+            <commit>11d6bf6d1f86db44095919c7a8a780b1f65795d6</commit>
             <created-from>plan-69-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -72,7 +72,18 @@
             <created-from>plan-69-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-04T23:37:01.538+05:30</timestamp>
+                    <message>npm test was already broken before Task 5 (plan-68 restructure 19f2669 deleted src/main/scripts/tasks/* but left 11/12 src/test files importing those paths). My change is dependency-only (removed fast-xml-parser); npm run build passes. Test suite is standalone, not wired to Maven/CI. Surfacing per workflow before proceeding.</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-04T23:38:59.641+05:30</timestamp>
+                    <message>Per approval, expanding Task 5 to clean orphaned tests: delete 9 fossil test files (7 import deleted src/main TS modules; install-path expects old build/runtime/bin/shipsmooth-tasks; xsd-validation references moved src/main/scripts/plan-tasks.xsd). Keep 3 session-start tests with corrected import paths (../../../../tasks/session-start). Fix tsconfig.test.json rootDir to include tasks/.</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>6</id>

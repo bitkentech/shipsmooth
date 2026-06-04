@@ -2,8 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "dist-test",
-    "rootDir": "src",
+    "rootDir": ".",
     "moduleResolution": "node"
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/test/**/*.ts", "tasks/**/*.ts"]
 }
