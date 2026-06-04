@@ -12,8 +12,10 @@ are narrow and concentrated; the costs and risks are large and concentrated in t
 places.
 
 * **The real wins are small and local:** proper Node/TS incrementality and cleaner JTE
-  wiring — both confined to `skills/pkg`, and both helping the dev inner loop you run
-  most (`skills`/`cli`/`core`/web).
+  wiring (both in `skills/pkg`, helping the dev inner loop), plus terser, more readable
+  build config for resource-copy-heavy modules — the **claude/gemini integration**
+  files in particular collapse from ~30-line nested-XML copy blocks to a few lines of
+  `Copy`/`expand`. See [Per-developer impact](#per-developer-impact-speed--authoring).
 * **The justifications people reach for are weak:** line count drops only ~25–35% (and
   the new `buildSrc`/`settings.gradle.kts` claw some back); "type safety" doesn't apply
   to the four stringly-typed `main()` entrypoints; perf gains are really the
@@ -33,8 +35,9 @@ places.
    `Target` render) to Gradle side-by-side and measure incrementality against
    `mvn compile`. This validates the one real win cheaply.
 3. **Only if Phase 0 clearly pays off:** commit to the full, parity-gated migration in
-   the sequence below. Otherwise, consider moving *only* `skills/pkg` and leaving the
-   rest on Maven.
+   the sequence below. Otherwise, consider moving only `skills/pkg` (speed + authoring
+   win) and the `claude`/`gemini` integration modules (low-risk, pure copy/filter →
+   large readability win), leaving `cli`/`core`/`packaging` on Maven.
 
 The remainder of this document is the detailed, repo-accurate basis for that
 recommendation.
@@ -110,8 +113,39 @@ boilerplate" pitches imply, and with two important caveats:
   args, launcher script, per-platform exec blocks), not XML overhead. These are also the
   highest-risk modules to port.
 
-Conclusion: line count is a **weak** argument for this migration. The real case rests on
-Node/TS incrementality and cleaner JTE wiring (see above), not on shorter build files.
+Conclusion: line count *in aggregate* is a **weak** argument. But the lines that *do*
+shrink are concentrated in the build files that integration and skills developers
+actually open and edit — which is the readability point made in the next section, and a
+better argument than the total-line delta.
+
+### Per-developer impact (speed + authoring) {#per-developer-impact-speed--authoring}
+
+"Is Gradle better for the average developer?" depends entirely on which part of the tree
+they touch, and on **two** axes: rebuild speed *and* how readable/editable the build
+config is when they open it. The two axes point different ways for different people:
+
+| Works on… | Build file today | Rebuild speed | Authoring / readability | Net |
+|---|---|---|---|---|
+| **Skills** (61 `.jte.md` + TS hooks) | `skills/pkg` 255L | ✅ real — incremental JTE/TS replaces the `dist -nt` mtime hack | ✅ JTE 4-plugin chain → terse | ✅✅ best case |
+| **Claude / Gemini integration** (no code; JSON/TOML/MD) | 124L / 161L | ➖ none (copy/filter is fast either way) | ✅ **large** — ~30-line nested-XML `<execution>` blocks → ~4 lines of `Copy { from/into }` + `expand()` | ✅ readability win (not speed) |
+| **CLI** (49 Java files) | `cli` 316L | ➖ marginal; **jlink relink is unhelped** | ➖ jlink args / launcher stay verbose in any DSL | ➖ mostly neutral, inherits port risk |
+| **Web** (not yet in reactor) | — | ✅ if JS/TS bundler; ➖ if Java service | ✅ Kotlin DSL over XML | ✅ likely, if JS-heavy |
+| **Core** (55 Java files) | `core` 225L | ➖ neutral (`javac` incremental in both) | ➖ codegen + shade + module-info config stays fiddly | ➖ neutral |
+
+Two corrections to a naive "perf-only" read:
+
+* **Integration devs are not "no difference."** On *speed* they aren't, but their entire
+  build file is copy-and-filter boilerplate — exactly what Gradle shrinks most. They edit
+  it whenever they add a command or manifest field, so the readability win recurs.
+* **The win is partly offset by a learning cost.** Every dev must learn Gradle, the
+  Kotlin DSL, the daemon, task names, and `buildSrc` conventions instead of Maven XML
+  they may already know. "Simpler syntax" pays off only after that one-time cost.
+
+The pattern: the **authoring** benefit lands on skills + integration devs (the most
+common editors, lowest-risk modules); the **speed** benefit lands on skills (+ a JS web
+module). cli/core devs gain little and carry the porting risk. This is the same
+conclusion as the cost analysis — value concentrates in `skills/pkg`, with the
+integration modules a strong, low-risk secondary candidate.
 
 ### Performance impact (moderate justification)
 
