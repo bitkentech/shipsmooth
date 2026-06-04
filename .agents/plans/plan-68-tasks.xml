@@ -39,12 +39,17 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Move claude and gemini integrations to top level</name>
-            <commit></commit>
+            <commit>3cbf742</commit>
             <created-from>plan-68-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-04T16:36:08.827+05:30</timestamp>
+                    <message>De-risk ready: claude+gemini moved to top-level. Purely structural (git mv + relativePath + root module list); artifactIds unchanged so packaging resolves. All source byte-identical pre/post; claude plugin.json/marketplace.json render IDENTICAL to baseline. Awaiting approval before Harden.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>2</depends-on>
         </task>
