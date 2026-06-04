@@ -1,6 +1,6 @@
-package io.bitken.ss;
+package io.bitken.ss.cli;
 
-import io.bitken.ss.cli.Shipsmooth;
+import io.bitken.ss.Build;
 import io.bitken.ss.cli.conf.ExperimentalModeParser;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;

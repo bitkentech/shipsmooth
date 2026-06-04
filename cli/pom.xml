@@ -17,6 +17,9 @@
         <junit.jupiter.version>5.10.2</junit.jupiter.version>
         <jlink.exec.home>/opt/installers/jdk-semeru/jdk-25.0.2+10</jlink.exec.home>
         <jlink.jmods.home>/opt/installers/jdk-semeru/jdk-25.0.2+10</jlink.jmods.home>
+        <jlink.jmods.darwin-x64>/opt/installers/jdk-semeru-mac-x64/Contents/Home</jlink.jmods.darwin-x64>
+        <jlink.jmods.darwin-arm64>/opt/installers/jdk-semeru-mac-arm64/Contents/Home</jlink.jmods.darwin-arm64>
+        <jlink.jmods.windows-x64>/opt/installers/jdk-semeru-win-x64/jdk-25.0.2+10</jlink.jmods.windows-x64>
         <jlink.jre.home>/opt/installers/jre-semeru/jdk-25.0.2+10-jre</jlink.jre.home>
         <jakarta.xml.bind-api.version>4.0.2</jakarta.xml.bind-api.version>
         <jaxb-runtime.version>4.0.5</jaxb-runtime.version>
@@ -82,6 +85,19 @@
                     </execution>
                 </executions>
             </plugin>
+            <!--
+              Run tests on the classpath, not the module path. Under -Pjlink the core dependency
+              jar is shaded with dagger.*; on the module path that collides with the real dagger
+              module (JPMS split-package ResolutionException in the test fork). Tests need no
+              module-layer behaviour, so classpath execution is both correct and conflict-free.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <useModulePath>false</useModulePath>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -114,6 +130,18 @@
                         <version>${maven-antrun-plugin.version}</version>
                         <executions>
                             <execution>
+                                <id>jlink-version-check</id>
+                                <phase>validate</phase>
+                                <goals><goal>run</goal></goals>
+                                <configuration>
+                                    <target>
+                                        <exec executable="${jlink.exec.home}/bin/jlink" failonerror="true">
+                                            <arg value="--version"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <execution>
                                 <id>jlink-build-image</id>
                                 <phase>package</phase>
                                 <goals><goal>run</goal></goals>
@@ -137,16 +165,144 @@
                                     </target>
                                 </configuration>
                             </execution>
-                            <!-- De-risk smoke: prove the linked image runs the version command -->
+                            <!-- Copy linux image to platform-named dir for PublishRelease -->
                             <execution>
-                                <id>jlink-smoke-version</id>
+                                <id>jlink-copy-linux-x64</id>
+                                <phase>package</phase>
+                                <goals><goal>run</goal></goals>
+                                <configuration>
+                                    <target>
+                                        <delete dir="${project.build.directory}/jlink-image-linux-x64"/>
+                                        <copy todir="${project.build.directory}/jlink-image-linux-x64">
+                                            <fileset dir="${project.build.directory}/jlink-image"/>
+                                        </copy>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <!-- Cross-compile macOS x64 image using Linux jlink + Mac jmods -->
+                            <execution>
+                                <id>jlink-build-darwin-x64</id>
+                                <phase>package</phase>
+                                <goals><goal>run</goal></goals>
+                                <configuration>
+                                    <target>
+                                        <delete dir="${project.build.directory}/jlink-image-darwin-x64"/>
+                                        <exec executable="${jlink.exec.home}/bin/jlink" failonerror="true">
+                                            <arg value="--module-path"/>
+                                            <arg value="${jlink.runtime.module.path}:${jlink.jmods.darwin-x64}/jmods"/>
+                                            <arg value="--add-modules"/>
+                                            <arg value="io.bitken.ss.cli,openj9.sharedclasses"/>
+                                            <arg value="--launcher"/>
+                                            <arg value="shipsmooth=io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth"/>
+                                            <arg value="--no-header-files"/>
+                                            <arg value="--no-man-pages"/>
+                                            <arg value="--compress"/>
+                                            <arg value="zip-9"/>
+                                            <arg value="--output"/>
+                                            <arg value="${project.build.directory}/jlink-image-darwin-x64"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <!-- Cross-compile macOS arm64 image using Linux jlink + ARM64 Mac jmods -->
+                            <execution>
+                                <id>jlink-build-darwin-arm64</id>
+                                <phase>package</phase>
+                                <goals><goal>run</goal></goals>
+                                <configuration>
+                                    <target>
+                                        <delete dir="${project.build.directory}/jlink-image-darwin-arm64"/>
+                                        <exec executable="${jlink.exec.home}/bin/jlink" failonerror="true">
+                                            <arg value="--module-path"/>
+                                            <arg value="${jlink.runtime.module.path}:${jlink.jmods.darwin-arm64}/jmods"/>
+                                            <arg value="--add-modules"/>
+                                            <arg value="io.bitken.ss.cli,openj9.sharedclasses"/>
+                                            <arg value="--launcher"/>
+                                            <arg value="shipsmooth=io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth"/>
+                                            <arg value="--no-header-files"/>
+                                            <arg value="--no-man-pages"/>
+                                            <arg value="--compress"/>
+                                            <arg value="zip-9"/>
+                                            <arg value="--output"/>
+                                            <arg value="${project.build.directory}/jlink-image-darwin-arm64"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <!-- Cross-compile Windows x64 image using Linux jlink + Windows jmods -->
+                            <execution>
+                                <id>jlink-build-windows-x64</id>
+                                <phase>package</phase>
+                                <goals><goal>run</goal></goals>
+                                <configuration>
+                                    <target>
+                                        <delete dir="${project.build.directory}/jlink-image-windows-x64"/>
+                                        <exec executable="${jlink.exec.home}/bin/jlink" failonerror="true">
+                                            <arg value="--module-path"/>
+                                            <arg value="${jlink.runtime.module.path}:${jlink.jmods.windows-x64}/jmods"/>
+                                            <arg value="--add-modules"/>
+                                            <arg value="io.bitken.ss.cli,openj9.sharedclasses"/>
+                                            <arg value="--launcher"/>
+                                            <arg value="shipsmooth=io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth"/>
+                                            <arg value="--no-header-files"/>
+                                            <arg value="--no-man-pages"/>
+                                            <arg value="--compress"/>
+                                            <arg value="zip-9"/>
+                                            <arg value="--output"/>
+                                            <arg value="${project.build.directory}/jlink-image-windows-x64"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <!-- Write full-JDK launcher with OpenJ9 SCC + quickstart -->
+                            <execution>
+                                <id>jlink-write-scc-launcher</id>
+                                <phase>package</phase>
+                                <goals><goal>run</goal></goals>
+                                <configuration>
+                                    <!-- TODO: Make scc-launcher cross-platform -->
+                                    <target>
+                                        <mkdir dir="${project.build.directory}/scc-launcher"/>
+                                        <echo file="${project.build.directory}/scc-launcher/shipsmooth">#!/bin/sh
+SCC_DIR="${project.build.directory}/scc"
+mkdir -p "$SCC_DIR"
+exec ${jlink.jre.home}/bin/java \
+  -Xquickstart \
+  -Xshareclasses:name=shipsmooth_v${project.version},cacheDir="$SCC_DIR",nonfatal \
+  --module-path ${jlink.runtime.module.path} \
+  -m io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth "$@"
+</echo>
+                                        <chmod file="${project.build.directory}/scc-launcher/shipsmooth" perm="755"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <!-- Smoke tests in verify phase -->
+                            <execution>
+                                <id>jlink-smoke-help</id>
                                 <phase>verify</phase>
                                 <goals><goal>run</goal></goals>
                                 <configuration>
                                     <target>
-                                        <exec executable="${project.build.directory}/jlink-image/bin/shipsmooth"
+                                        <exec executable="${project.build.directory}/scc-launcher/shipsmooth"
                                               failonerror="true">
-                                            <arg value="--version"/>
+                                            <arg value="--help"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>jlink-smoke-show</id>
+                                <phase>verify</phase>
+                                <goals><goal>run</goal></goals>
+                                <configuration>
+                                    <target>
+                                        <exec executable="${project.build.directory}/scc-launcher/shipsmooth"
+                                              failonerror="true"
+                                              dir="${project.basedir}/..">
+                                            <arg value="plan"/>
+                                            <arg value="show"/>
+                                            <arg value="--plan"/>
+                                            <arg value="27"/>
                                         </exec>
                                     </target>
                                 </configuration>

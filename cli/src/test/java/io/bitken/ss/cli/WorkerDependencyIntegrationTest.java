@@ -1,4 +1,4 @@
-package io.bitken.ss;
+package io.bitken.ss.cli;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 
 import io.bitken.ss.cli.Shipsmooth;

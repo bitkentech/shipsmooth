@@ -1,4 +1,4 @@
-package io.bitken.ss;
+package io.bitken.ss.cli;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 
 import io.bitken.ss.cli.Shipsmooth;
@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Runs against the actual git repo (Paths.get(".") == plugin-tasks-java/ subdir, which
  * is inside the real shipsmooth git repo), consistent with the other integration tests.
  */
-public class WorkerLifecycleIntegrationTest {
+public class WorkerWorktreeLifecycleIntegrationTest {
 
     private static final int PLAN_NUM = 993;
     private static final String TASK_ID = "1";
