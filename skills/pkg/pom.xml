@@ -11,8 +11,8 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <!-- artifactId kept as integration-common until Task 4 renames it + repoints packaging -->
-  <artifactId>integration-common</artifactId>
+  <!-- renderer module: turns skills/text JTE content into rendered output -->
+  <artifactId>skills-pkg</artifactId>
 
   <properties>
     <jte.version>3.1.15</jte.version>
