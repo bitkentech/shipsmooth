@@ -131,7 +131,6 @@
         <plugin.description>Agent coding workflow (dev build)</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build</build.outputDir>
         <plugin.hook.base>node "${CLAUDE_PLUGIN_ROOT}/dist/session-start.js"</plugin.hook.base>
-        <shipsmooth.dist.path>\${CLAUDE_PLUGIN_DATA}/dist</shipsmooth.dist.path>
         <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/cli/target/jlink-image</shipsmooth.jlink.dir>
         <shipsmooth.cli.bin>${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-@project.version@/bin/shipsmooth</shipsmooth.cli.bin>
         <skill.frontmatter></skill.frontmatter>
@@ -176,7 +175,6 @@ description: Use when starting any task — applies the shipsmooth agent coding 
         <marketplace.description>Plugin marketplace for bitkentech/shipsmooth</marketplace.description>
         <plugin.description>Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build</build.outputDir>
-        <shipsmooth.dist.path>\${CLAUDE_PLUGIN_DATA}/dist</shipsmooth.dist.path>
         <shipsmooth.jlink.dir>/dev/null</shipsmooth.jlink.dir>
         <shipsmooth.cli.bin>${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-@project.version@/bin/shipsmooth</shipsmooth.cli.bin>
         <plugin.hook.base>node "${CLAUDE_PLUGIN_ROOT}/dist/session-start.js"</plugin.hook.base>
@@ -214,7 +212,6 @@ description: Use when starting any task — applies the shipsmooth agent coding 
         <skip.copy-plugin-meta>false</skip.copy-plugin-meta>
         <plugin.description>Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini</build.outputDir>
-        <shipsmooth.dist.path>~/.cache/shipsmooth/dist</shipsmooth.dist.path>
         <plugin.hook.base>node "${extensionPath}/dist/session-start.js"</plugin.hook.base>
 <skill.frontmatter>---
 name: start

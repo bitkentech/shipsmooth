@@ -46,7 +46,7 @@
             <risk>low</risk>
             <status>agent-coded</status>
             <name>Stop copying `package.json` into build output</name>
-            <commit>3f4ac382dd15a18bbebbb8008d9aa590ff853c5e</commit>
+            <commit>ca64c0133be210a824fe25124c73936fed0b4252</commit>
             <created-from>plan-69-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
