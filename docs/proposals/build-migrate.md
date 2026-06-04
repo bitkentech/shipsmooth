@@ -5,6 +5,19 @@
 > name, JDK version, and build step below is taken from the current `pom.xml` files and
 > source tree, not from a generic Maven→Gradle template.
 
+## Motivation
+
+The shipsmooth build is a polyglot reactor: seven Maven modules that compile Java
+(JPMS), generate code (JAXB `xjc`, Dagger APT, templated sources), render Markdown via
+JTE, compile TypeScript via npm, link platform-specific OpenJ9/Semeru `jlink` runtimes,
+and assemble four distribution layouts (Claude dev/prod, Gemini dev/prod, Windows). The
+question this document answers is whether the dev-loop and authoring pain in that build
+is best addressed by **enhancing the existing Maven setup** or by **migrating to
+Gradle** — and it concludes the former recovers most of the upside at far less risk. A
+Gradle migration is *plausible* but not obviously worth it; the analysis below states the
+real wins, the real costs, and — critically — the parts of the existing build that any
+migration **must** reproduce faithfully or it will regress.
+
 ## Recommendation summary (TL;DR)
 
 **Do not do a full Maven→Gradle migration now.** The build works, and the genuine wins
@@ -127,15 +140,10 @@ weighed against *this* enhanced Maven build, not today's un-tuned one.
 
 ---
 
-## Motivation
+## The Gradle migration
 
-The shipsmooth build is a polyglot reactor: seven Maven modules that compile Java
-(JPMS), generate code (JAXB `xjc`, Dagger APT, templated sources), render Markdown via
-JTE, compile TypeScript via npm, link platform-specific OpenJ9/Semeru `jlink` runtimes,
-and assemble four distribution layouts (Claude dev/prod, Gemini dev/prod, Windows). A
-Gradle migration is *plausible* but not obviously worth it; this document states the
-real wins, the real costs, and — critically — the parts of the existing build that any
-migration **must** reproduce faithfully or it will regress.
+This part assesses a full (or partial) Maven→Gradle migration, weighed against the
+enhanced Maven baseline established above.
 
 ### Where Gradle would genuinely help
 
@@ -662,7 +670,7 @@ proven for all four payloads.**
   correctness risk in the "kill the profiles" objective.
 * **Toolchain resolution.** Gradle must select Semeru 25, not a generic JDK 25, or the
   SCC launcher and `zip-9` jlink break.
-* **Payoff vs. cost.** The dev inner loop is already `mvn compile` and is fast. The
-  measurable wins (Node/TS incrementality, JTE wiring) are concentrated in `skills:pkg`;
-  the costly, risky work is in `core`/`cli`. Phase 0 should decide whether the full
-  migration is justified or whether only `skills:pkg` is worth moving.
+  * **Payoff vs. cost.** The dev inner loop is already `mvn compile` and is fast. The
+    measurable wins (Node/TS incrementality, JTE wiring) are concentrated in `skills:pkg`;
+    the costly, risky work is in `core`/`cli`. Phase 0 should decide whether the full
+    migration is justified or whether only `skills:pkg` is worth moving.		
