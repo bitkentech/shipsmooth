@@ -22,6 +22,27 @@ Apply this skill whenever you are:
 
 ---
 
+## Control Strategy: The Risk-Quality Loop
+
+To maximize productivity while minimizing "hallucination drift," treat
+risk and quality as two pressures that peak at different times — and never
+chase both at once.
+
+- **Spiral risk** — the chance that the architecture or core logic is
+  simply wrong. It is highest at the *start* of a task, when the approach
+  is unproven, and collapses once the logic is validated.
+- **Implementation quality** — readability, project-pattern conformance,
+  and test coverage. It matters only *after* the approach is proven; polishing
+  code that may be thrown away is wasted effort.
+
+**Strategy:** De-risk aggressively first — prove the logic works and ignore
+quality rules. Once the approach is validated and approved, switch modes and
+harden the code to the quality bar. The per-task **De-risk & Harden Cycle**
+below operationalizes this; this section only explains *why* the two phases
+are kept separate.
+
+---
+
 ## Task Tracking Mode
 
 This workflow supports two task tracking modes. Choose one at the start of each plan:
@@ -31,22 +52,7 @@ This workflow supports two task tracking modes. Choose one at the start of each 
 
 Throughout this skill, instructions marked `[Linear]` apply only in Linear mode; instructions marked `[Local]` apply only in Local mode. Unmarked instructions apply to both.
 
-`[Local]` Script invocations use `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth <subcommand>`. All scripts read/write `.agents/plans/plan-{N}-tasks.xml` relative to the repo root.
-
----
-
-## Control Strategy: The Risk-Quality Loop
-
-To maximize productivity while minimizing "hallucination drift," apply an adaptive control strategy.
-
-**The Control Equation:**
-$$u[k] = K_S(R) \cdot \frac{\Delta e[k]}{T_s} + K_Q \cdot \frac{e[k]}{T_s}$$
-
-- **$K_S(R)$ (Spiral Risk Gain):** Sensitivity to architectural or logic drift. High when risk is unknown.
-- **$K_Q$ (Implementation Quality Gain):** Sensitivity to code quality, readability, and test coverage.
-- **$T_s$ (Sampling Interval):** Frequency of human intervention. Smaller $T_s$ = tighter control.
-
-**Strategy:** De-risk aggressively first (High $K_S$, Low $K_Q$). Once logic is proven, harden the code (Low $K_S$, High $K_Q$).
+`[Local]` Script invocations use `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth <subcommand>`. All scripts read/write `.agents/plans/plan-{N}-tasks.xml` relative to the repo root.
 
 ---
 
@@ -63,59 +69,41 @@ Plans are markdown files. They contain: narrative, design decisions, architectur
 
 ---
 
+## What Lives Where — Quick Reference
+
+| Content | Location | Reason |
+|---|---|---|
+| Plan narrative, design decisions, references | `.agents/plans/*.md` in git | Needs diffs, version history, co-evolution with code |
+| Task state (done / not done) | `[Linear]` Linear `[agent]` project · `[Local]` `.agents/plans/plan-{N}-tasks.xml` | Needs status tracking and human review |
+| Feature definitions | `[Linear]` Linear permanent backlog · `[Local]` Noted in plan file Context section | Permanent, human-curated |
+| Link between plan version and tasks | `[Linear]` Tag-based GitHub permalink in Linear issue description · `[Local]` `<created-from>` child element in XML | Immutable, survives branch lifecycle |
+| This workflow | `~/.claude/skills/start/SKILL.md` | Loaded by agent at task start |
+| Repo-specific overrides | `CLAUDE.md` in repo root | Workspace name, project conventions, etc. |
+
+---
+
 ## Git Tagging Convention
 
-Every time a plan file is committed and pushed, immediately create and push a version tag:
+Every time a plan file is committed, immediately create and push a version tag:
 
 ```bash
-# After committing a plan file change:
-git tag plan-07-v1
-git push origin plan-07-v1
-
-# Subsequent revisions:
-git tag plan-07-v2
-git push origin plan-07-v2
-
-# On clean completion:
-git tag plan-07-complete
-git push origin plan-07-complete
-
-# On abandonment (tag the deletion commit too):
-git tag plan-07-abandoned
-git push origin plan-07-abandoned
+${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth plan tag --plan {N} --kind version
+# prints: git push origin plan-{N}-v{K}  — run that line to push
 ```
 
-Tag naming: `plan-{N}-v{version}` for iterations, `plan-{N}-complete` for clean closeout, `plan-{N}-abandoned` for abandonment.
-
-### Automate with lefthook
-
-Commit a hook so tagging fires automatically on every push, regardless of whether a human or agent made the commit:
-
-```yaml
-# lefthook.yml
-pre-push:
-  commands:
-    auto-tag-plans:
-      run: |
-        # Detect if any .agents/plans/ file changed in the push
-        if git diff --name-only HEAD~1 HEAD | grep -q '^\.agents/plans/'; then
-          PLAN=$(git diff --name-only HEAD~1 HEAD | grep '^\.agents/plans/' | head -1)
-          PLAN_ID=$(echo "$PLAN" | grep -oP 'plan-\d+')
-          # Find next version number
-          LATEST=$(git tag -l "${PLAN_ID}-v*" | sort -V | tail -1)
-          if [ -z "$LATEST" ]; then
-            NEXT="${PLAN_ID}-v1"
-          else
-            N=$(echo "$LATEST" | grep -oP '\d+$')
-            NEXT="${PLAN_ID}-v$((N+1))"
-          fi
-          git tag "$NEXT"
-          git push origin "$NEXT"
-          echo "Auto-tagged: $NEXT"
-        fi
+On clean completion:
+```bash
+${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth plan tag --plan {N} --kind complete
+# prints: git push origin plan-{N}-complete
 ```
 
-Install lefthook if not present: `npm install -g lefthook && lefthook install`
+On abandonment:
+```bash
+${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth plan tag --plan {N} --kind abandoned
+# prints: git push origin plan-{N}-abandoned
+```
+
+Tag naming: `plan-{N}-v{version}` for iterations, `plan-{N}-complete` for clean closeout, `plan-{N}-abandoned` for abandonment. `plan tag --kind version` refuses to re-tag if the computed tag already exists — commit more changes first.
 
 ---
 
@@ -173,14 +161,12 @@ Use this hash (not the tag name) in Linear links — it is immutable and survive
    ```
 6. **Verify Preconditions:**
    ```bash
-   git status                          # must be clean
-   git log origin/t/{issue-id}-{short-description}..HEAD  # must be empty
-   git tag -l "plan-07-v1"             # must exist
-   git ls-remote origin "plan-07-v1"   # must be on remote
+   ${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth plan preflight --plan {N}
+   # Exits 0 (PASS) or 1 (FAIL: dirty tree / missing version tag). Warns on unpushed branch.
    ```
 7. **Create Task Tracking Infrastructure:**
    - `[Linear]` Create the `[agent]` Linear project. Create Linear issues from the **risk-sorted** plan tasks. Each issue description must include the **Risk Level** ($L/M/H$) and the tag-based GitHub URL of the specific plan version that generated it.
-   - `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth init --plan {N} --tasks-from .agents/plans/plan-{N}.md` to generate `.agents/plans/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI. The format uses child elements, not attributes.** The CLI requires task headings in the form `### Task N: Name [Risk]` where `N` is a positive integer — alphanumeric IDs (e.g. `01-A`) are not supported. To express a dependency between tasks, add a `*Depends-on: P[,Q...]*` line anywhere in the task body before the next heading (e.g. `*Depends-on: 1,3*`). The CLI parses this line and writes `<depends-on>` into the XML automatically.
+   - `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth plan init --plan {N} --tasks-from .agents/plans/plan-{N}.md` to generate `.agents/plans/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI. The format uses child elements, not attributes.** The CLI requires task headings in the form `### Task N: Name [Risk]` where `N` is a positive integer — alphanumeric IDs (e.g. `01-A`) are not supported. To express a dependency between tasks, add a `*Depends-on: P[,Q...]*` line anywhere in the task body before the next heading (e.g. `*Depends-on: 1,3*`). The CLI parses this line and writes `<depends-on>` into the XML automatically.
    - Organise tasks as **thin vertical slices** in both modes.
 8. **Final Review & Go-ahead:**
    - `[Linear]` **Stop.** Post to the Linear project that the risk-sorted plan is ready for review.
@@ -191,20 +177,11 @@ Use this hash (not the tag name) in Linear links — it is immutable and survive
 
 ## Phase 2 — Execute
 
-**Session-resume pre-flight `[Local]`** — If you are picking up a plan that was started in a previous session, run these checks before doing anything else:
+**Session-resume pre-flight `[Local]`** — If you are picking up a plan that was started in a previous session, run this before doing anything else:
 
 ```bash
-# 1. Confirm the XML task file exists (must not be missing)
-ls .agents/plans/plan-{N}-tasks.xml   # if absent, run: ${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth init --plan {N} --tasks-from .agents/plans/plan-{N}.md
-
-# 2. Review current task state
-${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth show --plan {N}
-
-# 3. Confirm no stray worktrees or background jobs remain
-git worktree list
-
-# 4. Check for a stale integration worktree from a prior session
-git worktree list | grep "integration/plan-{N}"
+${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth plan resume --plan {N}
+# Prints: XML file present check, task state summary, any integration worktrees for this plan.
 ```
 
 Only proceed once you know which tasks are done and which are next.
@@ -213,17 +190,16 @@ Only proceed once you know which tasks are done and which are next.
 
 **Step 0: Create a branch**
 
-Create and push a branch named after the primary Linear issue for this plan:
+Create a branch named after the primary issue for this plan:
 ```bash
-git checkout -b t/{issue-id}-{short-description}
-# e.g. git checkout -b t/pb-149-branch-creation-step
-git push -u origin t/{issue-id}-{short-description}
+${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth plan branch --issue {issue-id} --desc "{short-description}"
+# prints: git push -u origin t/{issue-id}-{slug}  — run that line to push
 ```
-All task commits go on this branch. The `t/` prefix stands for "task" (covers features, bugs, chores, etc.). Usernames are intentionally omitted — the task identity is what matters long-term.
+All task commits go on this branch. The `t/` prefix stands for "task". Usernames are omitted — the task identity is what matters long-term.
 
 **Before writing any code**, confirm the test coverage threshold with the human (default: 95%). Record the agreed value before proceeding.
 
-`[Local]` All `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth` mutations also append one event to `.agents/ledger.jsonl` (content-addressed blobs in `.agents/objects/`). The XML remains the human-readable source of truth; the ledger is the machine-readable execution trace and the foundation for future parallel execution. Inspect with `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth ledger list` or `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth ledger verify`.
+`[Local]` All `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth` mutations also append one event to `.agents/ledger.jsonl` (content-addressed blobs in `.agents/objects/`). The XML remains the human-readable source of truth; the ledger is the machine-readable execution trace and the foundation for future parallel execution. Inspect with `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth ledger list` or `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth ledger verify`.
 
 ### Preamble: integration tests (once, before any task)
 
@@ -244,17 +220,22 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
 
 ##### Step A: De-risking (Spiral Phase)
 - **Goal:** Validate logic and architectural direction. Ignore "Implementation Quality" rules.
-- Write at least one failing test that targets the core logic (preserving Core Invariant #6).
+- Write at least one failing test (and not more than 3) that targets the core logic (preserving 
+Core Invariant #6).
 - Implement just enough to prove the approach works. Focus on the core complexity.
 - Commit as `draft(N): de-risk [task name]`.
 - `[Linear]` Post a comment on the Linear issue notifying the human the draft is ready.
-- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth update-status --plan {N} --task {id} --status de-risked` and `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth add-comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
+- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth task status --plan {N} --task {id} --status de-risked` and `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth task comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
 - **Wait for explicit approval of the approach.**
 
 ##### Step B: Hardening (Quality Phase)
 - **Goal:** Achieve technical excellence, human readability, and coverage threshold.
-- Refactor the de-risked code for readability, performance, and project patterns.
-- Write full unit tests and ensure coverage meets the agreed threshold:
+- Refactor the de-risked code for readability, performance, and project patterns. If skill 
+"experimental-refine-dev" exists, then use it to improve the design.
+- Follow Test Driven Development if possible: Write only one test at a time, then the implementing code 
+and then refactor.
+- Keep doing Step B until coverage meets the agreed threshold (and if "experimental-refine-dev" skill exists,
+quality conforms to its instructions):
   ```bash
   # example — adjust to your toolchain:
   npm test -- --coverage --coverageThreshold='{"global":{"lines":95}}'
@@ -268,7 +249,7 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
 - `[Linear]` Mark the Linear issue **Agent Coded**.
 
 
-- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth update-status --plan {N} --task {id} --status agent-coded` and `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`.
+- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth task status --plan {N} --task {id} --status agent-coded` and `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth task set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`.
 
 
 #### Low risk tasks — Single-pass (current behavior)
@@ -289,17 +270,17 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
    - `[Linear]` Mark the Linear issue **Agent Coded**. No draft review needed.
 
 
-   - `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth update-status --plan {N} --task {id} --status agent-coded` and `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`. No draft review needed.
+   - `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth task status --plan {N} --task {id} --status agent-coded` and `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth task set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`. No draft review needed.
 
 
 ---
 
 - **Minor deviation** (task split, reorder, clarification):
   - `[Linear]` Update the Linear issue(s), add a deviation comment explaining why, continue.
-  - `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth add-deviation --plan {N} --task {id} --type minor --message "..."`, continue.
+  - `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth task deviation --plan {N} --task {id} --type minor --message "..."`, continue.
 - **Major deviation** (fundamental plan problem, architecture issue, blocked): Stop immediately.
   - `[Linear]` Post a Linear project update. Set project health to **"At Risk"**.
-  - `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth project-update --plan {N} --blocked --message "..."`.
+  - `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth plan update --plan {N} --blocked --message "..."`.
   - Wait for the human to revise the plan file, commit, push, and give a new go-ahead.
 
 Never autonomously modify the `.agents/plans/` file during execution. If a plan change is needed, surface it and wait.
@@ -314,11 +295,11 @@ git tag plan-07-complete
 git push origin plan-07-complete
 ```
 - `[Linear]` Close all Linear issues in the `[agent]` project. Mark `[agent]` project complete and archive it. Update the permanent backlog feature issue to reflect delivery (link to completing PR, note what was delivered).
-- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth project-update --plan {N} --status complete --message "Plan complete."`. Commit the final XML state. Update the permanent backlog feature issue (if tracked externally) or note delivery in the plan file.
+- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth plan update --plan {N} --status complete --message "Plan complete."`. Commit the final XML state. Update the permanent backlog feature issue (if tracked externally) or note delivery in the plan file.
 
 ### Completion with Loose Ends
 - `[Linear]` Label unresolved issues `needs-triage`. Set `[agent]` project to **"In Review"**. Post a project update listing each open issue and why it's unresolved. Wait for human to review: they will promote worthy issues to the permanent backlog or discard them. Human marks the project complete and archives it.
-- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth update-status --plan {N} --task {id} --status needs-triage` for each unresolved task. Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth project-update --plan {N} --status in-review --message "..."`. Commit the XML. Wait for human to review.
+- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth task status --plan {N} --task {id} --status needs-triage` for each unresolved task. Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth plan update --plan {N} --status in-review --message "..."`. Commit the XML. Wait for human to review.
 
 ### Abandonment
 - Human commits a plan file deletion with a commit message referencing the superseding plan number
@@ -329,7 +310,7 @@ git push origin plan-07-complete
   ```
 - **Do not delete any earlier tags** (`plan-07-v1`, `plan-07-v2`, etc.) — they are the audit trail
 - `[Linear]` Surface all open tasks for human triage. Migrate worthy tasks to the permanent backlog with a note: "Partial delivery — see plan-07-abandoned, superseded by plan-{M}". Archive the `[agent]` project with a closing note referencing the deletion commit hash and the superseding plan.
-- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.11/bin/shipsmooth project-update --plan {N} --status abandoned --message "Superseded by plan-{M}."`. Commit the final XML state.
+- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.12/bin/shipsmooth plan update --plan {N} --status abandoned --message "Superseded by plan-{M}."`. Commit the final XML state.
 
 ---
 
@@ -347,18 +328,5 @@ git push origin plan-07-complete
 If the creation version equals the closeout version, the plan never changed during execution. If they differ, the git diff between the two tag hashes shows exactly what changed and why.
 
 Feature issues in the permanent backlog should accumulate references to every plan that contributed to them — this gives a full delivery history across the feature's lifetime.
-
----
-
-## What Lives Where — Quick Reference
-
-| Content | Location | Reason |
-|---|---|---|
-| Plan narrative, design decisions, references | `.agents/plans/*.md` in git | Needs diffs, version history, co-evolution with code |
-| Task state (done / not done) | `[Linear]` Linear `[agent]` project · `[Local]` `.agents/plans/plan-{N}-tasks.xml` | Needs status tracking and human review |
-| Feature definitions | `[Linear]` Linear permanent backlog · `[Local]` Noted in plan file Context section | Permanent, human-curated |
-| Link between plan version and tasks | `[Linear]` Tag-based GitHub permalink in Linear issue description · `[Local]` `<created-from>` child element in XML | Immutable, survives branch lifecycle |
-| This workflow | `~/.claude/skills/start/SKILL.md` | Loaded by agent at task start |
-| Repo-specific overrides | `CLAUDE.md` in repo root | Workspace name, project conventions, etc. |
 
 ---
