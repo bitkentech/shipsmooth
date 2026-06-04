@@ -1,0 +1,4 @@
+# TLC model-checker run artifacts (not source)
+*.out
+*.tlc
+states/

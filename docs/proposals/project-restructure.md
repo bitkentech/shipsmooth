@@ -128,8 +128,11 @@ They are peer skill folders under `skills/text/` alongside the rest of the skill
 experimental status lives in the build flag, not the folder path.
 
 `exp/` grows when something has no Maven module, no feature flag, and no shipping path yet.
-`EXPERIMENTAL.md` moves to `exp/README.md` so documentation is co-located with the artifacts
-it describes.
+
+`EXPERIMENTAL.md` **stays at the top level** — it documents the feature-flagged experimental
+skills (the `experimental.enabled` gate), which are fully wired and shipped to opt-in users, not
+the unwired exploratory work in `exp/`. It is contributor/user-facing documentation, so it remains
+top-level rather than being co-located with the exploratory artifacts.
 
 ## Development workflow after restructure
 
@@ -213,7 +216,7 @@ gemini extensions link --consent build-gemini-dev/
 | `packaging/` | `packaging/` | Unchanged |
 | `devel/` | `devtools/` | Rename only |
 | `model/` | `exp/model/` | Signals exploratory status |
-| `EXPERIMENTAL.md` | `exp/README.md` | Co-locate docs with artifacts |
+| `EXPERIMENTAL.md` | `EXPERIMENTAL.md` (unchanged) | Stays top-level: documents feature-flagged shipped skills, not exp/ exploratory work |
 
 
 
@@ -233,6 +236,6 @@ gemini extensions link --consent build-gemini-dev/
 11. Move `integrations/claude/` content into `claude/`.
 12. Move `integrations/gemini/` content into `gemini/`.
 13. Rename `devel/` to `devtools/`; update root `pom.xml` module list.
-14. Move `model/` to `exp/model/`; move `EXPERIMENTAL.md` to `exp/README.md`.
+14. Move `model/` to `exp/model/`. `EXPERIMENTAL.md` stays at the top level (documents shipped feature-flagged skills, not exp/ exploratory work).
 15. Update all `pom.xml` `<relativePath>` and `<module>` references.
 16. Update `DEVELOPMENT.md` with new paths and build commands.
