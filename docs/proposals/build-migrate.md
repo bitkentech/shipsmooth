@@ -5,6 +5,40 @@
 > name, JDK version, and build step below is taken from the current `pom.xml` files and
 > source tree, not from a generic Maven→Gradle template.
 
+## Recommendation summary (TL;DR)
+
+**Do not do a full Maven→Gradle migration now.** The build works, and the genuine wins
+are narrow and concentrated; the costs and risks are large and concentrated in the worst
+places.
+
+* **The real wins are small and local:** proper Node/TS incrementality and cleaner JTE
+  wiring — both confined to `skills/pkg`, and both helping the dev inner loop you run
+  most (`skills`/`cli`/`core`/web).
+* **The justifications people reach for are weak:** line count drops only ~25–35% (and
+  the new `buildSrc`/`settings.gradle.kts` claw some back); "type safety" doesn't apply
+  to the four stringly-typed `main()` entrypoints; perf gains are really the
+  incrementality win in disguise.
+* **The costs/risks are large and land on the hardest modules:** dagger shade +
+  `module-info` re-injection, the hand-pinned jlink runtime module-path, 5-platform
+  cross-jlink + SCC launcher, JAXB/Dagger-APT/templated codegen, and the ~12-variable
+  render matrix. `cli` and `packaging` (38% of build lines) barely shrink and are the
+  riskiest to port.
+* **Most of the speed-up is available without migrating:** add `mvnd` (warm daemon) and
+  the Maven build-cache extension for ~none of the migration risk.
+
+**Recommended path:**
+
+1. **Now:** if speed is the pain, add `mvnd` + Maven build-cache to the existing build.
+2. **If still motivated:** run **Phase 0** only — port `skills/pkg` (Node/TS + JTE +
+   `Target` render) to Gradle side-by-side and measure incrementality against
+   `mvn compile`. This validates the one real win cheaply.
+3. **Only if Phase 0 clearly pays off:** commit to the full, parity-gated migration in
+   the sequence below. Otherwise, consider moving *only* `skills/pkg` and leaving the
+   rest on Maven.
+
+The remainder of this document is the detailed, repo-accurate basis for that
+recommendation.
+
 ## Motivation
 
 The shipsmooth build is a polyglot reactor: seven Maven modules that compile Java
