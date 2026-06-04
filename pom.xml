@@ -13,8 +13,8 @@
     <module>core</module>
     <module>cli</module>
     <module>skills</module>
-    <module>integrations/claude</module>
-    <module>integrations/gemini</module>
+    <module>claude</module>
+    <module>gemini</module>
     <module>packaging</module>
     <module>devel</module>
   </modules>

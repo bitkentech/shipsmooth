@@ -8,7 +8,7 @@
     <groupId>io.bitken</groupId>
     <artifactId>shipsmooth</artifactId>
     <version>0.3.12</version>
-    <relativePath>../../pom.xml</relativePath>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>integration-claude</artifactId>
