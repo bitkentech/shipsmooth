@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>68</plan>
+    <plan-version>plan-68-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-04</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Split app into core and cli with jlink moved to cli</name>
+            <commit>97aad6b79d0c68fb723a8b57360b954e10befa2b</commit>
+            <created-from>plan-68-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Restructure skills into text and pkg with parent pom</name>
+            <commit>5766183cf8ca2cf2eb8a91cc65315e8d5c678053</commit>
+            <created-from>plan-68-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Move claude and gemini integrations to top level</name>
+            <commit>3cbf742</commit>
+            <created-from>plan-68-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Repoint packaging to the new layout</name>
+            <commit>3e2a9f1</commit>
+            <created-from>plan-68-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename devel to devtools</name>
+            <commit>6d146f6591f135b29c9c10f1340e84d583583924</commit>
+            <created-from>plan-68-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Move model and EXPERIMENTAL into exp</name>
+            <commit>7adb548df661c830f9e6a3d3a72db9e9b87aae05</commit>
+            <created-from>plan-68-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Update docs and final pom relativePath sweep</name>
+            <commit>7daa70d5286d902ad5d7989097152782b31d1e1f</commit>
+            <created-from>plan-68-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2,3,4,5,6</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Flatten skills — drop text/, skills directly under skills/</name>
+            <commit>1123c4be648c9aecebf35c9f1e2614f67e66564f</commit>
+            <created-from>plan-68-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-04T17:31:00.600+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-04T18:00:49.405+05:30</timestamp>
+            <message>Project restructure complete. All 8 tasks landed; mvn clean install -Pjlink green across 9 modules; rendered output byte-identical to baseline (except intended jlinkDir app-&gt;cli). Skills flattened (Task 8). Squash-merged to main.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

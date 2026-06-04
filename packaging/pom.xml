@@ -35,7 +35,7 @@
     </dependency>
     <dependency>
       <groupId>io.bitken</groupId>
-      <artifactId>integration-common</artifactId>
+      <artifactId>skills-pkg</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -65,7 +65,7 @@
               <outputDirectory>${build.outputDir}/dist</outputDirectory>
               <resources>
                 <resource>
-                  <directory>${maven.multiModuleProjectDirectory}/integrations/common/scripts/dist</directory>
+                  <directory>${maven.multiModuleProjectDirectory}/skills/pkg/scripts/dist</directory>
                   <filtering>false</filtering>
                   <excludes>
                     <exclude>**/*.test.js</exclude>
@@ -91,7 +91,7 @@
               </delimiters>
               <resources>
                 <resource>
-                  <directory>${maven.multiModuleProjectDirectory}/integrations/common/scripts/src/main/resources</directory>
+                  <directory>${maven.multiModuleProjectDirectory}/skills/pkg/scripts/src/main/resources</directory>
                   <filtering>true</filtering>
                   <includes>
                     <include>package.json</include>
@@ -280,7 +280,7 @@
                   <outputDirectory>${build.outputDir}/scripts/tasks</outputDirectory>
                   <resources>
                     <resource>
-                      <directory>${maven.multiModuleProjectDirectory}/integrations/common/scripts/dist</directory>
+                      <directory>${maven.multiModuleProjectDirectory}/skills/pkg/scripts/dist</directory>
                       <filtering>false</filtering>
                       <excludes>
                         <exclude>**/*.test.js</exclude>
@@ -301,7 +301,7 @@
                   <outputDirectory>${build.outputDir}/scripts/tasks</outputDirectory>
                   <resources>
                     <resource>
-                      <directory>${maven.multiModuleProjectDirectory}/integrations/common/scripts/tasks</directory>
+                      <directory>${maven.multiModuleProjectDirectory}/skills/pkg/scripts/tasks</directory>
                       <filtering>false</filtering>
                       <excludes>
                         <exclude>**/*.test.ts</exclude>
@@ -338,9 +338,9 @@
                 <goals><goal>run</goal></goals>
                 <configuration>
                   <target>
-                    <fail message="jlink image not found. Run: mvn -pl app -am -Pjlink package">
+                    <fail message="jlink image not found. Run: mvn -pl cli -am -Pjlink package">
                       <condition>
-                        <not><available file="${maven.multiModuleProjectDirectory}/app/target/jlink-image/bin/shipsmooth"/></not>
+                        <not><available file="${maven.multiModuleProjectDirectory}/cli/target/jlink-image/bin/shipsmooth"/></not>
                       </condition>
                     </fail>
                   </target>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.bitken</groupId>
+    <artifactId>shipsmooth</artifactId>
+    <version>0.3.12</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>skills</artifactId>
+  <packaging>pom</packaging>
+
+  <!--
+    Parent aggregator for the skills product.
+    - text/ holds the JTE markdown content (the bulk of skill authoring); the pkg module's
+      antrun step copies text/ into its build, renames .jte.md -> .jte, and precompiles it.
+    - pkg/ is the renderer module (Java renderers + TS hook scripts) that turns text/ into output.
+  -->
+  <modules>
+    <module>pkg</module>
+  </modules>
+
+</project>

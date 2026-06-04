@@ -10,12 +10,13 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>integrations/common</module>
-    <module>integrations/claude</module>
-    <module>integrations/gemini</module>
+    <module>core</module>
+    <module>cli</module>
+    <module>skills</module>
+    <module>claude</module>
+    <module>gemini</module>
     <module>packaging</module>
-    <module>devel</module>
-    <module>app</module>
+    <module>devtools</module>
   </modules>
 
   <properties>
@@ -131,7 +132,7 @@
         <build.outputDir>${maven.multiModuleProjectDirectory}/build</build.outputDir>
         <plugin.hook.base>node "${CLAUDE_PLUGIN_ROOT}/dist/session-start.js"</plugin.hook.base>
         <shipsmooth.dist.path>\${CLAUDE_PLUGIN_DATA}/dist</shipsmooth.dist.path>
-        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/app/target/jlink-image</shipsmooth.jlink.dir>
+        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/cli/target/jlink-image</shipsmooth.jlink.dir>
         <shipsmooth.cli.bin>${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-@project.version@/bin/shipsmooth</shipsmooth.cli.bin>
         <skill.frontmatter></skill.frontmatter>
         <experimental.enabled>true</experimental.enabled>
@@ -153,7 +154,7 @@
         <plugin.description>Agent coding workflow (dev build)</plugin.description>
         <plugin.hook.base>node "${extensionPath}/dist/session-start.js"</plugin.hook.base>
 
-        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/app/target/jlink-image</shipsmooth.jlink.dir>
+        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/cli/target/jlink-image</shipsmooth.jlink.dir>
         <skill.frontmatter>---
 name: start-dev
 description: Use when starting any task — applies the shipsmooth agent coding workflow (dev build).
@@ -197,7 +198,7 @@ description: Use when starting any task — applies the shipsmooth agent coding 
         <plugin.description>Agent coding workflow (Windows)</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-windows</build.outputDir>
         <plugin.repo.name>${plugin.base.name}</plugin.repo.name>
-        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/app/target/jlink-image-windows-x64</shipsmooth.jlink.dir>
+        <shipsmooth.jlink.dir>${maven.multiModuleProjectDirectory}/cli/target/jlink-image-windows-x64</shipsmooth.jlink.dir>
         <skill.frontmatter></skill.frontmatter>
         <experimental.enabled>false</experimental.enabled>
       </properties>

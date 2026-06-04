@@ -25,12 +25,16 @@ shipsmooth/
   core/             ← Pure domain logic: ledger, workflow, git ops, plan service
   skills/
     text/           ← All JTE markdown content (the bulk of skill authoring)
-      shared/       ← Base workflow partials + start/SKILL.jte.md (base skill body)
-      experimental/ ← Feature-flagged skills
-      claude/       ← Claude-specific JTE overrides
-      gemini/       ← Gemini-specific JTE overrides
-    other/          ← Everything that renders text/ into output: Java renderers, TS hook scripts
-    pom.xml         ← Parent module: registers text/ as resources, declares other/ as submodule
+      start/        ← The start skill (one folder per skill): SKILL.jte.md
+      refine/       ← Experimental skill (peer folder): SKILL.jte.md + rules/
+      start-tla/    ← Experimental skill: SKILL.jte.md + tla-model.jte.md
+      start-parallel/ ← Experimental skill: SKILL.jte.md
+      shared/       ← Partials + target snippets shared across skills
+        workflow/   ← Base workflow partials (base-workflow.jte.md, etc.)
+        claude/     ← Claude snippets the shared workflow selects (per-skill overrides allowed too)
+        gemini/     ← Gemini snippets the shared workflow selects
+    pkg/            ← Everything that renders text/ into output: Java renderers, TS hook scripts
+    pom.xml         ← Parent module: registers text/ as resources, declares pkg/ as submodule
   cli/              ← CLI: picocli commands, jlink image build
   web/              ← Web UI (future)
   desktop/
@@ -59,15 +63,19 @@ navigate elsewhere.
 `skills/` is split into two subfolders, mirroring the webapp analogy of content vs scripts:
 
 - **`text/`** — all the JTE markdown content. A non-Java contributor editing skill prose only
-  ever touches this subtree. `text/shared/` holds base workflow partials; `text/claude/` and
-  `text/gemini/` hold per-target JTE overrides.
-- **`other/`** — everything that renders `text/` into output: `Target.java`, `SkillRenderer`,
+  ever touches this subtree. **One folder per skill**: `text/start/`, `text/refine/`,
+  `text/start-tla/`, `text/start-parallel/`, each holding its own `SKILL.jte.md`. `text/shared/`
+  holds base workflow partials (`text/shared/workflow/`) plus the target snippets the shared
+  workflow selects between (`text/shared/claude/`, `text/shared/gemini/`). A skill that needs its
+  own target-specific snippets may add `text/<skill>/claude/` or `text/<skill>/gemini/`; snippets
+  common across skills live in `text/shared/`.
+- **`pkg/`** — everything that renders `text/` into output: `Target.java`, `SkillRenderer`,
   `HooksRenderer`, `SessionStartConfigRenderer`, and the TypeScript hook scripts. These are
   tightly coupled to the JTE precompilation model and must share a Maven module with the
   templates they render.
 
 `skills/pom.xml` is the parent module: it registers `text/` as a resource directory (making
-`.jte.md` files available on the classpath) and declares `other/` as a submodule.
+`.jte.md` files available on the classpath) and declares `pkg/` as a submodule.
 
 Adding support for a new target means adding `text/opencode/` alongside a top-level `opencode/`
 folder for its hooks and metadata.
@@ -100,7 +108,7 @@ currently the TypeScript hook utilities. Over time it may grow `shared/hooks/`,
 naturally tracks the top level — it never needs a taxonomy of its own.
 
 The Java build tooling (`Target.java`, `SkillRenderer.java`, `HooksRenderer.java`) stays with
-the skill templates in `skills/other/` — it is coupled to the JTE precompilation model and must
+the skill templates in `skills/pkg/` — it is coupled to the JTE precompilation model and must
 share a classpath with the templates it renders.
 
 ### `packaging/` name is preserved
@@ -113,14 +121,18 @@ directories. `packaging/` holds the assembly and release orchestration code, not
 `exp/` is for work with no build wiring — things not yet incorporated into the product at all.
 The TLA+ model is the current example: it verifies invariants but is not compiled or shipped.
 
-This is distinct from feature-flagged experimental skills (`skills/text/experimental/refine`,
-`start-parallel`). Those are gated by the `experimental.enabled` flag but are fully wired into
-the build and deployed to users who opt in. They stay in `skills/text/experimental/` alongside
-the rest of the skill content.
+This is distinct from feature-flagged experimental skills (`skills/text/refine`,
+`skills/text/start-parallel`, `skills/text/start-tla`). Those are gated by the
+`experimental.enabled` flag but are fully wired into the build and deployed to users who opt in.
+They are peer skill folders under `skills/text/` alongside the rest of the skill content; their
+experimental status lives in the build flag, not the folder path.
 
 `exp/` grows when something has no Maven module, no feature flag, and no shipping path yet.
-`EXPERIMENTAL.md` moves to `exp/README.md` so documentation is co-located with the artifacts
-it describes.
+
+`EXPERIMENTAL.md` **stays at the top level** — it documents the feature-flagged experimental
+skills (the `experimental.enabled` gate), which are fully wired and shipped to opt-in users, not
+the unwired exploratory work in `exp/`. It is contributor/user-facing documentation, so it remains
+top-level rather than being co-located with the exploratory artifacts.
 
 ## Development workflow after restructure
 
@@ -128,11 +140,13 @@ it describes.
 
 | "I want to..." | Start here |
 |---|---|
-| Change the core workflow or add a skill | `skills/text/shared/` |
-| Add a Claude-specific skill variant | `skills/text/claude/` |
-| Add a Gemini-specific skill variant | `skills/text/gemini/` |
-| Add a new experimental (feature-flagged) skill | `skills/text/experimental/` |
-| Change the skill renderer or hook scripts | `skills/other/` |
+| Change shared workflow logic (all skills) | `skills/text/shared/workflow/` |
+| Edit an existing skill | `skills/text/<skill>/` (e.g. `text/start/`) |
+| Add a new skill | new `skills/text/<skill>/SKILL.jte.md` |
+| Change a Claude target snippet (shared) | `skills/text/shared/claude/` |
+| Change a Gemini target snippet (shared) | `skills/text/shared/gemini/` |
+| Add a skill-specific target snippet | `skills/text/<skill>/claude/` or `/gemini/` |
+| Change the skill renderer or hook scripts | `skills/pkg/` |
 | Change the Claude hook or plugin metadata | `claude/` |
 | Change the Gemini hook or extension metadata | `gemini/` |
 | Add a new target (e.g. Opencode) | create `opencode/` + `skills/text/opencode/` |
@@ -154,17 +168,19 @@ mvn compile -pl gemini -am -Pgemini-dev
 
 | Change scope | Edit location |
 |---|---|
-| Shared workflow logic (all targets) | `skills/text/shared/` |
-| Claude-specific skill content | `skills/text/claude/` |
-| Gemini-specific skill content | `skills/text/gemini/` |
+| Shared workflow logic (all skills) | `skills/text/shared/workflow/` |
+| A specific skill's body | `skills/text/<skill>/SKILL.jte.md` |
+| Shared Claude target snippet | `skills/text/shared/claude/` |
+| Shared Gemini target snippet | `skills/text/shared/gemini/` |
+| Skill-specific target snippet | `skills/text/<skill>/claude/` or `/gemini/` |
 
-Edit `skills/text/shared/` when the change should propagate to all targets; edit the
-target-specific folder when intentionally diverging.
+Edit `skills/text/shared/` when the change should propagate across skills/targets; edit a skill's
+own folder when the change is specific to that skill.
 
 ### Full dev loop (Gemini example)
 
 ```bash
-# 1. Edit JTE files in skills/text/shared/ or skills/text/gemini/
+# 1. Edit JTE files in skills/text/shared/ or skills/text/shared/gemini/
 # 2. Rebuild
 mvn compile -pl gemini -am -Pgemini-dev
 # 3. Link to local Gemini CLI (one-time setup)
@@ -188,19 +204,19 @@ gemini extensions link --consent build-gemini-dev/
 | `app/src/main/java/io/bitken/ss/` (non-cli packages) | `core/` | `workflow`, `ledger`, `git`, `gw`, `svc`, `conf` |
 | `app/src/main/java/io/bitken/ss/cli/` | `cli/` | picocli commands only |
 | `app/pom.xml` (jlink profile) | `cli/pom.xml` | jlink build machinery moves with CLI |
-| `integrations/common/src/main/jte-src/skills/shared/` | `skills/text/shared/` | Base workflow partials |
-| `integrations/common/src/main/jte-src/skills/start/SKILL.jte.md` | `skills/text/shared/` | Base skill body; co-located with `base-workflow.jte.md` it imports |
-| `integrations/common/src/main/jte-src/skills/experimental/` | `skills/text/experimental/` | Feature-flagged skills; stay in skills, not exp/ |
-| `integrations/common/src/main/jte-src/skills/start/claude/` | `skills/text/claude/` | Claude-specific JTE overrides |
-| `integrations/common/src/main/jte-src/skills/start/gemini/` | `skills/text/gemini/` | Gemini-specific JTE overrides |
-| `integrations/common/src/main/java/` (Target, SkillRenderer etc) | `skills/other/` | Coupled to JTE precompilation; stays with templates |
-| `integrations/common/scripts/` | `skills/other/` | TS hook scripts; rendered by HooksRenderer |
+| `…/jte-src/skills/start/SKILL.jte.md` | `skills/text/start/SKILL.jte.md` | The start skill, one folder per skill |
+| `…/jte-src/skills/shared/` (partials, workflow/) | `skills/text/shared/` | Base workflow partials |
+| `…/jte-src/skills/experimental/{refine,start-tla,start-parallel}/` | `skills/text/{refine,start-tla,start-parallel}/` | Experimental skills become peer skill folders |
+| `…/jte-src/skills/start/claude/` | `skills/text/shared/claude/` | Target snippets selected by the shared workflow |
+| `…/jte-src/skills/start/gemini/` | `skills/text/shared/gemini/` | Target snippets selected by the shared workflow |
+| `integrations/common/src/main/java/` (Target, SkillRenderer etc) | `skills/pkg/` | Coupled to JTE precompilation; stays with templates |
+| `integrations/common/scripts/` | `skills/pkg/` | TS hook scripts; rendered by HooksRenderer |
 | `integrations/claude/` | `claude/` | Plugin metadata, hooks, assembly |
 | `integrations/gemini/` | `gemini/` | Extension metadata, hooks, assembly |
 | `packaging/` | `packaging/` | Unchanged |
 | `devel/` | `devtools/` | Rename only |
 | `model/` | `exp/model/` | Signals exploratory status |
-| `EXPERIMENTAL.md` | `exp/README.md` | Co-locate docs with artifacts |
+| `EXPERIMENTAL.md` | `EXPERIMENTAL.md` (unchanged) | Stays top-level: documents feature-flagged shipped skills, not exp/ exploratory work |
 
 
 
@@ -208,17 +224,18 @@ gemini extensions link --consent build-gemini-dev/
 
 1. Create new top-level directories.
 2. Move `app/` non-cli source into `core/`; move `app/cli/` source into `cli/`.
-3. Move `integrations/common/src/main/jte-src/skills/shared/` into `skills/text/shared/`.
-4. Move `integrations/common/src/main/jte-src/skills/start/SKILL.jte.md` into `skills/text/shared/`.
-5. Move `integrations/common/src/main/jte-src/skills/experimental/` into `skills/text/experimental/`.
-6. Move `integrations/common/src/main/jte-src/skills/start/claude/` into `skills/text/claude/`.
-7. Move `integrations/common/src/main/jte-src/skills/start/gemini/` into `skills/text/gemini/`.
-8. Move `integrations/common/src/main/java/` (Target, SkillRenderer etc) into `skills/other/`.
-9. Move `integrations/common/scripts/` into `skills/other/`.
-10. Create `skills/pom.xml`: registers `text/` as a resource directory, declares `other/` as submodule.
+3. Move `…/jte-src/skills/start/SKILL.jte.md` into `skills/text/start/SKILL.jte.md`.
+4. Move `…/jte-src/skills/shared/` into `skills/text/shared/`.
+5. Move `…/jte-src/skills/experimental/{refine,start-tla,start-parallel}/` into peer folders `skills/text/{refine,start-tla,start-parallel}/`.
+6. Move `…/jte-src/skills/start/claude/` into `skills/text/shared/claude/`.
+7. Move `…/jte-src/skills/start/gemini/` into `skills/text/shared/gemini/`.
+   Then update `SkillRenderer` template paths and all `@template.*` includes to the new names; verify rendered output is byte-identical.
+8. Move `integrations/common/src/main/java/` (Target, SkillRenderer etc) into `skills/pkg/`.
+9. Move `integrations/common/scripts/` into `skills/pkg/`.
+10. Create `skills/pom.xml`: registers `text/` as a resource directory, declares `pkg/` as submodule.
 11. Move `integrations/claude/` content into `claude/`.
 12. Move `integrations/gemini/` content into `gemini/`.
 13. Rename `devel/` to `devtools/`; update root `pom.xml` module list.
-14. Move `model/` to `exp/model/`; move `EXPERIMENTAL.md` to `exp/README.md`.
+14. Move `model/` to `exp/model/`. `EXPERIMENTAL.md` stays at the top level (documents shipped feature-flagged skills, not exp/ exploratory work).
 15. Update all `pom.xml` `<relativePath>` and `<module>` references.
 16. Update `DEVELOPMENT.md` with new paths and build commands.
