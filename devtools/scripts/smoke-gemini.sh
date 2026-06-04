@@ -102,7 +102,7 @@ fi
 # --- 4. Hook logic test ---
 echo ""
 echo "--- Step 3: hook logic test ---"
-bash "$REPO_ROOT/devel/scripts/test-gemini-hook.sh"
+bash "$REPO_ROOT/devtools/scripts/test-gemini-hook.sh"
 
 echo ""
 echo "=== ALL SMOKE TESTS PASSED ==="

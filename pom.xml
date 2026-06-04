@@ -16,7 +16,7 @@
     <module>claude</module>
     <module>gemini</module>
     <module>packaging</module>
-    <module>devel</module>
+    <module>devtools</module>
   </modules>
 
   <properties>
