@@ -81,18 +81,33 @@ Node/TS incrementality and cleaner JTE wiring (see above), not on shorter build 
 
 ### Performance impact (moderate justification)
 
-Net assessment: **repeat dev-loop builds get moderately faster; cold/CI builds are a
-wash or slightly slower; release builds are tool-agnostic.** Performance is a secondary
-argument, and much of it is achievable in Maven without migrating (see the `mvnd`
-caveat below).
+Net assessment: **the dev inner loop — which is most of the actual work, on `skills`,
+`cli`, `core`, and the upcoming web module — stands to gain the most, via
+incrementality; the occasional release pipeline is tool-agnostic and Gradle can't speed
+it up; cold/CI builds are a wash or slightly slower.** Performance is a secondary
+argument, and much of the dev-loop gain is achievable in Maven without migrating (see
+the `mvnd`/build-cache caveat below).
 
-The dominant cost in this build is **not** the build tool. A full build forks ~23
-external processes: **7 `exec:java` runs** (each a cold JVM: `Target`,
-`ValidateRelease`, 4× `PackageRuntime`, `PublishRelease`) and **~16 `exec`/`antrun`
-invocations** (npm, tsc, 5× `jlink`, the `jar` module-info re-inject, copies, smoke
-tests). The wall-clock here is dominated by JVM/process startup plus the work inside —
-linking five Semeru jlink images, `npm install`, `tsc`. **Gradle makes none of that
-faster**; jlink takes the same time whoever invokes it.
+Distinguish the two builds, because they have very different cost profiles:
+
+* **Dev inner loop (`mvn compile`)** — what you run constantly while working on
+  `skills`, `cli`, `core` (and the upcoming web module). This forks only the
+  `skills/pkg` pipeline (gated npm/tsc, JTE rename + precompile, **one** `exec:java`
+  for the `Target` render) plus `core` codegen (JAXB `xjc`, Dagger APT, templated
+  source). That is roughly **one forked JVM plus the usually-skipped npm/tsc** — small.
+* **Release pipeline** — run occasionally and mostly **by hand**. The six
+  `packaging` `exec:java` runs (`ValidateRelease`, 4× `PackageRuntime`,
+  `PublishRelease`) have **no lifecycle phase binding**; they fire only on explicit
+  `mvn exec:java@<id>` invocations (see `DEVELOPMENT.md`), and `packaging` is not on the
+  dev compile path at all. The 5× `jlink` links + SCC launcher + smoke tests live in
+  `cli` under `-Pjlink package`. Together this is ~23 forked processes whose wall-clock
+  is dominated by JVM/process startup plus the work inside — linking five Semeru jlink
+  images, `npm install`, `tsc`.
+
+The key consequence: **the heavy, tool-agnostic cost lives in the release pipeline you
+rarely run, while the dev loop you run all day is exactly the npm/tsc/JTE work where
+Gradle's incrementality helps.** Gradle makes the release jlink/exec work no faster
+(jlink takes the same time whoever invokes it), but that path is not your hot loop.
 
 Factor by factor:
 
@@ -121,7 +136,10 @@ most of the speed-up for ~none of the migration risk. If perf were the *only* go
 is the cheaper path.
 
 Bottom line: performance is a **moderate** argument that is really the incrementality
-argument in different clothes — and partly available without migrating.
+argument in different clothes. It lands squarely on the dev inner loop (the work you
+actually do most — `skills`/`cli`/`core`/web), not on the rarely-run release pipeline —
+and it is partly available without migrating via `mvnd` + the Maven build-cache
+extension.
 
 ---
 
