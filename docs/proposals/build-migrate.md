@@ -41,8 +41,91 @@ places.
    win) and the `claude`/`gemini` integration modules (low-risk, pure copy/filter →
    large readability win), leaving `cli`/`core`/`packaging` on Maven.
 
-The remainder of this document is the detailed, repo-accurate basis for that
-recommendation.
+The remainder of this document has two parts: first the **Maven enhancements** that
+recover most of the upside in place, then the full **Gradle migration** analysis.
+
+---
+
+## Enhancements within the Maven system
+
+These are low-risk, in-place improvements to the *existing* build. They require no tool
+migration, no new DSL to learn, and each can be adopted independently. Together they
+recover most of the dev-loop speed and reliability that a Gradle migration would buy —
+which is why they belong first: they reset the baseline the Gradle case must beat.
+
+### 1. `mvnd` (Maven Daemon)
+
+Maven cold-starts a JVM on every invocation (~0.5–1s). `mvnd` keeps a warm JVM and a
+cached project model resident between runs, so 2nd+ invocations skip startup. It is a
+drop-in: same `pom.xml`, same goals, just `mvnd` instead of `mvn`. Zero migration risk;
+worst case you stop using it. Biggest payoff for the tight `compile`-restart loop where
+startup latency dominates. **Do this regardless of anything else.**
+
+### 2. Maven build-cache extension
+
+Configured via `.mvn/extensions.xml` + a cache config, the extension hashes each
+module's inputs (sources, POM config, deps) and, on a cache hit, **restores that
+module's `target/` and skips its build**. Two distinct benefits for skills:
+
+* **Reliability (the bigger win).** Today npm/tsc are gated by a hand-rolled mtime check
+  (`[ dist -nt tasks/session-start.ts ]`) that watches only one `.ts` file — edit any
+  other script and the rebuild can be wrongly skipped. Hashing all of
+  `scripts/tasks/**` + `package.json` removes that stale-skip / false-rebuild bug. This
+  is a *correctness* fix, not just speed.
+* **Speed, with a granularity catch.** The cache is **module-granular**. `skills/pkg` is
+  one module whose inputs include both the TS pipeline *and* the 61 sibling `.jte.md`
+  files (via the antrun reach-up), so changing any one input misses the cache for the
+  whole module and re-evaluates everything. The fix is enhancement #3.
+
+### 3. Split `skills/pkg`, render into `target/`, expose `build/` via symlink
+
+Two structural changes that, together, make the skills render genuinely cache-skippable
+in plain Maven:
+
+* **Module split.** Separate the TS/npm pipeline and the JTE renderer into two modules,
+  each with its own cache key. A `.jte.md` edit then busts only the render module; the
+  scripts module stays a cache hit. (On its own, without the build-cache extension, this
+  is just a refactor — it only pays off *combined with* #2.)
+* **Render into `target/`, not `build/`.** The render output currently lands in `build/`
+  (so Claude reads the dev plugin as a whole). `build/` is **outside `target/`**, so the
+  cache extension can neither save nor restore it — the render is invisible to the cache.
+  Fix: render into `target/plugin-<variant>/` (inside `target/`, so it is cached and
+  restored) and make `build/` a **symlink** into it:
+
+  ```
+  Target  →  target/plugin-claude-dev/          (cached & restored by the extension)
+  build/  →  target/plugin-claude-dev/          (symlink; Claude reads through it)
+  ```
+
+  On a cache miss, `Target` runs and the cache saves `target/plugin-*`. On a cache hit,
+  `Target` is **skipped**, the extension restores `target/plugin-*`, and the symlink
+  transparently exposes the restored content — so `build/` is correct **with no
+  re-render and no copy step.** A symlink (rather than a post-render copy) means zero
+  work on a hit.
+
+  **Caveats (accepted, deferred):**
+  * *Windows dev is out of scope here* — symlink creation/permissions on Windows are
+    ignored for this dev-loop optimization (release Windows packaging is unaffected).
+  * *`mvn clean` dangles the symlinks* — after a clean the `build*/` links point at a
+    deleted `target/`; mitigation is simply to rebuild after clean.
+
+  **Residual that remains regardless:** the four consumer dirs (`build/`,
+  `build-gemini/`, `build-gemini-dev/`, `build-windows/`) must map to four distinct
+  `target/plugin-*` subdirs, and the cache key must distinguish the variants — the same
+  ~12-variable render matrix. Symlink-vs-copy is orthogonal to this; both need the split.
+
+### What these recover, and what they don't
+
+With #1–#3 in place, the skills dev loop gets warm-start latency, reliable input
+tracking, and a cache-skippable render — i.e. essentially all the perf/reliability
+upside the Gradle case rests on, in plain Maven. The npm/tsc `scripts/dist` /
+`node_modules` outputs also sit outside `target/`; the same render-into-`target/` trick
+applies to them (emit into `target/dist`, symlink out) if their caching matters too.
+
+**Do these first.** They reset the baseline. The Gradle analysis that follows should be
+weighed against *this* enhanced Maven build, not today's un-tuned one.
+
+---
 
 ## Motivation
 
@@ -61,7 +144,9 @@ migration **must** reproduce faithfully or it will regress.
   (`[ -d dist ] && [ dist -nt tasks/session-start.ts ] || npm run build`). This only
   checks one sentinel source file's mtime. Gradle's `node-gradle` plugin with explicit
   `inputs.dir`/`outputs.dir` would model the whole `scripts/tasks` → `scripts/dist`
-  graph and skip correctly.
+  graph and skip correctly — though, per the Maven enhancements above, build-cache + a
+  module split reaches the same outcome in Maven; Gradle's edge is that it needs no
+  restructuring.
 * **Cleaner JTE wiring.** Rendering today takes a four-plugin chain in `skills/pkg`:
   `maven-antrun` (copy `start/`, `experimental/`, `shared/` and rename `.jte.md → .jte`)
   → `jte-maven-plugin` (precompile) → `build-helper` (`add-source`) → `maven-compiler`.
@@ -199,44 +284,30 @@ Factor by factor:
 * **Memory — Gradle worse.** The daemon holds a resident JVM (hundreds of MB) between
   builds; Maven does not. Matters on a constrained box.
 
-**The strongest counter-argument:** the current Maven build has **no `mvnd` daemon and
-no build-cache extension configured** — so this is not a fair baseline. Adding `mvnd`
-(warm-daemon startup) and the Maven build-cache extension (incrementality) would capture
-most of the speed-up for ~none of the migration risk. If perf were the *only* goal, that
-is the cheaper path.
+**Compared against the enhanced Maven baseline** (see *Enhancements within the Maven
+system* above — `mvnd`, build-cache, the `skills/pkg` split, and render-into-`target/`
+with a `build/` symlink), Gradle's perf advantage is small. Both reach warm-start
+latency, reliable input tracking, and a cache-skippable render. The differences:
 
-Even for the skills loop specifically, much of the Maven slowness is fixable in Maven:
+| Capability | Enhanced Maven | Gradle |
+|---|---|---|
+| Warm-start latency | ✅ `mvnd` | ✅ daemon |
+| Reliable input hashing (kills the mtime hack) | ✅ build-cache | ✅ task inputs |
+| Skip render when only TS changed (and vice-versa) | ✅ via module split | ✅ task graph, no split |
+| Cache-skippable render output | ✅ render into `target/`, symlink `build/` | ✅ declared task outputs |
+| Fine granularity *without* restructuring | ❌ needs split + symlink | ✅ built in |
+| Cache outputs naturally written outside `target/` | ⚠️ only by redirecting into `target/` | ✅ declare any dir as output |
 
-* **Build-cache fixes the *reliability* hole.** Today the npm/tsc steps are gated by a
-  hand-rolled mtime check (`[ dist -nt tasks/session-start.ts ]`) that watches only one
-  `.ts` file, so editing any other script can be wrongly skipped. The build-cache
-  extension hashing all of `scripts/tasks/**` + `package.json` removes that stale-skip /
-  false-rebuild bug — the most valuable thing it buys here, and it is a correctness win,
-  not just speed.
-* **But build-cache is module-granular, which is the catch.** `skills/pkg` is one module
-  whose inputs include both the TS pipeline *and* the 61 sibling `.jte.md` files
-  (pulled in via the antrun reach-up). Changing any one input misses the cache for the
-  **whole module**, so editing skill content re-evaluates the npm/tsc steps too — the
-  exact bundling Gradle avoids with task-level granularity.
-* **That bundling is fixable without Gradle.** Splitting `skills/pkg` into a TS/npm
-  module and a JTE-render module gives each its own cache key, so a `.jte.md` edit busts
-  only the render module and the scripts module stays a hit. This recovers most of
-  Gradle's intra-module selectivity in plain Maven. Gradle gets the same granularity
-  "for free" (no split needed) — real convenience, but convenience, not a unique
-  capability.
+The honest residual: Gradle gets task-level granularity and arbitrary-output caching
+**for free**, where Maven needs a module split plus the render-into-`target/` redirection
+to match it. That is a *convenience* difference, not a capability one — the enhanced
+Maven build reaches the same place with more deliberate wiring.
 
-The residual gap Gradle uniquely closes is narrow: caching the `Target` render and the
-`scripts/dist`/`node_modules` outputs, which live **outside `target/`** and so are
-invisible to the build-cache extension regardless of module layout.
-
-Bottom line: performance is a **moderate** argument that is really the incrementality
-argument in different clothes. It lands squarely on the dev inner loop (the work you
-actually do most — `skills`/`cli`/`core`/web), not on the rarely-run release pipeline.
-And most of it is recoverable in Maven without migrating — `mvnd` + build-cache, plus a
-`skills/pkg` module split for fine granularity. The genuinely Gradle-only residual
-(caching outputs written outside `target/`, like the `Target` render and `scripts/dist`)
-is narrow. Weigh the skills trial against *that* residual, not against today's
-un-tuned Maven baseline.
+Bottom line: performance is a **moderate** argument and, measured against the enhanced
+Maven baseline rather than today's un-tuned one, a *narrow* one. It lands on the dev
+inner loop (`skills`/`cli`/`core`/web), not the rarely-run release pipeline. Weigh the
+skills trial against the enhanced Maven build — the gap is mostly "Gradle does this
+without restructuring," not "only Gradle can do this."
 
 ---
 
