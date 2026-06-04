@@ -78,20 +78,42 @@ Task 1 is independent of 2–6 but ordered first by risk. Task 7 is the closing 
 
 ## Verification strategy
 
-This plan has no runtime feature to test end-to-end in the usual sense; **the build itself is the
-test.** The "integration test" (Phase 2 preamble) is a clean full build from the current layout,
-captured as the baseline green state, plus a rendered-output diff harness:
+This plan introduces no new runtime feature; **the build is the test.** The restructure must
+produce byte-identical rendered output (skills, hooks, scripts, plugin metadata) and a working
+jlink image — only the source/module layout changes.
 
-- **Baseline:** `mvn clean install` (or `mvn compile` where sufficient — see memory: `compile` is
-  enough for SKILL.md/hooks; `package` only for the jlink image) green on current layout, and a
-  snapshot of rendered skill/hook output (`build/`, `build-gemini/`) before any move.
-- **Per-task gate:** after each module move, the same build target passes, **and** the rendered
-  skill/hook/plugin output is byte-identical to the baseline snapshot (the restructure must not
-  change a single rendered artifact). Diffs are the failing-test signal.
-- **jlink gate (Task 1):** the jlink image still builds and the CLI binary runs `--version`.
+### Baseline (captured at Phase 2 start — done)
 
-Record the agreed coverage/verification bar with the human at Phase 2 Step 0 (default here is
-"identical rendered output + green build per task", since there is no new code to cover).
+`mvn clean compile` on the pre-restructure layout renders the full output into `build/`. That
+output was copied to **`.agents/tmp/expected-output/`** as the expected result. It contains:
+
+- `skills/*/SKILL.md` — the 4 rendered skills (start-dev + 3 experimental)
+- `hooks/hooks.json` — rendered hooks
+- `dist/session-start.js`, `dist/adm-zip-bundle.js`, `dist/session-start-config.json` — scripts
+- `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `package.json` — plugin metadata
+
+Note: `mvn compile` alone leaves `packaging`'s `verify-jlink-image-exists` check failing because
+no jlink image exists yet — that check is satisfied separately by the jlink build (see final gate).
+
+### Per-task gate (each module move)
+
+1. **Build green:** `mvn clean compile` succeeds for the moved/rewired modules (the JTE render +
+   TS bundle pipeline runs without error). For the closing reactor, the `packaging` jlink-verify
+   is satisfied by building the image first (`mvn -pl cli -am -Pjlink package`, path updates per
+   Task 1).
+2. **Each task commits a green, independently buildable state** (one module per commit). If a move
+   leaves the build red, it is fixed before committing — no red commits.
+
+### Final gate (after Task 7)
+
+1. **Identical rendered output:** `diff -r build/ .agents/tmp/expected-output/` returns no
+   differences — the restructure changed not one rendered artifact.
+2. **jlink image builds and runs:** `mvn -pl cli -am -Pjlink package` produces the jlink image and
+   the CLI binary runs `--version`.
+3. **Clean full build:** `mvn clean install` green from the new layout.
+
+No line-coverage threshold applies (agreed at Phase 2 Step 0) — this plan adds no new logic; the
+identical-output + working-jlink gates are the bar.
 
 ---
 
@@ -105,6 +127,8 @@ profile from `app/pom.xml` into `cli/pom.xml`; `cli` depends on `core`. Keep pac
 `io.bitken.ss.*` unchanged. Update root pom: replace `app` module with `core` and `cli`.
 **De-risk first:** prove `core` compiles standalone and `cli` builds the jlink image and runs
 `--version` before hardening pom structure. Verify rendered CLI behavior unchanged.
+**Verify:** `mvn -pl core -am compile` green; `mvn -pl cli -am -Pjlink package` builds the jlink
+image and the resulting binary runs `--version`; all `app` tests pass under the new modules.
 
 ### Task 2: Restructure skills into text and pkg with parent pom [High]
 *Depends-on: 1*
@@ -117,6 +141,9 @@ the antrun `.jte.md`→`.jte` rename, the jte-maven-plugin source dirs, and the 
 resource paths to the new `text/` location. Update root pom module list. **Rendered skill/hook
 output must be byte-identical to baseline.** De-risk by proving the JTE precompile + render pipeline
 produces identical output before hardening the parent/submodule pom split.
+**Verify:** `mvn -pl skills/pkg -am compile` renders without error; `diff -r build/skills
+.agents/tmp/expected-output/skills` and `diff build/hooks/hooks.json
+.agents/tmp/expected-output/hooks/hooks.json` show no differences.
 
 ### Task 3: Move claude and gemini integrations to top level [High]
 *Depends-on: 2*
@@ -125,6 +152,9 @@ poms' `<relativePath>`/parent refs and any path that pointed at `integrations/co
 `skills/` artifact. Update root pom module list. Plugin/extension assembly + hooks output must be
 identical to baseline. Note: `integrations/claude/windows/` (plugin-for-windows) is distinct from a
 future `desktop/win/` — keep it under `claude/` here, do not conflate.
+**Verify:** `mvn -pl claude -am compile` and `mvn -pl gemini -am compile` green; rendered plugin
+metadata (`.claude-plugin/*.json`, `package.json`) and hooks still diff-clean vs
+`.agents/tmp/expected-output/`.
 
 ### Task 4: Repoint packaging to the new layout [High]
 *Depends-on: 2*
@@ -132,17 +162,22 @@ Update `packaging/pom.xml` dependency on `integration-common` to the new `skills
 input paths that moved (`claude/`, `gemini/`, skills output). Orchestration logic stays unchanged
 per proposal — only module coordinates/paths move. Verify the assembled release artifact is
 equivalent to baseline.
+**Verify:** `mvn -pl packaging -am package` succeeds (jlink-verify check passes against the
+Task 1 image) and `diff -r build/ .agents/tmp/expected-output/` is clean.
 
 ### Task 5: Rename devel to devtools [Low]
 *Depends-on:*
 `git mv devel devtools`; update the `<module>devel</module>` line in root pom and any
 `<relativePath>` references. Pure rename — verify build still green.
+**Verify:** `mvn -pl devtools -am compile` green; root reactor still resolves all modules.
 
 ### Task 6: Move model and EXPERIMENTAL into exp [Low]
 *Depends-on:*
 `git mv model exp/model` and `git mv EXPERIMENTAL.md exp/README.md`. No build wiring (TLA+ is not
 compiled or shipped). Grep for any references to `model/` or `EXPERIMENTAL.md` in docs/scripts and
 repoint them.
+**Verify:** `grep -rn 'model/\|EXPERIMENTAL.md'` outside `exp/` returns no stale references;
+build unaffected (no build wiring touched).
 
 ### Task 7: Update docs and final pom relativePath sweep [Low]
 *Depends-on: 1,2,3,4,5,6*
@@ -151,6 +186,9 @@ Update `DEVELOPMENT.md` with the new paths and build commands (e.g. `mvn compile
 `pom.xml` for stale `<relativePath>`/`<module>` references and any lingering `app/` /
 `integrations/` paths in scripts or CI. Confirm a clean `mvn clean install` green from the new
 layout and rendered output identical to baseline.
+**Verify (final gate):** `mvn clean install` green from new layout; `mvn -pl cli -am -Pjlink
+package` builds the jlink image + `--version` runs; `diff -r build/ .agents/tmp/expected-output/`
+returns no differences; `grep -rn 'app/\|integrations/' --include='pom.xml'` finds no stale paths.
 
 ---
 
