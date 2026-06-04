@@ -2,7 +2,7 @@
 # Smoke test for the Gemini CLI extension build.
 #
 # What this tests:
-#   1. mvn -P gemini,!dev,!claude package produces a valid build-gemini/ tree
+#   1. mvn -P gemini,!dev,!claude compile produces a valid build-gemini/ tree
 #   2. gemini extensions link build-gemini/ succeeds
 #   3. The linked extension appears in ~/.gemini/extensions/
 #   4. scripts/test-gemini-hook.sh passes (hook command logic)
@@ -34,9 +34,9 @@ echo "gemini: $($GEMINI_BIN --version 2>&1 | head -1)"
 
 # --- 2. Build ---
 echo ""
-echo "--- Step 1: mvn -P gemini,!dev,!claude package ---"
+echo "--- Step 1: mvn -P gemini,!dev,!claude compile ---"
 cd "$REPO_ROOT"
-mvn -P gemini,\!dev,\!claude process-resources -q
+mvn -P gemini,\!dev,\!claude compile -q
 echo "Build output: $BUILD_DIR"
 
 # Assert expected files exist

@@ -50,8 +50,10 @@ MAIN_SHA=$(git rev-parse --short HEAD)
 echo "==> Cleaning build-gemini/ directory..."
 rm -rf build-gemini/
 
-echo "==> Building Gemini extension (mvn process-resources -P 'gemini,!dev,!claude')..."
-mvn process-resources -P 'gemini,!dev,!claude' -q
+echo "==> Building Gemini extension (mvn compile -P 'gemini,!dev,!claude')..."
+# compile (not process-resources): Target renders SKILL.md, hooks.json, and
+# session-start-config.json at the compile phase. process-resources skips it.
+mvn compile -P 'gemini,!dev,!claude' -q
 
 echo "==> Stamping version ${VERSION} into build-gemini/gemini-extension.json..."
 tmp=$(mktemp)

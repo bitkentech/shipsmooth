@@ -88,18 +88,20 @@ Toggle `enabledPlugins` in `~/.claude/settings.json`:
 ### Build the Gemini extension
 
 ```bash
-mvn -P gemini,!dev,!claude process-resources
+mvn -P gemini,!dev,!claude compile
 ```
+
+> Use `compile`, not `process-resources`: `Target` renders `SKILL.md`,
+> `hooks/hooks.json`, and `dist/session-start-config.json` at the `compile` phase.
 
 This produces `build-gemini/` containing the Gemini extension:
 ```
 build-gemini/
   gemini-extension.json
-  skills/start/SKILL.md      (with YAML frontmatter, ~/.cache/shipsmooth/dist paths)
-  hooks/hooks.json           (uses ${extensionPath} and ${HOME})
+  skills/start/SKILL.md      (with YAML frontmatter; cliBin → runtime-<ver>/bin/shipsmooth)
+  hooks/hooks.json           (SessionStart runs node "${extensionPath}/dist/session-start.js")
   commands/start.toml
-  dist/                      (pre-compiled JS — copied to ~/.cache/shipsmooth/dist/ by hook)
-  package.json
+  dist/                      (session-start.js + adm-zip-bundle.js + session-start-config.json)
 ```
 
 ### Link for local development
@@ -108,7 +110,7 @@ build-gemini/
 gemini extensions link --consent build-gemini/
 ```
 
-Changes to source files are reflected immediately after the next `mvn process-resources` run — no re-link needed (Gemini reads from the source path at load time).
+Changes to source files are reflected immediately after the next `mvn compile` run — no re-link needed (Gemini reads from the source path at load time).
 
 ### Run smoke tests
 
@@ -126,7 +128,7 @@ gemini extensions uninstall shipsmooth
 
 ### Notes
 - `build-gemini/` is gitignored — always a local, derived artifact
-- Run `mvn compile` (default, no `-P gemini`) to rebuild the Claude plugin; run `mvn -P gemini,!dev,!claude process-resources` for Gemini
+- Run `mvn compile` (default, no `-P gemini`) to rebuild the Claude plugin; run `mvn -P gemini,!dev,!claude compile` for Gemini
 - The `claude` profile in `claude/pom.xml` is `activeByDefault` — always disable it explicitly when building for Gemini
 
 ## Releasing a new version
@@ -191,7 +193,7 @@ Gemini CLI installs extensions by cloning a repo where `gemini-extension.json` l
 ```
 
 The script:
-1. Cleans `build-gemini/` and runs `mvn process-resources -P 'gemini,!dev,!claude'`
+1. Cleans `build-gemini/` and runs `mvn compile -P 'gemini,!dev,!claude'`
 2. Stamps the version into `build-gemini/gemini-extension.json`
 3. Clones `shipsmooth-gemini` into a temp directory
 4. Replaces its contents with the new build output
