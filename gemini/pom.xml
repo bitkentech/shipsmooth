@@ -65,23 +65,8 @@
                 </configuration>
               </execution>
 
-              <!-- Copy Gemini hooks into build-gemini/hooks/ -->
-              <execution>
-                <id>copy-gemini-hooks</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration>
-                  <outputDirectory>${build.outputDir}/hooks</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>${project.basedir}/src/main/resources/gemini-extension/hooks</directory>
-                      <filtering>false</filtering>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
+              <!-- Gemini hooks.json is rendered by Target at the compile phase
+                   (node "${extensionPath}/dist/session-start.js"); no copy step needed. -->
 
               <!-- Copy README.md into build-gemini/ -->
               <execution>
@@ -144,21 +129,6 @@
                   <resources>
                     <resource>
                       <directory>${project.basedir}/src/main/resources/gemini-extension/gemini-dev/commands</directory>
-                      <filtering>false</filtering>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-
-              <execution>
-                <id>copy-gemini-hooks-dev</id>
-                <phase>process-resources</phase>
-                <goals><goal>copy-resources</goal></goals>
-                <configuration>
-                  <outputDirectory>${build.outputDir}/hooks</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>${project.basedir}/src/main/resources/gemini-extension/hooks</directory>
                       <filtering>false</filtering>
                     </resource>
                   </resources>
