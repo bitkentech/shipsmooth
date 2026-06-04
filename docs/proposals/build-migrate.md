@@ -79,6 +79,50 @@ boilerplate" pitches imply, and with two important caveats:
 Conclusion: line count is a **weak** argument for this migration. The real case rests on
 Node/TS incrementality and cleaner JTE wiring (see above), not on shorter build files.
 
+### Performance impact (moderate justification)
+
+Net assessment: **repeat dev-loop builds get moderately faster; cold/CI builds are a
+wash or slightly slower; release builds are tool-agnostic.** Performance is a secondary
+argument, and much of it is achievable in Maven without migrating (see the `mvnd`
+caveat below).
+
+The dominant cost in this build is **not** the build tool. A full build forks ~23
+external processes: **7 `exec:java` runs** (each a cold JVM: `Target`,
+`ValidateRelease`, 4× `PackageRuntime`, `PublishRelease`) and **~16 `exec`/`antrun`
+invocations** (npm, tsc, 5× `jlink`, the `jar` module-info re-inject, copies, smoke
+tests). The wall-clock here is dominated by JVM/process startup plus the work inside —
+linking five Semeru jlink images, `npm install`, `tsc`. **Gradle makes none of that
+faster**; jlink takes the same time whoever invokes it.
+
+Factor by factor:
+
+* **Startup — Gradle worse by default, fixable.** Maven cold-starts a JVM each run
+  (~0.5–1s). The Gradle daemon keeps a warm JVM + cached model, so 2nd+ runs skip
+  startup. But the *first* run of a session pays daemon spin-up **and Kotlin DSL script
+  compilation**, which is heavier than parsing XML — so cold builds can be slower.
+* **Incrementality — Gradle clearly better; the real win.** Today `mvn compile` gates
+  npm/tsc on a brittle `dist -nt session-start.ts` mtime check and re-renders JTE every
+  time. Gradle task input/output tracking + build cache would skip unchanged TS and JTE
+  work. This overlaps exactly with the Node/TS + JTE argument above and is what you'd
+  feel in the edit → `compile` → restart loop.
+* **Parallelism — narrow Gradle edge.** The reactor is largely linear
+  (`core → cli → packaging`), but the 5 sequential jlink links could run as independent
+  parallel tasks. Real, but only on full release builds.
+* **Configuration cache — Gradle better but fragile here.** Heavy `Exec`/`JavaExec`
+  use (which this build has a lot of) is easy to make config-cache-incompatible; expect
+  to fight it.
+* **Memory — Gradle worse.** The daemon holds a resident JVM (hundreds of MB) between
+  builds; Maven does not. Matters on a constrained box.
+
+**The strongest counter-argument:** the current Maven build has **no `mvnd` daemon and
+no build-cache extension configured** — so this is not a fair baseline. Adding `mvnd`
+(warm-daemon startup) and the Maven build-cache extension (incrementality) would capture
+most of the speed-up for ~none of the migration risk. If perf were the *only* goal, that
+is the cheaper path.
+
+Bottom line: performance is a **moderate** argument that is really the incrementality
+argument in different clothes — and partly available without migrating.
+
 ---
 
 ## Background: the actual module graph
