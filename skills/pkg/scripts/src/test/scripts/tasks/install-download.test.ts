@@ -6,7 +6,7 @@ import * as path from 'node:path';
 import * as http from 'node:http';
 import { execFileSync } from 'node:child_process';
 import AdmZip from 'adm-zip';
-import { installRuntime } from '../../../main/scripts/tasks/session-start';
+import { installRuntime } from '../../../../tasks/session-start';
 
 function makeTmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'ss-itest-'));
@@ -15,7 +15,7 @@ function makeTmpDir(): string {
 function buildFakeRuntimeZip(): Buffer {
   const zip = new AdmZip();
   const script = '#!/bin/sh\necho fake-runtime "$@"\n';
-  zip.addFile('bin/shipsmooth-tasks', Buffer.from(script), '', 0o755 << 16);
+  zip.addFile('bin/shipsmooth', Buffer.from(script), '', 0o755 << 16);
   zip.addFile('lib/dummy.txt', Buffer.from('dummy\n'));
   zip.addFile('conf/empty.conf', Buffer.from(''));
   return zip.toBuffer();
@@ -59,7 +59,7 @@ test('integration: installRuntime downloads from a URL override, extracts, chmod
     await server.close();
   }
 
-  const bin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth-tasks');
+  const bin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth');
   assert.ok(fs.existsSync(bin), `binary should exist at ${bin}`);
   const mode = fs.statSync(bin).mode;
   assert.ok((mode & 0o111) !== 0, 'binary should be executable');
@@ -83,7 +83,7 @@ test('integration: installRuntime chmods runtime/bin/* to executable after extra
 
   // Build a zip where runtime/bin/java has no executable bit stored
   const zip = new AdmZip();
-  zip.addFile('bin/shipsmooth-tasks', Buffer.from('#!/bin/sh\necho ok\n'), '', 0o755 << 16);
+  zip.addFile('bin/shipsmooth', Buffer.from('#!/bin/sh\necho ok\n'), '', 0o755 << 16);
   zip.addFile('runtime/bin/java', Buffer.from('#!/bin/sh\necho fake-java\n'), '', 0o644 << 16);
   zip.addFile('runtime/bin/keytool', Buffer.from('#!/bin/sh\necho fake-keytool\n'), '', 0o644 << 16);
   const zipBytes = zip.toBuffer();
@@ -103,7 +103,7 @@ test('integration: installRuntime chmods runtime/bin/* to executable after extra
   }
 });
 
-test('integration: installRuntime throws if extracted zip is missing bin/shipsmooth-tasks', async () => {
+test('integration: installRuntime throws if extracted zip is missing bin/shipsmooth', async () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
   const version = '9.9.9-test';
@@ -129,7 +129,7 @@ test('integration: installRuntime throws if extracted zip is missing bin/shipsmo
   }
 
   assert.ok(err, 'expected throw on malformed archive');
-  assert.match(err!.message, /missing bin\/shipsmooth-tasks/);
+  assert.match(err!.message, /missing bin\/shipsmooth/);
 
   // Must NOT leave a partial runtimeDir behind
   const runtimeDir = path.join(cacheDir, `runtime-${version}`);

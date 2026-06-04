@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>69</plan>
+    <plan-version>plan-69-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-04</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Make the Gemini release run the renderer</name>
+            <commit>66b484f3a03b5063ab6c12003163c4687d47d696</commit>
+            <created-from>plan-69-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-04T19:09:54.501+05:30</timestamp>
+                    <message>De-risk draft ready: clean mvn compile -P gemini yields correct build-gemini/ (SKILL.md, session-start-config.json, hook runs session-start.js, cliBin=runtime bin). All 4 assertions pass.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Delete the fossil Gemini npm hook</name>
+            <commit>7d4e83e</commit>
+            <created-from>plan-69-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-04T23:16:28.500+05:30</timestamp>
+                    <message>De-risk: removed fossil hooks.json + both copy-gemini-hooks execs. Prod+dev builds verified — Target renders node ${extensionPath}/dist/session-start.js, no npm install.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Stop copying `package.json` into build output</name>
+            <commit>ca64c0133be210a824fe25124c73936fed0b4252</commit>
+            <created-from>plan-69-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Remove the dead `shipsmooth.dist.path` property</name>
+            <commit>11d6bf6d1f86db44095919c7a8a780b1f65795d6</commit>
+            <created-from>plan-69-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Drop the stale `fast-xml-parser` runtime dep</name>
+            <commit>e0e70bccb8882f560b5f044546147fa1b122b1da</commit>
+            <created-from>plan-69-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-04T23:37:01.538+05:30</timestamp>
+                    <message>npm test was already broken before Task 5 (plan-68 restructure 19f2669 deleted src/main/scripts/tasks/* but left 11/12 src/test files importing those paths). My change is dependency-only (removed fast-xml-parser); npm run build passes. Test suite is standalone, not wired to Maven/CI. Surfacing per workflow before proceeding.</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-04T23:38:59.641+05:30</timestamp>
+                    <message>Per approval, expanding Task 5 to clean orphaned tests: delete 9 fossil test files (7 import deleted src/main TS modules; install-path expects old build/runtime/bin/shipsmooth-tasks; xsd-validation references moved src/main/scripts/plan-tasks.xsd). Keep 3 session-start tests with corrected import paths (../../../../tasks/session-start). Fix tsconfig.test.json rootDir to include tasks/.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Fix smoke-gemini.sh assertions</name>
+            <commit>d569c04a38941af620f6ac13e82c67fee5491a02</commit>
+            <created-from>plan-69-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-04T23:50:38.150+05:30</timestamp>
+                    <message>test-gemini-hook.sh is a dead fossil: it references hooks/package.json, plugin-resources/... (path removed in restructure), old TS-CLI JS (hello.js/init.js) and fast-xml-parser node_modules. It tests the npm hook deleted in Task 2. Deleting it and removing the smoke-test step that invokes it; replacing with a direct session-start.js hook-command assertion.</message>
+                </deviation>
+            </deviations>
+            <depends-on>1</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-04T19:01:58.414+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-05T00:08:10.319+05:30</timestamp>
+            <message>All 6 tasks agent-coded and verified: Java suite green (BUILD SUCCESS), Claude+Gemini builds correct (no package.json, hook runs session-start.js, cliBin=runtime bin), TS build+test green (24/24), smoke-gemini layout assertions 10/10. Gemini build/release realigned with jlink runtime architecture.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { installRuntime } from '../../../main/scripts/tasks/session-start';
+import { installRuntime } from '../../../../tasks/session-start';
 
 function makeTmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'ss-test-'));
@@ -19,7 +19,7 @@ test('already cached: installRuntime is a no-op', async () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
   const version = '0.2.0';
-  const bin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth-tasks');
+  const bin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth');
   makeExecutable(bin);
 
   await installRuntime({ version, cacheDir, pluginRoot });
@@ -49,11 +49,11 @@ test('darwin-x64: installs from jlinkDir without error', async () => {
   const pluginRoot = makeTmpDir();
   const version = '0.3.3';
   const jlinkDir = makeTmpDir();
-  makeExecutable(path.join(jlinkDir, 'bin', 'shipsmooth-tasks'));
+  makeExecutable(path.join(jlinkDir, 'bin', 'shipsmooth'));
 
   await installRuntime({ version, cacheDir, pluginRoot, jlinkDir, forcePlatform: 'darwin-x64' });
 
-  const destBin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth-tasks');
+  const destBin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth');
   assert.ok(fs.existsSync(destBin), 'darwin-x64 binary should be installed from jlinkDir');
 });
 
@@ -62,16 +62,16 @@ test('darwin-arm64: installs from jlinkDir without error', async () => {
   const pluginRoot = makeTmpDir();
   const version = '0.3.4';
   const jlinkDir = makeTmpDir();
-  makeExecutable(path.join(jlinkDir, 'bin', 'shipsmooth-tasks'));
+  makeExecutable(path.join(jlinkDir, 'bin', 'shipsmooth'));
 
   await installRuntime({ version, cacheDir, pluginRoot, jlinkDir, forcePlatform: 'darwin-arm64' });
 
-  const destBin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth-tasks');
+  const destBin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth');
   assert.ok(fs.existsSync(destBin), 'darwin-arm64 binary should be installed from jlinkDir');
 });
 
 test('resolveCache: uses XDG_CACHE_HOME with name from config', () => {
-  const { resolveCache } = require('../../../main/scripts/tasks/session-start');
+  const { resolveCache } = require('../../../../tasks/session-start');
   const orig = process.env['XDG_CACHE_HOME'];
   try {
     process.env['XDG_CACHE_HOME'] = '/tmp/xdg-cache-test';
@@ -84,7 +84,7 @@ test('resolveCache: uses XDG_CACHE_HOME with name from config', () => {
 });
 
 test('resolveCache: falls back to ~/.cache/shipsmooth when name absent', () => {
-  const { resolveCache } = require('../../../main/scripts/tasks/session-start');
+  const { resolveCache } = require('../../../../tasks/session-start');
   const orig = process.env['XDG_CACHE_HOME'];
   try {
     delete process.env['XDG_CACHE_HOME'];
@@ -95,7 +95,7 @@ test('resolveCache: falls back to ~/.cache/shipsmooth when name absent', () => {
 });
 
 test('resolveCache: uses LOCALAPPDATA on win32 with name from config', () => {
-  const { resolveCache } = require('../../../main/scripts/tasks/session-start');
+  const { resolveCache } = require('../../../../tasks/session-start');
   const origPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
   const origLocalAppData = process.env['LOCALAPPDATA'];
   try {
@@ -111,7 +111,7 @@ test('resolveCache: uses LOCALAPPDATA on win32 with name from config', () => {
 });
 
 test('resolveCache: falls back to AppData/Local when LOCALAPPDATA unset on win32', () => {
-  const { resolveCache } = require('../../../main/scripts/tasks/session-start');
+  const { resolveCache } = require('../../../../tasks/session-start');
   const origPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
   const origLocalAppData = process.env['LOCALAPPDATA'];
   try {
@@ -133,11 +133,11 @@ test('zip extraction: runtime/bin/* files are chmod 0755 after install', async (
   // populate a fake jlink image with non-executable runtime/bin entries
   const runtimeBin = path.join(jlinkDir, 'bin');
   fs.mkdirSync(runtimeBin, { recursive: true });
-  fs.writeFileSync(path.join(jlinkDir, 'bin', 'shipsmooth-tasks'), '#!/bin/sh\necho ok\n');
-  fs.chmodSync(path.join(jlinkDir, 'bin', 'shipsmooth-tasks'), 0o755);
+  fs.writeFileSync(path.join(jlinkDir, 'bin', 'shipsmooth'), '#!/bin/sh\necho ok\n');
+  fs.chmodSync(path.join(jlinkDir, 'bin', 'shipsmooth'), 0o755);
   // jlinkDir path installs via fs.cpSync — verify launcher gets chmod'd
   await installRuntime({ version, cacheDir, pluginRoot, jlinkDir });
-  const bin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth-tasks');
+  const bin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth');
   assert.ok((fs.statSync(bin).mode & 0o111) !== 0, 'launcher must be executable');
 });
 
@@ -161,16 +161,16 @@ test('unsupported platform: error message lists supported platforms', async () =
 
 // Unit tests for Task 4
 test('win32-x64: runtimeBin returns .cmd path', () => {
-  const { runtimeBin } = require('../../../main/scripts/tasks/session-start');
+  const { runtimeBin } = require('../../../../tasks/session-start');
   const result = runtimeBin('/cache/runtime-0.3.9', 'win32-x64');
-  assert.ok(result.endsWith('shipsmooth-tasks.cmd'), `expected .cmd path, got ${result}`);
+  assert.ok(result.endsWith('shipsmooth.cmd'), `expected .cmd path, got ${result}`);
 });
 
 test('linux-x64: runtimeBin returns POSIX path', () => {
-  const { runtimeBin } = require('../../../main/scripts/tasks/session-start');
+  const { runtimeBin } = require('../../../../tasks/session-start');
   const result = runtimeBin('/cache/runtime-0.3.9', 'linux-x64');
   assert.ok(!result.endsWith('.cmd'), `expected POSIX path, got ${result}`);
-  assert.ok(result.endsWith('shipsmooth-tasks'), `expected shipsmooth-tasks, got ${result}`);
+  assert.ok(result.endsWith('shipsmooth'), `expected shipsmooth, got ${result}`);
 });
 
 // Integration test: win32-x64 must be a supported platform (currently fails — drives Task 4)
@@ -181,10 +181,10 @@ test('win32-x64: installs from jlinkDir without error', async () => {
   const jlinkDir = makeTmpDir();
   // Windows zip contains .cmd launcher, not a POSIX script
   fs.mkdirSync(path.join(jlinkDir, 'bin'), { recursive: true });
-  fs.writeFileSync(path.join(jlinkDir, 'bin', 'shipsmooth-tasks.cmd'), '@echo off\necho ok\n');
+  fs.writeFileSync(path.join(jlinkDir, 'bin', 'shipsmooth.cmd'), '@echo off\necho ok\n');
 
   await installRuntime({ version, cacheDir, pluginRoot, jlinkDir, forcePlatform: 'win32-x64' });
 
-  const destCmd = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth-tasks.cmd');
+  const destCmd = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth.cmd');
   assert.ok(fs.existsSync(destCmd), 'win32-x64 .cmd launcher should be installed from jlinkDir');
 });

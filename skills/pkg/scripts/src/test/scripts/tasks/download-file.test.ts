@@ -4,7 +4,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as http from 'node:http';
-import { downloadFile } from '../../../main/scripts/tasks/session-start';
+import { downloadFile } from '../../../../tasks/session-start';
 
 function makeTmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'dl-test-'));
