@@ -38,15 +38,18 @@ places.
   cross-jlink + SCC launcher, JAXB/Dagger-APT/templated codegen, and the ~12-variable
   render matrix. `cli` and `packaging` (38% of build lines) barely shrink and are the
   riskiest to port.
-* **Most of the speed-up is available without migrating:** `mvnd` (warm daemon) + the
-  Maven build-cache extension, plus a `skills/pkg` module split for fine-grained skips,
-  recover most of it at ~none of the migration risk. The Gradle-only residual (caching
-  outputs written outside `target/`) is narrow.
+* **Most of the speed-up — and the ergonomics — are available without migrating:** `mvnd`
+  (warm daemon) + the Maven build-cache extension + a `skills/pkg` module split recover
+  the perf; modeling the variants as *targets* (id-only named executions, not profiles)
+  recovers the "build any/all variants in one pass" ergonomics. All at ~none of the
+  migration risk. The Gradle-only residual (caching outputs outside `target/`, and
+  phase-free task isolation) is narrow.
 
 **Recommended path:**
 
 1. **Now:** apply the Maven enhancements (`mvnd`, build-cache, the `skills/pkg` split +
-   render-into-`target/`). These are worth doing on their own and reset the baseline.
+   render-into-`target/`, and targets-not-profiles). These are worth doing on their own
+   and reset the baseline.
 2. **Then, if still tempted by Gradle — the skills trial as a single go/no-go gate:**
    port `skills/pkg` to Gradle on a **throwaway branch** and develop against it for real
    (not a side-by-side benchmark — actually live with it). No permanent two-tool state.
@@ -129,13 +132,83 @@ in plain Maven:
   `target/plugin-*` subdirs, and the cache key must distinguish the variants — the same
   ~12-variable render matrix. Symlink-vs-copy is orthogonal to this; both need the split.
 
+### 4. Model the build variants as *targets*, not *profiles*
+
+The five profiles (`dev`, `prod`, `windows`, `gemini`, `gemini-dev`) are a category
+error. A profile is Maven's tool for *altering* a build by environment/condition (JDK,
+OS, CI flag). What these actually are is **targets** — distinct artifacts you want to
+*produce* (claude-dev, claude-prod, gemini-prod, gemini-dev, windows). The giveaway is
+the constant `-P ...,'!dev'` deactivation noise: you are fighting the default profile
+because two profiles set conflicting values for the same property. That is profiles
+misused as a target selector, and it is why **you cannot build Claude and Gemini in one
+pass today**.
+
+Model each target instead as a **named `exec:java` execution** that hardcodes its own
+~12-variable tuple in its `<configuration>`, selected by id (`exec:java@render-<target>`).
+This bundles the variables into a drift-proof unit (the alternatives — a profile matrix,
+or passing the 12 vars via `-Dvar=value` — both re-expose them to silent inconsistent
+combinations, so both were rejected). It also makes targets **non-exclusive**: several
+can run in one reactor pass.
+
+> **Warning — do NOT give the everyday target a `<phase>` binding.** It is tempting to
+> bind, say, `render-claude-dev` to `compile` so a bare `mvn compile` renders it
+> automatically. Don't. A phase is a *bucket* that runs **all** its bound executions, so
+> `mvn compile exec:java@render-gemini-prod` would then *also* run claude-dev — asking
+> for one target silently drags in another. Keep **all** target executions **id-only**
+> (no `<phase>`), so each runs only when named and never sweeps in a sibling. The price
+> is that the everyday command is explicit (`mvn compile exec:java@render-claude-dev`)
+> rather than a bare `mvn compile` — which is the right trade, and the next point hides
+> the verbosity.
+
+CLI shape with all targets id-only:
+
+```bash
+mvn compile                                                   # compiles code; renders NOTHING
+mvn compile exec:java@render-claude-dev                       # everyday loop, explicit
+mvn compile exec:java@render-gemini-prod                      # only gemini — no claude-dev sneaks in
+mvn compile exec:java@render-claude-dev exec:java@render-gemini-prod   # both, one pass
+```
+
+> **Caveat:** `exec:java@id` runs only that execution — it does *not* imply `compile`.
+> If `Target` needs freshly compiled/rendered classes present, prefix `mvn compile`
+> (as above). Verify what `Target` loads at runtime before relying on a bare
+> `exec:java@id`.
+
+**Wrap the tedious invocations in a directory of one-line shell scripts** — e.g.
+`make/claude-dev.sh`, `make/gemini-prod.sh`, `make/windows.sh`, `make/all.sh` (a `make/`
+*folder*, not GNU Make — which dodges every Makefile footgun: no `.PHONY`, no
+tab-vs-space trap, no extra tool, cross-checkout-portable, and self-listing via `ls
+make/`):
+
+```sh
+# make/gemini-prod.sh
+#!/bin/sh
+exec mvn compile exec:java@render-gemini-prod "$@"
+```
+```sh
+# make/all.sh — every target in one reactor pass
+#!/bin/sh
+exec mvn compile \
+  exec:java@render-claude-dev \
+  exec:java@render-gemini-prod \
+  exec:java@render-windows "$@"
+```
+
+This recovers the "explicit, non-exclusive, build-all-in-one-pass" ergonomics the Gradle
+case credits to its task model — in plain Maven. Gradle's residual edge here is genuine
+but narrow: `gradle renderGeminiProd` runs that task and its real dependencies and
+*nothing unrelated*, with no phase coupling and built-in discoverability (`gradle
+tasks`); the Maven version needs the id-only discipline plus the `make/` scripts to match
+it.
+
 ### What these recover, and what they don't
 
-With #1–#3 in place, the skills dev loop gets warm-start latency, reliable input
-tracking, and a cache-skippable render — i.e. essentially all the perf/reliability
-upside the Gradle case rests on, in plain Maven. The npm/tsc `scripts/dist` /
-`node_modules` outputs also sit outside `target/`; the same render-into-`target/` trick
-applies to them (emit into `target/dist`, symlink out) if their caching matters too.
+With #1–#4 in place, the skills dev loop gets warm-start latency, reliable input
+tracking, a cache-skippable render, and explicit non-exclusive targets — i.e. essentially
+all the perf/reliability/ergonomics upside the Gradle case rests on, in plain Maven. The
+npm/tsc `scripts/dist` / `node_modules` outputs also sit outside `target/`; the same
+render-into-`target/` trick applies to them (emit into `target/dist`, symlink out) if
+their caching matters too.
 
 **Do these first.** They reset the baseline. The Gradle analysis that follows should be
 weighed against *this* enhanced Maven build, not today's un-tuned one.
@@ -166,7 +239,11 @@ enhanced Maven baseline established above.
   (`dev`, `prod`, `windows`, `gemini`, `gemini-dev`) exist mainly to set the render
   variables consumed by `io.bitken.ss.resources.Target`. Explicit Gradle tasks
   (`renderClaudeDev`, `renderGeminiProd`, …) make the variants discoverable and
-  non-exclusive (today you cannot build Claude and Gemini in one reactor pass).
+  non-exclusive. **Caveat:** the non-exclusivity itself is *not* Gradle-only — plain
+  Maven gets it via id-only named executions (see Maven enhancement #4 above). Gradle's
+  real edge here is narrower: no phase-coupling (a task pulls in only its declared
+  dependencies, never sibling targets) and built-in discoverability (`gradle tasks`),
+  where the Maven version needs the id-only discipline plus `make/*.sh` wrappers.
 
 ### Where Gradle does **not** help (honest accounting)
 
