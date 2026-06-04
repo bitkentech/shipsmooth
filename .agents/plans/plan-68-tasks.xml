@@ -73,9 +73,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Rename devel to devtools</name>
-            <commit></commit>
+            <commit>6d146f6591f135b29c9c10f1340e84d583583924</commit>
             <created-from>plan-68-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -84,9 +84,9 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Move model and EXPERIMENTAL into exp</name>
-            <commit></commit>
+            <commit>7adb548df661c830f9e6a3d3a72db9e9b87aae05</commit>
             <created-from>plan-68-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -95,9 +95,9 @@
         <task>
             <id>7</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Update docs and final pom relativePath sweep</name>
-            <commit></commit>
+            <commit>7daa70d5286d902ad5d7989097152782b31d1e1f</commit>
             <created-from>plan-68-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
