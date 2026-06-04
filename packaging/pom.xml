@@ -75,32 +75,6 @@
             </configuration>
           </execution>
 
-          <!-- Copy package.json into build output (used by both Claude and Gemini hooks for npm install) -->
-          <execution>
-            <id>copy-package-json</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <skip>${skip.copy-dist}</skip>
-              <outputDirectory>${build.outputDir}</outputDirectory>
-              <useDefaultDelimiters>false</useDefaultDelimiters>
-              <delimiters>
-                <delimiter>@</delimiter>
-              </delimiters>
-              <resources>
-                <resource>
-                  <directory>${maven.multiModuleProjectDirectory}/skills/pkg/scripts/src/main/resources</directory>
-                  <filtering>true</filtering>
-                  <includes>
-                    <include>package.json</include>
-                  </includes>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-
         </executions>
       </plugin>
 

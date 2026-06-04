@@ -27,9 +27,9 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Delete the fossil Gemini npm hook</name>
-            <commit></commit>
+            <commit>7d4e83e</commit>
             <created-from>plan-69-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
@@ -44,9 +44,9 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Stop copying `package.json` into build output</name>
-            <commit></commit>
+            <commit>3f4ac382dd15a18bbebbb8008d9aa590ff853c5e</commit>
             <created-from>plan-69-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
