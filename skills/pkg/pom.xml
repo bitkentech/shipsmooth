@@ -6,11 +6,12 @@
 
   <parent>
     <groupId>io.bitken</groupId>
-    <artifactId>shipsmooth</artifactId>
+    <artifactId>skills</artifactId>
     <version>0.3.12</version>
-    <relativePath>../../pom.xml</relativePath>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
+  <!-- artifactId kept as integration-common until Task 4 renames it + repoints packaging -->
   <artifactId>integration-common</artifactId>
 
   <properties>
@@ -171,7 +172,7 @@
             <configuration>
               <target>
                 <copy todir="${project.build.directory}/jte-src">
-                  <fileset dir="${project.basedir}/../../skills/text"/>
+                  <fileset dir="${project.basedir}/../text"/>
                   <globmapper from="*.jte.md" to="*.jte"/>
                 </copy>
               </target>

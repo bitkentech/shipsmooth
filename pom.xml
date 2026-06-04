@@ -12,7 +12,7 @@
   <modules>
     <module>core</module>
     <module>cli</module>
-    <module>integrations/common</module>
+    <module>skills</module>
     <module>integrations/claude</module>
     <module>integrations/gemini</module>
     <module>packaging</module>
