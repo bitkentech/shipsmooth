@@ -27,12 +27,7 @@
             <commit>5766183cf8ca2cf2eb8a91cc65315e8d5c678053</commit>
             <created-from>plan-68-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments>
-                <comment>
-                    <timestamp>2026-06-04T16:17:11.211+05:30</timestamp>
-                    <message>De-risk draft ready: skills moved to per-skill text/ layout (start/, refine/, start-tla/, start-parallel/, shared/{workflow,claude,gemini}). All @template + SkillRenderer paths rewired. Rendered output BYTE-IDENTICAL to baseline. Awaiting approval before Harden (move renderers+scripts to skills/pkg/, create skills/pom.xml parent).</message>
-                </comment>
-            </comments>
+            <comments/>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
@@ -44,12 +39,7 @@
             <commit>3cbf742</commit>
             <created-from>plan-68-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments>
-                <comment>
-                    <timestamp>2026-06-04T16:36:08.827+05:30</timestamp>
-                    <message>De-risk ready: claude+gemini moved to top-level. Purely structural (git mv + relativePath + root module list); artifactIds unchanged so packaging resolves. All source byte-identical pre/post; claude plugin.json/marketplace.json render IDENTICAL to baseline. Awaiting approval before Harden.</message>
-                </comment>
-            </comments>
+            <comments/>
             <deviations/>
             <depends-on>2</depends-on>
         </task>
@@ -61,12 +51,7 @@
             <commit>3e2a9f1</commit>
             <created-from>plan-68-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments>
-                <comment>
-                    <timestamp>2026-06-04T16:58:58.904+05:30</timestamp>
-                    <message>De-risk ready: packaging repointed app-&gt;cli jlink paths (PublishRelease+PackageRuntime+pom verify) and integration-common-&gt;skills-pkg rename. Proven end-to-end: PackageRuntime consumed cli/target/jlink-image-linux-x64 and produced shipsmooth-0.3.12-linux-x64.zip. Awaiting approval before Harden (full release validation + clean install).</message>
-                </comment>
-            </comments>
+            <comments/>
             <deviations/>
             <depends-on>2</depends-on>
         </task>
@@ -104,10 +89,22 @@
             <deviations/>
             <depends-on>1,2,3,4,5,6</depends-on>
         </task>
+        <task>
+            <id>8</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Flatten skills — drop text/, skills directly under skills/</name>
+            <commit></commit>
+            <created-from>plan-68-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-06-04T16:01:31.029+05:30</timestamp>
+            <timestamp>2026-06-04T17:31:00.600+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>

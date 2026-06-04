@@ -170,6 +170,10 @@ image and the resulting binary runs `--version`; all `app` tests pass under the 
 
 ### Task 2: Restructure skills into text and pkg with parent pom [High]
 *Depends-on: 1*
+> **Superseded layout note:** Task 2 introduced the `skills/text/` wrapper. **Task 8** later drops
+> `text/` (skills sit directly under `skills/`). This section records what Task 2 actually did; see
+> Task 8 for the final skills layout.
+
 Split `integrations/common` into `skills/text/` (JTE content) + `skills/pkg/` (renderers + TS
 scripts) under a `skills/pom.xml` parent.
 
@@ -262,6 +266,49 @@ layout and rendered output identical to baseline.
 **Verify (final gate):** `mvn clean install` green from new layout; `mvn -pl cli -am -Pjlink
 package` builds the jlink image + `--version` runs; `diff -r build/ .agents/tmp/expected-output/`
 returns no differences; `grep -rn 'app/\|integrations/' --include='pom.xml'` finds no stale paths.
+
+### Task 8: Flatten skills — drop text/, skills directly under skills/ [Medium]
+*Depends-on: 2*
+Re-layout of Task 2's result (decided with human after Task 2 landed). **Drop the `text/` wrapper**:
+skill content folders sit directly under `skills/` so a contributor edits `skills/start/` and never
+descends into a `text/` subfolder. Proposal doc intentionally NOT updated for this (plan-only).
+
+**Target layout:**
+```
+skills/
+  pom.xml              ← explicit <fileset dir="..."/> per skill/shared folder (one entry per skill)
+  start/               ← the start skill
+    SKILL.jte.md
+    claude/  gemini/   ← (empty for now) start-specific target snippets when needed
+  experimental/
+    refine/ SKILL.jte.md + rules/
+    start-tla/ SKILL.jte.md + tla-model.jte.md
+    start-parallel/ SKILL.jte.md
+  shared/              ← partials shared across skills
+    base-workflow.jte.md  parallel-execution.jte.md
+    workflow/ (12 partials)
+      claude/  gemini/ ← today's target snippets live here (imported by workflow partials)
+    claude/  gemini/   ← shared target snippets not tied to a workflow partial (none today)
+  pkg/                 ← renderer module (Java) + scripts; rarely touched
+    src/main/java/...  scripts/   <skill>/ (per-skill build assets when needed, e.g. pkg/start/)
+```
+
+**Defining rule:** `claude/`/`gemini/` is a sub-pattern attachable to any skill or shared grouping
+(`start/claude/`, `shared/claude/`, `shared/workflow/claude/`) holding target snippets for whatever
+it sits under. Today's claude/gemini snippets move to **`shared/workflow/claude/`** +
+**`shared/workflow/gemini/`** (next to the `phase2-execute`/`parallel-execution` partials that import
+them via `@if(model.isGemini())…`). `start/claude/` stays empty until a start-only snippet appears.
+
+**Mechanics:** `git mv skills/text/<x>` → `skills/<x>` for every folder; remove the empty `text/`.
+Update the antrun JTE source: instead of one `dir="../text"` fileset, use an **explicit `<fileset
+dir="../<skill>"/>` per skill/shared folder** so adding a skill is a visible one-line pom edit.
+Rewire `@template.*` includes: `shared.claude.X` → `shared.workflow.claude.X` (snippets moved into
+`workflow/`); skill template paths in `SkillRenderer` are output-name-decoupled so unaffected, but
+the JTE *names* shift (no `text` was ever in the name, so most are unchanged). pkg stays one module;
+per-skill `pkg/<skill>/` folders added only when a skill needs build assets.
+**Verify:** `mvn -pl skills/pkg -am compile` renders; `diff -r build/skills
+.agents/tmp/expected-output/skills`, `diff build/hooks/hooks.json …`, `diff -r build/dist …` all
+show no differences (byte-identical output — pure re-layout).
 
 ---
 
