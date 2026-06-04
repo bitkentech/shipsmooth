@@ -193,7 +193,7 @@ Use this hash (not the tag name) in Linear links — it is immutable and survive
 
 `[Local]` The ledger's valid states and transitions are specified by this TLA⁺ model. Treat it as the authoritative definition of what sequences of ledger events are legal. When resuming a plan, reconstruct each task's milestone sequence from the ledger and check it against this model before doing anything else.
 
-@template.skills.experimental.start-tla.tla-model(model = model)
+@template.start-tla.tla-model(model = model)
 
 **Reading the model in terms of this skill:**
 

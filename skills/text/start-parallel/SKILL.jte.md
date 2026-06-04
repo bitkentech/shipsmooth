@@ -3,5 +3,5 @@
 @if(!model.skillFrontmatter().isEmpty())${model.skillFrontmatter()}@endif
 
 # ${model.skillName()} — Agent Coding Workflow (Parallel Execution)
-@template.skills.shared.base-workflow(model = model)
-@template.skills.shared.parallel-execution(model = model)
+@template.shared.base-workflow(model = model)
+@template.shared.parallel-execution(model = model)

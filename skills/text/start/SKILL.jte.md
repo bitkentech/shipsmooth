@@ -3,4 +3,4 @@
 @if(!model.skillFrontmatter().isEmpty())${model.skillFrontmatter()}@endif
 
 # ${model.skillName()} — Agent Coding Workflow
-@template.skills.shared.base-workflow(model = model)
+@template.shared.base-workflow(model = model)

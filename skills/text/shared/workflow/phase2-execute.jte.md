@@ -73,9 +73,9 @@ quality conforms to its instructions):
   This creates a stable rollback point. A human reviewing the PR can check out this commit to inspect each task in isolation.
 - `[Linear]` Mark the Linear issue **Agent Coded**.
 @if(model.isGemini())
-@template.skills.start.gemini.set-commit-hardening(model = model)
+@template.shared.gemini.set-commit-hardening(model = model)
 @else
-@template.skills.start.claude.set-commit-hardening(model = model)
+@template.shared.claude.set-commit-hardening(model = model)
 @endif
 
 #### Low risk tasks — Single-pass (current behavior)
@@ -95,9 +95,9 @@ quality conforms to its instructions):
    ```
    - `[Linear]` Mark the Linear issue **Agent Coded**. No draft review needed.
 @if(model.isGemini())
-@template.skills.start.gemini.set-commit-low-risk(model = model)
+@template.shared.gemini.set-commit-low-risk(model = model)
 @else
-@template.skills.start.claude.set-commit-low-risk(model = model)
+@template.shared.claude.set-commit-low-risk(model = model)
 @endif
 
 ---

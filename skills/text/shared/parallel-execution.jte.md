@@ -47,31 +47,31 @@ Before launching any subagents, ask the user:
 > 2. No, don't use subagents"
 
 @if(model.isGemini())
-@template.skills.start.gemini.permission-consent(model = model)
+@template.shared.gemini.permission-consent(model = model)
 @else
-@template.skills.start.claude.permission-consent(model = model)
+@template.shared.claude.permission-consent(model = model)
 @endif
 
 ### Per-task command sequence (run by the Lead Agent, not the subagent)
 
 For tasks **without** `<depends-on>`:
 @if(model.isGemini())
-@template.skills.start.gemini.task-command-sequence-independent(model = model)
+@template.shared.gemini.task-command-sequence-independent(model = model)
 @else
-@template.skills.start.claude.task-command-sequence-independent(model = model)
+@template.shared.claude.task-command-sequence-independent(model = model)
 @endif
 
 For tasks **with** `<depends-on>` (run after parent batch is complete):
 @if(model.isGemini())
-@template.skills.start.gemini.task-command-sequence-dependent(model = model)
+@template.shared.gemini.task-command-sequence-dependent(model = model)
 @else
-@template.skills.start.claude.task-command-sequence-dependent(model = model)
+@template.shared.claude.task-command-sequence-dependent(model = model)
 @endif
 
 @if(model.isGemini())
-@template.skills.start.gemini.agent-instruction(model = model)
+@template.shared.gemini.agent-instruction(model = model)
 @else
-@template.skills.start.claude.agent-instruction(model = model)
+@template.shared.claude.agent-instruction(model = model)
 @endif 
 
 `worker finish` aborts loudly if the subagent made any git commits inside the worktree (a contract violation). `worker cleanup` removes the `.agents/tasks/{id}` directory but intentionally keeps the `agent-work/{id}` branch — that branch is the only input `integrate` needs. The disappearance of `.agents/tasks/{id}` before `integrate` runs is expected and correct.
@@ -95,9 +95,9 @@ If it fails for environment reasons (e.g. Docker not available), add the necessa
 **File overlap warning:** Before running `integrate`, check which tasks touch the same files:
 
 @if(model.isGemini())
-@template.skills.start.gemini.file-overlap-check(model = model)
+@template.shared.gemini.file-overlap-check(model = model)
 @else
-@template.skills.start.claude.file-overlap-check(model = model)
+@template.shared.claude.file-overlap-check(model = model)
 @endif
 
 If two or more independent tasks (no `<depends-on>` between them) touch the same file, **expect a conflict** on that file. Brief the user before proceeding — the resolver will handle it, but manual resolution may be needed if the resolver exhausts its attempts.
@@ -128,30 +128,30 @@ LEDGER_SEQ=$(${model.cliBin()} ledger list --count)
 Then arm Monitor, passing `--after $LEDGER_SEQ`:
 
 @if(model.isGemini())
-@template.skills.start.gemini.ledger-watch-cmd(model = model)
+@template.shared.gemini.ledger-watch-cmd(model = model)
 @else
-@template.skills.start.claude.ledger-watch-cmd(model = model)
+@template.shared.claude.ledger-watch-cmd(model = model)
 @endif
 
 `ledger watch` blocks until a `RESOLVER_REQUESTED` event appears in `.agents/ledger.jsonl`, prints its full JSON payload to stdout, and exits 0. It creates the ledger file if it does not yet exist, so it is safe to arm before `integrate` has started. Exit 1 means it timed out (default 30 minutes) without seeing an event.
 
 @if(model.isGemini())
-@template.skills.start.gemini.background-execution(model = model)
+@template.shared.gemini.background-execution(model = model)
 @else
-@template.skills.start.claude.background-execution(model = model)
+@template.shared.claude.background-execution(model = model)
 @endif
 
 **When Monitor fires with a `RESOLVER_REQUESTED` line:**
 1. Parse the JSON blob from the ledger entry — it contains `payload` (the resolver prompt) and `metadata` fields including `worktree` and `task_id`.
 @if(model.isGemini())
-@template.skills.start.gemini.agent-resolver-call(model = model)
+@template.shared.gemini.agent-resolver-call(model = model)
 @else
-@template.skills.start.claude.agent-resolver-call(model = model)
+@template.shared.claude.agent-resolver-call(model = model)
 @endif
 @if(model.isGemini())
-@template.skills.start.gemini.resolver-complete-cmd(model = model)
+@template.shared.gemini.resolver-complete-cmd(model = model)
 @else
-@template.skills.start.claude.resolver-complete-cmd(model = model)
+@template.shared.claude.resolver-complete-cmd(model = model)
 @endif
 4. **Arm Monitor again (Cycle N+1)** — make a new Monitor tool call with the same command above (same `--after $LEDGER_SEQ` value) before waiting for the next event. Monitor has exited; you must re-arm it for each additional resolver cycle.
 

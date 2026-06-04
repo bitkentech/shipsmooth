@@ -28,7 +28,7 @@ class SkillRenderer {
     }
 
     void renderBase() throws IOException {
-        renderSkill("skills/start/SKILL.jte", baseModel);
+        renderSkill("start/SKILL.jte", baseModel);
     }
 
     void renderExperimental() throws IOException {
@@ -39,11 +39,11 @@ class SkillRenderer {
 
     private List<SkillVariant> experimentalVariants() {
         return List.of(
-            skillVariant("skills/experimental/start-tla/SKILL.jte", "experimental-" + startBase + "-tla",
+            skillVariant("start-tla/SKILL.jte", "experimental-" + startBase + "-tla",
                 "Use when starting any task — applies the shipsmooth agent coding workflow with a TLA-checked content-addressed ledger."),
-            skillVariant("skills/experimental/start-parallel/SKILL.jte", "experimental-" + startBase + "-parallel",
+            skillVariant("start-parallel/SKILL.jte", "experimental-" + startBase + "-parallel",
                 "Use when starting any task — applies the shipsmooth agent coding workflow with parallel subagent execution and ledger-coordinated integration."),
-            skillVariant("skills/experimental/refine/SKILL.jte", "experimental-refine",
+            skillVariant("refine/SKILL.jte", "experimental-refine",
                 "Improves the quality of code generation, or of already generated code")
         );
     }
