@@ -1,0 +1,406 @@
+# Proposal: Migrate the shipsmooth Multi-Module Build from Maven to Gradle (Kotlin DSL)
+
+> **Status:** Draft for evaluation. Rewritten against the repository as of version
+> `0.3.13` (post plan-68/69 restructure). Every module name, class name, JPMS module
+> name, JDK version, and build step below is taken from the current `pom.xml` files and
+> source tree, not from a generic Maven→Gradle template.
+
+## Motivation
+
+The shipsmooth build is a polyglot reactor: seven Maven modules that compile Java
+(JPMS), generate code (JAXB `xjc`, Dagger APT, templated sources), render Markdown via
+JTE, compile TypeScript via npm, link platform-specific OpenJ9/Semeru `jlink` runtimes,
+and assemble four distribution layouts (Claude dev/prod, Gemini dev/prod, Windows). A
+Gradle migration is *plausible* but not obviously worth it; this document states the
+real wins, the real costs, and — critically — the parts of the existing build that any
+migration **must** reproduce faithfully or it will regress.
+
+### Where Gradle would genuinely help
+
+* **Real incrementality for the Node/TS step.** `skills/pkg/pom.xml` and `devtools/pom.xml`
+  currently gate npm/tsc with brittle shell heuristics
+  (`[ -d dist ] && [ dist -nt tasks/session-start.ts ] || npm run build`). This only
+  checks one sentinel source file's mtime. Gradle's `node-gradle` plugin with explicit
+  `inputs.dir`/`outputs.dir` would model the whole `scripts/tasks` → `scripts/dist`
+  graph and skip correctly.
+* **Cleaner JTE wiring.** Rendering today takes a four-plugin chain in `skills/pkg`:
+  `maven-antrun` (copy `start/`, `experimental/`, `shared/` and rename `.jte.md → .jte`)
+  → `jte-maven-plugin` (precompile) → `build-helper` (`add-source`) → `maven-compiler`.
+  `gg.jte.gradle` wires generated sources straight into `compileJava`, collapsing the
+  middle two steps (the rename step still has to be reproduced — see Risks).
+* **Target-scoped tasks instead of a property matrix.** The five profiles
+  (`dev`, `prod`, `windows`, `gemini`, `gemini-dev`) exist mainly to set the render
+  variables consumed by `io.bitken.ss.resources.Target`. Explicit Gradle tasks
+  (`renderClaudeDev`, `renderGeminiProd`, …) make the variants discoverable and
+  non-exclusive (today you cannot build Claude and Gemini in one reactor pass).
+
+### Where Gradle does **not** help (honest accounting)
+
+* **The four packaging entrypoints stay stringly-typed.** `Target` (render),
+  `ValidateRelease`, `PackageRuntime`, and `PublishRelease` (all in `packaging/` and
+  `skills/pkg/`) are `main(String[])` programs invoked via `exec:java@<id>` with ~12
+  system properties. In Gradle these become `JavaExec` + `systemProperty(...)` — exactly
+  as stringly-typed. The "compile-time type safety" win applies only to build-script
+  glue, which is a small fraction of the surface.
+* **The hard JPMS/jlink problems do not disappear.** Dagger shading into `core`,
+  `module-info.class` re-injection, `useModulePath=false` for tests, and the
+  hand-pinned runtime module-path all have to be reproduced verbatim. Gradle changes the
+  syntax, not the underlying constraints.
+
+---
+
+## Background: the actual module graph
+
+```
+shipsmooth (pom, root)
+├── core            io.bitken.ss.core  — JAXB xjc, Dagger APT, templated sources, shade(jlink)
+├── cli             io.bitken.ss.cli   — picocli CLI + jlink image (5 platforms) + SCC launcher + smoke tests
+├── skills          (pom aggregator)
+│   └── pkg         skills-pkg         — npm/tsc, JTE render engine, Target main class
+├── claude          integration-claude — filters .claude-plugin/ + marketplace.json
+├── gemini          integration-gemini — filters gemini-extension.json, commands/
+├── packaging       packaging          — copy dist, ValidateRelease/PackageRuntime/PublishRelease
+└── devtools        devtools           — dev-only TS helper scripts
+```
+
+Key facts the migration must respect (verified in-tree):
+
+* **JDK is Semeru/OpenJ9 25** (`/opt/installers/jdk-semeru/jdk-25.0.2+10`), not 21. The
+  `jlink` invocations use `--compress zip-9` (new syntax) and add `openj9.sharedclasses`.
+* **JPMS module names** are `io.bitken.ss.core` and `io.bitken.ss.cli`. The launcher is
+  `shipsmooth=io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth`.
+* **Dagger is `requires static`** in `core/module-info.java` and is **shaded into the
+  core jar** under the `jlink` profile, because `DaggerAppComponents` is generated into
+  `core` and references `dagger.internal.*` at runtime, and `core` must not read `cli`.
+  Shade strips `module-info.class`, so it is re-injected with `jar --update`.
+* **The runtime module-path is a hand-pinned list of ~15 jars** from the local repo
+  (`/opt/mvn/repository` per `~/.m2/settings.xml`), not `runtimeClasspath`. The exact set
+  is in `cli/pom.xml`'s `jlink.runtime.module.path`.
+* **`core` runs three codegen steps**: `jaxb2-maven-plugin xjc` from
+  `src/main/resources/plan-tasks.xsd` → package `io.bitken.ss.jaxb`; Dagger annotation
+  processing; and `templating-maven-plugin filter-sources` (generates `Build` with
+  `VERSION` / `EXPERIMENTAL_BUILD`).
+* **Tests run on the classpath, not the module path** (`useModulePath=false` in `core`
+  and `cli`) to avoid a JPMS split-package `ResolutionException` between the shaded
+  dagger classes and the real dagger module.
+
+---
+
+## Strategic objectives
+
+* **Faithful parity first.** The migration is successful only if it produces
+  byte-equivalent (or behaviour-equivalent) `build/`, `build-gemini/`, `build-windows/`,
+  and `runtime-<ver>/` payloads. Parity is the acceptance test, not a nice-to-have.
+* **Real Node/TS incrementality.** Replace the `-nt` mtime hacks with task input/output
+  declarations.
+* **Explicit, non-exclusive variant tasks.** Make Claude/Gemini/Windows builds
+  selectable tasks rather than a mutually-exclusive profile matrix.
+
+---
+
+## Architectural blueprint
+
+### 1. `settings.gradle.kts`
+
+```kotlin
+rootProject.name = "shipsmooth"
+
+include("core")
+include("cli")
+include("skills:pkg")
+include("claude")
+include("gemini")
+include("packaging")
+include("devtools")
+```
+
+### 2. `buildSrc` convention plugin (JDK 25 / Semeru toolchain)
+
+```kotlin
+// buildSrc/src/main/kotlin/shipsmooth.java-conventions.gradle.kts
+plugins { java }
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+        vendor.set(JvmVendorSpec.IBM) // Semeru/OpenJ9; required for SCC + zip-9 jlink
+    }
+}
+
+tasks.withType<JavaCompile>().configureEach { options.encoding = "UTF-8" }
+repositories { mavenCentral() }
+
+dependencies { testImplementation("org.junit.jupiter:junit-jupiter:5.10.2") }
+
+tasks.test {
+    useJUnitPlatform()
+    // Mirror Maven surefire useModulePath=false: shaded dagger + real dagger module
+    // collide as a JPMS split package in the test fork. Tests need no module layer.
+    modularity.inferModulePath.set(false)
+}
+```
+
+> Note: the Gradle toolchain must resolve to the *same* Semeru JDK the `jlink` step uses.
+> If auto-provisioning can't find Semeru, pin it via
+> `org.gradle.java.installations.paths=/opt/installers/jdk-semeru/jdk-25.0.2+10`.
+
+---
+
+## Detailed module transformation
+
+### `core` — codegen + conditional shade
+
+The non-negotiable parts: JAXB `xjc`, Dagger APT, the templated `Build` source, and the
+`jlink`-only shade + `module-info` re-injection.
+
+```kotlin
+// core/build.gradle.kts
+plugins {
+    id("shipsmooth.java-conventions")
+    id("com.github.bjornvester.xjc") version "1.8.2"   // wraps xjc; emits io.bitken.ss.jaxb
+    id("com.gradleup.shadow") version "8.3.5" apply false // only wired under -PjlinkBuild
+}
+
+dependencies {
+    implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.2")
+    implementation("org.glassfish.jaxb:jaxb-runtime:4.0.5")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2")
+    compileOnly("com.google.dagger:dagger:2.59.2")          // requires static dagger
+    annotationProcessor("com.google.dagger:dagger-compiler:2.59.2")
+    implementation("jakarta.inject:jakarta.inject-api:2.0.1")
+}
+
+xjc {
+    xsdDir.set(layout.projectDirectory.dir("src/main/resources")) // plan-tasks.xsd
+    packageName.set("io.bitken.ss.jaxb")
+}
+
+// Generate Build.java (VERSION, EXPERIMENTAL_BUILD) — replaces templating-maven-plugin.
+val generateBuildConstants by tasks.registering(Copy::class) {
+    from("src/main/java-templates")          // Build.java template with @tokens@
+    into(layout.buildDirectory.dir("generated/sources/build-constants/io/bitken/ss"))
+    expand("project.version" to project.version, "experimental.enabled" to experimentalEnabled())
+}
+sourceSets.main { java.srcDir(generateBuildConstants.map { it.destinationDir }) }
+
+// jlink build only: shade dagger into core, then re-inject module-info.class.
+if (project.hasProperty("jlinkBuild")) {
+    apply(plugin = "com.gradleup.shadow")
+    // configure shadowJar to include com.google.dagger:dagger + javax.inject only,
+    // strip META-INF/*.SF|DSA|RSA, then a follow-up Exec runs:
+    //   $SEMERU/bin/jar --update --file <shaded.jar> module-info.class
+    // (Shade strips module-info; core must remain a named module on the link path.)
+}
+```
+
+### `cli` — jlink image, SCC launcher, smoke tests
+
+This is the old `app` work in the proposal; it lives in `cli`. The launcher module is
+`io.bitken.ss.cli`, compression is `zip-9`, and the OpenJ9 SCC launcher
+(`-Xquickstart -Xshareclasses`) is mandatory — the smoke tests run *through it*.
+
+```kotlin
+// cli/build.gradle.kts
+plugins {
+    id("shipsmooth.java-conventions")
+    application
+}
+
+dependencies {
+    implementation(project(":core"))
+    implementation("info.picocli:picocli:4.7.5")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2")
+}
+
+val semeruHome = providers.gradleProperty("jlink.exec.home")
+    .orElse("/opt/installers/jdk-semeru/jdk-25.0.2+10")
+
+// Hand-pinned runtime module path (exact jars from /opt/mvn/repository), mirroring
+// cli/pom.xml's jlink.runtime.module.path. NOT runtimeClasspath — the local-repo jar
+// layout is depended upon and the shaded core jar must replace the plain core jar.
+fun runtimeModulePath(): String = TODO("port the explicit ~15-jar list verbatim")
+
+val platforms = mapOf(
+    "linux-x64"    to "/opt/installers/jdk-semeru/jdk-25.0.2+10",
+    "darwin-x64"   to "/opt/installers/jdk-semeru-mac-x64/Contents/Home",
+    "darwin-arm64" to "/opt/installers/jdk-semeru-mac-arm64/Contents/Home",
+    "windows-x64"  to "/opt/installers/jdk-semeru-win-x64/jdk-25.0.2+10",
+)
+
+platforms.forEach { (name, jmodsHome) ->
+    tasks.register<Exec>("jlinkImage_$name") {
+        // depends on shaded core jar (-PjlinkBuild) + this module's jar
+        outputs.dir(layout.buildDirectory.dir("jlink-image-$name"))
+        commandLine(
+            "$semeruHome/bin/jlink".let { providers.gradleProperty("jlink.exec.home").map { h -> "$h/bin/jlink" }.getOrElse(it) },
+            "--module-path", "${runtimeModulePath()}:$jmodsHome/jmods",
+            "--add-modules", "io.bitken.ss.cli,openj9.sharedclasses",
+            "--launcher", "shipsmooth=io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth",
+            "--no-header-files", "--no-man-pages",
+            "--compress", "zip-9",
+            "--output", layout.buildDirectory.dir("jlink-image-$name").get().asFile.absolutePath,
+        )
+    }
+}
+
+// OpenJ9 shared-class-cache launcher (mandatory; smoke tests run through it).
+val writeSccLauncher by tasks.registering {
+    // emit build/scc-launcher/shipsmooth: a shell wrapper invoking the JRE with
+    //   -Xquickstart -Xshareclasses:name=shipsmooth_v<ver>,cacheDir=...,nonfatal
+    //   --module-path <runtime> -m io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth "$@"
+    // TODO: cross-platform variant (matches the TODO already in cli/pom.xml).
+}
+```
+
+### `skills:pkg` — Node/TS + JTE render engine
+
+The single biggest *real* win. `Target` (`io.bitken.ss.resources.Target`) renders the
+JTE templates into `build.outputDir` and consumes the full variable set.
+
+```kotlin
+// skills/pkg/build.gradle.kts
+plugins {
+    id("shipsmooth.java-conventions")
+    id("com.github.node-gradle.node") version "7.1.0"
+    id("gg.jte.gradle") version "3.1.15"
+}
+
+node { download.set(false) } // use system Node, matching exec-maven-plugin behaviour
+
+dependencies {
+    implementation("gg.jte:jte:3.1.15")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+}
+
+// Real incrementality, replacing  [ dist -nt tasks/session-start.ts ] || npm run build
+val compileTs by tasks.registering(com.github.gradle.node.npm.task.NpmTask::class) {
+    dependsOn(tasks.named("npmInstall"))
+    args.set(listOf("run", "build"))
+    inputs.dir("scripts/tasks")
+    inputs.file("scripts/package.json")
+    outputs.dir("scripts/dist")
+}
+
+// Reproduce the antrun rename: copy sibling start/, experimental/, shared/ .jte.md
+// into a staging dir and rename .jte.md -> .jte before jte precompiles them.
+val stageJte by tasks.registering(Copy::class) {
+    listOf("start", "experimental", "shared").forEach { dir ->
+        from(rootProject.layout.projectDirectory.dir(dir)) { into(dir) }
+    }
+    rename("(.*)\\.jte\\.md", "$1.jte")
+    into(layout.buildDirectory.dir("jte-src"))
+}
+
+jte {
+    sourceDirectory.set(stageJte.map { it.destinationDir.toPath() })
+    contentType.set(gg.jte.ContentType.Plain)
+    generate()
+}
+```
+
+The `Target` render run becomes a `JavaExec` task per variant, passing the same system
+properties the POM does today (`build.outputDir`, `build.env`, `build.platform`,
+`plugin.base.name`, `plugin.skill.start.basename`, `plugin.version`,
+`plugin.description`, `skill.frontmatter`, `shipsmooth.jlink.dir`, `plugin.hook.command`,
+`experimental.enabled`, `plugin.repo.name`). These must be modelled as a typed
+`RenderSpec` extension so the variants stay in sync; see Risks.
+
+### `claude` / `gemini` — manifest filtering
+
+Pure resource filtering (`maven-resources-plugin filtering=true`). In Gradle these are
+`Copy` tasks with `expand(...)` (Groovy `${}` interpolation; mind JSON braces). `claude`
+filters `.claude-plugin/*` + `marketplace.json`; `gemini` filters
+`gemini-extension.json` and copies `commands/` (different source dir for `gemini` vs
+`gemini-dev`). Windows adds a `README.md` copy.
+
+### `packaging` — assembly + the three release entrypoints
+
+`copy-dist` (compiled JS minus `*.test.js`) + `JavaExec` for `ValidateRelease`,
+`PackageRuntime` (per platform: `linux-x64`, `darwin-x64`, `darwin-arm64`, `win32-x64`),
+and `PublishRelease`. The dev profile's "verify jlink image exists" guard becomes a task
+precondition. These stay `JavaExec`-with-args; no type-safety gain, parity only.
+
+---
+
+## Variant strategy (replacing the profile matrix)
+
+| Maven profile | Gradle equivalent |
+|---|---|
+| `dev` (default) | `:packaging:assembleClaudeDev` task chain, `build.outputDir=build/` |
+| `prod` | `:packaging:assembleClaudeProd` |
+| `windows` | `:packaging:assembleWindows` (+ jlink `windows-x64`, README, bundled JRE/.bat) |
+| `gemini` | `:packaging:assembleGeminiProd`, `build.outputDir=build-gemini/` |
+| `gemini-dev` | `:packaging:assembleGeminiDev`, `build.outputDir=build-gemini-dev/` |
+
+Each variant task fixes its `RenderSpec` (the ~12 vars) and `outputDir`, so they are no
+longer mutually exclusive and can run in one invocation.
+
+---
+
+## Automated verification
+
+Mirror the existing `verify`-phase smoke tests, which run **through the SCC launcher**
+from the repo root:
+
+```kotlin
+// cli/build.gradle.kts
+val jlinkSmokeHelp by tasks.registering(Exec::class) {
+    dependsOn(writeSccLauncher, "jlinkImage_linux-x64")
+    commandLine(layout.buildDirectory.file("scc-launcher/shipsmooth").get().asFile.absolutePath, "--help")
+    isIgnoreExitValue = false
+}
+val jlinkSmokeShow by tasks.registering(Exec::class) {
+    dependsOn(writeSccLauncher, "jlinkImage_linux-x64")
+    workingDir(rootProject.projectDir)
+    commandLine(layout.buildDirectory.file("scc-launcher/shipsmooth").get().asFile.absolutePath,
+                "plan", "show", "--plan", "27")
+    isIgnoreExitValue = false
+}
+```
+
+---
+
+## Migration path and sequence
+
+Side-by-side, parity-gated. **Do not delete any `pom.xml` until byte/behaviour parity is
+proven for all four payloads.**
+
+1. **Phase 0 — Spike (de-risk the real wins).** Port only `skills:pkg` (Node/TS + JTE +
+   `Target` render for Claude-dev) to Gradle alongside Maven. Compare `build/` output
+   against `mvn compile`. This validates the incrementality and JTE claims cheaply before
+   committing to the hard modules.
+2. **Phase 1 — Structure.** Add `settings.gradle.kts` + `buildSrc` with the Semeru-25
+   toolchain; get `core` and `cli` *compiling* (no jlink), tests on classpath.
+3. **Phase 2 — Codegen parity.** Reproduce JAXB `xjc`, Dagger APT, and the `Build`
+   constants generator in `core`; diff generated sources against Maven's.
+4. **Phase 3 — jlink + shade.** Port the conditional dagger shade + `module-info`
+   re-injection, the hand-pinned runtime module-path, all five platform images, the SCC
+   launcher, and the smoke tests. Diff image contents against the Maven images.
+5. **Phase 4 — Assembly + release.** Port `claude`/`gemini`/`packaging` variant tasks and
+   the `ValidateRelease`/`PackageRuntime`/`PublishRelease` execs. Diff all four payloads
+   and `runtime-<ver>/`.
+6. **Phase 5 — Cutover.** Update `DEVELOPMENT.md`, `devtools/scripts/smoke-gemini.sh`,
+   and any CI to Gradle tasks; remove the `pom.xml` files only after parity sign-off.
+
+---
+
+## Risks and open questions
+
+* **Dagger shade + `module-info` re-injection** is the highest-risk item. Gradle's shadow
+  plugin also strips `module-info`; the `jar --update` re-inject step must run with the
+  *Semeru* `jar`. Get this working in a throwaway branch before trusting the estimate.
+* **Hand-pinned runtime module-path.** Porting `runtimeClasspath` instead of the explicit
+  jar list will silently change the image and may reintroduce the JPMS split-package
+  problem. The explicit list (including the *shaded* core jar in place of the plain one)
+  must be carried over verbatim.
+* **Render-variable drift.** The ~12 `Target` properties must be a single typed spec
+  shared by all variants, or Claude/Gemini/Windows outputs will diverge. This is the main
+  correctness risk in the "kill the profiles" objective.
+* **Toolchain resolution.** Gradle must select Semeru 25, not a generic JDK 25, or the
+  SCC launcher and `zip-9` jlink break.
+* **Payoff vs. cost.** The dev inner loop is already `mvn compile` and is fast. The
+  measurable wins (Node/TS incrementality, JTE wiring) are concentrated in `skills:pkg`;
+  the costly, risky work is in `core`/`cli`. Phase 0 should decide whether the full
+  migration is justified or whether only `skills:pkg` is worth moving.
