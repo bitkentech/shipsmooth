@@ -56,12 +56,17 @@
         <task>
             <id>4</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Repoint packaging to the new layout</name>
-            <commit></commit>
+            <commit>3e2a9f1</commit>
             <created-from>plan-68-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-04T16:58:58.904+05:30</timestamp>
+                    <message>De-risk ready: packaging repointed app-&gt;cli jlink paths (PublishRelease+PackageRuntime+pom verify) and integration-common-&gt;skills-pkg rename. Proven end-to-end: PackageRuntime consumed cli/target/jlink-image-linux-x64 and produced shipsmooth-0.3.12-linux-x64.zip. Awaiting approval before Harden (full release validation + clean install).</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>2</depends-on>
         </task>
