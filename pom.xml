@@ -10,12 +10,13 @@
   <packaging>pom</packaging>
 
   <modules>
+    <module>core</module>
+    <module>cli</module>
     <module>integrations/common</module>
     <module>integrations/claude</module>
     <module>integrations/gemini</module>
     <module>packaging</module>
     <module>devel</module>
-    <module>app</module>
   </modules>
 
   <properties>
