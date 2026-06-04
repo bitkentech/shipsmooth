@@ -22,12 +22,17 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Restructure skills into text and pkg with parent pom</name>
-            <commit></commit>
+            <commit>5766183cf8ca2cf2eb8a91cc65315e8d5c678053</commit>
             <created-from>plan-68-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-04T16:17:11.211+05:30</timestamp>
+                    <message>De-risk draft ready: skills moved to per-skill text/ layout (start/, refine/, start-tla/, start-parallel/, shared/{workflow,claude,gemini}). All @template + SkillRenderer paths rewired. Rendered output BYTE-IDENTICAL to baseline. Awaiting approval before Harden (move renderers+scripts to skills/pkg/, create skills/pom.xml parent).</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
