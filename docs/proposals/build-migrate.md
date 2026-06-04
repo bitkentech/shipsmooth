@@ -1,4 +1,4 @@
-# Proposal: Migrate the shipsmooth Multi-Module Build from Maven to Gradle (Kotlin DSL)
+# Build System Evaluation: Maven Enhancements vs. Gradle Migration (shipsmooth)
 
 > **Status:** Draft for evaluation. Rewritten against the repository as of version
 > `0.3.13` (post plan-68/69 restructure). Every module name, class name, JPMS module
@@ -45,14 +45,16 @@ places.
 
 **Recommended path:**
 
-1. **Now:** if speed is the pain, add `mvnd` + Maven build-cache to the existing build.
-2. **If still motivated:** run **Phase 0** only — port `skills/pkg` (Node/TS + JTE +
-   `Target` render) to Gradle side-by-side and measure incrementality against
-   `mvn compile`. This validates the one real win cheaply.
-3. **Only if Phase 0 clearly pays off:** commit to the full, parity-gated migration in
-   the sequence below. Otherwise, consider moving only `skills/pkg` (speed + authoring
-   win) and the `claude`/`gemini` integration modules (low-risk, pure copy/filter →
-   large readability win), leaving `cli`/`core`/`packaging` on Maven.
+1. **Now:** apply the Maven enhancements (`mvnd`, build-cache, the `skills/pkg` split +
+   render-into-`target/`). These are worth doing on their own and reset the baseline.
+2. **Then, if still tempted by Gradle — the skills trial as a single go/no-go gate:**
+   port `skills/pkg` to Gradle on a **throwaway branch** and develop against it for real
+   (not a side-by-side benchmark — actually live with it). No permanent two-tool state.
+3. **Decide from the trial, asymmetrically:** `skills/pkg` is the *best-case* module
+   (highest upside, lowest risk). If it does **not** feel clearly better there, **abandon
+   the whole migration** and delete the branch — `cli`/`core`/`packaging` have less
+   upside and far more risk, so they won't redeem it. If it **does** feel clearly better,
+   that justifies committing to the full, parity-gated migration in the sequence below.
 
 The remainder of this document has two parts: first the **Maven enhancements** that
 recover most of the upside in place, then the full **Gradle migration** analysis.
@@ -239,8 +241,9 @@ Two corrections to a naive "perf-only" read:
 The pattern: the **authoring** benefit lands on skills + integration devs (the most
 common editors, lowest-risk modules); the **speed** benefit lands on skills (+ a JS web
 module). cli/core devs gain little and carry the porting risk. This is the same
-conclusion as the cost analysis — value concentrates in `skills/pkg`, with the
-integration modules a strong, low-risk secondary candidate.
+conclusion as the cost analysis — value concentrates in `skills/pkg` (the integration
+modules see a readability win too, but they are not migrated separately: the decision is
+all-or-nothing, gated on the skills trial, with no permanent two-tool state).
 
 ### Performance impact (moderate justification)
 
@@ -249,7 +252,7 @@ Net assessment: **the dev inner loop — which is most of the actual work, on `s
 incrementality; the occasional release pipeline is tool-agnostic and Gradle can't speed
 it up; cold/CI builds are a wash or slightly slower.** Performance is a secondary
 argument, and much of the dev-loop gain is achievable in Maven without migrating (see
-the `mvnd`/build-cache caveat below).
+*Enhancements within the Maven system* above).
 
 Distinguish the two builds, because they have very different cost profiles:
 
@@ -637,10 +640,13 @@ val jlinkSmokeShow by tasks.registering(Exec::class) {
 Side-by-side, parity-gated. **Do not delete any `pom.xml` until byte/behaviour parity is
 proven for all four payloads.**
 
-1. **Phase 0 — Spike (de-risk the real wins).** Port only `skills:pkg` (Node/TS + JTE +
-   `Target` render for Claude-dev) to Gradle alongside Maven. Compare `build/` output
-   against `mvn compile`. This validates the incrementality and JTE claims cheaply before
-   committing to the hard modules.
+1. **Phase 0 — Skills trial (the go/no-go gate).** On a throwaway branch, port `skills:pkg`
+   (Node/TS + JTE + `Target` render for Claude-dev) to Gradle and *develop against it for
+   real* — not a side-by-side benchmark. Verify `build/` output matches `mvn compile`
+   once (parity sanity check), then judge how the loop feels. `skills:pkg` is the
+   best-case module, so this is an asymmetric gate: if it isn't clearly better here,
+   **abandon the migration and delete the branch**; the harder modules below won't redeem
+   it. Only proceed to Phase 1 if the trial clearly pays off. No permanent two-tool state.
 2. **Phase 1 — Structure.** Add `settings.gradle.kts` + `buildSrc` with the Semeru-25
    toolchain; get `core` and `cli` *compiling* (no jlink), tests on classpath.
 3. **Phase 2 — Codegen parity.** Reproduce JAXB `xjc`, Dagger APT, and the `Build`
@@ -670,7 +676,8 @@ proven for all four payloads.**
   correctness risk in the "kill the profiles" objective.
 * **Toolchain resolution.** Gradle must select Semeru 25, not a generic JDK 25, or the
   SCC launcher and `zip-9` jlink break.
-  * **Payoff vs. cost.** The dev inner loop is already `mvn compile` and is fast. The
-    measurable wins (Node/TS incrementality, JTE wiring) are concentrated in `skills:pkg`;
-    the costly, risky work is in `core`/`cli`. Phase 0 should decide whether the full
-    migration is justified or whether only `skills:pkg` is worth moving.		
+* **Payoff vs. cost.** Measured against the *enhanced* Maven baseline (not today's
+  un-tuned one), the measurable wins — Node/TS incrementality, JTE wiring — are
+  concentrated in `skills:pkg`, while the costly, risky work is in `core`/`cli`. The
+  Phase 0 skills trial is the gate that decides whether the full migration is justified
+  at all.
