@@ -125,6 +125,44 @@ identical-output + working-jlink gates are the bar.
 `core/` module and the `cli/` package tree into a new `cli/` module. Move the jlink + shade
 profile from `app/pom.xml` into `cli/pom.xml`; `cli` depends on `core`. Keep package names
 `io.bitken.ss.*` unchanged. Update root pom: replace `app` module with `core` and `cli`.
+
+**JPMS decision (resolved):** `core` and `cli` become **two JPMS modules**, not one merged module.
+The single `app/src/main/java/module-info.java` (module `io.bitken.ss`) splits into:
+- `core` → module `io.bitken.ss.core`: `exports` every package `cli` consumes
+  (`workflow ledger gw svc git conf` + the bare `io.bitken.ss` package holding `Build`), and keeps
+  the JAXB/Jackson `opens`/`requires` (`io.bitken.ss.jaxb`→jakarta.xml.bind,
+  `.ledger`/`.workflow.integration`→jackson).
+- `cli` → module `io.bitken.ss.cli`: `requires io.bitken.ss.core`, keeps the picocli
+  `requires`/`opens` (`io.bitken.ss.cli.*`→info.picocli).
+
+Rationale: a compiler-enforced boundary makes the "core has no target knowledge" invariant
+mechanical, and gives future `web`/`desktop` targets a clean standalone `core` to `requires`. The
+recurring cost — adding one `exports` line when a new core package is consumed across the boundary —
+is treated as a feature (it forces an explicit surface decision), not a tax. Known sharp edges to
+get right in De-risk: module-name vs package-name overlap for `io.bitken.ss.cli`; the dagger shade
+(automatic module, jlink-incompatible) must live with the right module; and the
+`META-INF/native-image/io.bitken.ss/` config dir is keyed to the old module name and must be
+repartitioned/renamed for the two-module graph. `Build.java` (generated, package `io.bitken.ss`,
+referenced only by `cli/CommandTree`) goes to `core` and is exported.
+
+**jlink / build realities (from `app/pom.xml` analysis — the fragile surface):**
+- The `jlink` profile's `module.path` lists every dependency JAR explicitly plus the project JAR.
+  After the split it must also include the `core` JAR; `--add-modules io.bitken.ss` becomes
+  `io.bitken.ss.cli` (which transitively resolves `io.bitken.ss.core` via `requires`). All ~6
+  cross-platform jlink executions, the SCC launcher, and the `--launcher` mapping reference
+  `io.bitken.ss/io.bitken.ss.cli.Shipsmooth` and each must update to the new module name.
+- **Dagger is shaded into the JAR** and `module-info.class` is re-injected post-shade (Shade strips
+  it). Dagger DI is centralized in `conf` (`@Inject`/`@Module`/`@Component` only appear there;
+  CLI commands are hand-built in `CommandTree`, not Dagger-managed). So the Dagger shade belongs
+  with **`core`** (where the component graph lives).
+- **jaxb2 plugin** generates `io.bitken.ss.jaxb` from `src/main/resources/plan-tasks.xsd`. That
+  package is consumed by both core (`workflow`, `gw`, `svc`) and cli (`cli/plan`, `cli/worker`,
+  `cli/task`) → the XSD + jaxb generation live in **`core`** and `io.bitken.ss.jaxb` is **exported**.
+- `XmlServiceAgentRunner` (exec-plugin `mainClass`, native-image agent) has **no source file** —
+  pre-existing dead config; the native-image plugin is commented out / skipped. Not fixed here.
+- `plan-tasks.xsd` and `META-INF/native-image/io.bitken.ss/` resources move to **`core`** and
+  **`cli`** respectively (native-image config is keyed to the executable/module name).
+
 **De-risk first:** prove `core` compiles standalone and `cli` builds the jlink image and runs
 `--version` before hardening pom structure. Verify rendered CLI behavior unchanged.
 **Verify:** `mvn -pl core -am compile` green; `mvn -pl cli -am -Pjlink package` builds the jlink
