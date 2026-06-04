@@ -5,7 +5,6 @@
 #   1. mvn -P gemini,!dev,!claude compile produces a valid build-gemini/ tree
 #   2. gemini extensions link build-gemini/ succeeds
 #   3. The linked extension appears in ~/.gemini/extensions/
-#   4. scripts/test-gemini-hook.sh passes (hook command logic)
 #
 # What this does NOT test (requires interactive gemini session):
 #   - SessionStart hook actually firing in a live gemini session
@@ -54,9 +53,8 @@ assert_file "$BUILD_DIR/gemini-extension.json"
 assert_file "$BUILD_DIR/hooks/hooks.json"
 assert_file "$BUILD_DIR/commands/start.toml"
 assert_file "$BUILD_DIR/skills/start/SKILL.md"
-assert_file "$BUILD_DIR/package.json"
-assert_file "$BUILD_DIR/dist/init.js"
-assert_file "$BUILD_DIR/dist/update-status.js"
+assert_file "$BUILD_DIR/dist/session-start.js"
+assert_file "$BUILD_DIR/dist/session-start-config.json"
 
 # Assert SKILL.md has frontmatter
 if head -1 "$BUILD_DIR/skills/start/SKILL.md" | grep -q "^---"; then
@@ -66,19 +64,29 @@ else
   exit 1
 fi
 
-# Assert SKILL.md uses ~/.cache/shipsmooth/dist path
-if grep -q "~/.cache/shipsmooth/dist" "$BUILD_DIR/skills/start/SKILL.md"; then
-  echo "  PASS: SKILL.md uses ~/.cache/shipsmooth/dist path"
+# Assert SKILL.md's cliBin resolves to the native runtime binary (jlink model)
+if grep -q "runtime-.*/bin/shipsmooth" "$BUILD_DIR/skills/start/SKILL.md"; then
+  echo "  PASS: SKILL.md uses runtime-<ver>/bin/shipsmooth cliBin"
 else
-  echo "  FAIL: SKILL.md missing ~/.cache/shipsmooth/dist path"
+  echo "  FAIL: SKILL.md missing runtime-<ver>/bin/shipsmooth cliBin"
   exit 1
 fi
 
-# Assert hooks.json uses ${extensionPath} not ${CLAUDE_PLUGIN_ROOT}
-if grep -q 'extensionPath' "$BUILD_DIR/hooks/hooks.json" && ! grep -q 'CLAUDE_PLUGIN_ROOT' "$BUILD_DIR/hooks/hooks.json"; then
-  echo "  PASS: hooks.json uses \${extensionPath}"
+# Assert the SessionStart hook runs session-start.js via ${extensionPath} (not ${CLAUDE_PLUGIN_ROOT})
+if grep -q 'extensionPath' "$BUILD_DIR/hooks/hooks.json" \
+   && grep -q 'session-start.js' "$BUILD_DIR/hooks/hooks.json" \
+   && ! grep -q 'CLAUDE_PLUGIN_ROOT' "$BUILD_DIR/hooks/hooks.json"; then
+  echo "  PASS: hooks.json runs session-start.js via \${extensionPath}"
 else
-  echo "  FAIL: hooks.json has wrong variable substitutions"
+  echo "  FAIL: hooks.json does not run session-start.js via \${extensionPath}"
+  exit 1
+fi
+
+# Assert no leftover npm-install machinery (package.json must not be shipped)
+if [[ ! -f "$BUILD_DIR/package.json" ]] && ! grep -q 'npm install' "$BUILD_DIR/hooks/hooks.json"; then
+  echo "  PASS: no package.json shipped, no npm install in hook"
+else
+  echo "  FAIL: fossil npm-install machinery still present"
   exit 1
 fi
 
@@ -99,15 +107,10 @@ else
   exit 1
 fi
 
-# --- 4. Hook logic test ---
-echo ""
-echo "--- Step 3: hook logic test ---"
-bash "$REPO_ROOT/devtools/scripts/test-gemini-hook.sh"
-
 echo ""
 echo "=== ALL SMOKE TESTS PASSED ==="
 echo ""
 echo "Next: start 'gemini' in a repo and verify:"
-echo "  - SessionStart hook fires (shipsmooth: deps installed)"
+echo "  - SessionStart hook fires (session-start.js installs runtime-<ver>/bin/shipsmooth)"
 echo "  - /skills shows start"
 echo "  - /start command is available"

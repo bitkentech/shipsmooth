@@ -117,7 +117,7 @@ Changes to source files are reflected immediately after the next `mvn compile` r
 ./devtools/scripts/smoke-gemini.sh
 ```
 
-Verifies the build layout, links the extension, and runs the hook logic test.
+Verifies the build layout (jlink runtime model: SKILL cliBin → `runtime-<ver>/bin/shipsmooth`, hook runs `session-start.js`, no shipped `package.json`) and links the extension.
 
 ### Uninstall
 

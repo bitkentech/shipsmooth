@@ -66,9 +66,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Drop the stale `fast-xml-parser` runtime dep</name>
-            <commit></commit>
+            <commit>e0e70bccb8882f560b5f044546147fa1b122b1da</commit>
             <created-from>plan-69-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -94,7 +94,13 @@
             <created-from>plan-69-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-04T23:50:38.150+05:30</timestamp>
+                    <message>test-gemini-hook.sh is a dead fossil: it references hooks/package.json, plugin-resources/... (path removed in restructure), old TS-CLI JS (hello.js/init.js) and fast-xml-parser node_modules. It tests the npm hook deleted in Task 2. Deleting it and removing the smoke-test step that invokes it; replacing with a direct session-start.js hook-command assertion.</message>
+                </deviation>
+            </deviations>
             <depends-on>1</depends-on>
         </task>
     </tasks>
