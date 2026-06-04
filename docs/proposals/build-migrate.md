@@ -47,6 +47,38 @@ migration **must** reproduce faithfully or it will regress.
   hand-pinned runtime module-path all have to be reproduced verbatim. Gradle changes the
   syntax, not the underlying constraints.
 
+### Expected line-count impact (weak justification)
+
+The current build is **1,732 lines across 9 `pom.xml` files**:
+
+| File | Lines | Expected after migration | Why |
+|---|---:|---:|---|
+| `packaging/pom.xml` | 343 | ~290 | Mostly irreducible logic: 5 `PackageRuntime`/`ValidateRelease`/`PublishRelease` execs with sysprops. Args carry over near 1:1. |
+| `cli/pom.xml` | 316 | ~270 | 5 platform jlink invocations + SCC launcher heredoc + smoke tests. Content, not ceremony. |
+| `skills/pkg/pom.xml` | 255 | ~150 | JTE 4-plugin chain collapses; Node gains real inputs/outputs. |
+| `pom.xml` (root) | 225 | ~70 | `pluginManagement` pinning → `buildSrc`; 5 profiles → typed `RenderSpec` + variant tasks. |
+| `core/pom.xml` | 225 | ~160 | Every codegen/shade step stays; only the `<execution>` wrapping is saved. |
+| `gemini/pom.xml` | 161 | ~80 | Pure resource filtering → `Copy { expand() }`. |
+| `claude/pom.xml` | 124 | ~70 | Same as gemini. |
+| `devtools/pom.xml` | 56 | ~30 | npm/tsc with real inputs/outputs. |
+| `skills/pom.xml` | 27 | ~2 | Becomes lines in `settings.gradle.kts`. |
+| **Total** | **1,732** | **~1,120–1,250** | |
+
+That is roughly a **25–35% reduction** — *not* the 50%+ that "eliminate XML
+boilerplate" pitches imply, and with two important caveats:
+
+* **The estimate excludes new files the migration adds**: `settings.gradle.kts` and the
+  `buildSrc` convention plugin (~40–60 lines together). The true net reduction is smaller
+  than a naive pom-vs-`build.gradle.kts` diff.
+* **The savings are concentrated in the low-risk modules** (`claude`, `gemini`, root
+  profiles). The two largest files — `cli` (316) and `packaging` (343), together **38% of
+  all build lines** — barely shrink, because their bulk is genuine build *logic* (jlink
+  args, launcher script, per-platform exec blocks), not XML overhead. These are also the
+  highest-risk modules to port.
+
+Conclusion: line count is a **weak** argument for this migration. The real case rests on
+Node/TS incrementality and cleaner JTE wiring (see above), not on shorter build files.
+
 ---
 
 ## Background: the actual module graph
