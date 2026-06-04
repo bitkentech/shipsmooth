@@ -170,18 +170,53 @@ image and the resulting binary runs `--version`; all `app` tests pass under the 
 
 ### Task 2: Restructure skills into text and pkg with parent pom [High]
 *Depends-on: 1*
-Create `skills/pom.xml` (parent: registers `text/` as a resource dir, declares `pkg/` submodule).
-`git mv` `integrations/common/src/main/jte-src/skills/{shared,experimental}` and
-`start/{SKILL.jte.md,claude,gemini}` into `skills/text/{shared,experimental,claude,gemini}` per the
-map. `git mv` `integrations/common/src/main/java/` (Target, SkillRenderer, HooksRenderer,
-SessionStartConfigRenderer, etc.) and `integrations/common/scripts/` into `skills/pkg/`. Rewire
-the antrun `.jte.md`→`.jte` rename, the jte-maven-plugin source dirs, and the `Target` main-class
-resource paths to the new `text/` location. Update root pom module list. **Rendered skill/hook
-output must be byte-identical to baseline.** De-risk by proving the JTE precompile + render pipeline
-produces identical output before hardening the parent/submodule pom split.
+Split `integrations/common` into `skills/text/` (JTE content) + `skills/pkg/` (renderers + TS
+scripts) under a `skills/pom.xml` parent.
+
+**Target layout — one folder per skill under `text/` (decided with human):**
+```
+skills/
+  pom.xml            ← parent: text/ = JTE resource root, declares pkg/ submodule
+  text/
+    start/SKILL.jte.md             ← the start skill, in its own folder
+    refine/SKILL.jte.md + rules/   ← experimental skills become peer skill folders
+    start-parallel/SKILL.jte.md
+    start-tla/SKILL.jte.md + tla-model.jte.md
+    shared/                        ← partials + target snippets shared across skills
+      base-workflow.jte.md  parallel-execution.jte.md  workflow/ (12)
+      claude/ (13)                 ← Claude target snippets the SHARED workflow selects
+      gemini/ (13)                 ← Gemini target snippets the SHARED workflow selects
+  pkg/
+    pom.xml          ← renderer module (was integration-common); Target, *Renderer, scripts/
+```
+Per-skill target overrides (`<skill>/claude/`, `<skill>/gemini/`) are an *available* convention for
+future skill-specific snippets; today all claude/gemini snippets are shared (imported by
+`shared/workflow/phase2-execute.jte.md` and `shared/parallel-execution.jte.md` via
+`@if(model.isGemini())…@else…`), so they live in `shared/claude` + `shared/gemini`.
+
+**JTE naming insight (de-risked):** template class names derive from the path under the JTE root,
+but they are *not* output — only the rendered `SKILL.md`/`hooks.json` is. `SkillRenderer.renderSkill`
+takes a template path and writes to `skills/<model.skillName()>/SKILL.md`; **path and output skill
+name are decoupled**. So renaming template paths is safe as long as the 4 path strings in
+`SkillRenderer` and every `@template.*` include are updated consistently; the byte-diff gate proves
+output unchanged. Reference rewiring required:
+- `SkillRenderer.java` (4 paths): `skills/start/SKILL.jte`→`start/SKILL.jte`;
+  `skills/experimental/refine/SKILL.jte`→`refine/SKILL.jte`; same for `start-tla`, `start-parallel`.
+- `@template.*` includes (~30): drop the `skills.` segment and remap `start.claude`→`shared.claude`,
+  `start.gemini`→`shared.gemini` (e.g. `@template.skills.start.gemini.set-commit-hardening` →
+  `@template.shared.gemini.set-commit-hardening`); `skills.shared.workflow.X` → `shared.workflow.X`.
+- jte-plugin/antrun JTE source root becomes `text/`; new template names are relative to it.
+
+`git mv` content into the per-skill folders; `git mv` `src/main/java/` + `scripts/` into `skills/pkg/`.
+Update root pom module list (`integrations/common` → `skills` parent + `skills/pkg`). Note: the JTE
+templates reference `io.bitken.ss.jaxb`? No — they use `PluginModel`; the renderer module depends on
+no core types, so it is independent of Task 1's core/cli split (the `Depends-on: 1` is reactor-order
+only). De-risk by proving the JTE precompile + render pipeline produces byte-identical output before
+hardening the parent/submodule pom split.
 **Verify:** `mvn -pl skills/pkg -am compile` renders without error; `diff -r build/skills
-.agents/tmp/expected-output/skills` and `diff build/hooks/hooks.json
-.agents/tmp/expected-output/hooks/hooks.json` show no differences.
+.agents/tmp/expected-output/skills`, `diff build/hooks/hooks.json
+.agents/tmp/expected-output/hooks/hooks.json`, and `diff -r build/dist
+.agents/tmp/expected-output/dist` all show no differences.
 
 ### Task 3: Move claude and gemini integrations to top level [High]
 *Depends-on: 2*
