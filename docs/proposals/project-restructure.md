@@ -29,8 +29,8 @@ shipsmooth/
       experimental/ ← Feature-flagged skills
       claude/       ← Claude-specific JTE overrides
       gemini/       ← Gemini-specific JTE overrides
-    other/          ← Everything that renders text/ into output: Java renderers, TS hook scripts
-    pom.xml         ← Parent module: registers text/ as resources, declares other/ as submodule
+    pkg/            ← Everything that renders text/ into output: Java renderers, TS hook scripts
+    pom.xml         ← Parent module: registers text/ as resources, declares pkg/ as submodule
   cli/              ← CLI: picocli commands, jlink image build
   web/              ← Web UI (future)
   desktop/
@@ -61,13 +61,13 @@ navigate elsewhere.
 - **`text/`** — all the JTE markdown content. A non-Java contributor editing skill prose only
   ever touches this subtree. `text/shared/` holds base workflow partials; `text/claude/` and
   `text/gemini/` hold per-target JTE overrides.
-- **`other/`** — everything that renders `text/` into output: `Target.java`, `SkillRenderer`,
+- **`pkg/`** — everything that renders `text/` into output: `Target.java`, `SkillRenderer`,
   `HooksRenderer`, `SessionStartConfigRenderer`, and the TypeScript hook scripts. These are
   tightly coupled to the JTE precompilation model and must share a Maven module with the
   templates they render.
 
 `skills/pom.xml` is the parent module: it registers `text/` as a resource directory (making
-`.jte.md` files available on the classpath) and declares `other/` as a submodule.
+`.jte.md` files available on the classpath) and declares `pkg/` as a submodule.
 
 Adding support for a new target means adding `text/opencode/` alongside a top-level `opencode/`
 folder for its hooks and metadata.
@@ -100,7 +100,7 @@ currently the TypeScript hook utilities. Over time it may grow `shared/hooks/`,
 naturally tracks the top level — it never needs a taxonomy of its own.
 
 The Java build tooling (`Target.java`, `SkillRenderer.java`, `HooksRenderer.java`) stays with
-the skill templates in `skills/other/` — it is coupled to the JTE precompilation model and must
+the skill templates in `skills/pkg/` — it is coupled to the JTE precompilation model and must
 share a classpath with the templates it renders.
 
 ### `packaging/` name is preserved
@@ -132,7 +132,7 @@ it describes.
 | Add a Claude-specific skill variant | `skills/text/claude/` |
 | Add a Gemini-specific skill variant | `skills/text/gemini/` |
 | Add a new experimental (feature-flagged) skill | `skills/text/experimental/` |
-| Change the skill renderer or hook scripts | `skills/other/` |
+| Change the skill renderer or hook scripts | `skills/pkg/` |
 | Change the Claude hook or plugin metadata | `claude/` |
 | Change the Gemini hook or extension metadata | `gemini/` |
 | Add a new target (e.g. Opencode) | create `opencode/` + `skills/text/opencode/` |
@@ -193,8 +193,8 @@ gemini extensions link --consent build-gemini-dev/
 | `integrations/common/src/main/jte-src/skills/experimental/` | `skills/text/experimental/` | Feature-flagged skills; stay in skills, not exp/ |
 | `integrations/common/src/main/jte-src/skills/start/claude/` | `skills/text/claude/` | Claude-specific JTE overrides |
 | `integrations/common/src/main/jte-src/skills/start/gemini/` | `skills/text/gemini/` | Gemini-specific JTE overrides |
-| `integrations/common/src/main/java/` (Target, SkillRenderer etc) | `skills/other/` | Coupled to JTE precompilation; stays with templates |
-| `integrations/common/scripts/` | `skills/other/` | TS hook scripts; rendered by HooksRenderer |
+| `integrations/common/src/main/java/` (Target, SkillRenderer etc) | `skills/pkg/` | Coupled to JTE precompilation; stays with templates |
+| `integrations/common/scripts/` | `skills/pkg/` | TS hook scripts; rendered by HooksRenderer |
 | `integrations/claude/` | `claude/` | Plugin metadata, hooks, assembly |
 | `integrations/gemini/` | `gemini/` | Extension metadata, hooks, assembly |
 | `packaging/` | `packaging/` | Unchanged |
@@ -213,9 +213,9 @@ gemini extensions link --consent build-gemini-dev/
 5. Move `integrations/common/src/main/jte-src/skills/experimental/` into `skills/text/experimental/`.
 6. Move `integrations/common/src/main/jte-src/skills/start/claude/` into `skills/text/claude/`.
 7. Move `integrations/common/src/main/jte-src/skills/start/gemini/` into `skills/text/gemini/`.
-8. Move `integrations/common/src/main/java/` (Target, SkillRenderer etc) into `skills/other/`.
-9. Move `integrations/common/scripts/` into `skills/other/`.
-10. Create `skills/pom.xml`: registers `text/` as a resource directory, declares `other/` as submodule.
+8. Move `integrations/common/src/main/java/` (Target, SkillRenderer etc) into `skills/pkg/`.
+9. Move `integrations/common/scripts/` into `skills/pkg/`.
+10. Create `skills/pom.xml`: registers `text/` as a resource directory, declares `pkg/` as submodule.
 11. Move `integrations/claude/` content into `claude/`.
 12. Move `integrations/gemini/` content into `gemini/`.
 13. Rename `devel/` to `devtools/`; update root `pom.xml` module list.

@@ -25,8 +25,8 @@ independently buildable and reviewable. No big-bang commit; intermediate states 
 | `integrations/common/.../jte-src/skills/experimental/` | `skills/text/experimental/` |
 | `integrations/common/.../jte-src/skills/start/claude/` | `skills/text/claude/` |
 | `integrations/common/.../jte-src/skills/start/gemini/` | `skills/text/gemini/` |
-| `integrations/common/src/main/java/` (Target, renderers) | `skills/other/` |
-| `integrations/common/scripts/` (TS hooks) | `skills/other/` |
+| `integrations/common/src/main/java/` (Target, renderers) | `skills/pkg/` |
+| `integrations/common/scripts/` (TS hooks) | `skills/pkg/` |
 | `integrations/claude/` | `claude/` |
 | `integrations/gemini/` | `gemini/` |
 | `devel/` | `devtools/` |
@@ -64,7 +64,7 @@ downstream consumer references them, and a `git mv` that leaves the build red bl
 | # | Task | Risk | Justification |
 |---|---|---|---|
 | 1 | Split `app/` → `core/` + `cli/`, move jlink to `cli` | **High** | One module with one jlink+shade build splits into two; module-path/jlink wiring is the most fragile thing in the repo. |
-| 2 | Create `skills/` parent + split `integrations/common` → `skills/text` (resources) + `skills/other` (Java+TS) | **High** | JTE precompilation (antrun rename, jte-plugin, `Target` main) is tightly coupled to resource paths; classpath of `.jte.md` must survive the move. |
+| 2 | Create `skills/` parent + split `integrations/common` → `skills/text` (resources) + `skills/pkg` (Java+TS) | **High** | JTE precompilation (antrun rename, jte-plugin, `Target` main) is tightly coupled to resource paths; classpath of `.jte.md` must survive the move. |
 | 3 | Move `integrations/claude/` → `claude/`, `integrations/gemini/` → `gemini/` | **High** | Plugin/extension assembly + hooks; cross-module path rewiring consuming skills output — promoted to High at calibration. |
 | 4 | Update `packaging/` module paths to new layout | **High** | Consumes `integration-common`; every input path moves and assembly correctness is release-critical — promoted to High at calibration. |
 | 5 | Rename `devel/` → `devtools/`; rewire root pom module list | **Low** | Pure rename + one `<module>` line. |
@@ -106,19 +106,19 @@ profile from `app/pom.xml` into `cli/pom.xml`; `cli` depends on `core`. Keep pac
 **De-risk first:** prove `core` compiles standalone and `cli` builds the jlink image and runs
 `--version` before hardening pom structure. Verify rendered CLI behavior unchanged.
 
-### Task 2: Restructure skills into text and other with parent pom [High]
+### Task 2: Restructure skills into text and pkg with parent pom [High]
 *Depends-on: 1*
-Create `skills/pom.xml` (parent: registers `text/` as a resource dir, declares `other/` submodule).
+Create `skills/pom.xml` (parent: registers `text/` as a resource dir, declares `pkg/` submodule).
 `git mv` `integrations/common/src/main/jte-src/skills/{shared,experimental}` and
 `start/{SKILL.jte.md,claude,gemini}` into `skills/text/{shared,experimental,claude,gemini}` per the
 map. `git mv` `integrations/common/src/main/java/` (Target, SkillRenderer, HooksRenderer,
-SessionStartConfigRenderer, etc.) and `integrations/common/scripts/` into `skills/other/`. Rewire
+SessionStartConfigRenderer, etc.) and `integrations/common/scripts/` into `skills/pkg/`. Rewire
 the antrun `.jte.md`→`.jte` rename, the jte-maven-plugin source dirs, and the `Target` main-class
 resource paths to the new `text/` location. Update root pom module list. **Rendered skill/hook
 output must be byte-identical to baseline.** De-risk by proving the JTE precompile + render pipeline
 produces identical output before hardening the parent/submodule pom split.
 
-### Task 3: Move claude and gemini integrations to top level [Med]
+### Task 3: Move claude and gemini integrations to top level [High]
 *Depends-on: 2*
 `git mv` `integrations/claude/` → `claude/` and `integrations/gemini/` → `gemini/`. Update their
 poms' `<relativePath>`/parent refs and any path that pointed at `integrations/common` to the new
@@ -126,7 +126,7 @@ poms' `<relativePath>`/parent refs and any path that pointed at `integrations/co
 identical to baseline. Note: `integrations/claude/windows/` (plugin-for-windows) is distinct from a
 future `desktop/win/` — keep it under `claude/` here, do not conflate.
 
-### Task 4: Repoint packaging to the new layout [Med]
+### Task 4: Repoint packaging to the new layout [High]
 *Depends-on: 2*
 Update `packaging/pom.xml` dependency on `integration-common` to the new `skills` artifact and any
 input paths that moved (`claude/`, `gemini/`, skills output). Orchestration logic stays unchanged
