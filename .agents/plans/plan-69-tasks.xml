@@ -11,23 +11,33 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Make the Gemini release run the renderer</name>
-            <commit></commit>
+            <commit>66b484f3a03b5063ab6c12003163c4687d47d696</commit>
             <created-from>plan-69-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-04T19:09:54.501+05:30</timestamp>
+                    <message>De-risk draft ready: clean mvn compile -P gemini yields correct build-gemini/ (SKILL.md, session-start-config.json, hook runs session-start.js, cliBin=runtime bin). All 4 assertions pass.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Delete the fossil Gemini npm hook</name>
             <commit></commit>
             <created-from>plan-69-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-04T23:16:28.500+05:30</timestamp>
+                    <message>De-risk: removed fossil hooks.json + both copy-gemini-hooks execs. Prod+dev builds verified — Target renders node ${extensionPath}/dist/session-start.js, no npm install.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
