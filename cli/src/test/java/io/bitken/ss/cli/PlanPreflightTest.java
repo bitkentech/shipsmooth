@@ -87,7 +87,7 @@ public class PlanPreflightTest {
     }
 
     private static GitTags stubTags(String version) {
-        return new GitTags() {
+        return new GitTags(java.nio.file.Paths.get(".")) {
             @Override public String getPlanVersion(int n) { return version; }
         };
     }

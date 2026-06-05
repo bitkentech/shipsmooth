@@ -42,7 +42,7 @@ public class PlanTagTest {
     @Test
     void versionKindCreatesNextTagAndPrintsPushLine() {
         List<String> created = new ArrayList<>();
-        GitTags tags = new GitTags() {
+        GitTags tags = new GitTags(java.nio.file.Paths.get(".")) {
             @Override public String nextPlanVersion(int n) { return "plan-7-v2"; }
             @Override public boolean tagExists(String t) { return false; }
             @Override public boolean createTag(String t) { created.add(t); return true; }
@@ -57,7 +57,7 @@ public class PlanTagTest {
 
     @Test
     void versionKindRefusesIfTagAlreadyExists() {
-        GitTags tags = new GitTags() {
+        GitTags tags = new GitTags(java.nio.file.Paths.get(".")) {
             @Override public String nextPlanVersion(int n) { return "plan-7-v2"; }
             @Override public boolean tagExists(String t) { return true; }
             @Override public boolean createTag(String t) { return false; }
@@ -70,7 +70,7 @@ public class PlanTagTest {
     @Test
     void completeKindCreatesCompleteTag() {
         List<String> created = new ArrayList<>();
-        GitTags tags = new GitTags() {
+        GitTags tags = new GitTags(java.nio.file.Paths.get(".")) {
             @Override public boolean createTag(String t) { created.add(t); return true; }
         };
         int exit = run(tags, "--plan", "7", "--kind", "complete");
@@ -82,7 +82,7 @@ public class PlanTagTest {
     @Test
     void abandonedKindCreatesAbandonedTag() {
         List<String> created = new ArrayList<>();
-        GitTags tags = new GitTags() {
+        GitTags tags = new GitTags(java.nio.file.Paths.get(".")) {
             @Override public boolean createTag(String t) { created.add(t); return true; }
         };
         int exit = run(tags, "--plan", "7", "--kind", "abandoned");
@@ -92,7 +92,7 @@ public class PlanTagTest {
 
     @Test
     void unknownKindFails() {
-        int exit = run(new GitTags(), "--plan", "7", "--kind", "bogus");
+        int exit = run(new GitTags(java.nio.file.Paths.get(".")), "--plan", "7", "--kind", "bogus");
         assertEquals(1, exit);
     }
 }

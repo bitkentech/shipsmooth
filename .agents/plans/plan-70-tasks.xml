@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>70</plan>
+    <plan-version>plan-70-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-05</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Fix `plan tag` — repo-root CWD and first-version off-by-one</name>
+            <commit>5986683</commit>
+            <created-from>plan-70-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-05T15:55:50.403+05:30</timestamp>
+                    <message>De-risk draft ready for review (commit 74de221): GitTags now runs git in repoRoot and nextPlanVersion starts at v1. GitTagsIntegrationTest green from a foreign CWD.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-05T16:19:13.647+05:30</timestamp>
+                    <message>End-to-end verified with the rebuilt fixed image vs old 0.3.12, both launched from a repo SUBDIR (cli/): old CLI -&gt; 'failed to create tag', exit 1; fixed CLI -&gt; 'Created tag: plan-70-v2', exit 0. preflight from subdir now PASS (only local-only WARNs). Mechanism: repoRoot=Paths.get('.'); old GitTags ran git with no .directory() so the subprocess CWD was unreliable under the OpenJ9 launcher; adding .directory(workDir.toFile()) (matching GitState) fixes it. plan-70-v2 created by the fixed image at the closeout commit.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Pin the launcher module coordinate, then fix it</name>
+            <commit>d576cdc</commit>
+            <created-from>plan-70-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Repackage and verify a launchable runtime</name>
+            <commit>d576cdc</commit>
+            <created-from>plan-70-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-05T16:07:06.497+05:30</timestamp>
+                    <message>Verified end-to-end: rebuilt linux-x64 jlink image + runtime zip from fixed code (commit d576cdc). Unpacked bin/shipsmooth --help exits 0 with no FindException; launcher -m line reads io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth; runtime --list-modules shows io.bitken.ss.cli + io.bitken.ss.core. No repo files changed (zip is a build artifact).</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>needs-triage</status>
+            <name>Replace the broken installed 0.3.13 runtime</name>
+            <commit></commit>
+            <created-from>plan-70-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-05T16:08:30.440+05:30</timestamp>
+                    <message>Release deferred per human: 0.3.13 is publicly released and broken, but human directed no release this session. Re-cut-vs-0.3.14 decision and the local-install swap under ~/.cache are both deferred; no ~/.cache changes made (scope guard). The verified fix lives in the repo (commit d576cdc) and a freshly-built linux-x64 zip.</message>
+                </deviation>
+            </deviations>
+            <depends-on>3</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-05T13:15:54.794+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-05T16:11:35.242+05:30</timestamp>
+            <message>Tasks 1-3 agent-coded and verified (plan tag CWD+v1 fix, launcher coordinate fix, end-to-end repackage launches with no FindException). Task 4 deferred (needs-triage): release/local-install swap held per human direction not to release.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-05T16:26:57.581+05:30</timestamp>
+            <message>Plan complete. T1-3 closed and verified end-to-end (plan tag CWD+v1 fix, launcher io.bitken.ss.cli coordinate, repackage launches with no FindException). T4 (release/local-install swap) intentionally left needs-triage: human will release after merge.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

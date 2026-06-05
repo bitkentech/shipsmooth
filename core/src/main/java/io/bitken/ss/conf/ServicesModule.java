@@ -75,8 +75,8 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    GitTags provideGitTags() {
-        return new GitTags();
+    GitTags provideGitTags(Path repoRoot) {
+        return new GitTags(repoRoot);
     }
 
     @Provides
