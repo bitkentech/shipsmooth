@@ -34,9 +34,9 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`buildSrc` convention plugin + `settings.gradle.kts`</name>
-            <commit></commit>
+            <commit>f6802a5</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
