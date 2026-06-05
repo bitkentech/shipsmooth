@@ -1,12 +1,17 @@
-# Plan 70 — Fix the packaged runtime launcher's stale module coordinate
+# Plan 70 — Fix the packaged launcher coordinate and the broken `plan tag` command
 
 ## Context
 
-**Backlog feature (Local mode):** Release-packaging correctness — the published
-runtime zip must launch on the current module layout. No external backlog
-tracker; recorded here per Core Invariant #3.
+**Backlog feature (Local mode):** Release-packaging and workflow-CLI
+correctness — the published runtime zip must launch on the current module
+layout, and `shipsmooth plan tag` must actually create the correct version tag.
+No external backlog tracker; recorded here per Core Invariant #3.
 
-### The defect
+This plan covers two independent defects found together: (1) the packaged
+runtime launcher's stale module coordinate, and (2) the `plan tag` command
+failing to create any tag and miscomputing the first version as `v2`.
+
+## Defect A — packaged launcher's stale module coordinate
 
 The installed `runtime-0.3.13/bin/shipsmooth` launcher dies at startup with:
 
@@ -51,13 +56,50 @@ and the launcher filename — but never the `-m` module/entry-point coordinate, 
 never launches it. The `cli/pom.xml` jlink smoke tests run against the *SCC*
 launcher (which plan 68 fixed), not the *PackageRuntime* launcher.
 
-### Goal
+## Defect B — `plan tag` creates no tag and miscomputes the first version
 
-Correct the module coordinate in both `PackageRuntime` launcher builders, add a
-regression test that pins the coordinate to the image's main module so a future
-split can't silently reship the bug, and cut a corrected runtime release.
+`shipsmooth plan tag --plan N --kind version` fails for every plan:
 
-### Non-goals / invariants
+```
+$ shipsmooth plan tag --plan 70 --kind version
+ERROR: failed to create tag plan-70-v2
+```
+
+Two bugs compound here, both in `core/.../gw/GitTags.java` and its wiring:
+
+**B1 — wrong working directory (the dominant failure).** `GitTags` is the only
+git-touching gateway that runs git in the JVM's inherited CWD. Every other
+gateway is given the repo root explicitly: `ServicesModule.provideGitState`
+passes `repoRoot` to `new GitState(repoRoot)` (which runs every command with
+`.directory(workDir)`), as do `WorktreeService` and `WorkflowServiceImpl`. But
+`provideGitTags()` is `new GitTags()` with no path, and `GitTags`'s
+`ProcessBuilder("git", ...)` calls set no `.directory(...)`. When the CLI is
+invoked from any CWD that isn't the git repo root, every `GitTags` git call
+exits non-zero, so `createTag` returns false → "failed to create tag". This also
+hits `--kind complete`/`--kind abandoned`, which skip the version math entirely
+and still fail — proving the failure is in `createTag`, not the version
+computation. `GitState` already exposes the correct pattern, including
+`tagExistsLocally`/`tagExistsOnRemote`, which duplicate (and outdo) `GitTags`'s
+local-only `tagExists`.
+
+**B2 — first version computes as v2, not v1.** `getPlanVersion(N)` returns the
+default `plan-N-v1` when no tag exists; `nextPlanVersion` then *unconditionally*
+increments it, yielding `plan-N-v2` for the very first tag. The first version of
+any plan should be `v1`. This is masked by B1 today (nothing gets created at all)
+but is a real off-by-one. `PlanTagTest` never catches it because every test stubs
+`nextPlanVersion` to a constant rather than exercising the real method.
+
+## Goal
+
+**Defect A:** Correct the module coordinate in both `PackageRuntime` launcher
+builders, add a regression test pinning the coordinate to the image's main
+module, and cut a corrected runtime release.
+
+**Defect B:** Give `GitTags` the repo root so it runs git in the right directory,
+fix the first-version off-by-one, and add tests that exercise the real
+`GitTags`/`Tag` path (not a stubbed `nextPlanVersion`) so both bugs stay fixed.
+
+## Non-goals / invariants
 
 - The entry class `io.bitken.ss.cli.Shipsmooth` is unchanged — only the module
   name (`io.bitken.ss` → `io.bitken.ss.cli`) is wrong.
@@ -67,24 +109,46 @@ split can't silently reship the bug, and cut a corrected runtime release.
   launcher references the pre-*rename* module
   `com.github.pramodbiligiri.shipsmooth.tasks` and is not what built 0.3.13. It
   is out of scope here (track separately), unless trivially deletable.
+- Tag naming/semantics are unchanged: iterations are `plan-N-vK` starting at
+  `v1`; `complete`/`abandoned` are fixed names. Existing tags are never deleted.
 
 ## Tasks
 
-### Task 1: Pin the launcher module coordinate, then fix it [High]
+### Task 1: Fix `plan tag` — repo-root CWD and first-version off-by-one [High]
 
-Write a failing regression test in `PackageRuntimeTest` first: assert the packaged
-POSIX launcher (`bin/shipsmooth`) and the Windows launcher (`bin/shipsmooth.cmd`)
-both contain `-m io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth` and do **not**
-contain the bare `io.bitken.ss/` coordinate. Confirm it fails red against the
-current code. Then fix `PackageRuntime.java:107` and `:120` to emit
+Defect B. Give `GitTags` the repo root and run all its git commands in it
+(mirror `GitState`: constructor `Path workDir`, `.directory(workDir.toFile())`
+on every `ProcessBuilder`); update `ServicesModule.provideGitTags` to
+`new GitTags(repoRoot)`. Fix the first-version computation so `nextPlanVersion`
+returns `plan-N-v1` when no version tag exists (and `v{K+1}` when the highest is
+`vK`). Prefer reusing `GitState`'s existing tag-existence checks over the
+duplicate `GitTags.tagExists` if it consolidates cleanly.
+
+Write failing tests first that exercise the **real** methods (not a stubbed
+`nextPlanVersion`): in a temp git repo, `nextPlanVersion` returns `v1` with no
+tags and `v3` when `v2` is the highest; `createTag` succeeds when the CLI's
+process CWD is *not* the repo root (the condition that reproduces the live
+failure); `--kind complete` creates `plan-N-complete`. Run to green.
+
+High risk: the workflow's tagging contract (Core Invariants #1, #5) is currently
+broken — no plan can be tagged — and this is a hard dependency for tagging this
+very plan and all closeout. Touches DI wiring and the version algorithm.
+
+### Task 2: Pin the launcher module coordinate, then fix it [High]
+
+Defect A. Write a failing regression test in `PackageRuntimeTest` first: assert
+the packaged POSIX launcher (`bin/shipsmooth`) and the Windows launcher
+(`bin/shipsmooth.cmd`) both contain `-m io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth`
+and do **not** contain the bare `io.bitken.ss/` coordinate. Confirm it fails red
+against the current code. Then fix `PackageRuntime.java:107` and `:120` to emit
 `io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth`. Run to green.
 
 High risk: this is the core correctness fix that determines whether the published
 runtime launches at all; a wrong module name silently reships the broken zip.
 
-### Task 2: Repackage and verify a launchable runtime [Medium]
+### Task 3: Repackage and verify a launchable runtime [Medium]
 
-*Depends-on: 1*
+*Depends-on: 2*
 
 Rebuild the jlink image and the runtime zip from the fixed code (the existing
 `PackageRuntime` packaging path), unpack it, and verify `bin/shipsmooth --help`
@@ -95,12 +159,12 @@ reads `io.bitken.ss.cli/...`.
 Medium risk: validates the end-to-end packaging output, not just the in-memory
 string; surfaces any other coordinate drift between the image and the launcher.
 
-### Task 3: Replace the broken installed 0.3.13 runtime [Low]
+### Task 4: Replace the broken installed 0.3.13 runtime [Low]
 
-*Depends-on: 2*
+*Depends-on: 3*
 
 The broken `~/.cache/shipsmooth/runtime-0.3.13` is a local install, not a repo
-artefact. Once Task 2 produces a good zip, replace the local install (or cut the
+artefact. Once Task 3 produces a good zip, replace the local install (or cut the
 corrected release) so `shipsmooth plan resume` works again on 0.3.13. Decide with
 the human whether this ships as a re-cut 0.3.13 or a 0.3.14 (a published-but-broken
 0.3.13 normally warrants a new version). No repo files change in this task.
@@ -109,6 +173,12 @@ Low risk: local install swap / release mechanics; no product code.
 
 ## Verification
 
+- New `GitTags`/`Tag` tests run the real methods: `nextPlanVersion` → `v1` on an
+  empty repo, `v{K+1}` otherwise; `createTag` succeeds when invoked from a CWD
+  other than the repo root; `--kind complete`/`version` create tags. All red
+  before the fix.
+- `shipsmooth plan tag --plan 70 --kind version` creates `plan-70-v1` (not `v2`)
+  and exits 0, run from the repo root and from an unrelated CWD.
 - `PackageRuntimeTest` asserts both launchers carry
   `-m io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth` and not the bare
   `io.bitken.ss/` coordinate; the test failed red before the fix.
