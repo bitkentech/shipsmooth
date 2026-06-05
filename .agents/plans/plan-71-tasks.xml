@@ -40,7 +40,13 @@
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-05T22:14:20.058+05:30</timestamp>
+                    <message>Dropped JvmVendorSpec.IBM from the convention plugin: skills/pkg has no jlink/SCC/OpenJ9 dependency, so any JDK 25 suffices. Semeru pin stays relevant only for cli/packaging in a later phase.</message>
+                </deviation>
+            </deviations>
             <depends-on>2</depends-on>
         </task>
         <task>
@@ -63,12 +69,17 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>JTE staging + precompile</name>
             <commit></commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-05T22:14:56.018+05:30</timestamp>
+                    <message>De-risk draft ready (commit c5be186): stageJte + gg.jte.gradle generate mode produces 61 template classes, FQN-identical to Maven. Open question resolved (3.1.15 works on JDK 25). Dropped Semeru vendor pin.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>3</depends-on>
         </task>
