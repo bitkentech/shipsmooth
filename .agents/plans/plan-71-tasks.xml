@@ -46,12 +46,17 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Node/TS pipeline with real input tracking</name>
             <commit></commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-05T21:55:40.777+05:30</timestamp>
+                    <message>De-risk draft ready for review (commit d0b8b75): node-gradle 7.1.0 runs with system Node; compileTs UP-TO-DATE on no-op, re-runs on real .ts edit.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>3</depends-on>
         </task>
