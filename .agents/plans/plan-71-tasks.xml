@@ -177,15 +177,19 @@
         <task>
             <id>11</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>`cli` compiles against `core` (no jlink)</name>
-            <commit></commit>
+            <commit>414d7ff</commit>
             <created-from>plan-71-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
                     <timestamp>2026-06-06T00:24:55.306+05:30</timestamp>
                     <message>De-risk draft (414d7ff): cli compiles + tests green (83 tests); :cli:run --help works end-to-end against core. Fixed core JAXB api-scope so it's transitively visible to cli.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-06T00:28:07.683+05:30</timestamp>
+                    <message>Hardened (verification-only, no code changes): clean :cli:build green; coverage exact parity with Maven (688/783=87%); --help output byte-identical to Maven-built CLI. Draft commit 414d7ff is final.</message>
                 </comment>
             </comments>
             <deviations/>
