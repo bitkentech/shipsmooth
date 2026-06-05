@@ -78,3 +78,62 @@ jte {
 
 // generateJte reads the staged .jte tree, so it must run after stageJte.
 tasks.named("generateJte") { dependsOn(stageJte) }
+
+// ---------------------------------------------------------------------------
+// Render targets (replacing the Maven dev / gemini-dev profiles).
+//
+// Each target is a JavaExec running io.bitken.ss.resources.Target with a full
+// RenderSpec tuple. Modelling the variables as one RenderSpec (in buildSrc)
+// keeps the two targets from drifting — the proposal's #1 correctness risk.
+// ---------------------------------------------------------------------------
+
+// plugin.version mirrors Maven's @project.version@. Sourced from a gradle
+// property so it stays in lockstep with the Maven <version> (0.3.14).
+val pluginVersion = (findProperty("plugin.version") as String?)
+    ?: error("plugin.version must be set (gradle.properties) to match the Maven project version")
+// This build's root project IS skills/pkg, so the repo root is two levels up
+// (skills/pkg -> skills -> repo root), not one.
+val repoRoot = layout.projectDirectory.dir("../..")
+val jlinkDir = repoRoot.dir("cli/target/jlink-image").asFile.path
+
+val claudeDevSpec = RenderSpec(
+    buildPlatform = "claude",
+    buildOs = "posix",
+    buildEnv = "dev",
+    pluginBaseName = "shipsmooth",
+    pluginVersion = pluginVersion,
+    pluginDescription = "Agent coding workflow (dev build)",
+    pluginSkillStartBasename = "start",
+    skillFrontmatter = "",
+    jlinkDir = jlinkDir,
+    pluginRepoName = "shipsmooth",
+    outputDir = layout.buildDirectory.dir("render/claude-dev").get().asFile.path,
+    experimentalEnabled = true,
+    pluginHookCommand = "node \"\${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"",
+)
+
+val geminiDevSpec = claudeDevSpec.copy(
+    buildPlatform = "gemini",
+    skillFrontmatter = """
+        ---
+        name: start-dev
+        description: Use when starting any task — applies the shipsmooth agent coding workflow (dev build).
+        ---
+    """.trimIndent(),
+    outputDir = layout.buildDirectory.dir("render/gemini-dev").get().asFile.path,
+    pluginHookCommand = "node \"\${extensionPath}/dist/session-start.js\"",
+)
+
+fun registerRender(taskName: String, spec: RenderSpec) =
+    tasks.register<JavaExec>(taskName) {
+        group = "render"
+        description = "Render the ${spec.buildPlatform}-${spec.buildEnv} plugin variant via Target."
+        dependsOn(tasks.named("compileJava"), compileTs)
+        classpath = sourceSets["main"].runtimeClasspath
+        mainClass.set("io.bitken.ss.resources.Target")
+        systemProperties(spec.systemProperties())
+        outputs.dir(spec.outputDir)
+    }
+
+val renderClaudeDev = registerRender("renderClaudeDev", claudeDevSpec)
+val renderGeminiDev = registerRender("renderGeminiDev", geminiDevSpec)
