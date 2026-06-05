@@ -149,14 +149,20 @@
         </task>
         <task>
             <id>10</id>
-            <risk>medium</risk>
+            <risk>high</risk>
             <status>pending</status>
             <name>`core` compiles (no codegen, no shade)</name>
             <commit></commit>
             <created-from>plan-71-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-05T23:56:18.013+05:30</timestamp>
+                    <message>Absorbed former Task 12 (core codegen): JAXB xjc + Dagger APT + Build constants. core can't compile without generated types, so compile/codegen split was artificial. Risk raised Medium-&gt;High. (plan-71-v3)</message>
+                </deviation>
+            </deviations>
             <depends-on>9</depends-on>
         </task>
         <task>
@@ -174,13 +180,19 @@
         <task>
             <id>12</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>`core` codegen — JAXB xjc, Dagger APT, `Build` constants</name>
             <commit></commit>
             <created-from>plan-71-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-05T23:56:18.529+05:30</timestamp>
+                    <message>Retired: merged into Task 10 at plan-71-v3. Number kept stable to avoid shifting downstream dependency references.</message>
+                </deviation>
+            </deviations>
             <depends-on>10</depends-on>
         </task>
         <task>
