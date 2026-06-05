@@ -2,7 +2,7 @@
 
 > **Status:** Trial complete. This records the objective outcome of porting
 > `skills/pkg` to Gradle on the throwaway branch `t/71-gradle-skills-trial`, as
-> the go/no-go gate defined in [`build-migrate.md`](build-migrate.md) §"Migration
+> the go/no-go gate defined in [`build-migrate.md`](../proposals/build-migrate.md) §"Migration
 > path and sequence", Phase 0. The final go/no-go decision is the human's; this
 > document gives the evidence and a recommendation.
 

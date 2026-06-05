@@ -121,7 +121,13 @@
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-05T22:46:13.983+05:30</timestamp>
+                    <message>Trial-result doc moved to docs/observations/ (plan-71.md text says docs/proposals/). Human-requested relocation; fixed the relative link to ../proposals/build-migrate.md. Plan file not edited per contract.</message>
+                </deviation>
+            </deviations>
             <depends-on>6,7</depends-on>
         </task>
     </tasks>
