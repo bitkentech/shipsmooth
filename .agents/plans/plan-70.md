@@ -82,6 +82,13 @@ computation. `GitState` already exposes the correct pattern, including
 `tagExistsLocally`/`tagExistsOnRemote`, which duplicate (and outdo) `GitTags`'s
 local-only `tagExists`.
 
+The same CWD fragility breaks `plan preflight`: it calls
+`gitTags.getPlanVersion(plan)` (CWD-fragile) to discover the version tag before
+checking it with `gitState.tagExistsLocally`, so preflight reports
+`FAIL: version tag plan-N-v1 not found locally` even when the tag exists. Any
+command that routes through `GitTags` inherits the bug. Fixing `GitTags` to use
+`repoRoot` fixes `tag`, `preflight`, and any other consumer at once.
+
 **B2 — first version computes as v2, not v1.** `getPlanVersion(N)` returns the
 default `plan-N-v1` when no tag exists; `nextPlanVersion` then *unconditionally*
 increments it, yielding `plan-N-v2` for the very first tag. The first version of
@@ -179,6 +186,9 @@ Low risk: local install swap / release mechanics; no product code.
   before the fix.
 - `shipsmooth plan tag --plan 70 --kind version` creates `plan-70-v1` (not `v2`)
   and exits 0, run from the repo root and from an unrelated CWD.
+- `shipsmooth plan preflight --plan 70` passes (no false "version tag not found
+  locally") once the tag exists, confirming the `GitTags` CWD fix reaches
+  preflight too.
 - `PackageRuntimeTest` asserts both launchers carry
   `-m io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth` and not the bare
   `io.bitken.ss/` coordinate; the test failed red before the fix.
