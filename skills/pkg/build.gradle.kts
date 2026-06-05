@@ -56,12 +56,13 @@ val compileTs by tasks.registering(NpmTask::class) {
 // (e.g. "start/SKILL.jte") and the gg.jte.generated.precompiled.* packages
 // match the Maven output.
 val skillsDir = layout.projectDirectory.dir("..") // skills/pkg -> skills/
+val jteSrcDir = layout.buildDirectory.dir("jte-src") // single source of truth
 val stageJte by tasks.registering(Copy::class) {
     listOf("start", "experimental", "shared").forEach { dir ->
         from(skillsDir.dir(dir)) { into(dir) }
     }
     rename("(.*)\\.jte\\.md", "$1.jte")
-    into(layout.buildDirectory.dir("jte-src"))
+    into(jteSrcDir)
 }
 
 jte {
@@ -69,7 +70,8 @@ jte {
     // main source set's compileJava — mirroring the Maven jte-maven-plugin
     // `generate` goal + build-helper add-source (so the generated artifacts and
     // gg.jte.generated.precompiled.* packages match the Maven output for parity).
-    sourceDirectory.set(layout.buildDirectory.dir("jte-src").get().asFile.toPath())
+    // Resolve the staged dir lazily (provider) rather than eagerly at config time.
+    sourceDirectory.set(jteSrcDir.map { it.asFile.toPath() })
     contentType.set(gg.jte.ContentType.Plain)
     generate()
 }
