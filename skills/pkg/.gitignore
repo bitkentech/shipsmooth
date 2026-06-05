@@ -3,3 +3,6 @@
 build/
 buildSrc/.gradle/
 buildSrc/build/
+# JTE plugin's default precompile target dir (unused now — we use generate mode
+# into build/generated-sources — but guard against it being recreated).
+jte-classes/

@@ -16,9 +16,10 @@ repositories {
 
 java {
     toolchain {
-        // Semeru/OpenJ9 25 at /opt/installers/jdk-semeru/jdk-25.0.2+10.
+        // JDK 25, any vendor. skills/pkg only renders JTE templates and runs
+        // tests — it has no jlink/SCC/OpenJ9 dependency, so the Semeru vendor
+        // pin (needed by cli/packaging) would only over-constrain Phase 0.
         languageVersion.set(JavaLanguageVersion.of(25))
-        vendor.set(JvmVendorSpec.IBM)
     }
 }
 
