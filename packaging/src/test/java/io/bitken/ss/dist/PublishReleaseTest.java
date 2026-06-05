@@ -94,6 +94,19 @@ public class PublishReleaseTest {
         assertDoesNotThrow(() -> PublishRelease.maybeValidateBuildOutput(tempDir, true));
     }
 
+    // Guards against re-introducing the pre-jlink Node-distribution payload.
+    // The release once copied build/scripts and build/package.json, which the
+    // restructured build no longer emits — causing the v0.3.14 release to fail.
+    @Test
+    void shippedBuildSubpathsExcludeObsoleteNodeArtifacts() {
+        assertEquals(List.of(".claude-plugin", "hooks", "dist", "skills"),
+                PublishRelease.SHIPPED_BUILD_SUBPATHS);
+        assertFalse(PublishRelease.SHIPPED_BUILD_SUBPATHS.contains("scripts"),
+                "build/scripts is no longer produced by the jlink build");
+        assertFalse(PublishRelease.SHIPPED_BUILD_SUBPATHS.contains("package.json"),
+                "build/package.json is no longer produced by the jlink build");
+    }
+
     @Test
     void validateBuildOutputPassesOnCleanManifests() throws IOException {
         Path claudePlugin = tempDir.resolve(".claude-plugin");

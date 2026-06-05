@@ -8,6 +8,16 @@ import java.util.List;
 
 public class PublishRelease {
 
+    /**
+     * The {@code build/} subdirectories copied into the {@code releases}-branch
+     * {@code dist/} payload. The jlink-runtime restructure (plans 68/69) replaced
+     * the shipped Node CLI, so the build no longer emits {@code scripts/} or
+     * {@code package.json} (the SessionStart hook runs {@code dist/session-start.js}
+     * directly). Keep this in sync with the build output.
+     */
+    static final List<String> SHIPPED_BUILD_SUBPATHS =
+            List.of(".claude-plugin", "hooks", "dist", "skills");
+
     private final String version;
     private final Path repoRoot;
     private final Path linuxJdkHome;
@@ -178,12 +188,9 @@ public class PublishRelease {
         Files.createDirectories(distDir);
 
         Path buildDir = repoRoot.resolve("build");
-        copyRecursive(buildDir.resolve(".claude-plugin"), distDir.resolve(".claude-plugin"));
-        copyRecursive(buildDir.resolve("hooks"),         distDir.resolve("hooks"));
-        copyRecursive(buildDir.resolve("dist"),          distDir.resolve("dist"));
-        copyRecursive(buildDir.resolve("scripts"),       distDir.resolve("scripts"));
-        copyRecursive(buildDir.resolve("skills"),        distDir.resolve("skills"));
-        Files.copy(buildDir.resolve("package.json"), distDir.resolve("package.json"), StandardCopyOption.REPLACE_EXISTING);
+        for (String sub : SHIPPED_BUILD_SUBPATHS) {
+            copyRecursive(buildDir.resolve(sub), distDir.resolve(sub));
+        }
 
         git("add", "dist/");
         git("commit", "-m", "release: v" + version);
