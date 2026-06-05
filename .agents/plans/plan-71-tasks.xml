@@ -86,12 +86,17 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>`Target` render variant tasks</name>
             <commit></commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-05T22:28:36.086+05:30</timestamp>
+                    <message>De-risk draft (2ab11cd): RenderSpec + renderClaudeDev/renderGeminiDev. claude-dev byte-identical to mvn -Pdev (6/6 files). Parity diff caught + fixed 2 wiring bugs (version, repo-root).</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>4,5</depends-on>
         </task>
