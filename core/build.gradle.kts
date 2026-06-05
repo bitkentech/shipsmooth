@@ -82,13 +82,18 @@ if (project.hasProperty("jlinkBuild")) {
 
     // Shadow strips module-info.class; restore it from the compiled classes using
     // the Semeru jar, so core stays a named JPMS module on the jlink module path.
+    // The task mutates shadowJar's output in place (jar --update), so a stamp file
+    // is used as the declared output for up-to-date tracking — re-running only when
+    // the shaded jar or the compiled module-info actually change.
     val reinjectModuleInfo by tasks.registering(Exec::class) {
         dependsOn("shadowJar")
         val shadedJar = tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar")
             .flatMap { it.archiveFile }
         val classesDir = layout.buildDirectory.dir("classes/java/main")
+        val stamp = layout.buildDirectory.file("tmp/reinjectModuleInfo.stamp")
         inputs.file(shadedJar)
-        inputs.dir(classesDir)
+        inputs.file(classesDir.map { it.file("module-info.class") })
+        outputs.file(stamp)
         workingDir(classesDir)
         commandLine(
             "$semeruHome/bin/jar",
@@ -96,6 +101,7 @@ if (project.hasProperty("jlinkBuild")) {
             "--file=${shadedJar.get().asFile.absolutePath}",
             "module-info.class",
         )
+        doLast { stamp.get().asFile.writeText("reinjected\n") }
     }
 
     tasks.named("assemble") { dependsOn(reinjectModuleInfo) }
