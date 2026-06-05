@@ -23,3 +23,9 @@ model/states/
 .idea/
 .serena/
 **/*.iml
+# Gradle (plan-71 migration): transient build state. build/ already ignored above.
+.gradle/
+**/.gradle/
+buildSrc/build/
+# JTE plugin's default precompile dir (we use generate mode into build/).
+**/jte-classes/
