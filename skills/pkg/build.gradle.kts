@@ -129,9 +129,19 @@ fun registerRender(taskName: String, spec: RenderSpec) =
         group = "render"
         description = "Render the ${spec.buildPlatform}-${spec.buildEnv} plugin variant via Target."
         dependsOn(tasks.named("compileJava"), compileTs)
-        classpath = sourceSets["main"].runtimeClasspath
+
+        val runtimeClasspath = sourceSets["main"].runtimeClasspath
+        classpath = runtimeClasspath
         mainClass.set("io.bitken.ss.resources.Target")
         systemProperties(spec.systemProperties())
+
+        // Inputs: the render is a pure function of (a) the RenderSpec tuple and
+        // (b) the runtime classpath — which carries the compiled JTE template
+        // classes, so a .jte.md edit (-> stageJte -> generateJte -> compileJava)
+        // busts this task. With these declared, an unchanged render is
+        // UP-TO-DATE instead of re-running every invocation.
+        spec.systemProperties().forEach { (key, value) -> inputs.property(key, value) }
+        inputs.files(runtimeClasspath).withNormalizer(ClasspathNormalizer::class.java)
         outputs.dir(spec.outputDir)
     }
 
