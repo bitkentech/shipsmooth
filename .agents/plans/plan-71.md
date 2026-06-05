@@ -1,4 +1,4 @@
-# Plan 71 — Gradle Skills Trial (`skills/pkg`)
+# Plan 71 — Maven→Gradle Migration (skills trial + full reactor)
 
 ## Context
 
@@ -8,9 +8,16 @@ best-case module (highest upside, lowest risk). If Gradle doesn't feel clearly b
 there, abandon the migration entirely — `cli`/`core`/`packaging` have less upside and
 far more risk.
 
-This plan is **Phase 0** of that sequence: port `skills/pkg` to Gradle on a throwaway
-branch and develop against it for real. Verify `build/` output matches `mvn compile`
-once (parity sanity check), then judge whether the loop actually feels better.
+**v1 (Tasks 1–8) was Phase 0**: port `skills/pkg` to Gradle on a throwaway branch and
+develop against it for real. Outcome (see `docs/observations/build-migrate-trial-result.md`):
+byte-for-byte parity on both render variants, real dev-loop incrementality, all tests
+green. Trial passed.
+
+**v2 (Tasks 9+) expands scope to the full migration.** Following an explicit Go
+decision, this plan now also covers Phases 1–5 from the proposal: structure, codegen
+parity, jlink + dagger-shade, assembly/release, and cutover. The `t/71-gradle-skills-trial`
+branch is no longer throwaway — it is the migration branch. This is a scope pivot, hence
+the version bump to `plan-71-v2`.
 
 Backlog feature: tracked in plan narrative only (no separate Linear issue — Local mode).
 
@@ -27,11 +34,20 @@ Backlog feature: tracked in plan narrative only (no separate Linear issue — Lo
 
 ## Scope
 
-- **In scope:** `skills/pkg/build.gradle.kts`, `buildSrc` convention plugin (Semeru 25
-  toolchain), `settings.gradle.kts` for the `skills` sub-project only.
-- **Out of scope:** `core`, `cli`, `packaging`, `claude`, `gemini`, `devtools` — these
-  are not touched until/unless Phase 0 passes.
-- The existing `pom.xml` files are **not deleted** until parity is confirmed.
+**v1 (Phase 0, Tasks 1–8) — done:** `skills/pkg` only.
+
+**v2 (Phases 1–5, Tasks 9+) — full reactor:**
+- **In scope:** root `settings.gradle.kts` (all 7 modules), full `buildSrc` conventions,
+  and a `build.gradle.kts` for each of `core`, `cli`, `packaging`, `claude`, `gemini`,
+  `devtools` — reproducing JAXB `xjc`, Dagger APT + shade, the templated `Build`
+  constants, the 5-platform jlink images, the OpenJ9 SCC launcher, and the
+  `ValidateRelease`/`PackageRuntime`/`PublishRelease` entrypoints.
+- **Parity is the acceptance test** (Core Invariant in the proposal): every phase must
+  produce byte- or behaviour-equivalent output vs Maven, diffed before sign-off.
+- The existing `pom.xml` files are **not deleted** until full parity is confirmed across
+  all four payloads — deletion is the final cutover task only.
+- **Semeru vendor pin returns for `core`/`cli`:** unlike `skills/pkg`, these need OpenJ9
+  (SCC, `zip-9` jlink), so the toolchain must resolve Semeru 25 specifically.
 
 ## Key facts from the proposal
 
@@ -183,3 +199,141 @@ Record the subjective judgement: is the Gradle loop clearly better?
 
 Acceptance: diff is empty or only contains known-acceptable differences (timestamps,
 auto-generated comments). Go/no-go decision recorded in the note.
+
+---
+
+## v2 — Full migration (Phases 1–5)
+
+Tasks below were added at `plan-71-v2` after the Phase 0 trial passed. Each phase is
+parity-gated: diff Gradle output against Maven before marking the task done. The
+`pom.xml` files stay until Task 17.
+
+**Ordering note:** these are NOT pure risk-sorted because the phases form a hard
+dependency chain (you cannot shade `core` before `core` compiles, etc.). Per the
+workflow's dependency-over-risk exception, the phase sequence is preserved. Risk levels
+(High tasks get the De-risk & Harden cycle): 9/10/11 Medium, 12 High, 13/14 High, 15 Low,
+16/17 High.
+
+### Phase 1 — Structure
+
+### Task 9: Root `settings.gradle.kts` + full `buildSrc` for the reactor [Medium]
+
+*Depends-on: 8*
+
+Promote the `skills/pkg`-scoped `settings.gradle.kts` to a **root** one including all
+seven modules (`core`, `cli`, `skills:pkg`, `claude`, `gemini`, `packaging`, `devtools`).
+Move `buildSrc` to the repo root. Reinstate the **Semeru vendor pin** in the convention
+plugin (required by `core`/`cli` for SCC + `zip-9` jlink) — but keep a `skills/pkg`
+override or vendor-agnostic path so the skills build still works on any JDK 25.
+
+This is structural only: no module compiles yet beyond skills.
+
+Acceptance: `./gradlew projects` lists all seven modules and resolves the Semeru
+toolchain; `./gradlew :skills:pkg:test` still green after the relocation.
+
+### Task 10: `core` compiles (no codegen, no shade) [Medium]
+
+*Depends-on: 9*
+
+Stand up `core/build.gradle.kts` with picocli/jackson/jakarta deps and the
+`shipsmooth.java-conventions` plugin, compiling the hand-written `io.bitken.ss.core`
+sources only (codegen stubbed/committed-in temporarily if needed to get a clean
+`compileJava`). Tests on the classpath (`useModulePath=false`).
+
+Acceptance: `./gradlew :core:compileJava` succeeds for the non-generated sources.
+
+### Task 11: `cli` compiles against `core` (no jlink) [Medium]
+
+*Depends-on: 10*
+
+`cli/build.gradle.kts` with `implementation(project(":core"))` + picocli; apply the
+`application` plugin. No jlink yet — just a working `compileJava` + `test`.
+
+Acceptance: `./gradlew :cli:test` green; `./gradlew :cli:run --args="--help"` prints
+usage.
+
+### Phase 2 — Codegen parity
+
+### Task 12: `core` codegen — JAXB xjc, Dagger APT, `Build` constants [High]
+
+*Depends-on: 10*
+
+Reproduce the three Maven codegen steps in Gradle:
+- JAXB `xjc` from `core/src/main/resources/plan-tasks.xsd` → `io.bitken.ss.jaxb`
+  (via the `com.github.bjornvester.xjc` plugin or an `xjc` JavaExec).
+- Dagger annotation processing (`annotationProcessor` dep) generating
+  `DaggerAppComponents` into `core`.
+- The templated `Build` source (`VERSION`, `EXPERIMENTAL_BUILD`) — a `Copy`+`expand`
+  task replacing `templating-maven-plugin`, wired into the main source set.
+
+Acceptance: `diff` Gradle-generated sources against the Maven `target/generated-sources`
+output — same packages, same `Build` constants; `./gradlew :core:test` green.
+
+### Phase 3 — jlink + shade (highest risk)
+
+### Task 13: Conditional Dagger shade + `module-info` re-injection [High]
+
+*Depends-on: 12*
+
+Under a `-PjlinkBuild` flag, shade `com.google.dagger:dagger` + `jakarta.inject` into the
+`core` jar (Shadow plugin), strip `META-INF/*.SF|DSA|RSA`, then **re-inject
+`module-info.class`** with the Semeru `jar --update` (Shadow strips it; `core` must stay a
+named module). This is the single highest-risk item in the migration.
+
+Acceptance: the shaded `core` jar is a named JPMS module (`jar --describe-module` shows
+`io.bitken.ss.core`) and contains `dagger.internal.*`; tests still pass on the classpath.
+
+### Task 14: 5-platform jlink images + SCC launcher + smoke tests [High]
+
+*Depends-on: 13*
+
+Port the `cli` jlink profile: the hand-pinned ~16-jar runtime module-path (verbatim from
+`cli/pom.xml`, including the *shaded* core jar in place of the plain one), `--add-modules
+io.bitken.ss.cli,openj9.sharedclasses`, `--compress zip-9`, `--launcher`, for all five
+platforms (linux-x64, darwin-x64, darwin-arm64, windows-x64 + the JRE variant). Emit the
+OpenJ9 SCC launcher (`-Xquickstart -Xshareclasses`). Reproduce the `verify`-phase smoke
+tests that run **through** the launcher from the repo root.
+
+Acceptance: `./gradlew :cli:jlinkImage_linux-x64` produces an image whose contents match
+the Maven image (module set + launcher); the SCC smoke tests (`--help`, `plan show
+--plan 27`) pass through the launcher.
+
+### Phase 4 — Assembly + release
+
+### Task 15: `claude`/`gemini` manifest filtering [Low]
+
+*Depends-on: 11*
+
+Replace the `maven-resources-plugin` filtering in `claude` and `gemini` with `Copy` +
+`expand()` tasks (mind JSON brace escaping). `claude` filters `.claude-plugin/*` +
+`marketplace.json`; `gemini` filters `gemini-extension.json` + copies `commands/`
+(distinct source for `gemini` vs `gemini-dev`).
+
+Acceptance: filtered manifests are byte-identical to the Maven `target/` output for both
+the prod and dev variants.
+
+### Task 16: `packaging` assembly + release entrypoints [High]
+
+*Depends-on: 14, 15*
+
+Port `packaging`: `copy-dist` (compiled JS minus `*.test.js`), then `JavaExec` tasks for
+`ValidateRelease`, `PackageRuntime` (per platform: linux-x64, darwin-x64, darwin-arm64,
+win32-x64), and `PublishRelease`. The dev "verify jlink image exists" guard becomes a task
+precondition. These stay `JavaExec`-with-args (no type-safety gain — parity only).
+
+Acceptance: a dry-run `PackageRuntime` for linux-x64 produces a `runtime-<ver>/` payload
+byte/behaviour-equivalent to the Maven output; `ValidateRelease` passes on it.
+
+### Phase 5 — Cutover
+
+### Task 17: Full parity sign-off + remove `pom.xml` files [High]
+
+*Depends-on: 16*
+
+Diff **all four payloads** (`build/`, `build-gemini/`, `build-windows/`, `runtime-<ver>/`)
+Gradle vs Maven on a clean tree. Update `DEVELOPMENT.md`, `devtools/scripts/smoke-gemini.sh`,
+and any CI to Gradle tasks. **Only after sign-off**, remove the seven `pom.xml` files in a
+single cutover commit. Tag the result.
+
+Acceptance: all four payloads parity-clean; no remaining `mvn` invocation in docs/scripts;
+`./gradlew build` green from a clean checkout with no `pom.xml` present.
