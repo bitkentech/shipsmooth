@@ -264,13 +264,19 @@
         <task>
             <id>15</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`claude`/`gemini` manifest filtering</name>
-            <commit></commit>
+            <commit>6519b81</commit>
             <created-from>plan-71-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-06T01:15:56.162+05:30</timestamp>
+                    <message>Beyond porting: fixed a latent bug found via parity diff — Maven gemini-prod profile missing &lt;plugin.name&gt;, shipping literal ${plugin.name}. Fixed in both pom.xml and Gradle (user-directed). All 4 variants now byte-identical.</message>
+                </deviation>
+            </deviations>
             <depends-on>11</depends-on>
         </task>
         <task>
