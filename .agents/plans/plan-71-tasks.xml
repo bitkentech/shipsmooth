@@ -133,9 +133,9 @@
         <task>
             <id>9</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Root `settings.gradle.kts` + full `buildSrc` for the reactor</name>
-            <commit></commit>
+            <commit>9c8f230</commit>
             <created-from>plan-71-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments>
