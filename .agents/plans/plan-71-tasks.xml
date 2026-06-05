@@ -133,12 +133,17 @@
         <task>
             <id>9</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Root `settings.gradle.kts` + full `buildSrc` for the reactor</name>
             <commit></commit>
             <created-from>plan-71-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-05T23:38:51.489+05:30</timestamp>
+                    <message>De-risk draft (548999b): buildSrc/wrapper/settings relocated to root; :skills:pkg builds + tests green as subproject. Fixed bytecode to Java 21 (--release) for Maven parity; Semeru confirmed jlink-only, not compile toolchain.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>8</depends-on>
         </task>
