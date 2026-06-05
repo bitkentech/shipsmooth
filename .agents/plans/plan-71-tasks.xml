@@ -46,9 +46,9 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Node/TS pipeline with real input tracking</name>
-            <commit></commit>
+            <commit>2c0ea7c</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
