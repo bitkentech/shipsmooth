@@ -35,7 +35,9 @@ public class Shipsmooth {
 
     public static void main(String[] args) {
         AppComponents app = DaggerAppComponents.builder()
-            .servicesModule(new ServicesModule(Paths.get("."), ExperimentalModeParser.fromArgs(args)))
+            .servicesModule(new ServicesModule(
+                RepoRootResolver.resolve(Paths.get(".")),
+                ExperimentalModeParser.fromArgs(args)))
             .build();
 
         int exitCode = new Shipsmooth(app, args).execute();
