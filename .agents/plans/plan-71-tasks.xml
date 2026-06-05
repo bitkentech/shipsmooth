@@ -22,9 +22,9 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add `plan branch --plan` for Local mode</name>
-            <commit></commit>
+            <commit>23508bb</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
