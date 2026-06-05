@@ -115,9 +115,9 @@
         <task>
             <id>8</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Parity verification + go/no-go judgement</name>
-            <commit></commit>
+            <commit>83d662f</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
