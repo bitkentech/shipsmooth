@@ -6,16 +6,25 @@ import java.io.InputStreamReader;
 import java.nio.file.Path;
 
 /**
- * Resolves the git repo root by running {@code git rev-parse --show-toplevel}
- * from the given directory. Falls back to the given directory if git is
- * unavailable or the directory is not inside a git repo.
+ * The root directory of the git repository containing {@code startDir}.
+ * Falls back to {@code startDir} when git is unavailable or not in a repo.
  */
-class RepoRootResolver {
+class RepoRoot {
 
-    static Path resolve(Path fromDir) {
+    private final Path root;
+
+    RepoRoot(Path startDir) {
+        this.root = resolve(startDir);
+    }
+
+    Path path() {
+        return root;
+    }
+
+    private static Path resolve(Path startDir) {
         try {
             Process p = new ProcessBuilder("git", "rev-parse", "--show-toplevel")
-                    .directory(fromDir.toFile())
+                    .directory(startDir.toFile())
                     .redirectErrorStream(true)
                     .start();
             try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
@@ -28,6 +37,6 @@ class RepoRootResolver {
         } catch (IOException | InterruptedException e) {
             if (e instanceof InterruptedException) Thread.currentThread().interrupt();
         }
-        return fromDir;
+        return startDir;
     }
 }
