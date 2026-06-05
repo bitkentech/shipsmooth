@@ -104,7 +104,7 @@ public class PackageRuntime {
              + "\"%INSTALL%\\runtime\\bin\\" + os.javaExe() + "\" ^\r\n"
              + "  -Xquickstart ^\r\n"
              + "  -Xshareclasses:name=shipsmooth_v" + version + ",cacheDir=\"%SCC_DIR%\",nonfatal ^\r\n"
-             + "  -m io.bitken.ss/io.bitken.ss.cli.Shipsmooth %*\r\n";
+             + "  -m io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth %*\r\n";
     }
 
     private String buildPosixLauncher() {
@@ -117,7 +117,7 @@ public class PackageRuntime {
                 exec "$INSTALL/runtime/bin/%s" \\
                   -Xquickstart \\
                   -Xshareclasses:name=shipsmooth_v%s,cacheDir="$SCC_DIR",nonfatal \\
-                  -m io.bitken.ss/io.bitken.ss.cli.Shipsmooth "$@"
+                  -m io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth "$@"
                 """.formatted(os.javaExe(), version);
     }
 }
