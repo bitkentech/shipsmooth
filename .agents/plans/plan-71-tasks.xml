@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Fix `repoRoot` resolved from `Paths.get(".")`</name>
-            <commit></commit>
+            <commit>0b061d4</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
