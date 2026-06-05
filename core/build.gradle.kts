@@ -67,6 +67,8 @@ if (project.hasProperty("jlinkBuild")) {
     val semeruHome = (findProperty("jlink.exec.home") as String?)
         ?: "/opt/installers/jdk-semeru/jdk-25.0.2+10"
 
+    val classesDir = layout.buildDirectory.dir("classes/java/main")
+
     tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
         // Replace the plain core jar (no classifier) so the jlink module path
         // picks up the shaded jar in its place, exactly as Maven does.
@@ -80,20 +82,17 @@ if (project.hasProperty("jlinkBuild")) {
         exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
     }
 
-    // Shadow strips module-info.class; restore it from the compiled classes using
-    // the Semeru jar, so core stays a named JPMS module on the jlink module path.
-    // The task mutates shadowJar's output in place (jar --update), so a stamp file
-    // is used as the declared output for up-to-date tracking — re-running only when
-    // the shaded jar or the compiled module-info actually change.
+    // Shadow strips module-info.class; restore it from the compiled classes with
+    // the Semeru jar so core stays a named JPMS module on the jlink module path.
+    // The shaded jar is declared as this task's OUTPUT (the task updates it in
+    // place): when shadowJar reruns and replaces the jar, Gradle sees the output
+    // changed out from under it and re-runs the re-injection — no stale stamp.
     val reinjectModuleInfo by tasks.registering(Exec::class) {
         dependsOn("shadowJar")
         val shadedJar = tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar")
             .flatMap { it.archiveFile }
-        val classesDir = layout.buildDirectory.dir("classes/java/main")
-        val stamp = layout.buildDirectory.file("tmp/reinjectModuleInfo.stamp")
-        inputs.file(shadedJar)
         inputs.file(classesDir.map { it.file("module-info.class") })
-        outputs.file(stamp)
+        outputs.file(shadedJar)
         workingDir(classesDir)
         commandLine(
             "$semeruHome/bin/jar",
@@ -101,7 +100,6 @@ if (project.hasProperty("jlinkBuild")) {
             "--file=${shadedJar.get().asFile.absolutePath}",
             "module-info.class",
         )
-        doLast { stamp.get().asFile.writeText("reinjected\n") }
     }
 
     tasks.named("assemble") { dependsOn(reinjectModuleInfo) }
