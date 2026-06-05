@@ -86,9 +86,9 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>`Target` render variant tasks</name>
-            <commit></commit>
+            <commit>4eaa00e</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
