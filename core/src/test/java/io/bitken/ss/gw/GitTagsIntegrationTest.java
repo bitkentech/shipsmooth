@@ -35,17 +35,7 @@ public class GitTagsIntegrationTest {
         Files.writeString(repoDir.resolve("README.md"), "init");
         git("add", ".");
         git("commit", "-m", "init");
-        gitTags = newGitTags(repoDir);
-    }
-
-    /**
-     * Constructs a {@code GitTags} bound to {@code workDir}. Until Task 1 lands
-     * the repo-root constructor, this falls back to the no-arg constructor so
-     * the test compiles and fails red on behavior (CWD bug), not on a missing
-     * symbol. After the fix, replace the body with {@code new GitTags(workDir)}.
-     */
-    private static GitTags newGitTags(Path workDir) {
-        return new GitTags();
+        gitTags = new GitTags(repoDir);
     }
 
     @Test

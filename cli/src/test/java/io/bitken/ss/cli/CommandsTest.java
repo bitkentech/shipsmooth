@@ -60,14 +60,14 @@ public class CommandsTest {
     @Test
     public void testInitCommand() {
         xmlFile.delete();
-        int exitCode = new CommandLine(new Init(planService, xmlService, new GitTags(), new ExperimentalMode(false)).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
+        int exitCode = new CommandLine(new Init(planService, xmlService, new GitTags(java.nio.file.Paths.get(".")), new ExperimentalMode(false)).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
         assertEquals(0, exitCode);
         assertTrue(xmlFile.exists());
     }
 
     @Test
     public void testInitCommandFileNotFound() {
-        int exitCode = new CommandLine(new Init(planService, xmlService, new GitTags(), new ExperimentalMode(false)).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", "non-existent.md");
+        int exitCode = new CommandLine(new Init(planService, xmlService, new GitTags(java.nio.file.Paths.get(".")), new ExperimentalMode(false)).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", "non-existent.md");
         assertEquals(1, exitCode);
     }
 
