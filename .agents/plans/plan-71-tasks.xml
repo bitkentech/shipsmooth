@@ -282,12 +282,17 @@
         <task>
             <id>16</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>`packaging` assembly + release entrypoints</name>
             <commit></commit>
             <created-from>plan-71-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T01:35:39.519+05:30</timestamp>
+                    <message>De-risk draft (72af949): packageRuntime_linux-x64 zip structurally identical to Maven (163 entries); ValidateRelease passes on prod manifests. 4 platform tasks + copyDist wired. PublishRelease wired-only (never run). PackageRuntime.main path-hardcoding handled via image staging (Java untouched).</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>14,15</depends-on>
         </task>
