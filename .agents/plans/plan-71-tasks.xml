@@ -243,15 +243,19 @@
         <task>
             <id>14</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>5-platform jlink images + SCC launcher + smoke tests</name>
-            <commit></commit>
+            <commit>d3efd18</commit>
             <created-from>plan-71-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
                     <timestamp>2026-06-06T00:54:54.259+05:30</timestamp>
                     <message>De-risk draft (d3efd18): linux jlink image builds + runs (--help works, correct modules); SCC smoke tests pass (plan show --plan 27 renders real output through SCC JRE). 4 platform tasks wired. Also fixed a latent Task 13 stamp-ordering bug that broke core module resolution.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-06T01:02:57.464+05:30</timestamp>
+                    <message>Hardened (verification-only): all 4 platform images build (correct modules via release file); clean-from-scratch full jlink build green (4 images + 2 smoke tests); Maven parity confirmed — module sets + dir structure identical, plan show --plan 27 byte-identical through both Gradle &amp; Maven images. Draft d3efd18 is final.</message>
                 </comment>
             </comments>
             <deviations/>
