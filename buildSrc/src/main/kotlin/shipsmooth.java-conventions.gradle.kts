@@ -57,11 +57,19 @@ tasks.named<JacocoReport>("jacocoTestReport") {
         xml.required.set(true)
         html.required.set(true)
     }
-    // Exclude the JTE-generated template classes — they are generated code, not
-    // hand-written logic, so measuring their coverage only dilutes the number.
+    // Exclude generated code (JTE templates, JAXB classes, Dagger components, the
+    // Build constants) — these are generated, not hand-written logic, so measuring
+    // their coverage only dilutes the number.
     classDirectories.setFrom(
         classDirectories.files.map { dir ->
-            fileTree(dir) { exclude("gg/jte/generated/**") }
+            fileTree(dir) {
+                exclude(
+                    "gg/jte/generated/**",      // JTE precompiled templates (skills)
+                    "io/bitken/ss/jaxb/**",     // xjc-generated JAXB classes (core)
+                    "**/Dagger*.class",         // Dagger-generated components (core)
+                    "io/bitken/ss/Build.class", // templated Build constants (core)
+                )
+            }
         }
     )
 }
