@@ -150,12 +150,17 @@
         <task>
             <id>10</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>`core` compiles (no codegen, no shade)</name>
             <commit></commit>
             <created-from>plan-71-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T00:09:07.847+05:30</timestamp>
+                    <message>De-risk draft (2c9a5b8): core compiles with JAXB+Dagger+Build codegen; :core:test green (69 tests); generated JAXB list + Build.java byte-identical to Maven. Fixed xjc API, Groovy dotted-token expansion, dagger classpath scope.</message>
+                </comment>
+            </comments>
             <deviations>
                 <deviation>
                     <type>major</type>
