@@ -103,9 +103,9 @@
         <task>
             <id>7</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Existing tests pass under Gradle</name>
-            <commit></commit>
+            <commit>a9dfc61</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
