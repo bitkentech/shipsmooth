@@ -34,7 +34,7 @@ public class GitTags {
      */
     public String nextPlanVersion(int planNum) {
         String highest = highestVersionTag(planNum);
-        int next = highest == null ? 1 : parseVersion(highest) + 1;
+        int next = highest == null ? 1 : versionNumber(highest) + 1;
         return versionPrefix(planNum) + next;
     }
 
@@ -91,13 +91,13 @@ public class GitTags {
         return versionPrefix(planNum) + "1";
     }
 
-    private static int parseVersion(String tag) {
-        int dashV = tag.lastIndexOf("-v");
-        if (dashV < 0) return 0;
-        try {
-            return Integer.parseInt(tag.substring(dashV + 2));
-        } catch (NumberFormatException e) {
-            return 0;
-        }
+    /**
+     * Extracts the {@code K} from a {@code plan-{N}-vK} tag. The only caller
+     * passes a tag matched by the {@code plan-{N}-v*} glob in
+     * {@link #highestVersionTag}, so {@code -v} and a numeric suffix are
+     * guaranteed present.
+     */
+    private static int versionNumber(String tag) {
+        return Integer.parseInt(tag.substring(tag.lastIndexOf("-v") + 2));
     }
 }

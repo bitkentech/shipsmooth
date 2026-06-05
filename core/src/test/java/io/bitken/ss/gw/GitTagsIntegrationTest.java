@@ -59,6 +59,39 @@ public class GitTagsIntegrationTest {
                 "next version after v2 must be v3");
     }
 
+    @Test
+    void getPlanVersionReturnsDefaultV1WhenNoTags() {
+        assertEquals("plan-70-v1", gitTags.getPlanVersion(70));
+    }
+
+    @Test
+    void getPlanVersionReturnsHighestExistingTag() throws Exception {
+        git("tag", "plan-70-v1");
+        git("tag", "plan-70-v2");
+        assertEquals("plan-70-v2", gitTags.getPlanVersion(70));
+    }
+
+    @Test
+    void tagExistsReturnsFalseWhenAbsent() {
+        assertFalse(gitTags.tagExists("plan-70-v9"));
+    }
+
+    @Test
+    void createTagReturnsFalseWhenTagAlreadyExists() {
+        assertTrue(gitTags.createTag("plan-70-v1"));
+        assertFalse(gitTags.createTag("plan-70-v1"),
+                "re-creating an existing tag must fail (git exits non-zero)");
+    }
+
+    @Test
+    void operationsReturnSafeDefaultsWhenWorkDirIsNotAGitRepo(@TempDir Path nonRepo) {
+        GitTags orphan = new GitTags(nonRepo);
+        assertEquals("plan-70-v1", orphan.getPlanVersion(70), "default version when git fails");
+        assertEquals("plan-70-v1", orphan.nextPlanVersion(70), "first version when git fails");
+        assertFalse(orphan.tagExists("plan-70-v1"), "no tag when git fails");
+        assertFalse(orphan.createTag("plan-70-v1"), "createTag fails when not a repo");
+    }
+
     private void git(String... args) throws Exception {
         String[] cmd = new String[args.length + 1];
         cmd[0] = "git";
