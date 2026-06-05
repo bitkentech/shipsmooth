@@ -1,0 +1,5 @@
+# Gradle trial (plan-71, Phase 0) transient output — never commit these.
+.gradle/
+build/
+buildSrc/.gradle/
+buildSrc/build/
