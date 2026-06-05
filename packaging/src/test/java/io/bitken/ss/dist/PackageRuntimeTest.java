@@ -137,6 +137,55 @@ public class PackageRuntimeTest {
         }
     }
 
+    // Integration test (plan 70 Defect A): both packaged launchers must target the
+    // image's actual main module io.bitken.ss.cli, not the pre-split io.bitken.ss.
+    @Test
+    void posixLauncherTargetsCliModuleCoordinate() throws IOException {
+        Path fakeJdkHome = tempDir.resolve("jdk");
+        Path fakeJlinkImage = tempDir.resolve("jlink-image");
+        Files.createDirectories(fakeJlinkImage.resolve("bin"));
+        Files.writeString(fakeJlinkImage.resolve("bin/java"), "#!/bin/sh");
+        Files.writeString(fakeJlinkImage.resolve("bin/shipsmooth"), "#!/bin/sh");
+
+        Path outputDir = tempDir.resolve("dist");
+        Files.createDirectories(outputDir);
+
+        new PackageRuntime("linux-x64", fakeJdkHome, fakeJlinkImage, outputDir, "0.3.0").run();
+
+        try (ZipFile zf = new ZipFile(outputDir.resolve("shipsmooth-0.3.0-linux-x64.zip").toFile())) {
+            var entry = zf.getEntry("bin/shipsmooth");
+            assertNotNull(entry);
+            String content = new String(zf.getInputStream(entry).readAllBytes());
+            assertTrue(content.contains("-m io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth"),
+                "POSIX launcher must target the io.bitken.ss.cli module: " + content);
+            assertFalse(content.contains("-m io.bitken.ss/io.bitken.ss.cli.Shipsmooth"),
+                "POSIX launcher must not use the pre-split io.bitken.ss coordinate");
+        }
+    }
+
+    @Test
+    void windowsLauncherTargetsCliModuleCoordinate() throws IOException {
+        Path fakeJdkHome = tempDir.resolve("jdk");
+        Path fakeJlinkImage = tempDir.resolve("jlink-image");
+        Files.createDirectories(fakeJlinkImage.resolve("bin"));
+        Files.writeString(fakeJlinkImage.resolve("bin/shipsmooth"), "fake");
+
+        Path outputDir = tempDir.resolve("dist");
+        Files.createDirectories(outputDir);
+
+        new PackageRuntime("win32-x64", fakeJdkHome, fakeJlinkImage, outputDir, "0.3.0").run();
+
+        try (ZipFile zf = new ZipFile(outputDir.resolve("shipsmooth-0.3.0-win32-x64.zip").toFile())) {
+            var entry = zf.getEntry("bin/shipsmooth.cmd");
+            assertNotNull(entry);
+            String content = new String(zf.getInputStream(entry).readAllBytes());
+            assertTrue(content.contains("-m io.bitken.ss.cli/io.bitken.ss.cli.Shipsmooth"),
+                "Windows launcher must target the io.bitken.ss.cli module: " + content);
+            assertFalse(content.contains("-m io.bitken.ss/io.bitken.ss.cli.Shipsmooth"),
+                "Windows launcher must not use the pre-split io.bitken.ss coordinate");
+        }
+    }
+
     @Test
     void windowsLauncherEntryNameMatchesOsWindowsLauncherFileName() throws IOException {
         // Locks packaging and skill-renderer to the same single source of truth
