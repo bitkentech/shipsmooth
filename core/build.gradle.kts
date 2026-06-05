@@ -6,8 +6,11 @@ plugins {
 }
 
 dependencies {
-    // Runtime + API deps (versions mirror core/pom.xml).
-    implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.2")
+    // jakarta.xml.bind-api is part of core's PUBLIC API: TaskStore returns
+    // io.bitken.ss.jaxb.PlanTasks and throws JAXBException, so consumers (cli)
+    // need it transitively -> api, not implementation. jaxb-runtime is the impl,
+    // so it stays implementation.
+    api("jakarta.xml.bind:jakarta.xml.bind-api:4.0.2")
     implementation("org.glassfish.jaxb:jaxb-runtime:4.0.5")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2")
