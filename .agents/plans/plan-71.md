@@ -210,9 +210,12 @@ parity-gated: diff Gradle output against Maven before marking the task done. The
 
 **Ordering note:** these are NOT pure risk-sorted because the phases form a hard
 dependency chain (you cannot shade `core` before `core` compiles, etc.). Per the
-workflow's dependency-over-risk exception, the phase sequence is preserved. Risk levels
-(High tasks get the De-risk & Harden cycle): 9/10/11 Medium, 12 High, 13/14 High, 15 Low,
-16/17 High.
+workflow's dependency-over-risk exception, the phase sequence is preserved.
+
+**v3 change:** former Task 12 (core codegen) merged into Task 10 — `core` can't compile
+without its generated types, so the compile/codegen split was artificial. Task 10 is now
+High (absorbs the codegen risk); Task 12's number is retired. Risk levels: 9 Medium,
+**10 High**, 11 Medium, 12 (retired), 13/14 High, 15 Low, 16/17 High.
 
 ### Phase 1 — Structure
 
@@ -231,16 +234,28 @@ This is structural only: no module compiles yet beyond skills.
 Acceptance: `./gradlew projects` lists all seven modules and resolves the Semeru
 toolchain; `./gradlew :skills:pkg:test` still green after the relocation.
 
-### Task 10: `core` compiles (no codegen, no shade) [Medium]
+### Task 10: `core` compiles WITH codegen (JAXB xjc + Dagger APT + Build constants) [High]
 
 *Depends-on: 9*
 
-Stand up `core/build.gradle.kts` with picocli/jackson/jakarta deps and the
-`shipsmooth.java-conventions` plugin, compiling the hand-written `io.bitken.ss.core`
-sources only (codegen stubbed/committed-in temporarily if needed to get a clean
-`compileJava`). Tests on the classpath (`useModulePath=false`).
+**(v3: merged with the former Task 12.)** The hand-written `core` sources reference
+generated types deeply — `io.bitken.ss.jaxb.*` across 5+ files, Dagger `@Component`
+output, and the `Build` constants — so there is no meaningful "compiles without codegen"
+intermediate state. Wire all three codegen mechanisms and compile in one task:
 
-Acceptance: `./gradlew :core:compileJava` succeeds for the non-generated sources.
+- **JAXB `xjc`** from `core/src/main/resources/plan-tasks.xsd` → `io.bitken.ss.jaxb`
+  (via the `com.github.bjornvester.xjc` plugin or an `xjc` JavaExec).
+- **Dagger APT** (`annotationProcessor` dep) generating `DaggerAppComponents` — runs as
+  part of `compileJava`, mirroring Maven's `annotationProcessorPaths`.
+- **Build constants** (`VERSION`, `EXPERIMENTAL_BUILD`) — a `Copy`+`expand` task replacing
+  `templating-maven-plugin`, wired into the main source set.
+
+Stand up `core/build.gradle.kts` with picocli/jackson/jakarta deps + the
+`shipsmooth.java-conventions` plugin. Tests on the classpath (`useModulePath=false`).
+**No shade/jlink yet** — that stays in Task 13.
+
+Acceptance: `diff` Gradle-generated sources against Maven `target/generated-sources`
+(same JAXB packages, same `Build` constants); `./gradlew :core:test` green.
 
 ### Task 11: `cli` compiles against `core` (no jlink) [Medium]
 
@@ -254,26 +269,18 @@ usage.
 
 ### Phase 2 — Codegen parity
 
-### Task 12: `core` codegen — JAXB xjc, Dagger APT, `Build` constants [High]
+### Task 12: (merged into Task 10 at v3)
 
-*Depends-on: 10*
-
-Reproduce the three Maven codegen steps in Gradle:
-- JAXB `xjc` from `core/src/main/resources/plan-tasks.xsd` → `io.bitken.ss.jaxb`
-  (via the `com.github.bjornvester.xjc` plugin or an `xjc` JavaExec).
-- Dagger annotation processing (`annotationProcessor` dep) generating
-  `DaggerAppComponents` into `core`.
-- The templated `Build` source (`VERSION`, `EXPERIMENTAL_BUILD`) — a `Copy`+`expand`
-  task replacing `templating-maven-plugin`, wired into the main source set.
-
-Acceptance: `diff` Gradle-generated sources against the Maven `target/generated-sources`
-output — same packages, same `Build` constants; `./gradlew :core:test` green.
+The "core codegen" work was folded into Task 10 — `core` cannot compile without its
+generated types, so splitting compile-then-codegen was an artificial boundary. See
+Task 10. This number is intentionally retired (not renumbered, to keep downstream
+dependency references stable).
 
 ### Phase 3 — jlink + shade (highest risk)
 
 ### Task 13: Conditional Dagger shade + `module-info` re-injection [High]
 
-*Depends-on: 12*
+*Depends-on: 10*
 
 Under a `-PjlinkBuild` flag, shade `com.google.dagger:dagger` + `jakarta.inject` into the
 `core` jar (Shadow plugin), strip `META-INF/*.SF|DSA|RSA`, then **re-inject
