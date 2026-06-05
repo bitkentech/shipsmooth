@@ -5,6 +5,7 @@
 
 plugins {
     `java-library`
+    jacoco // coverage report for the test task
 }
 
 repositories {
@@ -31,10 +32,30 @@ dependencies {
     val junitVersion = "5.10.2" // matches skills/pkg/pom.xml
     "testImplementation"(platform("org.junit:junit-bom:$junitVersion"))
     "testImplementation"("org.junit.jupiter:junit-jupiter")
+    // Gradle 9 no longer puts the platform launcher on the test runtime
+    // classpath transitively; declare it explicitly or the executor can't start.
+    "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
     // skills:pkg has no module-info; keep it off the module path (parity with Maven).
     modularity.inferModulePath.set(false)
+    // Always (re)generate the coverage report after tests run.
+    finalizedBy(tasks.named("jacocoTestReport"))
+}
+
+tasks.named<JacocoReport>("jacocoTestReport") {
+    dependsOn(tasks.named("test"))
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+    // Exclude the JTE-generated template classes — they are generated code, not
+    // hand-written logic, so measuring their coverage only dilutes the number.
+    classDirectories.setFrom(
+        classDirectories.files.map { dir ->
+            fileTree(dir) { exclude("gg/jte/generated/**") }
+        }
+    )
 }
