@@ -231,18 +231,29 @@
                     <message>Hardened: reinject UP-TO-DATE via stamp file. module-info behaviour-equivalent to Maven (describe-module + ModulePackages identical; ~13-byte constant-pool diff allowed by byte-OR-behaviour parity bar). Clean jlink build green, tests green.</message>
                 </comment>
             </comments>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-06T00:54:54.822+05:30</timestamp>
+                    <message>Stamp-file up-to-date tracking (added in t13 harden) let reinjectModuleInfo skip after shadowJar rebuilt the jar, breaking cli jlink module resolution. Fixed in d3efd18: shaded jar declared as reinject's output instead.</message>
+                </deviation>
+            </deviations>
             <depends-on>12</depends-on>
         </task>
         <task>
             <id>14</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>5-platform jlink images + SCC launcher + smoke tests</name>
             <commit></commit>
             <created-from>plan-71-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T00:54:54.259+05:30</timestamp>
+                    <message>De-risk draft (d3efd18): linux jlink image builds + runs (--help works, correct modules); SCC smoke tests pass (plan show --plan 27 renders real output through SCC JRE). 4 platform tasks wired. Also fixed a latent Task 13 stamp-ordering bug that broke core module resolution.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>13</depends-on>
         </task>
