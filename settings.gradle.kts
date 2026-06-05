@@ -5,4 +5,5 @@ rootProject.name = "shipsmooth"
 // the reactor stays buildable at every step. Target end state (Phase 5):
 //   include("core"); include("cli"); include("skills:pkg")
 //   include("claude"); include("gemini"); include("packaging"); include("devtools")
+include("core")
 include("skills:pkg")
