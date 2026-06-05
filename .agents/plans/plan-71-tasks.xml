@@ -216,12 +216,17 @@
         <task>
             <id>13</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Conditional Dagger shade + `module-info` re-injection</name>
             <commit></commit>
             <created-from>plan-71-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T00:35:10.706+05:30</timestamp>
+                    <message>De-risk draft (2345344): Shadow shade + Semeru jar module-info re-injection. Shaded core jar byte-parity with Maven jlink jar (dagger=78, javax.inject=7, module-info present, 0 sig files); jar --describe-module identical. :core:test green with/without -PjlinkBuild.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>12</depends-on>
         </task>
