@@ -12,7 +12,7 @@
             <id>1</id>
             <risk>medium</risk>
             <status>pending</status>
-            <name>Add `plan branch --plan` for Local mode</name>
+            <name>Fix `repoRoot` resolved from `Paths.get(".")`</name>
             <commit></commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
@@ -21,9 +21,9 @@
         </task>
         <task>
             <id>2</id>
-            <risk>low</risk>
+            <risk>medium</risk>
             <status>pending</status>
-            <name>`buildSrc` convention plugin + `settings.gradle.kts`</name>
+            <name>Add `plan branch --plan` for Local mode</name>
             <commit></commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
@@ -33,9 +33,9 @@
         </task>
         <task>
             <id>3</id>
-            <risk>medium</risk>
+            <risk>low</risk>
             <status>pending</status>
-            <name>Node/TS pipeline with real input tracking</name>
+            <name>`buildSrc` convention plugin + `settings.gradle.kts`</name>
             <commit></commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
@@ -47,16 +47,28 @@
             <id>4</id>
             <risk>medium</risk>
             <status>pending</status>
+            <name>Node/TS pipeline with real input tracking</name>
+            <commit></commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>pending</status>
             <name>JTE staging + precompile</name>
             <commit></commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>2</depends-on>
+            <depends-on>3</depends-on>
         </task>
         <task>
-            <id>5</id>
+            <id>6</id>
             <risk>medium</risk>
             <status>pending</status>
             <name>`Target` render variant tasks</name>
@@ -65,10 +77,10 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>3,4</depends-on>
+            <depends-on>4,5</depends-on>
         </task>
         <task>
-            <id>6</id>
+            <id>7</id>
             <risk>low</risk>
             <status>pending</status>
             <name>Existing tests pass under Gradle</name>
@@ -77,10 +89,10 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>4</depends-on>
+            <depends-on>5</depends-on>
         </task>
         <task>
-            <id>7</id>
+            <id>8</id>
             <risk>low</risk>
             <status>pending</status>
             <name>Parity verification + go/no-go judgement</name>
@@ -89,12 +101,12 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>5,6</depends-on>
+            <depends-on>6,7</depends-on>
         </task>
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-06-05T17:12:19.654+05:30</timestamp>
+            <timestamp>2026-06-05T18:49:16.371+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>

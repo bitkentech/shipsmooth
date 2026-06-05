@@ -54,9 +54,25 @@ Backlog feature: tracked in plan narrative only (no separate Linear issue — Lo
 
 ## Tasks
 
-### Task 1: Add `plan branch --plan` for Local mode [Medium]
+### Task 1: Fix `repoRoot` resolved from `Paths.get(".")` [Medium]
 
 *Depends-on:*
+
+`Shipsmooth.java:38` passes `Paths.get(".")` as `repoRoot` to `ServicesModule`. Plan-70
+wired `GitTags` to use `repoRoot` correctly, but never fixed the source value — so under
+the packaged launcher (which sets its own CWD), `git tag` still runs in the wrong
+directory and fails.
+
+Fix: resolve `repoRoot` via `git rev-parse --show-toplevel` at startup instead of
+trusting `"."`. If the command fails (not in a git repo), fall back to `Paths.get(".")`
+and print a warning.
+
+Acceptance: `shipsmooth plan tag --plan 71 --kind version` succeeds when invoked from a
+subdirectory of the repo (e.g. `skills/pkg/`).
+
+### Task 2: Add `plan branch --plan` for Local mode [Medium]
+
+*Depends-on: 1*
 
 The `plan branch` CLI subcommand currently requires `--issue <id>` (a Linear issue ID).
 In Local mode there is no Linear issue, so callers must either pass a fake ID or bypass
@@ -75,9 +91,9 @@ Also update the SKILL.md `[Local]` branch-creation step to use this form.
 Acceptance: `shipsmooth plan branch --plan 71 --desc "foo"` prints the correct git
 commands without requiring `--issue`.
 
-### Task 2: `buildSrc` convention plugin + `settings.gradle.kts` [Low]
+### Task 3: `buildSrc` convention plugin + `settings.gradle.kts` [Low]
 
-*Depends-on: 1*
+*Depends-on: 2*
 
 Add `buildSrc/src/main/kotlin/shipsmooth.java-conventions.gradle.kts` with:
 - Semeru 25 toolchain (`JvmVendorSpec.IBM`)
@@ -94,9 +110,9 @@ rootProject.name = "skills-pkg"
 
 Acceptance: `./gradlew help` (inside `skills/pkg/`) resolves the toolchain and exits 0.
 
-### Task 3: Node/TS pipeline with real input tracking [Medium]
+### Task 4: Node/TS pipeline with real input tracking [Medium]
 
-*Depends-on: 2*
+*Depends-on: 3*
 
 Replace the brittle `[ dist -nt tasks/session-start.ts ] || npm run build` mtime check
 with a `node-gradle` `NpmTask` that declares:
@@ -112,9 +128,9 @@ Use `node { download.set(false) }` (system Node, matching current Maven behaviou
 Acceptance: edit a `.ts` file in `scripts/tasks/` → `./gradlew compileTs` re-runs tsc;
 edit an unrelated file → `compileTs` is UP-TO-DATE.
 
-### Task 4: JTE staging + precompile [Medium]
+### Task 5: JTE staging + precompile [Medium]
 
-*Depends-on: 2*
+*Depends-on: 3*
 
 Replace the antrun + jte-maven-plugin + build-helper chain with:
 1. `stageJte` Copy task: copies `start/`, `experimental/`, `shared/` from repo root,
@@ -125,9 +141,9 @@ Replace the antrun + jte-maven-plugin + build-helper chain with:
 Acceptance: `./gradlew compileJava` produces `.class` files for the JTE-generated
 templates; `javap` on one confirms it compiled.
 
-### Task 5: `Target` render variant tasks [Medium]
+### Task 6: `Target` render variant tasks [Medium]
 
-*Depends-on: 3, 4*
+*Depends-on: 4, 5*
 
 Add two `JavaExec` tasks — `renderClaudeDev` and `renderGeminiDev` — that invoke
 `io.bitken.ss.resources.Target` with the same 12 system properties the current Maven
@@ -141,9 +157,9 @@ Acceptance: `./gradlew renderClaudeDev` produces a `build/` directory; diff agai
 `mvn compile` output shows no meaningful differences (whitespace/timestamp noise
 acceptable).
 
-### Task 6: Existing tests pass under Gradle [Low]
+### Task 7: Existing tests pass under Gradle [Low]
 
-*Depends-on: 4*
+*Depends-on: 5*
 
 Wire `src/test/java` to the Gradle test task. Confirm all six existing test classes
 (`EnvTest`, `OsTest`, `PlatformTest`, `PluginModelTest`, `TargetTest`,
@@ -151,9 +167,9 @@ Wire `src/test/java` to the Gradle test task. Confirm all six existing test clas
 
 Acceptance: `./gradlew test` green; coverage report generated.
 
-### Task 7: Parity verification + go/no-go judgement [Low]
+### Task 8: Parity verification + go/no-go judgement [Low]
 
-*Depends-on: 5, 6*
+*Depends-on: 6, 7*
 
 Run both pipelines on a clean tree and diff the outputs:
 ```bash
