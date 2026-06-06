@@ -258,5 +258,5 @@ val copyTsSource by tasks.registering(Copy::class) {
 tasks.register("assembleClaudeDev") {
     group = "assemble"
     description = "Assemble the full claude-dev plugin payload into <build.outputDir> (default build/)."
-    dependsOn(renderClaudeDev, copyDist, ":claude:copyPluginMeta")
+    dependsOn(renderClaudeDev, copyDist, ":claude:copyClaudeMetaDev")
 }
