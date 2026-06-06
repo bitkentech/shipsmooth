@@ -338,12 +338,17 @@
         <task>
             <id>19</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Run the TS tests in the build</name>
-            <commit></commit>
+            <commit>47fb3a6</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T02:37:02.707+05:30</timestamp>
+                    <message>De-risk draft ready (commit 47fb3a6). testTs NpmTask wired into check; 24 TS tests green, broken test fails the build, rerun UP-TO-DATE. Ran before Task 17 (recorded deviation).</message>
+                </comment>
+            </comments>
             <deviations>
                 <deviation>
                     <type>minor</type>
