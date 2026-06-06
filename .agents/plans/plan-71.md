@@ -393,15 +393,28 @@ manifests + `dist/` + `scripts/`. The previously-committed `build*/` reference d
 mutually inconsistent local artifacts (now deleted), so the parity baseline for each variant is
 a **fresh** `mvn compile -P<profile>` build into a temp dir while the poms still exist.
 
-Shared mechanism (landed in the first task, Task 21): make the render `outputDir` overridable
-from `build.outputDir` (default to the per-variant path for back-compat). Each `assembleX` task
-runs render + the variant's manifests + the applicable JS/TS copies into one dir. **Assembly
+Shared mechanism (landed in the first task, Task 21). **Assembly
 does not invoke packaging** — packaging runs last, consuming the assembled payload + jlink image
 to produce the runtime zip. The JS/TS copies (`copyDist`/`copyScripts`/`copyTsSource`) are
-payload-assembly, not packaging, so they move out of the `packaging` module into a
-payload-owning home (e.g. `skills:pkg`); packaging keeps only `PackageRuntime`/`ValidateRelease`/
-`PublishRelease`. The post-build version stamp (release.sh `jq`) is out of scope — a
-release-script step, equal for both systems.
+payload-assembly, not packaging, so they move out of the `packaging` module into
+`skills:pkg`; packaging keeps only `PackageRuntime`/`ValidateRelease`/`PublishRelease`. The
+post-build version stamp (release.sh `jq`) is out of scope — a release-script step, equal for
+both systems.
+
+**Dependency direction: integration → `skills:pkg`, never the reverse** (decided at
+`plan-71-v10`). The `assembleClaude*` / `assembleGemini*` tasks live in the **`claude`** and
+**`gemini`** integration modules, not in `skills:pkg`. `skills:pkg` is the low-level module: it
+renders skills and owns the JS/TS, and knows nothing about claude or gemini. It exposes its
+render + copy work as **reusable, parameterized building blocks** (output dir + variant spec as
+explicit task inputs / a registration API), so a consuming integration module drives them with
+**explicit** values rather than a shared global `-Pbuild.outputDir` that both modules happen to
+read. `claude.assembleClaudeDev` therefore *invokes skills:pkg with the claude-dev output dir +
+spec*, plus its own manifest task — a clean hand-off, no inversion. (The earlier Task-21 draft
+put `assembleClaudeDev` in `skills:pkg` reaching out to `:claude:copyPluginMeta` — that inverted
+dependency is being corrected here.) Note `claude`/`gemini` are resource-only modules with no
+Java classpath, so the render `JavaExec` (which needs `skills:pkg`'s classpath) stays *executed*
+in `skills:pkg`; the integration module parameterizes and depends on it, e.g. via a consumable
+artifact/configuration or a `skills:pkg` registration function the consumer calls with its spec.
 
 **No default variants** (decided at `plan-71-v9`). The Maven `-Pvariant` / `activeByDefault`
 fallback (`?: "dev"`) was a Maven-land UI shortcut and will **not** exist in Gradle. The
@@ -422,10 +435,12 @@ that variant before being marked done.
 
 *Depends-on: 18, 20*
 
-First variant + the shared `renderOutputDir` override mechanism. Assemble the claude **dev**
-payload (render claude-dev + `.claude-plugin/` manifests + JS copies) into one dir. Adds the
-per-variant `copyClaudeMetaDev` manifest task (no global `-Pvariant` default — see the
-no-default-variants note above) and wires `assembleClaudeDev` to it.
+First variant + the shared building-block mechanism. Establishes the `skills:pkg` reusable
+render/copy building blocks (parameterized by explicit output dir + spec) and the
+integration→skills:pkg hand-off pattern. `assembleClaudeDev` lives in the **`claude`** module
+and assembles the claude **dev** payload (drives skills:pkg render claude-dev + JS copies into
+claude's output dir + adds the per-variant `copyClaudeMetaDev` manifest task — no global
+`-Pvariant` default). See the dependency-direction and no-default-variants notes above.
 
 Acceptance: `./gradlew assembleClaudeDev` produces a payload byte-identical to a fresh
 `mvn compile -Pdev` build (modulo the jq version stamp); existing tests green.

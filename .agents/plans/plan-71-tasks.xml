@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>71</plan>
-    <plan-version>plan-71-v9</plan-version>
+    <plan-version>plan-71-v10</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -381,6 +381,10 @@
                     <timestamp>2026-06-06T22:09:15.523+05:30</timestamp>
                     <message>De-risk draft ready (b5684de): assembleClaudeDev byte-identical to fresh mvn -Pdev (10 files, empty diff). Shared mechanism landed: renderOutputDir override + JS/TS copies moved out of packaging into skills/pkg. packaging compiles; tests green.</message>
                 </comment>
+                <comment>
+                    <timestamp>2026-06-06T22:28:54.611+05:30</timestamp>
+                    <message>Refined to no-default-variants (92c8392): claude manifest is now a per-variant factory (copyClaudeMetaDev/Prod), no global -Pvariant default. assembleClaudeDev byte-identical to fresh mvn -Pdev with NO -Pvariant flag; claude has zero variant defaults; tests green.</message>
+                </comment>
             </comments>
             <deviations/>
             <depends-on>18,20</depends-on>
@@ -468,6 +472,11 @@
         <update>
             <timestamp>2026-06-06T22:24:36.109+05:30</timestamp>
             <message>plan-71-v9: design decision recorded — NO default variants. The Maven -Pvariant/activeByDefault ?:'dev' fallback was a Maven-land UI shortcut; Gradle won't have it. claude/gemini manifest tasks become per-variant via a factory (copyClaudeMetaDev/Prod, copyGeminiDev/Prod); each assembleX depends on its own variant's task; no global variant property. Lands incrementally across Tasks 21-25.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T22:51:03.428+05:30</timestamp>
+            <message>plan-71-v10: fix inverted dependency. assembleClaude*/assembleGemini* move into the claude/gemini integration modules (not skills/pkg). skills/pkg exposes render+copy as reusable parameterized building blocks; integration modules drive them with explicit output dir + variant (no shared global -Pbuild.outputDir). Direction is integration-&gt;skills:pkg, never reverse. The Task-21 draft's skills/pkg-&gt;:claude:copyPluginMeta dependsOn is being corrected.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
