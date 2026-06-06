@@ -463,12 +463,17 @@
         <task>
             <id>25</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>assembleWindows</name>
-            <commit></commit>
+            <commit>155ba42</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T02:26:22.912+05:30</timestamp>
+                    <message>De-risk draft ready (commit 155ba42). assembleWindows parity-clean vs mvn -P windows; no copyDist (no dist/*.js), windows tokens + windows README + install-runtime.bat all correct. All 5 assemblies regression-clean.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>23</depends-on>
         </task>
