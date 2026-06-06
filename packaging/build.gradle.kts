@@ -11,45 +11,115 @@ dependencies {
     implementation("org.apache.commons:commons-compress:1.27.1")
 }
 
-// ---------------------------------------------------------------------------
-// Release entrypoints (replacing the Maven exec-maven-plugin executions). These
-// stay stringly-typed JavaExec-with-args — no type-safety gain, parity only.
+// ===========================================================================
+// Packaging assembly + release entrypoints (porting packaging/pom.xml).
+//
+// Two kinds of work live here:
+//  1. Payload assembly into the prod build/ tree (copy-dist, and — under the
+//     claude profile — copy-scripts / copy-ts-source). These feed the payload
+//     that ValidateRelease checks.
+//  2. Release entrypoints: stringly-typed JavaExec wrappers over the existing
+//     io.bitken.ss.dist.* mains (parity only — no type-safety gain). The Java
+//     is left untouched; only its main()-bound paths are satisfied here.
+//
 // PublishRelease is WIRED but intentionally NOT invoked by any aggregate task:
-// it is outward-facing (publishes a GitHub release) and must be run explicitly.
-// ---------------------------------------------------------------------------
-val repoRoot = rootProject.layout.projectDirectory.asFile.absolutePath
+// it publishes a GitHub release (outward-facing) and must be run explicitly.
+// ===========================================================================
+
+val repoRoot = rootProject.layout.projectDirectory
+val repoRootPath = repoRoot.asFile.absolutePath
 val pluginVersion = (findProperty("plugin.version") as String?) ?: "0.3.14"
 
+// jlink target -> Semeru home, used by packageRuntime_<target> and publishRelease.
+// The *target string* is the PackageRuntime argument: it drives both Os.fromPackagingTarget
+// (only "win32"-prefixed -> WINDOWS) and the zip filename, so the windows entry MUST be
+// "win32-x64" — not "windows-x64" — to match the Maven payload. The Semeru property keys
+// below stay "windows-x64" (mirroring the pom's <jdk.semeru.windows-x64>).
 val semeruByTarget = mapOf(
     "linux-x64" to "/opt/installers/jdk-semeru/jdk-25.0.2+10",
     "darwin-x64" to "/opt/installers/jdk-semeru-mac-x64/Contents/Home",
     "darwin-arm64" to "/opt/installers/jdk-semeru-mac-arm64/Contents/Home",
-    "windows-x64" to "/opt/installers/jdk-semeru-win-x64/jdk-25.0.2+10",
+    "win32-x64" to "/opt/installers/jdk-semeru-win-x64/jdk-25.0.2+10",
 )
 
-// copy-dist: compiled JS (minus *.test.js) into build/dist/ alongside the
-// session-start-config.json that Target renders.
+// Maps a packageRuntime target back to the publish-release -Djdk.semeru.<key> property name.
+fun semeruPropertyKey(target: String): String = if (target == "win32-x64") "windows-x64" else target
+
+// build.outputDir is the prod payload root (defaults to <repo>/build, mirroring the pom's
+// prod-profile <build.outputDir>). build-gemini/ is its gemini sibling.
 val outputDir = (findProperty("build.outputDir") as String?)
     ?.let { file(it) }
-    ?: rootProject.layout.projectDirectory.dir("build").asFile
+    ?: repoRoot.dir("build").asFile
+val geminiOutputDir = (findProperty("build.gemini.outputDir") as String?)
+    ?.let { file(it) }
+    ?: repoRoot.dir("build-gemini").asFile
+
+val distSource = repoRoot.dir("skills/pkg/scripts/dist")
+val tsSource = repoRoot.dir("skills/pkg/scripts/tasks")
+
+// ---------------------------------------------------------------------------
+// Payload assembly
+// ---------------------------------------------------------------------------
+
+// copy-dist: compiled JS (minus *.test.js) into build/dist/, alongside the
+// session-start-config.json that Target renders.
 val copyDist by tasks.registering(Copy::class) {
-    from(rootProject.layout.projectDirectory.dir("skills/pkg/scripts/dist")) {
-        exclude("**/*.test.js")
-    }
+    group = "release"
+    description = "Copy compiled JS (minus *.test.js) into <build.outputDir>/dist."
+    from(distSource) { exclude("**/*.test.js") }
     into(File(outputDir, "dist"))
+}
+
+// claude-profile copy-scripts: compiled JS (minus *.test.js) into build/scripts/tasks/.
+val copyScripts by tasks.registering(Copy::class) {
+    group = "release"
+    description = "Copy compiled JS (minus *.test.js) into <build.outputDir>/scripts/tasks."
+    from(distSource) { exclude("**/*.test.js") }
+    into(File(outputDir, "scripts/tasks"))
+}
+
+// claude-profile copy-ts-source: TS source (minus *.test.ts) into build/scripts/tasks/.
+// The SessionStart hook compiles these at runtime.
+val copyTsSource by tasks.registering(Copy::class) {
+    group = "release"
+    description = "Copy TS source (minus *.test.ts) into <build.outputDir>/scripts/tasks."
+    from(tsSource) { exclude("**/*.test.ts") }
+    into(File(outputDir, "scripts/tasks"))
+}
+
+// ---------------------------------------------------------------------------
+// Release entrypoints
+// ---------------------------------------------------------------------------
+
+// Applies the repo-root + version system properties shared by every dist main.
+fun JavaExec.withDistDefaults() {
+    group = "release"
+    classpath = sourceSets["main"].runtimeClasspath
+    systemProperty("shipsmooth.repo.root", repoRootPath)
+    systemProperty("project.version", pluginVersion)
 }
 
 // ValidateRelease: checks the assembled build/ + build-gemini/ payloads.
 val validateRelease by tasks.registering(JavaExec::class) {
-    group = "release"
-    classpath = sourceSets["main"].runtimeClasspath
+    description = "Validate the assembled prod build/ + build-gemini/ payloads."
+    withDistDefaults()
     mainClass.set("io.bitken.ss.dist.ValidateRelease")
     systemProperty("build.outputDir", outputDir.absolutePath)
-    systemProperty(
-        "build.gemini.outputDir",
-        (findProperty("build.gemini.outputDir") as String?)
-            ?: rootProject.layout.projectDirectory.dir("build-gemini").asFile.absolutePath,
-    )
+    systemProperty("build.gemini.outputDir", geminiOutputDir.absolutePath)
+}
+
+// dev-profile guard: the staged jlink image (cli/target/jlink-image/bin/shipsmooth) must
+// exist before a runtime is packaged. In Maven this was an antrun <fail> bound to the dev
+// profile; here it is a per-target precondition that runs after staging and before the
+// PackageRuntime JavaExec action.
+fun Task.verifyJlinkImageStaged() = doFirst {
+    val launcher = repoRoot.file("cli/target/jlink-image/bin/shipsmooth").asFile
+    if (!launcher.exists()) {
+        throw GradleException(
+            "jlink image not found at ${launcher.path}. " +
+                "Staging (:cli:jlinkImage_<target>) did not produce a launcher.",
+        )
+    }
 }
 
 // PackageRuntime per platform: zips the jlink image + launcher into a
@@ -60,8 +130,10 @@ val validateRelease by tasks.registering(JavaExec::class) {
 // only main() is path-bound).
 semeruByTarget.forEach { (target, jdkHome) ->
     val stageImage = tasks.register<Copy>("stageJlinkImage_$target") {
+        group = "release"
+        description = "Stage the Gradle jlink image for $target into the Maven-expected path."
         dependsOn(":cli:jlinkImage_$target")
-        val dest = rootProject.layout.projectDirectory.dir("cli/target/jlink-image")
+        val dest = repoRoot.dir("cli/target/jlink-image")
         // jlink writes read-only legal/ files; a stale dest blocks overwrite, so
         // clear it first (chmod to make it deletable).
         doFirst {
@@ -71,28 +143,29 @@ semeruByTarget.forEach { (target, jdkHome) ->
                 delete(d)
             }
         }
-        from(rootProject.layout.projectDirectory.dir("cli/build/jlink-image-$target"))
+        from(repoRoot.dir("cli/build/jlink-image-$target"))
         into(dest)
     }
     tasks.register<JavaExec>("packageRuntime_$target") {
-        group = "release"
+        description = "Stage + zip the $target runtime payload (shipsmooth-<ver>-$target.zip)."
+        withDistDefaults()
+        // stageImage populates cli/target/jlink-image; the guard (doFirst) then confirms
+        // the launcher exists before PackageRuntime's JavaExec action runs.
         dependsOn(stageImage)
-        classpath = sourceSets["main"].runtimeClasspath
+        verifyJlinkImageStaged()
         mainClass.set("io.bitken.ss.dist.PackageRuntime")
         args(target, jdkHome)
-        systemProperty("shipsmooth.repo.root", repoRoot)
-        systemProperty("project.version", pluginVersion)
     }
 }
 
 // PublishRelease — WIRED ONLY. Never depended on by an aggregate task; run
 // explicitly and deliberately (it publishes outward).
 tasks.register<JavaExec>("publishRelease") {
-    group = "release"
-    description = "Publishes a GitHub release. Outward-facing — run only when intended."
-    classpath = sourceSets["main"].runtimeClasspath
+    description = "Publish a GitHub release. Outward-facing — run only when intended."
+    withDistDefaults()
     mainClass.set("io.bitken.ss.dist.PublishRelease")
     args((findProperty("shipsmooth.release.version") as String?) ?: pluginVersion)
-    systemProperty("shipsmooth.repo.root", repoRoot)
-    semeruByTarget.forEach { (target, home) -> systemProperty("jdk.semeru.$target", home) }
+    semeruByTarget.forEach { (target, home) ->
+        systemProperty("jdk.semeru.${semeruPropertyKey(target)}", home)
+    }
 }
