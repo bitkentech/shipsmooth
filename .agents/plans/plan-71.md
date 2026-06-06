@@ -383,11 +383,35 @@ Acceptance: `build-windows/skills/start/SKILL.md` cliBin uses `%LOCALAPPDATA%\�
 under both `mvn -P windows compile` and `./gradlew renderWindows`; the two outputs are
 byte-identical; `TargetIntegrationTest` still green.
 
+### Task 21: Gradle payload assembly orchestration [Medium]
+
+*Depends-on: 18, 20*
+
+Added at `plan-71-v7`. Discovered while starting Task 17: Gradle has no way to assemble a
+**complete** prod payload into one tree the way `mvn compile -Pprod -P'!dev'` does. The
+`claude`, `gemini`, and `packaging` module tasks already honour `-Pbuild.outputDir` and compose
+cleanly into a shared dir, but the `skills/pkg` render tasks **hardcode** their `outputDir` to
+`build/render/<variant>/`, so `skills/` + `hooks/` never join `.claude-plugin/` + `dist/` +
+`scripts/tasks/`. Until this is fixed, the Task-17 four-payload diff can only compare the render
+sub-output, not the full payload.
+
+Make the render `outputDir` overridable from `build.outputDir` (defaulting to the current
+per-variant path for back-compat), then add a per-payload aggregate task that runs render +
+claude manifests + packaging copies into one dir, mirroring the Maven profiles:
+`assembleProd` → `build/` (claude prod), `assembleGemini` → `build-gemini/`, `assembleWindows`
+→ `build-windows/` (windows render; `skip.copy-dist` equivalent — no `copyDist`). Respect the
+Maven phase order. Leave the post-build version-stamp (release.sh `jq`) out of scope — it is a
+release-script step, equal for both build systems.
+
+Acceptance: `./gradlew assembleProd` (and gemini/windows) produce a full payload tree
+structurally matching `mvn compile -P<profile>`; each is byte-identical to the corresponding
+Maven payload modulo the known release-script jq version stamp.
+
 ### Phase 5 — Cutover
 
 ### Task 17: Full parity sign-off + remove `pom.xml` files [High]
 
-*Depends-on: 16, 18, 20*
+*Depends-on: 16, 18, 20, 21*
 
 Diff **all four payloads** (`build/`, `build-gemini/`, `build-windows/`, `runtime-<ver>/`)
 Gradle vs Maven on a clean tree. Update `DEVELOPMENT.md`, `devtools/scripts/smoke-gemini.sh`,

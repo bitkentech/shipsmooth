@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>71</plan>
-    <plan-version>plan-71-v6</plan-version>
+    <plan-version>plan-71-v7</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -312,7 +312,7 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>16,18,20</depends-on>
+            <depends-on>16,18,20,21</depends-on>
         </task>
         <task>
             <id>18</id>
@@ -368,6 +368,18 @@
             <deviations/>
             <depends-on>18</depends-on>
         </task>
+        <task>
+            <id>21</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Gradle payload assembly orchestration</name>
+            <commit></commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>18,20</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
@@ -388,6 +400,11 @@
         <update>
             <timestamp>2026-06-06T17:54:45.463+05:30</timestamp>
             <message>plan-71-v6: added Task 20 (fix Windows SKILL cliBin). Latent bug found in Task 18 — render exec never forwarded build.os in any commit (git -S empty), so build-windows/ SKILL ships posix path not %LOCALAPPDATA%\...\shipsmooth.cmd. Half-wired since plan-61/pb-55, not a regression; install works via install-runtime.bat. Task 17 now Depends-on 16,18,20.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T21:31:50.175+05:30</timestamp>
+            <message>plan-71-v7: split out Task 21 (Gradle payload assembly orchestration). Task 17's four-payload diff was blocked — render tasks hardcode outputDir to build/render/&lt;variant&gt;/, so no Gradle invocation assembles a full payload (claude/gemini/packaging compose fine; render is the blocker). Task 21 makes render outputDir overridable + adds assembleProd/Gemini/Windows aggregates. Task 17 now Depends-on 16,18,20,21.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
