@@ -147,3 +147,61 @@ fun registerRender(taskName: String, spec: RenderSpec) =
 
 val renderClaudeDev = registerRender("renderClaudeDev", claudeDevSpec)
 val renderGeminiDev = registerRender("renderGeminiDev", geminiDevSpec)
+
+// ---------------------------------------------------------------------------
+// Prod render variants (Task 18) — mirror the Maven `prod`, `gemini`, `windows`
+// profiles. Prod deltas vs dev: buildEnv=prod, experimentalEnabled=false,
+// prod description, empty/prod frontmatter. plugin.repo.name is unset in the
+// Maven prod/gemini profiles; Target falls back repoName->name (="shipsmooth"),
+// so passing pluginRepoName="shipsmooth" matches. (windows sets it explicitly,
+// also to shipsmooth.)
+// ---------------------------------------------------------------------------
+val prodDescription = "Agent coding workflow with plan-before-implement discipline, " +
+    "TDD, vertical slices, Linear integration, and immutable git-based plan versioning."
+
+val claudeProdSpec = claudeDevSpec.copy(
+    buildEnv = "prod",
+    pluginDescription = prodDescription,
+    skillFrontmatter = "",
+    jlinkDir = "/dev/null",
+    outputDir = layout.buildDirectory.dir("render/claude-prod").get().asFile.path,
+    experimentalEnabled = false,
+)
+
+val geminiProdSpec = claudeProdSpec.copy(
+    buildPlatform = "gemini",
+    skillFrontmatter = """
+        ---
+        name: start
+        description: Use when starting any task — applies the shipsmooth agent coding workflow.
+        ---
+    """.trimIndent(),
+    // The Maven gemini profile sets no shipsmooth.jlink.dir, so Target defaults it
+    // to "" and omits the jlinkDir line. Inheriting claudeProd's "/dev/null" would
+    // diverge — parity diff caught this. Keep it empty.
+    jlinkDir = "",
+    outputDir = layout.buildDirectory.dir("render/gemini-prod").get().asFile.path,
+    pluginHookCommand = "node \"\${extensionPath}/dist/session-start.js\"",
+)
+
+// The Maven render exec (skills/pkg render-plugin-resources) does NOT pass
+// build.os — Target always reads it as the "posix" default. The windows profile's
+// build.os=windows only affects downstream packaging (PackageRuntime injects the
+// Windows .cmd/.bat content), not this render. So buildOs stays "posix" here;
+// setting it to "windows" would render Windows-specific SKILL/hooks that the Maven
+// build-windows/ payload does not contain (parity diff caught this). Only the
+// windows-specific jlink dir is passed, mirroring the profile's shipsmooth.jlink.dir.
+val windowsSpec = claudeProdSpec.copy(
+    pluginDescription = "Agent coding workflow (Windows)",
+    jlinkDir = repoRoot.dir("cli/target/jlink-image-windows-x64").asFile.path,
+    // The Maven windows profile leaves plugin.hook.base unset, so the render's
+    // plugin.hook.command resolves to "" and Posix.hookCommand returns empty (no
+    // session-start hook, no install-runtime.bat — that wiring is added later by
+    // packaging). Inheriting claudeProd's node command diverges — diff caught it.
+    pluginHookCommand = "",
+    outputDir = layout.buildDirectory.dir("render/windows").get().asFile.path,
+)
+
+val renderClaudeProd = registerRender("renderClaudeProd", claudeProdSpec)
+val renderGeminiProd = registerRender("renderGeminiProd", geminiProdSpec)
+val renderWindows = registerRender("renderWindows", windowsSpec)
