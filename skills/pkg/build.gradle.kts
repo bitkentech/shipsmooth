@@ -247,6 +247,18 @@ val copyDist by tasks.registering(Copy::class) {
     outputs.files(jsFiles)
 }
 
+// copyDistProd: prod-path counterpart to copyDist. Writes the same non-test JS into
+// a FIXED private staging dir (build/stage/dist-prod), independent of -Pbuild.outputDir,
+// so the prod assemble Sync (sole writer of the final payload dir) can merge it without
+// the dev co-deposit overlap-check. (plan-71 Task 23, dual-mode prod path.)
+val copyDistProd by tasks.registering(Copy::class) {
+    group = "assemble"
+    description = "Copy compiled JS (minus *.test.js) into a private prod staging dir."
+    dependsOn(compileTs)
+    from(layout.projectDirectory.dir("scripts/dist")) { exclude("**/*.test.js") }
+    into(layout.buildDirectory.dir("stage/dist-prod").map { File(it.asFile, "dist") })
+}
+
 // copyScripts: compiled JS (minus *.test.js) into <payload>/scripts/tasks/.
 // claude-prod / windows payloads only (not dev/gemini). Used by Tasks 23/25.
 val copyScripts by tasks.registering(Copy::class) {

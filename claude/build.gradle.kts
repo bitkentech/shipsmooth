@@ -37,23 +37,29 @@ val outputDir = (findProperty("build.outputDir") as String?)
     ?: rootProject.layout.projectDirectory.dir("build").asFile
 
 // Factory: one .claude-plugin manifest task per variant (plugin.json + marketplace.json,
-// token-filtered). Mirrors skills/pkg's registerRender(spec) pattern. Declares its EXACT
-// output files (not just the dest dir) so the payload overlap-check can attribute them
-// (Task 21, Bazel-style); the manifest set is a fixed two files.
-fun registerClaudeMeta(taskName: String, tokens: Map<String, Any>) =
+// token-filtered) writing into <baseDir>/.claude-plugin/. Mirrors skills/pkg's
+// registerRender(spec) pattern. Declares its EXACT output files (not just the dest dir)
+// so the payload overlap-check can attribute them (Task 21, Bazel-style); the manifest
+// set is a fixed two files.
+//   - dev  baseDir = outputDir (the -Pbuild.outputDir co-deposit tree)
+//   - prod baseDir = a FIXED private staging dir, merged later by the assemble Sync
+fun registerClaudeMeta(taskName: String, tokens: Map<String, Any>, baseDir: File) =
     tasks.register<Copy>(taskName) {
         group = "assemble"
-        description = "Filter plugin.json + marketplace.json into <build.outputDir>/.claude-plugin/."
+        description = "Filter plugin.json + marketplace.json into <baseDir>/.claude-plugin/."
         from(layout.projectDirectory.dir("src/main/resources/claude-plugin"))
-        val dest = File(outputDir, ".claude-plugin")
+        val dest = File(baseDir, ".claude-plugin")
         into(dest)
         expand(tokens)
         outputs.file(File(dest, "plugin.json"))
         outputs.file(File(dest, "marketplace.json"))
     }
 
-val copyClaudeMetaDev = registerClaudeMeta("copyClaudeMetaDev", devTokens)
-val copyClaudeMetaProd = registerClaudeMeta("copyClaudeMetaProd", prodTokens)
+// Fixed private prod staging dir (independent of -Pbuild.outputDir) for the prod Sync path.
+val claudeProdMetaStage = layout.buildDirectory.dir("stage/claude-prod-meta").get().asFile
+
+val copyClaudeMetaDev = registerClaudeMeta("copyClaudeMetaDev", devTokens, outputDir)
+val copyClaudeMetaProd = registerClaudeMeta("copyClaudeMetaProd", prodTokens, claudeProdMetaStage)
 
 // ---------------------------------------------------------------------------
 // assembleClaudeDev (Task 21): the full claude-dev plugin payload into one dir —
@@ -76,6 +82,30 @@ registerPayloadAssembly(
         PayloadProducer("renderClaudeDev", skillsPkg.tasks.named("renderClaudeDev"), ownsFilesOnly = false),
         PayloadProducer("copyDist", skillsPkg.tasks.named("copyDist"), ownsFilesOnly = true),
         PayloadProducer("copyClaudeMetaDev", copyClaudeMetaDev, ownsFilesOnly = true),
+    ),
+)
+
+// ---------------------------------------------------------------------------
+// assembleClaudeProd (Task 23): the full claude-prod plugin payload, via the prod
+// dual-mode Sync path. Each producer writes into its OWN private staging dir —
+// renderClaudeProd (skills/ + hooks/ + dist/session-start-config.json) into
+// skills:pkg's build/render/claude-prod, copyDistProd (dist/*.js) into its prod
+// staging, copyClaudeMetaProd (.claude-plugin manifests, prod tokens) into
+// claudeProdMetaStage — and assembleClaudeProd Syncs all three into <build.outputDir>
+// as the SOLE writer (overlap-immune; no overlap-check on the release path).
+// (plan-71 v11-v15 dual-mode.) Note: the claude-prod payload has NO scripts/tasks
+// tree (the Maven prod baseline emits none), so copyScripts/copyTsSource are unused here.
+// ---------------------------------------------------------------------------
+val claudeProdRenderStage = skillsPkg.layout.buildDirectory.dir("render/claude-prod").get().asFile
+val claudeProdDistStage = skillsPkg.layout.buildDirectory.dir("stage/dist-prod").get().asFile
+registerPayloadSync(
+    syncTaskName = "assembleClaudeProd",
+    description = "Assemble the full claude-prod plugin payload into <build.outputDir> (default build/).",
+    payloadDir = outputDir,
+    sources = listOf(
+        SyncSource(skillsPkg.tasks.named("renderClaudeProd"), claudeProdRenderStage),
+        SyncSource(skillsPkg.tasks.named("copyDistProd"), claudeProdDistStage),
+        SyncSource(copyClaudeMetaProd, claudeProdMetaStage),
     ),
 )
 

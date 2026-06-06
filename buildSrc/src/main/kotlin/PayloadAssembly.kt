@@ -1,6 +1,7 @@
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.TaskProvider
 import java.io.File
 
@@ -56,3 +57,37 @@ fun Project.registerPayloadAssembly(
         dependsOn(verify)
     }
 }
+
+/**
+ * One source dir for a prod Sync assembly: a producer task plus the private dir it
+ * writes into. The Sync pulls from each [stagingDir]; the producer is wired as a
+ * dependency so it has run first.
+ */
+class SyncSource(
+    val task: TaskProvider<out Task>,
+    val stagingDir: File,
+)
+
+/**
+ * Reusable prod payload assembly (plan-71 dual-mode, the release-path counterpart to
+ * [registerPayloadAssembly]). Each producer writes into its OWN private [SyncSource.stagingDir];
+ * the registered [Sync] task is the SOLE writer of [payloadDir], merging every staging dir into
+ * it. Because Sync owns the destination outright it is structurally overlap-immune (and prunes
+ * stale files), so the dev co-deposit overlap-check is neither needed nor wired here. The extra
+ * copy is acceptable on the rare release path. Returns the Sync task provider.
+ */
+fun Project.registerPayloadSync(
+    syncTaskName: String,
+    description: String,
+    payloadDir: File,
+    sources: List<SyncSource>,
+): TaskProvider<Sync> =
+    tasks.register(syncTaskName, Sync::class.java) {
+        group = "assemble"
+        this.description = description
+        sources.forEach { src ->
+            dependsOn(src.task)
+            from(src.stagingDir)
+        }
+        into(payloadDir)
+    }
