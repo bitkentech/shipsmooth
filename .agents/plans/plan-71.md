@@ -355,11 +355,39 @@ Acceptance: `./gradlew renderClaudeProd` (and the gemini/windows tasks) each pro
 prod payload; diff against the matching `mvn -P <profile> compile` output shows only
 known-acceptable noise (timestamps, auto-generated comments).
 
+### Task 20: Fix Windows SKILL cliBin path (forward `build.os` to the render) [Medium]
+
+*Depends-on: 18*
+
+Added at `plan-71-v6`. Latent bug found during Task 18: the Maven `render-plugin-resources`
+exec (`skills/pkg/pom.xml`) has **never** forwarded `build.os` — `git log -S "<key>build.os</key>"`
+is empty across all history. So `Target` always reads `build.os=posix`, and the shipped
+`build-windows/skills/start/SKILL.md` carries the posix cliBin
+(`${XDG_CACHE_HOME:-~/.cache}/.../bin/shipsmooth`) instead of the intended Windows path
+(`%LOCALAPPDATA%\…\runtime\bin\shipsmooth.cmd`). The render *code* (`Os.Windows.cliBinPath`)
+and its unit test (`TargetIntegrationTest` sets `build.os=windows` in-process) are correct —
+the property just never reaches the real build. This is a half-wired feature from birth (the
+`%LOCALAPPDATA%` cliBin landed in plan-61 `697e615`; the `windows` profile in pb-55 `ff0fb6c`),
+not a regression — the May-25 v0.3.11 Windows install used the single posix SKILL; the Windows
+machinery was all added afterward. Note the install itself works (driven by `install-runtime.bat`
+via `hookCommand`, independent of the SKILL cliBin) — only the documented command path is wrong.
+
+Fix: forward `build.os` to the render in **both** build systems. Maven: add
+`<key>build.os</key><value>${build.os}</value>` to the `render-plugin-resources` exec. Gradle:
+`RenderSpec.systemProperties()` already emits `build.os`, so set `windowsSpec.buildOs = "windows"`
+(reverting the Task-18 parity workaround). After the fix, both systems render the
+`%LOCALAPPDATA%` cliBin and stay byte-identical to each other. Regenerate the committed
+`build-windows/` reference if one is tracked.
+
+Acceptance: `build-windows/skills/start/SKILL.md` cliBin uses `%LOCALAPPDATA%\…\shipsmooth.cmd`
+under both `mvn -P windows compile` and `./gradlew renderWindows`; the two outputs are
+byte-identical; `TargetIntegrationTest` still green.
+
 ### Phase 5 — Cutover
 
 ### Task 17: Full parity sign-off + remove `pom.xml` files [High]
 
-*Depends-on: 16, 18*
+*Depends-on: 16, 18, 20*
 
 Diff **all four payloads** (`build/`, `build-gemini/`, `build-windows/`, `runtime-<ver>/`)
 Gradle vs Maven on a clean tree. Update `DEVELOPMENT.md`, `devtools/scripts/smoke-gemini.sh`,
