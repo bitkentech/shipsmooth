@@ -331,11 +331,35 @@ precondition. These stay `JavaExec`-with-args (no type-safety gain — parity on
 Acceptance: a dry-run `PackageRuntime` for linux-x64 produces a `runtime-<ver>/` payload
 byte/behaviour-equivalent to the Maven output; `ValidateRelease` passes on it.
 
+### Task 18: Prod render variant tasks [Medium]
+
+*Depends-on: 5, 6*
+
+Added at `plan-71-v3`: Task 6 (the Phase-0 trial) scoped only the *dev* render variants
+(`renderClaudeDev`, `renderGeminiDev`); no task ever created the prod ones, so three of the
+four prod payloads can't be produced by Gradle. Task 17's four-payload diff depends on them.
+Numbered 18 (next integer) but ordered before 17 via Task 17's `*Depends-on:*`.
+
+Add three `JavaExec` render tasks in `skills/pkg/build.gradle.kts` — `renderClaudeProd`,
+`renderGeminiProd`, and `renderWindows` — mirroring the existing dev render tasks but with
+the prod tuples from the `prod`, `gemini`, and `windows` Maven profiles. Each is a new
+`RenderSpec` passed to the existing `registerRender(...)` helper (the `RenderSpec` data class
+and its `systemProperties()` mapping already exist in `buildSrc` and are parity-complete — no
+infra changes). Prod deltas: `buildEnv=prod`, `experimentalEnabled=false`, prod
+`pluginDescription`, `pluginSkillStartBasename=start`, empty/prod `skillFrontmatter`.
+`renderWindows` additionally sets `buildOs=windows` and
+`jlinkDir=cli/target/jlink-image-windows-x64`. The windows profile also sets
+`skip.copy-dist=true`; that is a packaging *assembly* concern handled in Task 17, not here.
+
+Acceptance: `./gradlew renderClaudeProd` (and the gemini/windows tasks) each produce their
+prod payload; diff against the matching `mvn -P <profile> compile` output shows only
+known-acceptable noise (timestamps, auto-generated comments).
+
 ### Phase 5 — Cutover
 
 ### Task 17: Full parity sign-off + remove `pom.xml` files [High]
 
-*Depends-on: 16*
+*Depends-on: 16, 18*
 
 Diff **all four payloads** (`build/`, `build-gemini/`, `build-windows/`, `runtime-<ver>/`)
 Gradle vs Maven on a clean tree. Update `DEVELOPMENT.md`, `devtools/scripts/smoke-gemini.sh`,

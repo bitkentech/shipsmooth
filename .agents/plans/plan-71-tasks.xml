@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>71</plan>
-    <plan-version>plan-71-v1</plan-version>
+    <plan-version>plan-71-v4</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -312,13 +312,35 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>16</depends-on>
+            <depends-on>16,18</depends-on>
+        </task>
+        <task>
+            <id>18</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Prod render variant tasks</name>
+            <commit></commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5,6</depends-on>
         </task>
     </tasks>
     <project-updates>
         <update>
             <timestamp>2026-06-05T23:06:15.140+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T14:35:50.839+05:30</timestamp>
+            <message>Task 17 blocked: prod render variants were never built. Task 6 (Phase-0 trial) scoped only renderClaudeDev/renderGeminiDev; no task created renderClaudeProd/renderGeminiProd/renderWindows. Three of the four prod payloads (build/ prod, build-gemini/, build-windows/) cannot be produced by Gradle, so the task-17 four-payload parity diff cannot run. Needs a plan revision adding prod render variant task(s) before task 17.</message>
+            <blocked>true</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T14:48:56.530+05:30</timestamp>
+            <message>Unblocked at plan-71-v3: added Task 18 (Prod render variant tasks: renderClaudeProd/renderGeminiProd/renderWindows). Task 17 now Depends-on 16,18. Task 18 executes before 17.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
