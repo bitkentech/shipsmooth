@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>71</plan>
-    <plan-version>plan-71-v7</plan-version>
+    <plan-version>plan-71-v8</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -312,7 +312,7 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>16,18,20,21</depends-on>
+            <depends-on>16,21,22,23,24,25</depends-on>
         </task>
         <task>
             <id>18</id>
@@ -372,13 +372,61 @@
             <id>21</id>
             <risk>medium</risk>
             <status>pending</status>
-            <name>Gradle payload assembly orchestration</name>
+            <name>assembleClaudeDev (+ shared renderOutputDir mechanism)</name>
             <commit></commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
             <depends-on>18,20</depends-on>
+        </task>
+        <task>
+            <id>22</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>assembleGeminiDev</name>
+            <commit></commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>21</depends-on>
+        </task>
+        <task>
+            <id>23</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>assembleClaudeProd</name>
+            <commit></commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>21</depends-on>
+        </task>
+        <task>
+            <id>24</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>assembleGeminiProd</name>
+            <commit></commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>22,23</depends-on>
+        </task>
+        <task>
+            <id>25</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>assembleWindows</name>
+            <commit></commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>23</depends-on>
         </task>
     </tasks>
     <project-updates>
@@ -405,6 +453,11 @@
         <update>
             <timestamp>2026-06-06T21:31:50.175+05:30</timestamp>
             <message>plan-71-v7: split out Task 21 (Gradle payload assembly orchestration). Task 17's four-payload diff was blocked — render tasks hardcode outputDir to build/render/&lt;variant&gt;/, so no Gradle invocation assembles a full payload (claude/gemini/packaging compose fine; render is the blocker). Task 21 makes render outputDir overridable + adds assembleProd/Gemini/Windows aggregates. Task 17 now Depends-on 16,18,20,21.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T21:50:44.934+05:30</timestamp>
+            <message>plan-71-v8: reworked payload assembly into 5 per-variant tasks (21 assembleClaudeDev, 22 GeminiDev, 23 ClaudeProd, 24 GeminiProd, 25 Windows), migrated one at a time starting ClaudeDev. Deleted the stale/inconsistent committed build*/ dirs; parity baseline is now a fresh mvn -P&lt;profile&gt; build per variant. JS/TS copies move out of packaging (assembly must not invoke packaging). Task 17 now Depends-on 16,21,22,23,24,25.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>

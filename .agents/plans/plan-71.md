@@ -383,38 +383,86 @@ Acceptance: `build-windows/skills/start/SKILL.md` cliBin uses `%LOCALAPPDATA%\�
 under both `mvn -P windows compile` and `./gradlew renderWindows`; the two outputs are
 byte-identical; `TargetIntegrationTest` still green.
 
-### Task 21: Gradle payload assembly orchestration [Medium]
+### Payload assembly — one task per variant
+
+Reworked at `plan-71-v8`. Gradle has no way to assemble a **complete** payload into one tree
+the way `mvn compile -P<profile>` does: the `claude`/`gemini` module tasks and the packaging
+JS/TS copies already honour `-Pbuild.outputDir`, but the `skills/pkg` render tasks **hardcode**
+their `outputDir` to `build/render/<variant>/`, so `skills/` + `hooks/` never join the
+manifests + `dist/` + `scripts/`. The previously-committed `build*/` reference dirs were stale,
+mutually inconsistent local artifacts (now deleted), so the parity baseline for each variant is
+a **fresh** `mvn compile -P<profile>` build into a temp dir while the poms still exist.
+
+Shared mechanism (landed in the first task, Task 21): make the render `outputDir` overridable
+from `build.outputDir` (default to the per-variant path for back-compat). Each `assembleX` task
+runs render + the variant's manifests + the applicable JS/TS copies into one dir. **Assembly
+does not invoke packaging** — packaging runs last, consuming the assembled payload + jlink image
+to produce the runtime zip. The JS/TS copies (`copyDist`/`copyScripts`/`copyTsSource`) are
+payload-assembly, not packaging, so they move out of the `packaging` module into a
+payload-owning home (e.g. `skills:pkg`); packaging keeps only `PackageRuntime`/`ValidateRelease`/
+`PublishRelease`. The post-build version stamp (release.sh `jq`) is out of scope — a
+release-script step, equal for both systems.
+
+Each task below migrates exactly one variant and is parity-gated against a fresh Maven build of
+that variant before being marked done.
+
+### Task 21: `assembleClaudeDev` [Medium]
 
 *Depends-on: 18, 20*
 
-Added at `plan-71-v7`. Discovered while starting Task 17: Gradle has no way to assemble a
-**complete** prod payload into one tree the way `mvn compile -Pprod -P'!dev'` does. The
-`claude`, `gemini`, and `packaging` module tasks already honour `-Pbuild.outputDir` and compose
-cleanly into a shared dir, but the `skills/pkg` render tasks **hardcode** their `outputDir` to
-`build/render/<variant>/`, so `skills/` + `hooks/` never join `.claude-plugin/` + `dist/` +
-`scripts/tasks/`. Until this is fixed, the Task-17 four-payload diff can only compare the render
-sub-output, not the full payload.
+First variant + the shared `renderOutputDir` override mechanism. Assemble the claude **dev**
+payload (render claude-dev + `.claude-plugin/` manifests + JS/TS copies) into one dir.
 
-Make the render `outputDir` overridable from `build.outputDir` (defaulting to the current
-per-variant path for back-compat), then add a per-payload aggregate task that runs render +
-claude manifests + packaging copies into one dir, mirroring the Maven profiles:
-`assembleProd` → `build/` (claude prod), `assembleGemini` → `build-gemini/`, `assembleWindows`
-→ `build-windows/` (windows render; `skip.copy-dist` equivalent — no `copyDist`). Respect the
-Maven phase order. Leave the post-build version-stamp (release.sh `jq`) out of scope — it is a
-release-script step, equal for both build systems.
+Acceptance: `./gradlew assembleClaudeDev` produces a payload byte-identical to a fresh
+`mvn compile -Pdev` build (modulo the jq version stamp); existing tests green.
 
-Acceptance: `./gradlew assembleProd` (and gemini/windows) produce a full payload tree
-structurally matching `mvn compile -P<profile>`; each is byte-identical to the corresponding
-Maven payload modulo the known release-script jq version stamp.
+### Task 22: `assembleGeminiDev` [Medium]
+
+*Depends-on: 21*
+
+Assemble the gemini **dev** payload (render gemini-dev + `gemini-extension.json` + `commands/` +
+README + any applicable JS/TS copies) into one dir.
+
+Acceptance: `./gradlew assembleGeminiDev` byte-identical to a fresh `mvn compile -P 'gemini-dev'`
+build (modulo jq stamp).
+
+### Task 23: `assembleClaudeProd` [Medium]
+
+*Depends-on: 21*
+
+Assemble the claude **prod** payload (render claude-prod + prod manifests + JS/TS copies).
+
+Acceptance: `./gradlew assembleClaudeProd` byte-identical to a fresh `mvn compile -Pprod -P'!dev'`
+build (modulo jq stamp).
+
+### Task 24: `assembleGeminiProd` [Medium]
+
+*Depends-on: 22, 23*
+
+Assemble the gemini **prod** payload.
+
+Acceptance: `./gradlew assembleGeminiProd` byte-identical to a fresh
+`mvn compile -P 'gemini,!dev,!claude'` build (modulo jq stamp).
+
+### Task 25: `assembleWindows` [Medium]
+
+*Depends-on: 23*
+
+Assemble the **windows** payload (render windows + claude manifests; **no** `copyDist` —
+windows skips it). Includes the windows `hooks/` (cmd.exe + `install-runtime.bat`) from Task 20.
+
+Acceptance: `./gradlew assembleWindows` byte-identical to a fresh `mvn compile -P windows` build
+(modulo jq stamp).
 
 ### Phase 5 — Cutover
 
 ### Task 17: Full parity sign-off + remove `pom.xml` files [High]
 
-*Depends-on: 16, 18, 20, 21*
+*Depends-on: 16, 21, 22, 23, 24, 25*
 
-Diff **all four payloads** (`build/`, `build-gemini/`, `build-windows/`, `runtime-<ver>/`)
-Gradle vs Maven on a clean tree. Update `DEVELOPMENT.md`, `devtools/scripts/smoke-gemini.sh`,
+Diff **all payloads** — the five assembled variants (claude-dev, gemini-dev, claude-prod,
+gemini-prod, windows via Tasks 21–25) plus the `runtime-<ver>/` zip (Task 16) — Gradle vs Maven
+on a clean tree. Update `DEVELOPMENT.md`, `devtools/scripts/smoke-gemini.sh`,
 and any CI to Gradle tasks. **Only after sign-off**, remove the seven `pom.xml` files in a
 single cutover commit. Tag the result.
 
