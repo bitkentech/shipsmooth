@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>71</plan>
-    <plan-version>plan-71-v10</plan-version>
+    <plan-version>plan-71-v11</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -477,6 +477,11 @@
         <update>
             <timestamp>2026-06-06T22:51:03.428+05:30</timestamp>
             <message>plan-71-v10: fix inverted dependency. assembleClaude*/assembleGemini* move into the claude/gemini integration modules (not skills/pkg). skills/pkg exposes render+copy as reusable parameterized building blocks; integration modules drive them with explicit output dir + variant (no shared global -Pbuild.outputDir). Direction is integration-&gt;skills:pkg, never reverse. The Task-21 draft's skills/pkg-&gt;:claude:copyPluginMeta dependsOn is being corrected.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T23:29:58.576+05:30</timestamp>
+            <message>plan-71-v11: dual-mode assembly (supersedes v10 consumable-config hand-off). Dev = producers co-deposit directly into build/&lt;variant&gt; (fast, no copy), guarded by a buildSrc overlap-check that FAILS on intersecting declared producer outputs (file-granular, declares inputs so it's UP-TO-DATE on no-op -&gt; zero hot-loop cost). Prod = producers write private dirs, assemble Syncs into build/&lt;variant&gt; as sole writer (overlap-immune). Producers take explicit output dir + declare file-granular outputs (render's whole-dir outputs.dir must be tightened). Shared TS/hooks stay in skills/pkg (gemini uses them too). Task 21 lands the check + dev assembleClaudeDev.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>

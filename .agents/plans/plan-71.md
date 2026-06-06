@@ -404,17 +404,41 @@ both systems.
 **Dependency direction: integration → `skills:pkg`, never the reverse** (decided at
 `plan-71-v10`). The `assembleClaude*` / `assembleGemini*` tasks live in the **`claude`** and
 **`gemini`** integration modules, not in `skills:pkg`. `skills:pkg` is the low-level module: it
-renders skills and owns the JS/TS, and knows nothing about claude or gemini. It exposes its
-render + copy work as **reusable, parameterized building blocks** (output dir + variant spec as
-explicit task inputs / a registration API), so a consuming integration module drives them with
-**explicit** values rather than a shared global `-Pbuild.outputDir` that both modules happen to
-read. `claude.assembleClaudeDev` therefore *invokes skills:pkg with the claude-dev output dir +
-spec*, plus its own manifest task — a clean hand-off, no inversion. (The earlier Task-21 draft
-put `assembleClaudeDev` in `skills:pkg` reaching out to `:claude:copyPluginMeta` — that inverted
-dependency is being corrected here.) Note `claude`/`gemini` are resource-only modules with no
-Java classpath, so the render `JavaExec` (which needs `skills:pkg`'s classpath) stays *executed*
-in `skills:pkg`; the integration module parameterizes and depends on it, e.g. via a consumable
-artifact/configuration or a `skills:pkg` registration function the consumer calls with its spec.
+renders skills and owns the shared JS/TS, and knows nothing about claude or gemini. The shared
+TS/JS (`session-start`) and `hooks` rendering stay in `skills:pkg` — they are consumed by **both**
+claude and gemini (a fresh `gemini-dev` build ships the same `dist/session-start.js` + rendered
+`hooks/`), so they are not claude-specific and do not move. `claude`/`gemini` are resource-only
+modules (no Java classpath), so the render `JavaExec` stays *executed* in `skills:pkg`; the
+integration module owns the *assembly* and its own manifests. (The earlier Task-21 draft put
+`assembleClaudeDev` in `skills:pkg` reaching out to `:claude:copyPluginMeta` — that inverted
+dependency is corrected here.)
+
+**Dual-mode assembly** (decided at `plan-71-v11`, superseding v10's consumable-configuration
+hand-off). Optimise the path run constantly (dev) for speed and the path run rarely
+(prod/release) for correctness. Both modes reuse the **same** producer task definitions; only the
+output dir passed and the assembly wiring differ.
+
+- **Producers** (render, `copyDist`/`copyScripts`/`copyTsSource`, the per-variant manifest tasks)
+  take the output dir as an **explicit parameter** (no shared global `-Pbuild.outputDir`) and
+  declare **file/subpath-granular** outputs — NOT the whole payload dir. The render currently
+  declares `outputs.dir(spec.outputDir)` = the whole dir, which is too coarse for both
+  incrementality and the check below, and must be tightened. (Example: in `dist/` the render owns
+  `session-start-config.json` while `copyDist` owns `*.js` — same dir, disjoint files.)
+- **Dev** (`assembleClaudeDev`, `assembleGeminiDev`): producers co-deposit **directly** into
+  `build/<variant>` — fast, no copy. Guarded by a `buildSrc` **overlap-check** task that **fails
+  the build** (Gradle's native overlapping-outputs detection is only a warning that silently
+  disables incrementality, so the "one dir, one writer" invariant would rot by accident — the
+  check makes it enforced). The check compares producers' **declared** `outputs.files` (in-memory
+  path sets, ~dozens of files), asserts pairwise-disjoint at **file** granularity (dir-granularity
+  would false-positive on `dist/`), and **declares those output paths as its own inputs** so it is
+  `UP-TO-DATE` and skipped on no-op rebuilds — zero cost on the hot dev loop. It compares declared
+  paths, never walks the output tree on disk.
+- **Prod** (`assembleClaudeProd`, `assembleGeminiProd`, `assembleWindows`): producers write to
+  their own private dirs; the assemble task `Sync`s them into `build/<variant>` as the **sole
+  writer** — structurally overlap-immune, release-correct. The extra Sync is acceptable on the
+  rare release path; the overlap-check is not in the prod path (no shared writers).
+
+The `buildSrc` overlap-check is a shared prerequisite landed in Task 21 (alongside `assembleClaudeDev`).
 
 **No default variants** (decided at `plan-71-v9`). The Maven `-Pvariant` / `activeByDefault`
 fallback (`?: "dev"`) was a Maven-land UI shortcut and will **not** exist in Gradle. The
@@ -435,15 +459,20 @@ that variant before being marked done.
 
 *Depends-on: 18, 20*
 
-First variant + the shared building-block mechanism. Establishes the `skills:pkg` reusable
-render/copy building blocks (parameterized by explicit output dir + spec) and the
-integration→skills:pkg hand-off pattern. `assembleClaudeDev` lives in the **`claude`** module
-and assembles the claude **dev** payload (drives skills:pkg render claude-dev + JS copies into
-claude's output dir + adds the per-variant `copyClaudeMetaDev` manifest task — no global
-`-Pvariant` default). See the dependency-direction and no-default-variants notes above.
+First variant + the shared dual-mode mechanism. Lands: (1) the `buildSrc` **overlap-check** task
+(fails on intersecting declared producer outputs, file-granular, declares its inputs so it stays
+`UP-TO-DATE`); (2) tightened **file/subpath-granular** output declarations on the render + copy
+producers (replacing the current whole-dir `outputs.dir`); (3) producers taking an **explicit
+output dir** parameter; (4) `assembleClaudeDev` in the **`claude`** module — **dev co-deposit**:
+producers write directly into `build/claude-dev`, gated by the overlap-check, plus the per-variant
+`copyClaudeMetaDev` manifest task (no global `-Pvariant` default). See the dependency-direction,
+no-default-variants, and dual-mode notes above. (Prod/Sync mode arrives with the prod variant
+tasks 23/24/25.)
 
-Acceptance: `./gradlew assembleClaudeDev` produces a payload byte-identical to a fresh
-`mvn compile -Pdev` build (modulo the jq version stamp); existing tests green.
+Acceptance: `./gradlew assembleClaudeDev` produces `build/claude-dev` byte-identical to a fresh
+`mvn compile -Pdev` build (modulo the jq version stamp); the overlap-check passes and is
+`UP-TO-DATE` on a no-op rebuild; deliberately pointing two producers at an overlapping path fails
+the check; existing tests green.
 
 ### Task 22: `assembleGeminiDev` [Medium]
 
