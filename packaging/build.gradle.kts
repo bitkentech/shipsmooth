@@ -54,38 +54,10 @@ val geminiOutputDir = (findProperty("build.gemini.outputDir") as String?)
     ?.let { file(it) }
     ?: repoRoot.dir("build-gemini").asFile
 
-val distSource = repoRoot.dir("skills/pkg/scripts/dist")
-val tsSource = repoRoot.dir("skills/pkg/scripts/tasks")
-
-// ---------------------------------------------------------------------------
-// Payload assembly
-// ---------------------------------------------------------------------------
-
-// copy-dist: compiled JS (minus *.test.js) into build/dist/, alongside the
-// session-start-config.json that Target renders.
-val copyDist by tasks.registering(Copy::class) {
-    group = "release"
-    description = "Copy compiled JS (minus *.test.js) into <build.outputDir>/dist."
-    from(distSource) { exclude("**/*.test.js") }
-    into(File(outputDir, "dist"))
-}
-
-// claude-profile copy-scripts: compiled JS (minus *.test.js) into build/scripts/tasks/.
-val copyScripts by tasks.registering(Copy::class) {
-    group = "release"
-    description = "Copy compiled JS (minus *.test.js) into <build.outputDir>/scripts/tasks."
-    from(distSource) { exclude("**/*.test.js") }
-    into(File(outputDir, "scripts/tasks"))
-}
-
-// claude-profile copy-ts-source: TS source (minus *.test.ts) into build/scripts/tasks/.
-// The SessionStart hook compiles these at runtime.
-val copyTsSource by tasks.registering(Copy::class) {
-    group = "release"
-    description = "Copy TS source (minus *.test.ts) into <build.outputDir>/scripts/tasks."
-    from(tsSource) { exclude("**/*.test.ts") }
-    into(File(outputDir, "scripts/tasks"))
-}
+// Note: the payload JS/TS copies (copyDist/copyScripts/copyTsSource) moved to
+// skills/pkg in Task 21 — they assemble the plugin payload, not the jlink runtime.
+// This module keeps only the runtime/release entrypoints below. outputDir /
+// geminiOutputDir remain for validateRelease, which reads the assembled payloads.
 
 // ---------------------------------------------------------------------------
 // Release entrypoints

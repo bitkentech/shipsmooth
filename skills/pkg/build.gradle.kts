@@ -96,6 +96,13 @@ val pluginVersion = (findProperty("plugin.version") as String?)
 val repoRoot = layout.projectDirectory.dir("../..")
 val jlinkDir = repoRoot.dir("cli/target/jlink-image").asFile.path
 
+// Resolve a render output dir: -Pbuild.outputDir overrides (so an assembleX task
+// can target the shared build/ payload tree), else the per-variant default under
+// the module build dir (back-compat for standalone renderX runs). (Task 21)
+fun renderOutputDir(variantDefault: String): String =
+    (findProperty("build.outputDir") as String?)
+        ?: layout.buildDirectory.dir("render/$variantDefault").get().asFile.path
+
 val claudeDevSpec = RenderSpec(
     buildPlatform = "claude",
     buildOs = "posix",
@@ -107,7 +114,7 @@ val claudeDevSpec = RenderSpec(
     skillFrontmatter = "",
     jlinkDir = jlinkDir,
     pluginRepoName = "shipsmooth",
-    outputDir = layout.buildDirectory.dir("render/claude-dev").get().asFile.path,
+    outputDir = renderOutputDir("claude-dev"),
     experimentalEnabled = true,
     pluginHookCommand = "node \"\${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"",
 )
@@ -201,3 +208,55 @@ val windowsSpec = claudeProdSpec.copy(
 val renderClaudeProd = registerRender("renderClaudeProd", claudeProdSpec)
 val renderGeminiProd = registerRender("renderGeminiProd", geminiProdSpec)
 val renderWindows = registerRender("renderWindows", windowsSpec)
+
+// ---------------------------------------------------------------------------
+// Payload JS/TS copies (moved here from the packaging module in Task 21 — these
+// populate the plugin payload, not the jlink runtime, so they belong with the
+// rest of payload assembly; packaging keeps only PackageRuntime/Validate/Publish).
+// Source trees are local to this module (scripts/dist, scripts/tasks).
+// ---------------------------------------------------------------------------
+// Where the assembled payload goes (shared with the render + claude manifests).
+val payloadDir = (findProperty("build.outputDir") as String?)
+    ?.let { file(it) }
+    ?: repoRoot.dir("build").asFile
+
+// copyDist: compiled JS (minus *.test.js) into <payload>/dist/, alongside the
+// session-start-config.json the render writes. compileTs produces scripts/dist.
+val copyDist by tasks.registering(Copy::class) {
+    group = "assemble"
+    description = "Copy compiled JS (minus *.test.js) into <build.outputDir>/dist."
+    dependsOn(compileTs)
+    from(layout.projectDirectory.dir("scripts/dist")) { exclude("**/*.test.js") }
+    into(File(payloadDir, "dist"))
+}
+
+// copyScripts: compiled JS (minus *.test.js) into <payload>/scripts/tasks/.
+// claude-prod / windows payloads only (not dev/gemini). Used by Tasks 23/25.
+val copyScripts by tasks.registering(Copy::class) {
+    group = "assemble"
+    description = "Copy compiled JS (minus *.test.js) into <build.outputDir>/scripts/tasks."
+    dependsOn(compileTs)
+    from(layout.projectDirectory.dir("scripts/dist")) { exclude("**/*.test.js") }
+    into(File(payloadDir, "scripts/tasks"))
+}
+
+// copyTsSource: TS source (minus *.test.ts) into <payload>/scripts/tasks/ (the
+// SessionStart hook compiles these at runtime). claude-prod / windows only.
+val copyTsSource by tasks.registering(Copy::class) {
+    group = "assemble"
+    description = "Copy TS source (minus *.test.ts) into <build.outputDir>/scripts/tasks."
+    from(layout.projectDirectory.dir("scripts/tasks")) { exclude("**/*.test.ts") }
+    into(File(payloadDir, "scripts/tasks"))
+}
+
+// ---------------------------------------------------------------------------
+// assembleClaudeDev (Task 21): full claude-dev payload into one dir — render
+// (skills/, hooks/, dist/session-start-config.json) + .claude-plugin/ manifests
+// + dist/*.js. No scripts/tasks (dev payload has none). Does NOT invoke packaging.
+// Run with -Pbuild.outputDir=<dir> to target a specific tree (e.g. build/).
+// ---------------------------------------------------------------------------
+tasks.register("assembleClaudeDev") {
+    group = "assemble"
+    description = "Assemble the full claude-dev plugin payload into <build.outputDir> (default build/)."
+    dependsOn(renderClaudeDev, copyDist, ":claude:copyPluginMeta")
+}
