@@ -403,6 +403,18 @@ payload-owning home (e.g. `skills:pkg`); packaging keeps only `PackageRuntime`/`
 `PublishRelease`. The post-build version stamp (release.sh `jq`) is out of scope — a
 release-script step, equal for both systems.
 
+**No default variants** (decided at `plan-71-v9`). The Maven `-Pvariant` / `activeByDefault`
+fallback (`?: "dev"`) was a Maven-land UI shortcut and will **not** exist in Gradle. The
+`claude` and `gemini` modules currently compute `tokens` / `outputDir` once at config time from
+a global `-Pvariant` (defaulting to dev) and register a single manifest task — which makes it
+impossible for `assembleClaudeDev` and `assembleClaudeProd` to both be correct in one build.
+Instead, the manifest tasks become **per-variant** via a factory (like the render's
+`registerRender(spec)`): e.g. `copyClaudeMetaDev` / `copyClaudeMetaProd`,
+`copyGeminiDev` / `copyGeminiProd`. Each `assembleX` depends on its own variant's manifest task;
+nothing reads a global `variant` property and the `?: "dev"` defaults are deleted. This refactor
+lands incrementally — each variant task (21–25) adds the per-variant manifest task(s) it needs,
+and the defaults are fully gone once all five exist.
+
 Each task below migrates exactly one variant and is parity-gated against a fresh Maven build of
 that variant before being marked done.
 
@@ -411,7 +423,9 @@ that variant before being marked done.
 *Depends-on: 18, 20*
 
 First variant + the shared `renderOutputDir` override mechanism. Assemble the claude **dev**
-payload (render claude-dev + `.claude-plugin/` manifests + JS/TS copies) into one dir.
+payload (render claude-dev + `.claude-plugin/` manifests + JS copies) into one dir. Adds the
+per-variant `copyClaudeMetaDev` manifest task (no global `-Pvariant` default — see the
+no-default-variants note above) and wires `assembleClaudeDev` to it.
 
 Acceptance: `./gradlew assembleClaudeDev` produces a payload byte-identical to a fresh
 `mvn compile -Pdev` build (modulo the jq version stamp); existing tests green.

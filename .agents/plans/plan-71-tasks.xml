@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>71</plan>
-    <plan-version>plan-71-v8</plan-version>
+    <plan-version>plan-71-v9</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -371,12 +371,17 @@
         <task>
             <id>21</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>assembleClaudeDev (+ shared renderOutputDir mechanism)</name>
             <commit></commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T22:09:15.523+05:30</timestamp>
+                    <message>De-risk draft ready (b5684de): assembleClaudeDev byte-identical to fresh mvn -Pdev (10 files, empty diff). Shared mechanism landed: renderOutputDir override + JS/TS copies moved out of packaging into skills/pkg. packaging compiles; tests green.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>18,20</depends-on>
         </task>
@@ -458,6 +463,11 @@
         <update>
             <timestamp>2026-06-06T21:50:44.934+05:30</timestamp>
             <message>plan-71-v8: reworked payload assembly into 5 per-variant tasks (21 assembleClaudeDev, 22 GeminiDev, 23 ClaudeProd, 24 GeminiProd, 25 Windows), migrated one at a time starting ClaudeDev. Deleted the stale/inconsistent committed build*/ dirs; parity baseline is now a fresh mvn -P&lt;profile&gt; build per variant. JS/TS copies move out of packaging (assembly must not invoke packaging). Task 17 now Depends-on 16,21,22,23,24,25.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T22:24:36.109+05:30</timestamp>
+            <message>plan-71-v9: design decision recorded — NO default variants. The Maven -Pvariant/activeByDefault ?:'dev' fallback was a Maven-land UI shortcut; Gradle won't have it. claude/gemini manifest tasks become per-variant via a factory (copyClaudeMetaDev/Prod, copyGeminiDev/Prod); each assembleX depends on its own variant's task; no global variant property. Lands incrementally across Tasks 21-25.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
