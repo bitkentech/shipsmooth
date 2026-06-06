@@ -264,44 +264,10 @@ val copyTsSource by tasks.registering(Copy::class) {
     into(File(payloadDir, "scripts/tasks"))
 }
 
-// ---------------------------------------------------------------------------
-// assembleClaudeDev (Task 21): full claude-dev payload into one dir — render
-// (skills/, hooks/, dist/session-start-config.json) + .claude-plugin/ manifests
-// + dist JS. No scripts/tasks (dev payload has none). Does NOT invoke packaging.
-// Run with -Pbuild.outputDir=<dir> to target a specific tree (e.g. build/).
-//
-// Dev co-deposit: the producers write straight into the one payload dir, gated by
-// the overlap-check — each producer declares its exact owned files/dirs and the
-// check fails on any double-owned or undeclared payload file. (plan-71 v14.)
-//
-// NOTE: per the integration→skills:pkg direction this entry point is to move into
-// the claude module (it already cross-depends on :claude:copyClaudeMetaDev).
-// Tracked as a follow-up within Task 21.
-// ---------------------------------------------------------------------------
-val assembledPayloadDir = payloadDir
-val verifyClaudeDevPayload by tasks.registering(VerifyNoOverlappingOutputs::class) {
-    group = "assemble"
-    description = "Enforce one-writer-per-file across the claude-dev payload producers."
-    dependsOn(renderClaudeDev, copyDist, ":claude:copyClaudeMetaDev")
-    payloadDir.set(assembledPayloadDir)
-    // copyDist / copyClaudeMetaDev are Copy tasks: into() auto-registers the dest DIR
-    // as an output alongside our explicit file declarations. Pass only the FILE entries
-    // so the check attributes by exact files (a dir entry would let the producer "own"
-    // any stray dropped under it, defeating both overlap and stray detection). The
-    // render legitimately owns whole subtrees (skills/, hooks/), so it passes dirs too.
-    addProducer("renderClaudeDev", renderClaudeDev.get().outputs.files)
-    addProducer("copyDist", files(copyDist.map { it.outputs.files.filter { f -> f.isFile } }))
-    addProducer(
-        "copyClaudeMetaDev",
-        files(project(":claude").tasks.named("copyClaudeMetaDev").map { it.outputs.files.filter { f -> f.isFile } }),
-    )
-}
-
-tasks.register("assembleClaudeDev") {
-    group = "assemble"
-    description = "Assemble the full claude-dev plugin payload into <build.outputDir> (default build/)."
-    dependsOn(verifyClaudeDevPayload)
-}
+// The assembleClaude*/assembleGemini* entry points live in the claude/ and gemini/
+// integration build scripts (plan-71 v15, isolation by audience), each calling the
+// shared buildSrc registerPayloadAssembly() helper with its own producers. skills:pkg
+// exposes only the shared producers above (render*, copyDist/copyScripts/copyTsSource).
 
 
 
