@@ -428,11 +428,14 @@ output dir passed and the assembly wiring differ.
   `build/<variant>` — fast, no copy. Guarded by a `buildSrc` **overlap-check** task that **fails
   the build** (Gradle's native overlapping-outputs detection is only a warning that silently
   disables incrementality, so the "one dir, one writer" invariant would rot by accident — the
-  check makes it enforced). The check compares producers' **declared** `outputs.files` (in-memory
-  path sets, ~dozens of files), asserts pairwise-disjoint at **file** granularity (dir-granularity
-  would false-positive on `dist/`), and **declares those output paths as its own inputs** so it is
-  `UP-TO-DATE` and skipped on no-op rebuilds — zero cost on the hot dev loop. It compares declared
-  paths, never walks the output tree on disk.
+  check makes it enforced). **The check walks each producer's output dir on disk** after the
+  producers run and asserts the real produced files are pairwise-disjoint at **file** granularity.
+  (A *declared*-output check was tried first and rejected: Gradle `Copy` tasks declare their
+  output as the destination **directory**, not files, so it cannot distinguish `dist/*.js`
+  (copyDist) from `dist/session-start-config.json` (render) without either walking disk or making
+  every producer hand-enumerate its dest files — a fragile new invariant. Walking disk is cheap in
+  absolute terms: a payload is ~15 files, so the scan is milliseconds.) The check runs after (and
+  `dependsOn`) the producers and is a no-cost gate relative to the assembly it guards.
 - **Prod** (`assembleClaudeProd`, `assembleGeminiProd`, `assembleWindows`): producers write to
   their own private dirs; the assemble task `Sync`s them into `build/<variant>` as the **sole
   writer** — structurally overlap-immune, release-correct. The extra Sync is acceptable on the
