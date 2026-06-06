@@ -94,7 +94,7 @@ registerPayloadAssembly(
 // claudeProdMetaStage — and assembleClaudeProd Syncs all three into <build.outputDir>
 // as the SOLE writer (overlap-immune; no overlap-check on the release path).
 // (plan-71 v11-v15 dual-mode.) Note: the claude-prod payload has NO scripts/tasks
-// tree (the Maven prod baseline emits none), so copyScripts/copyTsSource are unused here.
+// tree (the Maven prod baseline emits none) — just skills/, hooks/, dist/, .claude-plugin/.
 // ---------------------------------------------------------------------------
 val claudeProdRenderStage = skillsPkg.layout.buildDirectory.dir("render/claude-prod").get().asFile
 val claudeProdDistStage = skillsPkg.layout.buildDirectory.dir("stage/dist-prod").get().asFile

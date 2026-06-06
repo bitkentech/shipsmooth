@@ -229,59 +229,51 @@ val payloadDir = (findProperty("build.outputDir") as String?)
     ?.let { file(it) }
     ?: repoRoot.dir("build").asFile
 
-// copyDist: compiled JS (minus *.test.js) into <payload>/dist/, alongside the
-// session-start-config.json the render writes. compileTs produces scripts/dist.
-// Declares its OWN dest files (not the dist/ dir) so the overlap-check sees copyDist
-// owning only the JS, leaving dist/session-start-config.json to the render.
-val copyDist by tasks.registering(Copy::class) {
-    group = "assemble"
-    description = "Copy compiled JS (minus *.test.js) into <build.outputDir>/dist."
-    dependsOn(compileTs)
-    from(layout.projectDirectory.dir("scripts/dist")) { exclude("**/*.test.js") }
-    val dest = File(payloadDir, "dist")
-    into(dest)
-    // File-granular declared outputs: the non-test JS that compileTs emits.
-    val jsFiles = fileTree(layout.projectDirectory.dir("scripts/dist")) {
-        include("**/*.js"); exclude("**/*.test.js")
-    }.files.map { File(dest, it.name) }
-    outputs.files(jsFiles)
-}
+// Factory: copy the compiled non-test JS that compileTs emits into <distRoot>/dist/.
+// Two callers, differing only in destination and overlap-check needs:
+//   - dev  (copyDist): co-deposits into the -Pbuild.outputDir payload tree, so it
+//     declares its EXACT dest files (not the dist/ dir) — that lets the overlap-check
+//     see copyDist owning only the JS, leaving dist/session-start-config.json to the
+//     render. (withFileGranularOutputs = true)
+//   - prod (copyDistProd): writes a FIXED private staging dir, independent of
+//     -Pbuild.outputDir; the prod assemble Sync (sole writer of the final dir) merges
+//     it, so no overlap-check and no file-granular declaration is needed.
+// (plan-71 Task 21 dev / Task 23 prod dual-mode.)
+fun registerCopyDist(taskName: String, distRoot: File, withFileGranularOutputs: Boolean) =
+    tasks.register<Copy>(taskName) {
+        group = "assemble"
+        description = "Copy compiled JS (minus *.test.js) into $distRoot/dist."
+        dependsOn(compileTs)
+        val src = layout.projectDirectory.dir("scripts/dist")
+        from(src) { exclude("**/*.test.js") }
+        val dest = File(distRoot, "dist")
+        into(dest)
+        if (withFileGranularOutputs) {
+            val jsFiles = fileTree(src) { include("**/*.js"); exclude("**/*.test.js") }
+                .files.map { File(dest, it.name) }
+            outputs.files(jsFiles)
+        }
+    }
 
-// copyDistProd: prod-path counterpart to copyDist. Writes the same non-test JS into
-// a FIXED private staging dir (build/stage/dist-prod), independent of -Pbuild.outputDir,
-// so the prod assemble Sync (sole writer of the final payload dir) can merge it without
-// the dev co-deposit overlap-check. (plan-71 Task 23, dual-mode prod path.)
-val copyDistProd by tasks.registering(Copy::class) {
-    group = "assemble"
-    description = "Copy compiled JS (minus *.test.js) into a private prod staging dir."
-    dependsOn(compileTs)
-    from(layout.projectDirectory.dir("scripts/dist")) { exclude("**/*.test.js") }
-    into(layout.buildDirectory.dir("stage/dist-prod").map { File(it.asFile, "dist") })
-}
+val copyDist = registerCopyDist("copyDist", payloadDir, withFileGranularOutputs = true)
+val copyDistProd = registerCopyDist(
+    "copyDistProd",
+    layout.buildDirectory.dir("stage/dist-prod").get().asFile,
+    withFileGranularOutputs = false,
+)
 
-// copyScripts: compiled JS (minus *.test.js) into <payload>/scripts/tasks/.
-// claude-prod / windows payloads only (not dev/gemini). Used by Tasks 23/25.
-val copyScripts by tasks.registering(Copy::class) {
-    group = "assemble"
-    description = "Copy compiled JS (minus *.test.js) into <build.outputDir>/scripts/tasks."
-    dependsOn(compileTs)
-    from(layout.projectDirectory.dir("scripts/dist")) { exclude("**/*.test.js") }
-    into(File(payloadDir, "scripts/tasks"))
-}
-
-// copyTsSource: TS source (minus *.test.ts) into <payload>/scripts/tasks/ (the
-// SessionStart hook compiles these at runtime). claude-prod / windows only.
-val copyTsSource by tasks.registering(Copy::class) {
-    group = "assemble"
-    description = "Copy TS source (minus *.test.ts) into <build.outputDir>/scripts/tasks."
-    from(layout.projectDirectory.dir("scripts/tasks")) { exclude("**/*.test.ts") }
-    into(File(payloadDir, "scripts/tasks"))
-}
+// NOTE (Task 23): no variant's payload contains a scripts/tasks/ tree — verified
+// against fresh Maven prod AND windows baselines (both emit only skills/, hooks/,
+// dist/, .claude-plugin/, and the gemini/windows extras). The earlier copyScripts /
+// copyTsSource tasks here were speculative ("Used by Tasks 23/25") and had no real
+// consumer, so they were removed. If Task 25 (Windows) turns out to need a runtime
+// TS-source copy, re-introduce it then against an actual Windows baseline.
 
 // The assembleClaude*/assembleGemini* entry points live in the claude/ and gemini/
 // integration build scripts (plan-71 v15, isolation by audience), each calling the
-// shared buildSrc registerPayloadAssembly() helper with its own producers. skills:pkg
-// exposes only the shared producers above (render*, copyDist/copyScripts/copyTsSource).
+// shared buildSrc registerPayloadAssembly() (dev) / registerPayloadSync() (prod)
+// helper with its own producers. skills:pkg exposes only the shared producers above
+// (render*, copyDist, copyDistProd).
 
 
 

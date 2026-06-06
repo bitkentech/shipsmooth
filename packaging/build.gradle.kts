@@ -54,8 +54,8 @@ val geminiOutputDir = (findProperty("build.gemini.outputDir") as String?)
     ?.let { file(it) }
     ?: repoRoot.dir("build-gemini").asFile
 
-// Note: the payload JS/TS copies (copyDist/copyScripts/copyTsSource) moved to
-// skills/pkg in Task 21 — they assemble the plugin payload, not the jlink runtime.
+// Note: the payload JS copy (copyDist, + copyDistProd) moved to skills/pkg in
+// Task 21/23 — it assembles the plugin payload, not the jlink runtime.
 // This module keeps only the runtime/release entrypoints below. outputDir /
 // geminiOutputDir remain for validateRelease, which reads the assembled payloads.
 
