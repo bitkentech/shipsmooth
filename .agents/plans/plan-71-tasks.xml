@@ -423,9 +423,9 @@
         <task>
             <id>23</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>assembleClaudeProd</name>
-            <commit></commit>
+            <commit>55cdc5f769f832db4a12f76c2e94e5c5d250d6a6</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
