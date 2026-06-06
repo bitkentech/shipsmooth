@@ -149,7 +149,14 @@ fun registerRender(taskName: String, spec: RenderSpec) =
         // UP-TO-DATE instead of re-running every invocation.
         spec.systemProperties().forEach { (key, value) -> inputs.property(key, value) }
         inputs.files(runtimeClasspath).withNormalizer(ClasspathNormalizer::class.java)
-        outputs.dir(spec.outputDir)
+        // Declare what the render OWNS at the right granularity (Task 21, Bazel-style):
+        // the skills/ and hooks/ subtrees (variant-dependent file sets) plus the single
+        // dist/session-start-config.json. It deliberately does NOT own all of dist/ —
+        // copyDist owns the JS there — so the overlap-check can tell them apart and the
+        // shared dist/ dir has one writer per file.
+        outputs.dir("${spec.outputDir}/skills")
+        outputs.dir("${spec.outputDir}/hooks")
+        outputs.file("${spec.outputDir}/dist/session-start-config.json")
     }
 
 val renderClaudeDev = registerRender("renderClaudeDev", claudeDevSpec)
@@ -222,12 +229,20 @@ val payloadDir = (findProperty("build.outputDir") as String?)
 
 // copyDist: compiled JS (minus *.test.js) into <payload>/dist/, alongside the
 // session-start-config.json the render writes. compileTs produces scripts/dist.
+// Declares its OWN dest files (not the dist/ dir) so the overlap-check sees copyDist
+// owning only the JS, leaving dist/session-start-config.json to the render.
 val copyDist by tasks.registering(Copy::class) {
     group = "assemble"
     description = "Copy compiled JS (minus *.test.js) into <build.outputDir>/dist."
     dependsOn(compileTs)
     from(layout.projectDirectory.dir("scripts/dist")) { exclude("**/*.test.js") }
-    into(File(payloadDir, "dist"))
+    val dest = File(payloadDir, "dist")
+    into(dest)
+    // File-granular declared outputs: the non-test JS that compileTs emits.
+    val jsFiles = fileTree(layout.projectDirectory.dir("scripts/dist")) {
+        include("**/*.js"); exclude("**/*.test.js")
+    }.files.map { File(dest, it.name) }
+    outputs.files(jsFiles)
 }
 
 // copyScripts: compiled JS (minus *.test.js) into <payload>/scripts/tasks/.
@@ -252,11 +267,43 @@ val copyTsSource by tasks.registering(Copy::class) {
 // ---------------------------------------------------------------------------
 // assembleClaudeDev (Task 21): full claude-dev payload into one dir — render
 // (skills/, hooks/, dist/session-start-config.json) + .claude-plugin/ manifests
-// + dist/*.js. No scripts/tasks (dev payload has none). Does NOT invoke packaging.
+// + dist JS. No scripts/tasks (dev payload has none). Does NOT invoke packaging.
 // Run with -Pbuild.outputDir=<dir> to target a specific tree (e.g. build/).
+//
+// Dev co-deposit: the producers write straight into the one payload dir, gated by
+// the overlap-check — each producer declares its exact owned files/dirs and the
+// check fails on any double-owned or undeclared payload file. (plan-71 v14.)
+//
+// NOTE: per the integration→skills:pkg direction this entry point is to move into
+// the claude module (it already cross-depends on :claude:copyClaudeMetaDev).
+// Tracked as a follow-up within Task 21.
 // ---------------------------------------------------------------------------
+val assembledPayloadDir = payloadDir
+val verifyClaudeDevPayload by tasks.registering(VerifyNoOverlappingOutputs::class) {
+    group = "assemble"
+    description = "Enforce one-writer-per-file across the claude-dev payload producers."
+    dependsOn(renderClaudeDev, copyDist, ":claude:copyClaudeMetaDev")
+    payloadDir.set(assembledPayloadDir)
+    // copyDist / copyClaudeMetaDev are Copy tasks: into() auto-registers the dest DIR
+    // as an output alongside our explicit file declarations. Pass only the FILE entries
+    // so the check attributes by exact files (a dir entry would let the producer "own"
+    // any stray dropped under it, defeating both overlap and stray detection). The
+    // render legitimately owns whole subtrees (skills/, hooks/), so it passes dirs too.
+    addProducer("renderClaudeDev", renderClaudeDev.get().outputs.files)
+    addProducer("copyDist", files(copyDist.map { it.outputs.files.filter { f -> f.isFile } }))
+    addProducer(
+        "copyClaudeMetaDev",
+        files(project(":claude").tasks.named("copyClaudeMetaDev").map { it.outputs.files.filter { f -> f.isFile } }),
+    )
+}
+
 tasks.register("assembleClaudeDev") {
     group = "assemble"
     description = "Assemble the full claude-dev plugin payload into <build.outputDir> (default build/)."
-    dependsOn(renderClaudeDev, copyDist, ":claude:copyClaudeMetaDev")
+    dependsOn(verifyClaudeDevPayload)
 }
+
+
+
+
+

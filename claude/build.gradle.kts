@@ -37,15 +37,21 @@ val outputDir = (findProperty("build.outputDir") as String?)
     ?: rootProject.layout.projectDirectory.dir("build").asFile
 
 // Factory: one .claude-plugin manifest task per variant (plugin.json + marketplace.json,
-// token-filtered). Mirrors skills/pkg's registerRender(spec) pattern.
+// token-filtered). Mirrors skills/pkg's registerRender(spec) pattern. Declares its EXACT
+// output files (not just the dest dir) so the payload overlap-check can attribute them
+// (Task 21, Bazel-style); the manifest set is a fixed two files.
 fun registerClaudeMeta(taskName: String, tokens: Map<String, Any>) =
     tasks.register<Copy>(taskName) {
         group = "assemble"
         description = "Filter plugin.json + marketplace.json into <build.outputDir>/.claude-plugin/."
         from(layout.projectDirectory.dir("src/main/resources/claude-plugin"))
-        into(File(outputDir, ".claude-plugin"))
+        val dest = File(outputDir, ".claude-plugin")
+        into(dest)
         expand(tokens)
+        outputs.file(File(dest, "plugin.json"))
+        outputs.file(File(dest, "marketplace.json"))
     }
 
 val copyClaudeMetaDev = registerClaudeMeta("copyClaudeMetaDev", devTokens)
 val copyClaudeMetaProd = registerClaudeMeta("copyClaudeMetaProd", prodTokens)
+
