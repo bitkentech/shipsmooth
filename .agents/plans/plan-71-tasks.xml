@@ -402,7 +402,7 @@
             <risk>medium</risk>
             <status>agent-coded</status>
             <name>assembleGeminiDev</name>
-            <commit>89db8e9276a05c573d1e2116cfc0ed1988d289c8</commit>
+            <commit>c546c52e960fc4ba5131373553a6462b823c50b0</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
