@@ -317,15 +317,19 @@
         <task>
             <id>18</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Prod render variant tasks</name>
-            <commit></commit>
+            <commit>7fe75da</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
                     <timestamp>2026-06-06T17:33:40.607+05:30</timestamp>
                     <message>De-risk draft ready (7fe75da): renderClaudeProd/renderGeminiProd/renderWindows all byte-identical to mvn -P prod/gemini/windows render. Parity diff caught + fixed 3 divergences (gemini jlinkDir, windows build.os, windows hook command).</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-06T17:58:52.959+05:30</timestamp>
+                    <message>Hardened: implementation already at quality bar (3 documented RenderSpec.copy variants, existing buildSrc infra). Clean-tree re-verify: claude-prod/gemini-prod/windows all byte-identical to fresh mvn -P prod/gemini/windows baselines; :skills:pkg:test 57 green (incl TargetIntegrationTest). No code churn needed. Note: renderWindows matches Maven's current posix cliBin; Task 20 corrects that in both systems.</message>
                 </comment>
             </comments>
             <deviations/>
