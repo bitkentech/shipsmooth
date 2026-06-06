@@ -413,6 +413,19 @@ integration module owns the *assembly* and its own manifests. (The earlier Task-
 `assembleClaudeDev` in `skills:pkg` reaching out to `:claude:copyPluginMeta` — that inverted
 dependency is corrected here.)
 
+**Isolation by audience** (decided at `plan-71-v15`). The point of per-integration assembly is
+that someone working on Claude need not read, edit, or understand how Gemini is built, and vice
+versa. So `assembleClaude*` lives in `claude/build.gradle.kts` and `assembleGemini*` in
+`gemini/build.gradle.kts` — each fully self-contained, naming only its own producers
+(`renderClaudeDev`, `copyDist`, `copyClaudeMetaDev`, …) and never referencing the other
+integration. A **top-level root `build.gradle.kts` was rejected** for exactly this reason: it
+would house all five variants together, forcing the Claude and Gemini owners into one shared file.
+The reusable machinery — `VerifyNoOverlappingOutputs` and a small
+`registerPayloadAssembly(name, payloadDir, producers…)` helper that wires the co-deposit +
+overlap-check uniformly — lives in **`buildSrc`** as common helpers every integration calls. An
+integration depending on `skills:pkg` producers is a normal downstream dependency (it consumes the
+shared SDK), not an inversion.
+
 **Dual-mode assembly** (decided at `plan-71-v11`, superseding v10's consumable-configuration
 hand-off). Optimise the path run constantly (dev) for speed and the path run rarely
 (prod/release) for correctness. Both modes reuse the **same** producer task definitions; only the

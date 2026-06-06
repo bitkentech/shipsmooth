@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>71</plan>
-    <plan-version>plan-71-v14</plan-version>
+    <plan-version>plan-71-v15</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -385,6 +385,10 @@
                     <timestamp>2026-06-06T22:28:54.611+05:30</timestamp>
                     <message>Refined to no-default-variants (92c8392): claude manifest is now a per-variant factory (copyClaudeMetaDev/Prod), no global -Pvariant default. assembleClaudeDev byte-identical to fresh mvn -Pdev with NO -Pvariant flag; claude has zero variant defaults; tests green.</message>
                 </comment>
+                <comment>
+                    <timestamp>2026-06-07T00:46:13.208+05:30</timestamp>
+                    <message>De-risk draft (85da0e4): assembleClaudeDev byte-identical to fresh mvn -Pdev; Bazel-style VerifyNoOverlappingOutputs in buildSrc — payload-only (md/js/json/toml/bat/ts), file/dir ownership w/ file-match precedence; teeth proven (fails on same-file overlap + undeclared strays, passes clean). copyDist/scripts/ts moved out of packaging; claude manifest factory declares exact files. Follow-ups: move entry point to claude module; verify UP-TO-DATE.</message>
+                </comment>
             </comments>
             <deviations/>
             <depends-on>18,20</depends-on>
@@ -497,6 +501,11 @@
         <update>
             <timestamp>2026-06-07T00:16:03.991+05:30</timestamp>
             <message>plan-71-v14: scope the overlap-check to PAYLOAD content files only — the .md/.js/.json/.toml/.bat/.ts that land in build/&lt;variant&gt;/, for skills/claude/gemini only. Opt-in per assembleX over an explicit producer list (never auto-discovers tasks); extension allowlist {md,js,json,toml,bat,ts} as a guard so .class files / JARs / generated sources / node_modules can never be dragged in. core/cli/packaging never get the check. (Survey: a fresh build of all 5 variants emits only those extensions.)</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T00:52:09.039+05:30</timestamp>
+            <message>plan-71-v15: isolation by audience. assembleClaude* lives in claude/build.gradle.kts, assembleGemini* in gemini/ — each self-contained, naming only its own producers, never referencing the other integration (so the Claude owner needn't understand Gemini's build). Top-level root build.gradle.kts REJECTED (would force both owners into one file). Reusable machinery (VerifyNoOverlappingOutputs + a registerPayloadAssembly helper) lives in buildSrc as common helpers. Corrects the de-risk draft which put assembleClaudeDev in skills/pkg.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
