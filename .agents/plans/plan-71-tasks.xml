@@ -406,7 +406,13 @@
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-07T01:29:13.925+05:30</timestamp>
+                    <message>Gemini payload drops .claude-plugin plugin/marketplace json (Claude-marketplace metadata, never belonged in a Gemini extension; gemini profiles also never set marketplace.name/description so marketplace.json shipped half-filtered with a literal token). Fixed Maven gemini-dev+gemini profiles to skip.copy-plugin-meta=true; assembleGeminiDev producers = renderGeminiDev + copyDist + gemini manifest/commands/README only. Deliberate divergence from prior buggy Maven output; same shape as the gemini-prod plugin.name fix.</message>
+                </deviation>
+            </deviations>
             <depends-on>21</depends-on>
         </task>
         <task>

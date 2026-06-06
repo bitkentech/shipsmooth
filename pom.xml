@@ -145,7 +145,11 @@
         <build.platform>gemini</build.platform>
         <build.os>posix</build.os>
         <skip.copy-dist>false</skip.copy-dist>
-        <skip.copy-plugin-meta>false</skip.copy-plugin-meta>
+        <!-- .claude-plugin/{plugin,marketplace}.json are Claude-marketplace metadata
+             and don't belong in a Gemini extension (the gemini profiles never even
+             defined marketplace.name/description, so the file shipped half-filtered).
+             Skip the claude copy-plugin-meta for gemini variants. (plan-71 Task 22.) -->
+        <skip.copy-plugin-meta>true</skip.copy-plugin-meta>
 
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini-dev</build.outputDir>
 
@@ -209,7 +213,8 @@ description: Use when starting any task — applies the shipsmooth agent coding 
         <build.platform>gemini</build.platform>
         <build.os>posix</build.os>
         <skip.copy-dist>false</skip.copy-dist>
-        <skip.copy-plugin-meta>false</skip.copy-plugin-meta>
+        <!-- See gemini-dev: .claude-plugin metadata is Claude-only, skip for gemini. -->
+        <skip.copy-plugin-meta>true</skip.copy-plugin-meta>
         <plugin.name>${plugin.base.name}</plugin.name>
         <plugin.description>Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.</plugin.description>
         <build.outputDir>${maven.multiModuleProjectDirectory}/build-gemini</build.outputDir>

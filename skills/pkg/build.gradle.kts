@@ -127,7 +127,9 @@ val geminiDevSpec = claudeDevSpec.copy(
         description: Use when starting any task — applies the shipsmooth agent coding workflow (dev build).
         ---
     """.trimIndent(),
-    outputDir = layout.buildDirectory.dir("render/gemini-dev").get().asFile.path,
+    // Honour -Pbuild.outputDir like claudeDev, so assembleGeminiDev can target the
+    // shared payload tree (Task 22). Standalone runs default to build/render/gemini-dev.
+    outputDir = renderOutputDir("gemini-dev"),
     pluginHookCommand = "node \"\${extensionPath}/dist/session-start.js\"",
 )
 
