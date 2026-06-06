@@ -400,12 +400,17 @@
         <task>
             <id>22</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>assembleGeminiDev</name>
-            <commit></commit>
+            <commit>89db8e9276a05c573d1e2116cfc0ed1988d289c8</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T01:38:10.366+05:30</timestamp>
+                    <message>De-risk draft ready for review (commit dae7e43). assembleGeminiDev parity-clean vs mvn gemini-dev; overlap-check UP-TO-DATE on no-op, fails on overlap/stray. Includes a scope decision: gemini payload no longer ships .claude-plugin/ (Maven gemini+gemini-dev set skip.copy-plugin-meta=true) — recorded as a minor deviation.</message>
+                </comment>
+            </comments>
             <deviations>
                 <deviation>
                     <type>minor</type>
