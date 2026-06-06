@@ -29,6 +29,16 @@ val prodTokens = mapOf(
         "description" to "Plugin marketplace for bitkentech/shipsmooth",
     ),
 )
+// Windows variant (Maven `windows` profile): prod plugin.name, Windows-specific plugin
+// description, and a -windows marketplace description. (plan-71 Task 25.)
+val windowsTokens = mapOf(
+    "plugin" to mapOf("name" to pluginBaseName, "description" to "Agent coding workflow (Windows)"),
+    "project" to mapOf("version" to pluginVersion),
+    "marketplace" to mapOf(
+        "name" to "bitkentech",
+        "description" to "Plugin marketplace for bitkentech/shipsmooth-windows",
+    ),
+)
 
 // Where the manifests land. -Pbuild.outputDir targets the shared payload tree (so an
 // assembleX task can drive it); defaults to the repo build/ dir for standalone runs.
@@ -55,11 +65,26 @@ fun registerClaudeMeta(taskName: String, tokens: Map<String, Any>, baseDir: File
         outputs.file(File(dest, "marketplace.json"))
     }
 
-// Fixed private prod staging dir (independent of -Pbuild.outputDir) for the prod Sync path.
+// Fixed private staging dirs (independent of -Pbuild.outputDir) for the prod/windows
+// Sync paths.
 val claudeProdMetaStage = layout.buildDirectory.dir("stage/claude-prod-meta").get().asFile
+val windowsMetaStage = layout.buildDirectory.dir("stage/windows-meta").get().asFile
 
 val copyClaudeMetaDev = registerClaudeMeta("copyClaudeMetaDev", devTokens, outputDir)
 val copyClaudeMetaProd = registerClaudeMeta("copyClaudeMetaProd", prodTokens, claudeProdMetaStage)
+val copyClaudeMetaWindows = registerClaudeMeta("copyClaudeMetaWindows", windowsTokens, windowsMetaStage)
+
+// copyWindowsReadme: the Windows-only README.md (from claude/src/main/resources/windows/,
+// unfiltered) into a fixed private staging dir, merged by the assembleWindows Sync.
+// Mirrors claude/pom.xml's `copy-windows-readme` execution. (plan-71 Task 25.)
+val windowsReadmeStage = layout.buildDirectory.dir("stage/windows-readme").get().asFile
+val copyWindowsReadme by tasks.registering(Copy::class) {
+    group = "assemble"
+    description = "Copy the Windows README.md into a private windows staging dir."
+    from(layout.projectDirectory.dir("src/main/resources/windows")) { include("README.md") }
+    into(windowsReadmeStage)
+    outputs.file(File(windowsReadmeStage, "README.md"))
+}
 
 // ---------------------------------------------------------------------------
 // assembleClaudeDev (Task 21): the full claude-dev plugin payload into one dir —
@@ -106,6 +131,29 @@ registerPayloadSync(
         SyncSource(skillsPkg.tasks.named("renderClaudeProd"), claudeProdRenderStage),
         SyncSource(skillsPkg.tasks.named("copyDistProd"), claudeProdDistStage),
         SyncSource(copyClaudeMetaProd, claudeProdMetaStage),
+    ),
+)
+
+// ---------------------------------------------------------------------------
+// assembleWindows (Task 25): the full windows plugin payload, via the prod Sync path.
+// Windows is a Claude plugin, so it carries .claude-plugin/ (windows tokens), but it
+// DIFFERS from claude-prod: skip.copy-dist=true, so there is NO copyDist(Prod) — the
+// payload has no dist/*.js, only the render's dist/session-start-config.json. The
+// Windows-specific hooks/ (cmd.exe + install-runtime.bat, Task 20) come from
+// renderWindows. A Windows-only README.md (copyWindowsReadme) is included.
+// Producers: renderWindows + copyClaudeMetaWindows + copyWindowsReadme, each in its
+// own private staging dir; assembleWindows Syncs them into <build.outputDir> as the
+// SOLE writer. (plan-71 v11-v15 dual-mode.)
+// ---------------------------------------------------------------------------
+val windowsRenderStage = skillsPkg.layout.buildDirectory.dir("render/windows").get().asFile
+registerPayloadSync(
+    syncTaskName = "assembleWindows",
+    description = "Assemble the full windows plugin payload into <build.outputDir>.",
+    payloadDir = outputDir,
+    sources = listOf(
+        SyncSource(skillsPkg.tasks.named("renderWindows"), windowsRenderStage),
+        SyncSource(copyClaudeMetaWindows, windowsMetaStage),
+        SyncSource(copyWindowsReadme, windowsReadmeStage),
     ),
 )
 
