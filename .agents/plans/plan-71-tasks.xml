@@ -371,9 +371,9 @@
         <task>
             <id>21</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>assembleClaudeDev (+ shared renderOutputDir mechanism)</name>
-            <commit></commit>
+            <commit>dcce08e</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
@@ -388,6 +388,10 @@
                 <comment>
                     <timestamp>2026-06-07T00:46:13.208+05:30</timestamp>
                     <message>De-risk draft (85da0e4): assembleClaudeDev byte-identical to fresh mvn -Pdev; Bazel-style VerifyNoOverlappingOutputs in buildSrc — payload-only (md/js/json/toml/bat/ts), file/dir ownership w/ file-match precedence; teeth proven (fails on same-file overlap + undeclared strays, passes clean). copyDist/scripts/ts moved out of packaging; claude manifest factory declares exact files. Follow-ups: move entry point to claude module; verify UP-TO-DATE.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-07T01:12:23.339+05:30</timestamp>
+                    <message>Closed (dcce08e): assembleClaudeDev in claude module (isolation by audience), reusable registerPayloadAssembly + VerifyNoOverlappingOutputs in buildSrc. Byte-identical to mvn -Pdev; overlap-check teeth proven; UP-TO-DATE on no-op via output stamp (outside payload). copyDist/scripts/ts moved out of packaging; claude manifest factory declares exact files. Ready to reuse for Tasks 22-25.</message>
                 </comment>
             </comments>
             <deviations/>
