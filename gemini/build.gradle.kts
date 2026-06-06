@@ -39,34 +39,38 @@ val outputDir = (findProperty("build.outputDir") as String?)
 val resourcesDir = layout.projectDirectory.dir("src/main/resources/gemini-extension")
 
 // Factory: one gemini metadata task PER VARIANT — filters gemini-extension.json,
-// copies the variant's commands/ tree + README into <build.outputDir>. Declares its
-// EXACT output files (not just dest dirs) so the payload overlap-check can attribute
-// them (Task 21/22, Bazel-style). Returns the Copy task provider.
-//   - dev  uses gemini-dev/commands (start-dev.toml)
-//   - prod uses gemini/commands     (start.toml)
-fun registerGeminiMeta(taskName: String, tokens: Map<String, Any>, commandsVariant: String) =
+// copies the variant's commands/ tree + README into <baseDir>. Declares its EXACT
+// output files (not just dest dirs) so the payload overlap-check can attribute them
+// (Task 21/22, Bazel-style). Returns the Copy task provider.
+//   - dev  uses gemini-dev/commands (start-dev.toml); baseDir = the co-deposit outputDir
+//   - prod uses gemini/commands     (start.toml);     baseDir = a FIXED private staging
+//     dir, merged later by the assemble Sync (mirrors claude's registerClaudeMeta).
+fun registerGeminiMeta(taskName: String, tokens: Map<String, Any>, commandsVariant: String, baseDir: File) =
     tasks.register<Copy>(taskName) {
         group = "assemble"
-        description = "Filter gemini-extension.json + copy commands/ + README into <build.outputDir>."
+        description = "Filter gemini-extension.json + copy commands/ + README into <baseDir>."
         // 1. Filtered manifest at the payload root.
         from(resourcesDir) { include("gemini-extension.json"); expand(tokens) }
         // 2. README (unfiltered) at the payload root.
         from(resourcesDir) { include("README.md") }
         // 3. The variant's commands/ tree (unfiltered) into commands/.
         from(resourcesDir.dir("$commandsVariant/commands")) { into("commands") }
-        into(outputDir)
+        into(baseDir)
 
         // Exact declared outputs for the overlap-check. The commands set is variant-fixed
         // (one .toml today); enumerate the source tree so adding a command is picked up.
-        outputs.file(File(outputDir, "gemini-extension.json"))
-        outputs.file(File(outputDir, "README.md"))
+        outputs.file(File(baseDir, "gemini-extension.json"))
+        outputs.file(File(baseDir, "README.md"))
         fileTree(resourcesDir.dir("$commandsVariant/commands")).files.forEach { cmd ->
-            outputs.file(File(File(outputDir, "commands"), cmd.name))
+            outputs.file(File(File(baseDir, "commands"), cmd.name))
         }
     }
 
-val copyGeminiMetaDev = registerGeminiMeta("copyGeminiMetaDev", devTokens, "gemini-dev")
-val copyGeminiMetaProd = registerGeminiMeta("copyGeminiMetaProd", prodTokens, "gemini")
+// Fixed private prod staging dir (independent of -Pbuild.outputDir) for the prod Sync path.
+val geminiProdMetaStage = layout.buildDirectory.dir("stage/gemini-prod-meta").get().asFile
+
+val copyGeminiMetaDev = registerGeminiMeta("copyGeminiMetaDev", devTokens, "gemini-dev", outputDir)
+val copyGeminiMetaProd = registerGeminiMeta("copyGeminiMetaProd", prodTokens, "gemini", geminiProdMetaStage)
 
 // ---------------------------------------------------------------------------
 // assembleGeminiDev (Task 22): the full gemini-dev extension payload into one dir —
@@ -90,5 +94,29 @@ registerPayloadAssembly(
         PayloadProducer("renderGeminiDev", skillsPkg.tasks.named("renderGeminiDev"), ownsFilesOnly = false),
         PayloadProducer("copyDist", skillsPkg.tasks.named("copyDist"), ownsFilesOnly = true),
         PayloadProducer("copyGeminiMetaDev", copyGeminiMetaDev, ownsFilesOnly = true),
+    ),
+)
+
+// ---------------------------------------------------------------------------
+// assembleGeminiProd (Task 24): the full gemini-prod extension payload, via the prod
+// dual-mode Sync path (mirrors claude's assembleClaudeProd). Each producer writes its
+// OWN private staging dir — renderGeminiProd (skills/ + hooks/ + dist/session-start-config.json)
+// into skills:pkg's build/render/gemini-prod, copyDistProd (dist/*.js) into its prod
+// staging, copyGeminiMetaProd (gemini-extension.json + commands/ + README) into
+// geminiProdMetaStage — and assembleGeminiProd Syncs all three into <build.outputDir>
+// as the SOLE writer (overlap-immune; no overlap-check on the release path).
+// (plan-71 v11-v15 dual-mode.) Note: the gemini payload carries NO .claude-plugin/
+// (Task 22) and NO scripts/tasks/ tree (Task 23 — no variant emits one).
+// ---------------------------------------------------------------------------
+val geminiProdRenderStage = skillsPkg.layout.buildDirectory.dir("render/gemini-prod").get().asFile
+val geminiProdDistStage = skillsPkg.layout.buildDirectory.dir("stage/dist-prod").get().asFile
+registerPayloadSync(
+    syncTaskName = "assembleGeminiProd",
+    description = "Assemble the full gemini-prod extension payload into <build.outputDir> (pass -Pbuild.outputDir).",
+    payloadDir = outputDir,
+    sources = listOf(
+        SyncSource(skillsPkg.tasks.named("renderGeminiProd"), geminiProdRenderStage),
+        SyncSource(skillsPkg.tasks.named("copyDistProd"), geminiProdDistStage),
+        SyncSource(copyGeminiMetaProd, geminiProdMetaStage),
     ),
 )
