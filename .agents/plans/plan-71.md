@@ -368,3 +368,23 @@ single cutover commit. Tag the result.
 
 Acceptance: all four payloads parity-clean; no remaining `mvn` invocation in docs/scripts;
 `./gradlew build` green from a clean checkout with no `pom.xml` present.
+
+### Task 19: Run the TS tests in the build [Medium]
+
+*Depends-on: 17*
+
+Added at `plan-71-v5`. The `skills/pkg/scripts` TS suite (`session-start.test.ts` — e.g. the
+`jlinkDir` non-directory / install-from-jlinkDir cases) is currently run only by a manual
+`npm test` (`package.json` `test` script: `tsc -p tsconfig.test.json && npm run bundle-test &&
+node --test`). Neither Maven nor Gradle ran it in the build (Maven only did `npm install` +
+`npm run build`), so it was never a parity gap — but post-cutover there is no Maven home for it
+either, and an unrun test rots. Wire it into the Gradle build so `./gradlew check` (or `build`)
+executes the TS suite.
+
+Add a Gradle task (e.g. an `NpmTask`/`Exec` running the `package.json` `test` script, or its
+`tsc`+`node --test` steps) in `skills/pkg/build.gradle.kts`, with `node_modules`/`tasks` as
+inputs so it's incremental, and hook it into `check`. Decide whether a TS-test failure should
+fail the aggregate build (recommended: yes).
+
+Acceptance: `./gradlew :skills:pkg:check` runs the TS tests and fails on a deliberately broken
+TS test; a clean run is green.
