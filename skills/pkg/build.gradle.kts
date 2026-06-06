@@ -49,6 +49,27 @@ val compileTs by tasks.registering(NpmTask::class) {
     outputs.dir("scripts/dist")
 }
 
+// `npm test` (tsc -p tsconfig.test.json + bundle-test + node --test) — the TS unit
+// suite under scripts/src/test (session-start / install-download / download-file).
+// Neither Maven nor the earlier Gradle build ran it, so it would rot post-cutover;
+// wire it into `check` so ./gradlew check (or build) executes it and FAILS the build
+// on a broken test. (plan-71 Task 19.) Inputs cover the test sources + the production
+// tasks they import + the test tsconfig, so it is incremental (UP-TO-DATE on no change).
+val testTs by tasks.registering(NpmTask::class) {
+    dependsOn(tasks.named<NpmInstallTask>("npmInstall"))
+    args.set(listOf("test"))
+
+    inputs.dir("scripts/src/test").withPathSensitivity(RELATIVE)
+    inputs.dir("scripts/tasks").withPathSensitivity(RELATIVE)
+    inputs.file("scripts/package.json").withPathSensitivity(RELATIVE)
+    inputs.file("scripts/tsconfig.json").withPathSensitivity(RELATIVE)
+    inputs.file("scripts/tsconfig.test.json").withPathSensitivity(RELATIVE)
+    outputs.dir("scripts/dist-test")
+}
+
+// Fail `check`/`build` if the TS suite fails (recommended in the plan).
+tasks.named("check") { dependsOn(testTs) }
+
 // Reproduce the antrun rename step: copy the sibling start/, experimental/,
 // shared/ trees from the repo's skills/ dir into a staging root, renaming
 // *.jte.md -> *.jte. The start/experimental/shared prefix is preserved so the

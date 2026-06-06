@@ -344,7 +344,13 @@
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-07T02:36:46.143+05:30</timestamp>
+                    <message>Executed Task 19 BEFORE Task 17 despite the plan's 'Depends-on: 17'. Task 19 only wires the existing TS suite into skills/pkg/build.gradle.kts; it needs nothing from Task 17's cutover. Correct order is 19-before-17: wire+verify TS tests while the build is stable, not after the pom-deletion cutover. Task 17's parity sign-off remains the final step.</message>
+                </deviation>
+            </deviations>
             <depends-on>17</depends-on>
         </task>
         <task>
