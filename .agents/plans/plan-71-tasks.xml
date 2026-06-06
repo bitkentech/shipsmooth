@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>71</plan>
-    <plan-version>plan-71-v13</plan-version>
+    <plan-version>plan-71-v14</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -492,6 +492,11 @@
         <update>
             <timestamp>2026-06-07T00:09:41.073+05:30</timestamp>
             <message>plan-71-v13: Bazel-inspired exact-output declaration resolves the overlap-check. After two rejected designs (declared-DIR check can't see files; naive disk-walk can't attribute co-deposited files), adopt Bazel's 'declare exact output files' model: each producer declares outputs.file(&lt;each file&gt;) not outputs.dir(). The cheap in-memory declared-output check then works (filter to file entries, assert disjoint, UP-TO-DATE-friendly, no disk walk). A separate completeness pass walks the assembled dir for undeclared strays (Gradle has no Bazel sandbox). Validated by spike v3.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T00:16:03.991+05:30</timestamp>
+            <message>plan-71-v14: scope the overlap-check to PAYLOAD content files only — the .md/.js/.json/.toml/.bat/.ts that land in build/&lt;variant&gt;/, for skills/claude/gemini only. Opt-in per assembleX over an explicit producer list (never auto-discovers tasks); extension allowlist {md,js,json,toml,bat,ts} as a guard so .class files / JARs / generated sources / node_modules can never be dragged in. core/cli/packaging never get the check. (Survey: a fresh build of all 5 variants emits only those extensions.)</message>
             <blocked>false</blocked>
         </update>
     </project-updates>

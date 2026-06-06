@@ -435,6 +435,15 @@ output dir passed and the assembly wiring differ.
   declared==actual, so the assemble task additionally walks the final payload dir and asserts every
   file present was declared by exactly one producer — catching both overlaps and stray undeclared
   files, the closest Gradle gets to Bazel's guarantee.)
+- **Scope: payload content files only** (decided at `plan-71-v14`). The overlap-check polices
+  ONLY the plugin **payload** output files — the `.md` / `.js` / `.json` / `.toml` / `.bat` /
+  `.ts`(+`.d.ts`) that land in `build/<variant>/` — and ONLY for the payload-producing modules
+  (`skills`, `claude`, `gemini`). It is **opt-in per `assembleX` task** over an **explicit list of
+  registered payload producers**; it never auto-discovers tasks and never sees general build
+  outputs (`.class`, JARs, generated sources, JTE template classes, `node_modules`, etc.). A
+  file-extension allowlist (`{md, js, json, toml, bat, ts}` — the only types a fresh build of any
+  of the five variants emits) is a second guard so a mis-registered non-payload output can't drag
+  class files in. `core` / `cli` / `packaging` never get the check.
 - **Dev** (`assembleClaudeDev`, `assembleGeminiDev`): producers co-deposit **directly** into
   `build/<variant>` — fast, no copy. Guarded by a `buildSrc` **overlap-check** that **fails the
   build** (Gradle's native overlapping-outputs detection is only a warning that silently disables
