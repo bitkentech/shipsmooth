@@ -421,25 +421,32 @@ output dir passed and the assembly wiring differ.
 - **Producers** (render, `copyDist`/`copyScripts`/`copyTsSource`, the per-variant manifest tasks)
   take the output dir as an **explicit parameter** (no shared global `-Pbuild.outputDir`) and
   declare **file/subpath-granular** outputs — NOT the whole payload dir. The render currently
-  declares `outputs.dir(spec.outputDir)` = the whole dir, which is too coarse for both
-  incrementality and the check below, and must be tightened. (Example: in `dist/` the render owns
-  `session-start-config.json` while `copyDist` owns `*.js` — same dir, disjoint files.)
+  declares `outputs.dir(spec.outputDir)` = the whole dir, which defeats the check; each producer
+  must instead declare its **exact output files** (see Bazel note below).
+- **Producers declare exact output files (Bazel-style).** Decided at `plan-71-v13` after two
+  rejected check designs (a declared-*directory* check can't tell `dist/` JS from
+  `session-start-config.json`; a naive disk-walk can't attribute files when producers co-deposit
+  into one dir — the walk sees the union for every producer). Bazel's model resolves this: every
+  action declares its **exact** output files, and "one file → one producer" is an invariant of the
+  build graph. Translated to Gradle: each producer declares `outputs.file(<each file>)` (render:
+  its skills + hooks + `dist/session-start-config.json`; copyDist: its `.js` files; manifests:
+  `plugin.json` + `marketplace.json`) instead of `outputs.dir(...)`. The render's produced set is
+  deterministic, so it is accurately declarable. (Gradle, unlike Bazel, has no sandbox enforcing
+  declared==actual, so the assemble task additionally walks the final payload dir and asserts every
+  file present was declared by exactly one producer — catching both overlaps and stray undeclared
+  files, the closest Gradle gets to Bazel's guarantee.)
 - **Dev** (`assembleClaudeDev`, `assembleGeminiDev`): producers co-deposit **directly** into
-  `build/<variant>` — fast, no copy. Guarded by a `buildSrc` **overlap-check** task that **fails
-  the build** (Gradle's native overlapping-outputs detection is only a warning that silently
-  disables incrementality, so the "one dir, one writer" invariant would rot by accident — the
-  check makes it enforced). **The check walks each producer's output dir on disk** after the
-  producers run and asserts the real produced files are pairwise-disjoint at **file** granularity.
-  (A *declared*-output check was tried first and rejected: Gradle `Copy` tasks declare their
-  output as the destination **directory**, not files, so it cannot distinguish `dist/*.js`
-  (copyDist) from `dist/session-start-config.json` (render) without either walking disk or making
-  every producer hand-enumerate its dest files — a fragile new invariant. Walking disk is cheap in
-  absolute terms: a payload is ~15 files, so the scan is milliseconds.) The check runs after (and
-  `dependsOn`) the producers and is a no-cost gate relative to the assembly it guards.
+  `build/<variant>` — fast, no copy. Guarded by a `buildSrc` **overlap-check** that **fails the
+  build** (Gradle's native overlapping-outputs detection is only a warning that silently disables
+  incrementality, so the invariant would rot by accident — the check enforces it). The check reads
+  each producer's **declared** `outputs.files`, keeps only the **file** entries (a `Copy`'s
+  `into()` also auto-registers the dir; dir entries are skipped), and asserts them pairwise-disjoint
+  — in-memory, no disk walk, and `UP-TO-DATE`-friendly. A separate completeness pass walks the
+  assembled dir to catch undeclared strays (above).
 - **Prod** (`assembleClaudeProd`, `assembleGeminiProd`, `assembleWindows`): producers write to
   their own private dirs; the assemble task `Sync`s them into `build/<variant>` as the **sole
   writer** — structurally overlap-immune, release-correct. The extra Sync is acceptable on the
-  rare release path; the overlap-check is not in the prod path (no shared writers).
+  rare release path; the overlap-check is not needed in the prod path.
 
 The `buildSrc` overlap-check is a shared prerequisite landed in Task 21 (alongside `assembleClaudeDev`).
 

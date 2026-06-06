@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>71</plan>
-    <plan-version>plan-71-v12</plan-version>
+    <plan-version>plan-71-v13</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -487,6 +487,11 @@
         <update>
             <timestamp>2026-06-06T23:54:45.102+05:30</timestamp>
             <message>plan-71-v12: overlap-check walks disk (corrects v11's 'never walk the tree'). The Task-21 spike disproved the cheap declared-output check: Gradle Copy tasks declare a DIRECTORY output, not files, so it can't distinguish dist/*.js from dist/session-start-config.json without disk-walking or fragile hand-enumeration. The check now globs each producer's output dir after they run and asserts real files pairwise-disjoint. Cheap (~15 files, ms). dependsOn the producers.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T00:09:41.073+05:30</timestamp>
+            <message>plan-71-v13: Bazel-inspired exact-output declaration resolves the overlap-check. After two rejected designs (declared-DIR check can't see files; naive disk-walk can't attribute co-deposited files), adopt Bazel's 'declare exact output files' model: each producer declares outputs.file(&lt;each file&gt;) not outputs.dir(). The cheap in-memory declared-output check then works (filter to file entries, assert disjoint, UP-TO-DATE-friendly, no disk walk). A separate completeness pass walks the assembled dir for undeclared strays (Gradle has no Bazel sandbox). Validated by spike v3.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
