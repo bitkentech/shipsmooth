@@ -40,6 +40,18 @@ abstract class VerifyNoOverlappingOutputs : DefaultTask() {
     @get:org.gradle.api.tasks.InputDirectory
     abstract val payloadDir: DirectoryProperty
 
+    /**
+     * Success stamp. A pure assertion task declares no outputs, so Gradle re-runs it
+     * every invocation ("not up-to-date: has not declared any outputs"). Writing a
+     * trivial stamp gives it an output to track, so an unchanged payload leaves it
+     * UP-TO-DATE — zero cost on the hot dev loop. Defaults under the task's build dir.
+     */
+    @get:org.gradle.api.tasks.OutputFile
+    val stamp: org.gradle.api.file.RegularFileProperty =
+        project.objects.fileProperty().convention(
+            project.layout.buildDirectory.file("payload-checks/$name.ok"),
+        )
+
     /** producer name -> its declared outputs (files and/or dirs it owns). */
     @get:Internal
     val producers: MutableMap<String, ConfigurableFileCollection> = LinkedHashMap()
@@ -101,6 +113,12 @@ abstract class VerifyNoOverlappingOutputs : DefaultTask() {
                     "them (declare via outputs.file(..)/outputs.dir(..) on the producing task):\n$detail",
             )
         }
+
+        // All assertions passed — write the success stamp so this task is UP-TO-DATE
+        // until an input (a producer output or the payload dir) actually changes.
+        val stampFile = stamp.get().asFile
+        stampFile.parentFile.mkdirs()
+        stampFile.writeText("ok: ${payloadFiles.size} payload files verified\n")
     }
 
     companion object {
