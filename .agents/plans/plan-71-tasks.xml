@@ -446,12 +446,17 @@
         <task>
             <id>24</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>assembleGeminiProd</name>
-            <commit></commit>
+            <commit>5c19a6420e88df386e7d75235f7eba87ae3828d6</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T02:14:18.603+05:30</timestamp>
+                    <message>De-risk draft ready (commit 5c19a64). assembleGeminiProd parity-clean vs mvn gemini-prod baseline; reuses Task 23 Sync machinery. All 4 assemblies regression-clean.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>22,23</depends-on>
         </task>
