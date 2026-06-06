@@ -282,9 +282,9 @@
         <task>
             <id>16</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>`packaging` assembly + release entrypoints</name>
-            <commit></commit>
+            <commit>cf6ca4b9ee25690f27cfc1f760421b809a253e59</commit>
             <created-from>plan-71-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments>
@@ -293,7 +293,13 @@
                     <message>De-risk draft (72af949): packageRuntime_linux-x64 zip structurally identical to Maven (163 entries); ValidateRelease passes on prod manifests. 4 platform tasks + copyDist wired. PublishRelease wired-only (never run). PackageRuntime.main path-hardcoding handled via image staging (Java untouched).</message>
                 </comment>
             </comments>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-06T14:17:25.447+05:30</timestamp>
+                    <message>Ported the claude-profile copy-scripts/copy-ts-source (JS+TS -&gt; build/scripts/tasks/) into packaging as copyScripts/copyTsSource; not listed in task-16 plan text but a packaging-module concern that ValidateRelease payload parity depends on. Human-approved.</message>
+                </deviation>
+            </deviations>
             <depends-on>14,15</depends-on>
         </task>
         <task>
