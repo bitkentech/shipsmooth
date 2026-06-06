@@ -350,12 +350,21 @@
         <task>
             <id>20</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Fix Windows SKILL cliBin path (forward build.os to render)</name>
-            <commit></commit>
+            <commit>4e15fe7</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T19:07:31.580+05:30</timestamp>
+                    <message>De-risk draft ready (4e15fe7): build.os forwarded in both systems; windows SKILL now %LOCALAPPDATA%\...\shipsmooth.cmd + install-runtime.bat, Gradle==Maven byte-identical; claude/gemini-prod unaffected; 57 tests green.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-06T19:14:41.103+05:30</timestamp>
+                    <message>Hardened: 2-line fix already at bar, no churn. Clean-tree re-verify: claude-prod/gemini-prod/windows all byte-identical to fresh Maven baselines; windows SKILL carries shipsmooth.cmd cliBin; :skills:pkg:test green. Both build systems now forward build.os.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>18</depends-on>
         </task>
