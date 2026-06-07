@@ -3,7 +3,12 @@
 // maven-resources-plugin copy-resources filtering with Copy + expand().
 //
 // No java-conventions plugin here — this module has no Java, only resource
-// filtering (parity with claude/pom.xml, which is build-only).
+// filtering (parity with claude/pom.xml, which is build-only). The `base` plugin
+// gives us `clean` + the lifecycle tasks (assembleX already hook in) without any
+// Java toolchain, so the root `./gradlew clean` reaches this module's build/.
+plugins {
+    base
+}
 
 val pluginBaseName = (findProperty("plugin.base.name") as String?) ?: "shipsmooth"
 val pluginVersion = (findProperty("plugin.version") as String?) ?: "0.3.14"

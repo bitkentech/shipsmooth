@@ -13,6 +13,13 @@
 // — that is Claude-marketplace metadata and has no place in a Gemini extension (the Maven
 // gemini profiles never even set marketplace.name/description, so it shipped half-filtered).
 // (plan-71 Task 22; Maven gemini/gemini-dev now skip.copy-plugin-meta=true.)
+//
+// No java-conventions plugin here — resource filtering only (parity with gemini/pom.xml).
+// The `base` plugin gives us `clean` + the lifecycle tasks (assembleX already hook in)
+// without any Java toolchain, so the root `./gradlew clean` reaches this module's build/.
+plugins {
+    base
+}
 
 val pluginBaseName = (findProperty("plugin.base.name") as String?) ?: "shipsmooth"
 val pluginVersion = (findProperty("plugin.version") as String?) ?: "0.3.14"
