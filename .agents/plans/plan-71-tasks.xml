@@ -491,13 +491,24 @@
         <task>
             <id>26</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Gradle-native release path (de-Maven the release entrypoints)</name>
             <commit></commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T13:31:25.544+05:30</timestamp>
+                    <message>De-risk draft (2d9d95b): PublishRelease.java de-Maven'd — 3 mvn build calls -&gt; gradlew (jlinkImage_*, assembleClaudeProd, assembleWindows); mvn versions:set -&gt; gradle.properties plugin.version rewrite. assembleClaudeProd verified to run with ZERO mvn and stamp the version into plugin.json directly (jq stamp redundant). FINDING: manifest/render tasks don't declare plugin.version as a task input, so a bump leaves them UP-TO-DATE with the OLD version (--rerun-tasks confirms cause); harden by declaring it an input. Awaiting approval.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-07T13:33:44.422+05:30</timestamp>
+                    <message>Scope constraint (human): do NOT move functionality between Java and scripts in this plan — this is a pure mvn-&gt;gradle migration in place. So: PublishRelease.java stays Java-only (no gemini logic added to it); release.sh / release-gemini.sh / package-tasks-java.sh keep their current responsibilities and entrypoints, only their mvn calls become gradlew calls. The plan's 'prefer making PublishRelease the single entrypoint / retire the shell scripts' suggestion is explicitly DECLINED. jq stamp is dropped only where it is a verified no-op (manifest already stamped by Gradle expand()).</message>
+                </deviation>
+            </deviations>
             <depends-on>14,16,23,24,25</depends-on>
         </task>
     </tasks>

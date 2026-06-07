@@ -56,6 +56,10 @@ fun registerGeminiMeta(taskName: String, tokens: Map<String, Any>, commandsVaria
         // 3. The variant's commands/ tree (unfiltered) into commands/.
         from(resourcesDir.dir("$commandsVariant/commands")) { into("commands") }
         into(baseDir)
+        // expand() values aren't auto-tracked as inputs, so a version (or any token) bump
+        // would leave this UP-TO-DATE and re-stamp nothing. Declare the tokens as an input
+        // so a changed plugin.version re-renders gemini-extension.json.
+        inputs.property("tokens", tokens)
 
         // Exact declared outputs for the overlap-check. The commands set is variant-fixed
         // (one .toml today); enumerate the source tree so adding a command is picked up.

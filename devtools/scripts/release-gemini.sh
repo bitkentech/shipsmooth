@@ -6,7 +6,7 @@
 # Example: ./scripts/release-gemini.sh 0.0.1
 #          ./scripts/release-gemini.sh 0.0.1 --force   # skip clean-tree check
 #
-# Prerequisites: jq, gh (GitHub CLI, authenticated), maven, git
+# Prerequisites: jq, gh (GitHub CLI, authenticated), git (build is Gradle)
 #
 # The shipsmooth-gemini repo (https://github.com/bitkentech/shipsmooth-gemini) is a
 # pure publish artifact — its contents are fully replaced on each release.
@@ -50,15 +50,14 @@ MAIN_SHA=$(git rev-parse --short HEAD)
 echo "==> Cleaning build-gemini/ directory..."
 rm -rf build-gemini/
 
-echo "==> Building Gemini extension (mvn compile -P 'gemini,!dev,!claude')..."
-# compile (not process-resources): Target renders SKILL.md, hooks.json, and
-# session-start-config.json at the compile phase. process-resources skips it.
-mvn compile -P 'gemini,!dev,!claude' -q
-
-echo "==> Stamping version ${VERSION} into build-gemini/gemini-extension.json..."
-tmp=$(mktemp)
-jq --arg v "$VERSION" '. + {"version": $v}' build-gemini/gemini-extension.json > "$tmp"
-mv "$tmp" build-gemini/gemini-extension.json
+echo "==> Building Gemini extension (./gradlew assembleGeminiProd)..."
+# -Pplugin.version overrides the build version for this invocation only (no
+# gradle.properties mutation/commit), mirroring the old script which set the
+# Gemini release version without bumping the project version. The manifest task
+# expands it into gemini-extension.json at build time, so no post-build jq stamp
+# is needed.
+./gradlew assembleGeminiProd -Pbuild.outputDir="${REPO_ROOT}/build-gemini" \
+  -Pplugin.version="${VERSION}" -q
 
 echo "==> Cloning ${GEMINI_REPO}..."
 GEMINI_CLONE_DIR=$(mktemp -d)

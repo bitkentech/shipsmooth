@@ -61,6 +61,10 @@ fun registerClaudeMeta(taskName: String, tokens: Map<String, Any>, baseDir: File
         val dest = File(baseDir, ".claude-plugin")
         into(dest)
         expand(tokens)
+        // expand() values are NOT auto-tracked as inputs, so a version (or any token)
+        // bump would leave this task UP-TO-DATE and re-stamp nothing. Declare the tokens
+        // as an input property so a changed plugin.version re-renders the manifest.
+        inputs.property("tokens", tokens)
         outputs.file(File(dest, "plugin.json"))
         outputs.file(File(dest, "marketplace.json"))
     }
