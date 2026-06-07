@@ -2,7 +2,7 @@
 # Smoke test for the Gemini CLI extension build.
 #
 # What this tests:
-#   1. mvn -P gemini,!dev,!claude compile produces a valid build-gemini/ tree
+#   1. ./gradlew assembleGeminiProd produces a valid build-gemini/ tree
 #   2. gemini extensions link build-gemini/ succeeds
 #   3. The linked extension appears in ~/.gemini/extensions/
 #
@@ -33,9 +33,9 @@ echo "gemini: $($GEMINI_BIN --version 2>&1 | head -1)"
 
 # --- 2. Build ---
 echo ""
-echo "--- Step 1: mvn -P gemini,!dev,!claude compile ---"
+echo "--- Step 1: ./gradlew assembleGeminiProd ---"
 cd "$REPO_ROOT"
-mvn -P gemini,\!dev,\!claude compile -q
+./gradlew assembleGeminiProd -Pbuild.outputDir="$BUILD_DIR" -q
 echo "Build output: $BUILD_DIR"
 
 # Assert expected files exist
