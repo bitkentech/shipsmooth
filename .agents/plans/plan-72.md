@@ -1,4 +1,13 @@
-# Plan 72 — Maven teardown (remove Maven after Gradle release proves out)
+# Plan 72 — Runtime install fix + final Maven parity sign-off (pre-release)
+
+> **Rescoped at v2 (2026-06-07):** Maven removal was **dropped from this plan** and moved to a
+> new **plan-73**. The new sequence the human chose: (1) land the runtime-install fix + the
+> final parity sign-off here, (2) **close plan-72, squash-merge to `main`, cut a patch release**
+> via the Gradle path and verify it good, (3) **then** remove Maven in plan-73. Rationale:
+> exercise the Gradle release path once more on a clean patch release — carrying the new
+> jspawnhelper fix — while Maven still exists as a fallback, before burning that safety net.
+> Original Task 2 (delete poms / docs cutover / tag) is retargeted to plan-73 below; it is
+> deleted from this plan, not commented out.
 
 ## Context
 
@@ -8,42 +17,38 @@ byte-identical to Maven, the 5-platform jlink images + OpenJ9 SCC launcher work,
 runs in `check`, and the release path is Gradle-native (plan-71 Task 26 — `PublishRelease.java`
 and the live `release.sh` / `release-gemini.sh` scripts all invoke `./gradlew`, no `mvn`).
 
-What plan-71 deliberately did **not** do is delete the poms. The de-risking decision was: merge
-plan-71 to `main` with **both** build systems present, cut a **real** release via the proven
-Gradle path, and only then remove Maven. This plan is that teardown.
-
-**Precondition for starting this plan:** a real release has been cut from `main` using the
-Gradle path and verified good (the human runs the outward-facing release). Until that has
-happened, do not begin Task 1.
+The poms still exist (both build systems present on `main`). Before removing Maven, this plan
+(a) fixes a release-install bug found in this cycle — the runtime ships
+`runtime/lib/jspawnhelper` non-executable, breaking every subprocess-spawning CLI command on a
+fresh install (see Task 3) — and (b) records the final Gradle-vs-Maven parity sign-off while
+Maven is still here to diff against. Maven removal itself is plan-73, gated on a real release
+of this plan's output proving good.
 
 Backlog feature: tracked in plan narrative only (Local mode), continuation of the build-migrate
-work (`docs/proposals/build-migrate.md`). plan-71's deferred Task 17 is the seed of this plan.
+work (`docs/proposals/build-migrate.md`). plan-71's deferred Task 17 is the seed of plan-72/73.
 
 ## Objectives
 
-1. Confirm full parity one final time, on a clean tree, across all five payloads + the
-   `runtime-<ver>/` zip — Gradle vs Maven — while the poms still exist (last chance to diff).
-2. Remove Maven entirely: the nine `pom.xml` files, the dead `package-tasks-java.sh`, and every
-   `mvn` invocation in docs/CI/scripts (except historical `docs/proposals/*.md` narrative).
-3. Leave `main` building and releasing cleanly with **no `pom.xml` present**.
+1. Fix the runtime-install exec-bit bug so a freshly installed release runtime can spawn
+   subprocesses (the gate for the release to be worth cutting).
+2. Confirm full parity one final time across all five payloads + the `runtime-<ver>/` zip —
+   Gradle vs Maven — while the poms still exist (last chance to diff).
+3. Leave the branch ready to close, squash-merge, and release; Maven removal deferred to
+   plan-73.
 
 ## Scope
 
 **In scope:**
-- Final parity sign-off (all 5 payloads + runtime zip).
-- Delete all **nine** real `pom.xml` files: root reactor, `skills/` aggregator, and the seven
-  modules (`core`, `cli`, `skills/pkg`, `claude`, `gemini`, `packaging`, `devtools`).
-- Remove the dead `devtools/scripts/package-tasks-java.sh` (references a non-existent `app`
-  module; superseded by `packageRuntime_linux-x64`).
-- Update `DEVELOPMENT.md` and `devtools/scripts/smoke-gemini.sh` to Gradle commands. (No CI to
-  update — the project has no `.github/` / pipeline.)
-- Tag the cutover commit.
+- Runtime-install exec-bit fix + the secondary git-stderr surfacing (Task 3).
+- Final parity sign-off (all 5 payloads + runtime zip) (Task 1).
 
-**Out of scope:**
-- Any change to build *behaviour* or payload *output* — this plan only removes Maven; the
-  Gradle build is already the source of truth.
-- `docs/proposals/*.md` — left as historical migration narrative (they intentionally describe
-  the old Maven setup).
+**Out of scope (moved to plan-73):**
+- Deleting the nine `pom.xml` files, removing the dead `package-tasks-java.sh`, and the
+  `DEVELOPMENT.md` / `smoke-gemini.sh` cutover-to-Gradle edits, and tagging the cutover.
+
+**Out of scope (unchanged):**
+- Any change to build *behaviour* or payload *output*.
+- `docs/proposals/*.md` — left as historical migration narrative.
 - Moving functionality between Java and scripts (same constraint as plan-71 Task 26).
 
 ## Key facts carried from plan-71
@@ -59,19 +64,16 @@ work (`docs/proposals/build-migrate.md`). plan-71's deferred Task 17 is the seed
 
 ## Open questions
 
-- Does `./gradlew build` from a totally clean checkout (fresh clone, no `~/.m2`, no poms) pass
-  end-to-end, including jlink under `-PjlinkBuild`?
-
-**Resolved:** there is **no CI** for this project — no `.github/` directory exists (confirmed
-2026-06-07). The "update CI to Gradle" item is therefore a no-op; nothing references `mvn` from
-a pipeline.
+(None for plan-72. The clean-checkout-with-no-poms question moves to plan-73, where Maven is
+actually removed. Confirmed this cycle: there is **no CI** — no `.github/` directory exists.)
 
 ---
 
 ## Tasks
 
-_Tasks are listed in risk-sorted execution order: 3 → 1 → 2. Task numbers are stable identities,
-not sequence — Task 3 (High, independent) runs first; Task 1 (High) gates Task 2 (Medium)._
+_Tasks are listed in risk-sorted execution order: 3 → 1. Both High. Task 3 (independent, the
+release-blocking install fix) runs first; Task 1 is the parity sign-off. Maven removal is
+plan-73, not a task here._
 
 ### Task 3: Fix runtime-install exec bits — `jspawnhelper` EACCES [High]
 
@@ -146,22 +148,14 @@ On a clean tree, with the poms still present, build each payload **both** ways a
   package path.
 
 Record the diffs (empty or known noise: timestamps, the jq stamp which is now a Gradle no-op).
-This is the last point Maven exists to diff against, so it is a hard gate before Task 2.
+This is the last point Maven exists to diff against (before plan-73 removes it).
 
 Acceptance: every payload parity-clean (or documented known-noise only); sign-off recorded in
 a short note (e.g. `docs/observations/`).
 
-### Task 2: Remove Maven + cutover docs/CI [Medium]
+---
 
-*Depends-on: 1*
-
-**Only after Task 1 sign-off.** In a single cutover commit:
-- Delete all nine `pom.xml` files (root + `skills/` aggregator + 7 modules).
-- Delete `devtools/scripts/package-tasks-java.sh` (dead `app`-module script).
-- Update `DEVELOPMENT.md` (build/release/version sections) and
-  `devtools/scripts/smoke-gemini.sh` to Gradle commands.
-- Leave `docs/proposals/*.md` untouched (historical record).
-
-Acceptance: `grep -rn 'mvn ' .` finds nothing outside `docs/proposals/*.md`; `./gradlew build`
-green from a clean checkout with **no `pom.xml` present**; `./gradlew :skills:pkg:check` runs
-the TS tests. Tag the cutover commit.
+_Maven removal (former Task 2) lives in **plan-73**: delete the nine poms + dead
+`package-tasks-java.sh`, cut `DEVELOPMENT.md` / `smoke-gemini.sh` over to Gradle, tag the
+cutover. **Precondition:** a patch release cut from `main` after plan-72 merges is verified
+good. See `.agents/plans/plan-73.md`._

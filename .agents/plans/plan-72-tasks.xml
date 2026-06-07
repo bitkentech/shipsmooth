@@ -43,13 +43,19 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Remove Maven + cutover docs/CI</name>
             <commit></commit>
             <created-from>plan-72-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-07T23:00:29.240+05:30</timestamp>
+                    <message>Removed from plan-72 (rescoped v2). Maven removal moved to plan-73, gated on a patch release from main proving good after plan-72 merges. Task 2 here is closed, not executed.</message>
+                </deviation>
+            </deviations>
             <depends-on>1</depends-on>
         </task>
     </tasks>
