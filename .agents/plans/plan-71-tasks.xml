@@ -4,14 +4,14 @@
     <plan-version>plan-71-v15</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>in-review</status>
         <created>2026-06-05</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Fix `repoRoot` resolved from `Paths.get(".")`</name>
             <commit>0b061d4</commit>
             <created-from>plan-71-v1</created-from>
@@ -22,7 +22,7 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Add `plan branch --plan` for Local mode</name>
             <commit>23508bb</commit>
             <created-from>plan-71-v1</created-from>
@@ -34,7 +34,7 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`buildSrc` convention plugin + `settings.gradle.kts`</name>
             <commit>f6802a5</commit>
             <created-from>plan-71-v1</created-from>
@@ -52,7 +52,7 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Node/TS pipeline with real input tracking</name>
             <commit>2c0ea7c</commit>
             <created-from>plan-71-v1</created-from>
@@ -69,7 +69,7 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>JTE staging + precompile</name>
             <commit>2777592</commit>
             <created-from>plan-71-v1</created-from>
@@ -86,7 +86,7 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`Target` render variant tasks</name>
             <commit>4eaa00e</commit>
             <created-from>plan-71-v1</created-from>
@@ -103,7 +103,7 @@
         <task>
             <id>7</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Existing tests pass under Gradle</name>
             <commit>a9dfc61</commit>
             <created-from>plan-71-v1</created-from>
@@ -115,7 +115,7 @@
         <task>
             <id>8</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Parity verification + go/no-go judgement</name>
             <commit>83d662f</commit>
             <created-from>plan-71-v1</created-from>
@@ -133,7 +133,7 @@
         <task>
             <id>9</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Root `settings.gradle.kts` + full `buildSrc` for the reactor</name>
             <commit>9c8f230</commit>
             <created-from>plan-71-v2</created-from>
@@ -150,7 +150,7 @@
         <task>
             <id>10</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`core` compiles (no codegen, no shade)</name>
             <commit>a217325</commit>
             <created-from>plan-71-v2</created-from>
@@ -177,7 +177,7 @@
         <task>
             <id>11</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`cli` compiles against `core` (no jlink)</name>
             <commit>414d7ff</commit>
             <created-from>plan-71-v2</created-from>
@@ -216,7 +216,7 @@
         <task>
             <id>13</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Conditional Dagger shade + `module-info` re-injection</name>
             <commit>1df82da</commit>
             <created-from>plan-71-v2</created-from>
@@ -243,7 +243,7 @@
         <task>
             <id>14</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>5-platform jlink images + SCC launcher + smoke tests</name>
             <commit>d3efd18</commit>
             <created-from>plan-71-v2</created-from>
@@ -264,7 +264,7 @@
         <task>
             <id>15</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`claude`/`gemini` manifest filtering</name>
             <commit>6519b81</commit>
             <created-from>plan-71-v2</created-from>
@@ -282,7 +282,7 @@
         <task>
             <id>16</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`packaging` assembly + release entrypoints</name>
             <commit>cf6ca4b9ee25690f27cfc1f760421b809a253e59</commit>
             <created-from>plan-71-v2</created-from>
@@ -305,19 +305,24 @@
         <task>
             <id>17</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>needs-triage</status>
             <name>Full parity sign-off + remove `pom.xml` files</name>
             <commit></commit>
             <created-from>plan-71-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T14:18:52.489+05:30</timestamp>
+                    <message>Deferred to plan-72 (Maven teardown). Decision: prove the Gradle build+release on main FIRST (cut a real release via the Task-26 Gradle path), THEN delete the poms in a separate plan. plan-71 closes with the full Gradle build + all 5 assemblies + Gradle-native release path proven, coexisting with Maven (Gradle is the path, Maven best-effort). The 9-pom deletion + dead package-tasks-java.sh removal + docs/CI cutover + final parity sign-off + tag all move to plan-72.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>16,21,22,23,24,25,26</depends-on>
         </task>
         <task>
             <id>18</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Prod render variant tasks</name>
             <commit>7fe75da</commit>
             <created-from>plan-71-v1</created-from>
@@ -338,7 +343,7 @@
         <task>
             <id>19</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Run the TS tests in the build</name>
             <commit>47fb3a6</commit>
             <created-from>plan-71-v1</created-from>
@@ -361,7 +366,7 @@
         <task>
             <id>20</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Fix Windows SKILL cliBin path (forward build.os to render)</name>
             <commit>4e15fe7</commit>
             <created-from>plan-71-v1</created-from>
@@ -382,7 +387,7 @@
         <task>
             <id>21</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>assembleClaudeDev (+ shared renderOutputDir mechanism)</name>
             <commit>dcce08e</commit>
             <created-from>plan-71-v1</created-from>
@@ -411,7 +416,7 @@
         <task>
             <id>22</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>assembleGeminiDev</name>
             <commit>c546c52e960fc4ba5131373553a6462b823c50b0</commit>
             <created-from>plan-71-v1</created-from>
@@ -434,7 +439,7 @@
         <task>
             <id>23</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>assembleClaudeProd</name>
             <commit>55cdc5f769f832db4a12f76c2e94e5c5d250d6a6</commit>
             <created-from>plan-71-v1</created-from>
@@ -457,7 +462,7 @@
         <task>
             <id>24</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>assembleGeminiProd</name>
             <commit>5c19a6420e88df386e7d75235f7eba87ae3828d6</commit>
             <created-from>plan-71-v1</created-from>
@@ -474,7 +479,7 @@
         <task>
             <id>25</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>assembleWindows</name>
             <commit>155ba42</commit>
             <created-from>plan-71-v1</created-from>
@@ -491,7 +496,7 @@
         <task>
             <id>26</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Gradle-native release path (de-Maven the release entrypoints)</name>
             <commit>809cfc968473392e8e8ad015c768931c0db21105</commit>
             <created-from>plan-71-v1</created-from>
@@ -581,6 +586,11 @@
         <update>
             <timestamp>2026-06-07T13:05:37.871+05:30</timestamp>
             <message>plan-71-v16: added Task 26 (Gradle-native release path) before the cutover. Task 17 was unshippable as written — deleting the poms strands the project with no release path. PublishRelease.java (the canonical entrypoint, wrapped as a JavaExec in Task 16) still shells out to mvn in 4 places (versions:set L94, -Pjlink package L130, compile -Pprod L135, compile -Pwindows L154); release.sh/release-gemini.sh and package-tasks-java.sh likewise. Task 26 swaps each for its existing Gradle equivalent (jlinkImage_*, assembleClaudeProd/GeminiProd/Windows, PackageRuntime), moves the version bump to gradle.properties plugin.version as single source of truth, and resolves the 'modulo jq stamp' caveat (manifests already expand plugin.version at build time). Dry-run-verified vs Maven while poms still exist. Task 17 now Depends-on 16,21,22,23,24,25,26; pom count corrected 7-&gt;9 (root + skills aggregator + 7 modules).</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T14:23:06.311+05:30</timestamp>
+            <message>plan-71 closed in-review (v17). Maven-&gt;Gradle migration functionally complete: all 7 modules build under Gradle, all 5 payloads assemble byte-identical to Maven, 5-platform jlink + SCC launcher, TS tests in check, Gradle-native release path (Task 26). 24 tasks closed, Task 12 closed, Task 17 needs-triage DEFERRED to plan-72. Sequence: merge to main with both build systems -&gt; cut a real release via the proven Gradle path -&gt; remove Maven in plan-72. Gradle is the build/release path on main; Maven best-effort until plan-72. plan-72.md created (tasks deferred until that plan starts).</message>
             <blocked>false</blocked>
         </update>
     </project-updates>

@@ -217,6 +217,18 @@ without its generated types, so the compile/codegen split was artificial. Task 1
 High (absorbs the codegen risk); Task 12's number is retired. Risk levels: 9 Medium,
 **10 High**, 11 Medium, 12 (retired), 13/14 High, 15 Low, 16/17 High.
 
+**v17 change — Maven removal deferred to plan-72.** plan-71 closes with the full
+Maven→Gradle migration *functionally complete*: all seven modules build under Gradle, all
+five plugin payloads assemble byte-identical to Maven, the 5-platform jlink images + SCC
+launcher work, the TS suite runs in `check`, and the release path is Gradle-native (Task 26).
+The one remaining item — **Task 17: delete the nine `pom.xml` files + final cutover** — is
+*not* done here. Per a de-risking decision, the order is: merge to `main` with both build
+systems present → cut a *real* release via the proven Gradle path → only then remove Maven.
+That teardown (pom deletion, dead-script removal, docs/CI cutover, final parity sign-off, tag)
+moves to **plan-72**. On `main` in the interim, **Gradle is the build/release path; Maven is
+best-effort** until plan-72 removes it. Task 17 is marked `needs-triage` and superseded by
+plan-72.
+
 **v16 change:** added Task 26 (Gradle-native release path), and Task 17 now depends on it.
 The cutover was unshippable as written: deleting the poms strands the project with no way to
 release. Three release mechanisms still shell out to `mvn` — `PublishRelease.java` (the
@@ -608,6 +620,12 @@ manifests correctly.
 ### Task 17: Full parity sign-off + remove `pom.xml` files [High]
 
 *Depends-on: 16, 21, 22, 23, 24, 25, 26*
+
+> **DEFERRED to plan-72 (v17).** Not executed in plan-71. See the v17 note above: Maven
+> removal happens only after a real Gradle release proves the path on `main`. This task's full
+> scope (parity sign-off, docs/CI cutover, delete 9 poms, remove the dead
+> `package-tasks-java.sh`, tag) is carried forward to plan-72. Left here `needs-triage` for the
+> audit trail.
 
 Diff **all payloads** — the five assembled variants (claude-dev, gemini-dev, claude-prod,
 gemini-prod, windows via Tasks 21–25) plus the `runtime-<ver>/` zip (Task 16) — Gradle vs Maven
