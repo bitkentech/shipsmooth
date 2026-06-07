@@ -217,6 +217,18 @@ without its generated types, so the compile/codegen split was artificial. Task 1
 High (absorbs the codegen risk); Task 12's number is retired. Risk levels: 9 Medium,
 **10 High**, 11 Medium, 12 (retired), 13/14 High, 15 Low, 16/17 High.
 
+**v16 change:** added Task 26 (Gradle-native release path), and Task 17 now depends on it.
+The cutover was unshippable as written: deleting the poms strands the project with no way to
+release. Three release mechanisms still shell out to `mvn` — `PublishRelease.java` (the
+canonical entrypoint, ported to a `JavaExec` task in Task 16 but whose *Java code* still runs
+`mvn versions:set`, `mvn -Pjlink package`, and `mvn compile -Pprod/-Pwindows`), the
+`release.sh`/`release-gemini.sh` shell scripts, and `package-tasks-java.sh`. Task 17's
+acceptance ("no remaining `mvn` invocation in docs/scripts") silently required this work but
+gave it no home. Task 26 makes the release path Gradle-native **before** the poms are deleted,
+so the migration can be dry-run-verified against Maven while both still exist. Also corrected
+Task 17's pom count: there are **nine** real `pom.xml` files (root reactor + `skills/`
+aggregator + 7 modules), not seven — all nine must go for `./gradlew build` to work pom-free.
+
 ### Phase 1 — Structure
 
 ### Task 9: Root `settings.gradle.kts` + full `buildSrc` for the reactor [Medium]
@@ -546,18 +558,69 @@ Acceptance: `./gradlew assembleWindows` byte-identical to a fresh `mvn compile -
 
 ### Phase 5 — Cutover
 
+### Task 26: Gradle-native release path (de-Maven the release entrypoints) [High]
+
+*Depends-on: 14, 16, 23, 24, 25*
+
+Added at `plan-71-v16`. The cutover (Task 17) deletes the poms, but the release path is still
+100% Maven, so without this task the migration ships a repo that cannot release. Three
+mechanisms shell out to `mvn`:
+
+1. **`PublishRelease.java`** (`packaging/src/main/java/io/bitken/ss/dist/PublishRelease.java`)
+   — the canonical entrypoint per `DEVELOPMENT.md`, ported to a `JavaExec` task in Task 16 but
+   whose *Java code* still runs Maven in four places: `mvn versions:set` (L94),
+   `mvn -pl cli -am -Pjlink … package` (L130), `mvn compile -Pprod -P!dev` (L135), and
+   `mvn compile -Pwindows -P!dev` (L154). Wrapping it in a Gradle task did not de-Maven it.
+2. **`release.sh` / `release-gemini.sh`** — `mvn versions:set` + `mvn compile -P<profile>`.
+3. **`package-tasks-java.sh`** — `mvn -pl app help:evaluate` (version) + assumes
+   `mvn -Pjlink package`. (Note: references a stale `app` module; reconcile or retire.)
+
+Replace each `mvn` call with its existing Gradle equivalent — all the building blocks already
+exist: `:cli:jlinkImage_<platform>` (Task 14), `assembleClaudeProd` / `assembleGeminiProd` /
+`assembleWindows` (Tasks 23/24/25), and `PackageRuntime`/`ValidateRelease` (Task 16).
+
+**Version bump has no Gradle home** and is the crux. Maven's `mvn versions:set` writes the
+version into the poms; Gradle's render reads `plugin.version` from `gradle.properties`
+(`RenderSpec.kt:33`, `claude/build.gradle.kts:9`). So the bump must become "rewrite
+`plugin.version` in `gradle.properties` and commit it" — and that becomes the **single source
+of truth** for the build version post-cutover. Decide where the bump logic lives (a small
+Gradle task, a helper invoked by `PublishRelease`, or inline in the scripts) — but there must
+be exactly one writer of the version.
+
+**jq stamp may become redundant.** The scripts post-stamp `plugin.json` /
+`gemini-extension.json` via `jq` because the *Maven* build did not always carry the release
+version into the manifest. The Gradle manifest tasks already `expand()` `plugin.version` into
+the manifest at build time (`claude/build.gradle.kts:18`). Confirm whether the jq step is now a
+no-op; if so, drop it (this is the "modulo jq stamp" caveat the assembly tasks reference —
+resolve it here, don't carry it past cutover).
+
+Prefer making `PublishRelease.java` the Gradle-native entrypoint (it is the documented one) and
+either retiring the shell scripts or thinning them to call it, rather than maintaining two
+divergent release paths.
+
+Acceptance: a **dry-run** of the full release (claude runtime zip + gemini extension + windows
+payload) runs end-to-end with **zero `mvn` invocations** — verified by `grep -rn 'mvn ' ` over
+`PublishRelease.java` and `devtools/scripts/*.sh` returning nothing — *while the poms still
+exist*; the dry-run output (payloads + runtime zip) is byte/behaviour-equivalent to the
+Maven-built release; a deliberate version bump updates `gradle.properties` and stamps the
+manifests correctly.
+
 ### Task 17: Full parity sign-off + remove `pom.xml` files [High]
 
-*Depends-on: 16, 21, 22, 23, 24, 25*
+*Depends-on: 16, 21, 22, 23, 24, 25, 26*
 
 Diff **all payloads** — the five assembled variants (claude-dev, gemini-dev, claude-prod,
 gemini-prod, windows via Tasks 21–25) plus the `runtime-<ver>/` zip (Task 16) — Gradle vs Maven
-on a clean tree. Update `DEVELOPMENT.md`, `devtools/scripts/smoke-gemini.sh`,
-and any CI to Gradle tasks. **Only after sign-off**, remove the seven `pom.xml` files in a
+on a clean tree. Update `DEVELOPMENT.md`, `devtools/scripts/smoke-gemini.sh`, the release
+scripts/docs (Task 26 does the release-path code; this task updates the surrounding docs/CI),
+and any CI to Gradle tasks. Leave `docs/proposals/*.md` as historical migration narrative.
+**Only after sign-off**, remove all **nine** `pom.xml` files (root reactor + `skills/`
+aggregator + `core`, `cli`, `skills/pkg`, `claude`, `gemini`, `packaging`, `devtools`) in a
 single cutover commit. Tag the result.
 
-Acceptance: all four payloads parity-clean; no remaining `mvn` invocation in docs/scripts;
-`./gradlew build` green from a clean checkout with no `pom.xml` present.
+Acceptance: all five payloads parity-clean; no remaining `mvn` invocation anywhere except
+`docs/proposals/*.md`; `./gradlew build` green from a clean checkout with **no `pom.xml`
+present**.
 
 ### Task 19: Run the TS tests in the build [Medium]
 

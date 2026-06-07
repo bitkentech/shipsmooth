@@ -312,7 +312,7 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>16,21,22,23,24,25</depends-on>
+            <depends-on>16,21,22,23,24,25,26</depends-on>
         </task>
         <task>
             <id>18</id>
@@ -488,6 +488,18 @@
             <deviations/>
             <depends-on>23</depends-on>
         </task>
+        <task>
+            <id>26</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Gradle-native release path (de-Maven the release entrypoints)</name>
+            <commit></commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>14,16,23,24,25</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
@@ -553,6 +565,11 @@
         <update>
             <timestamp>2026-06-07T00:52:09.039+05:30</timestamp>
             <message>plan-71-v15: isolation by audience. assembleClaude* lives in claude/build.gradle.kts, assembleGemini* in gemini/ — each self-contained, naming only its own producers, never referencing the other integration (so the Claude owner needn't understand Gemini's build). Top-level root build.gradle.kts REJECTED (would force both owners into one file). Reusable machinery (VerifyNoOverlappingOutputs + a registerPayloadAssembly helper) lives in buildSrc as common helpers. Corrects the de-risk draft which put assembleClaudeDev in skills/pkg.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T13:05:37.871+05:30</timestamp>
+            <message>plan-71-v16: added Task 26 (Gradle-native release path) before the cutover. Task 17 was unshippable as written — deleting the poms strands the project with no release path. PublishRelease.java (the canonical entrypoint, wrapped as a JavaExec in Task 16) still shells out to mvn in 4 places (versions:set L94, -Pjlink package L130, compile -Pprod L135, compile -Pwindows L154); release.sh/release-gemini.sh and package-tasks-java.sh likewise. Task 26 swaps each for its existing Gradle equivalent (jlinkImage_*, assembleClaudeProd/GeminiProd/Windows, PackageRuntime), moves the version bump to gradle.properties plugin.version as single source of truth, and resolves the 'modulo jq stamp' caveat (manifests already expand plugin.version at build time). Dry-run-verified vs Maven while poms still exist. Task 17 now Depends-on 16,21,22,23,24,25,26; pom count corrected 7-&gt;9 (root + skills aggregator + 7 modules).</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
