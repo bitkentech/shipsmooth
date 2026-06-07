@@ -4,7 +4,7 @@
     <plan-version>plan-72-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-07</created>
     </metadata>
     <tasks>
@@ -63,6 +63,11 @@
         <update>
             <timestamp>2026-06-07T21:40:59.864+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T23:03:39.288+05:30</timestamp>
+            <message>plan-72 complete: runtime-install exec-bit fix (Task 3, jspawnhelper) + final Maven-&gt;Gradle parity sign-off (Task 1, all 5 payloads + runtime zip). Task 2 (Maven removal) closed and moved to plan-73. Ready to squash-merge to main and cut a patch release; Maven removal follows in plan-73 once that release is verified good.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
