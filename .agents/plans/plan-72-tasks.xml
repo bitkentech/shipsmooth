@@ -11,9 +11,9 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Fix runtime-install exec bits — `jspawnhelper` EACCES</name>
-            <commit></commit>
+            <commit>adfcf863f0b89ed0c4bd71eee6cc61e29673ea89</commit>
             <created-from>plan-72-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
