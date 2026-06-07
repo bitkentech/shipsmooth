@@ -491,9 +491,9 @@
         <task>
             <id>26</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Gradle-native release path (de-Maven the release entrypoints)</name>
-            <commit></commit>
+            <commit>809cfc968473392e8e8ad015c768931c0db21105</commit>
             <created-from>plan-71-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
