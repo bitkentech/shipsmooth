@@ -88,14 +88,12 @@ async function downloadAndInstall(version: string, runtimeDir: string, platform:
     if (!fs.existsSync(extractedBin)) {
       throw new Error(`shipsmooth: extracted archive is missing ${path.relative(extractDir, extractedBin)} (from ${url})`);
     }
+    // Executable bits across the tree (runtime/bin/*, runtime/lib/jspawnhelper, ...) are
+    // restored by keepOriginalPermission above. We still force the top-level launcher
+    // executable as a backstop: it is the one entry point, and a producer that ever forgets
+    // its mode would otherwise leave the install unrunnable.
     if (!isWin) {
       fs.chmodSync(extractedBin, 0o755);
-    }
-    const runtimeBinDir = path.join(extractDir, 'runtime', 'bin');
-    if (!isWin && fs.existsSync(runtimeBinDir)) {
-      for (const entry of fs.readdirSync(runtimeBinDir)) {
-        fs.chmodSync(path.join(runtimeBinDir, entry), 0o755);
-      }
     }
     fs.renameSync(extractDir, runtimeDir);
   } finally {

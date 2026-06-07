@@ -41,11 +41,11 @@ function startServer(zipBytes: Buffer): Promise<{ url: string; close: () => Prom
 test('integration: installRuntime downloads from a URL override, extracts, chmods, and cleans up tmp', async () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
-  const version = '9.9.9-test';
+  // Unique version per test run so the cacheDir/runtimeDir paths never collide with
+  // a concurrently-running test (node:test runs tests concurrently).
+  const version = `9.9.9-cleanup-${process.hrtime.bigint()}`;
   const zipBytes = buildFakeRuntimeZip();
   const server = await startServer(zipBytes);
-
-  const tmpEntriesBefore = fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith('shipsmooth-'));
 
   try {
     await installRuntime({
@@ -67,25 +67,24 @@ test('integration: installRuntime downloads from a URL override, extracts, chmod
   const out = execFileSync(bin, ['hello'], { encoding: 'utf8' });
   assert.match(out, /fake-runtime hello/);
 
-  // No new shipsmooth-* dirs in os.tmpdir — finally{} cleaned the download tmp
-  const tmpEntriesAfter = fs.readdirSync(os.tmpdir()).filter((n) => n.startsWith('shipsmooth-'));
-  assert.deepEqual(tmpEntriesAfter, tmpEntriesBefore, 'no shipsmooth-* tmp dirs should be left behind');
-
-  // No leftover .tmp extract dir in cacheDir
+  // No leftover .tmp extract dir for THIS install (the download-tmp cleanup invariant,
+  // checked on paths this test owns rather than a shared os.tmpdir() snapshot that races
+  // against concurrent installs).
   assert.ok(!fs.existsSync(`${path.join(cacheDir, `runtime-${version}`)}.tmp`),
     'extract .tmp dir should be cleaned up');
 });
 
-test('integration: installRuntime chmods runtime/bin/* to executable after extraction', async () => {
+test('integration: installRuntime keeps runtime/bin/* executable from stored zip modes', async () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
   const version = '9.9.9-perms';
 
-  // Build a zip where runtime/bin/java has no executable bit stored
+  // runtime/bin/* stored executable in the zip (raw perms) must stay executable —
+  // now via keepOriginalPermission, not a bin-only post-extract chmod.
   const zip = new AdmZip();
-  zip.addFile('bin/shipsmooth', Buffer.from('#!/bin/sh\necho ok\n'), '', 0o755 << 16);
-  zip.addFile('runtime/bin/java', Buffer.from('#!/bin/sh\necho fake-java\n'), '', 0o644 << 16);
-  zip.addFile('runtime/bin/keytool', Buffer.from('#!/bin/sh\necho fake-keytool\n'), '', 0o644 << 16);
+  zip.addFile('bin/shipsmooth', Buffer.from('#!/bin/sh\necho ok\n'), '', 0o755);
+  zip.addFile('runtime/bin/java', Buffer.from('#!/bin/sh\necho fake-java\n'), '', 0o755);
+  zip.addFile('runtime/bin/keytool', Buffer.from('#!/bin/sh\necho fake-keytool\n'), '', 0o755);
   const zipBytes = zip.toBuffer();
 
   const server = await startServer(zipBytes);
@@ -101,6 +100,28 @@ test('integration: installRuntime chmods runtime/bin/* to executable after extra
     assert.ok(fs.existsSync(f), `${name} should exist`);
     assert.ok((fs.statSync(f).mode & 0o111) !== 0, `${name} should be executable`);
   }
+});
+
+test('integration: installRuntime force-chmods the launcher even if its stored mode lacks +x', async () => {
+  // Backstop branch: the one entry point (bin/shipsmooth) is force-chmod'd 0755 after
+  // extraction so a producer that ever ships it non-executable still installs runnable.
+  const cacheDir = makeTmpDir();
+  const pluginRoot = makeTmpDir();
+  const version = '9.9.9-launcher';
+
+  const zip = new AdmZip();
+  zip.addFile('bin/shipsmooth', Buffer.from('#!/bin/sh\necho ok\n'), '', 0o644); // NOT executable in the zip
+  const zipBytes = zip.toBuffer();
+
+  const server = await startServer(zipBytes);
+  try {
+    await installRuntime({ version, cacheDir, pluginRoot, forcePlatform: 'linux-x64', releaseUrlBase: server.url } as any);
+  } finally {
+    await server.close();
+  }
+
+  const bin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth');
+  assert.ok((fs.statSync(bin).mode & 0o111) !== 0, 'launcher must be executable despite non-exec stored mode');
 });
 
 test('integration: installRuntime preserves executable bit on runtime/lib/* (jspawnhelper)', async () => {
@@ -121,6 +142,9 @@ test('integration: installRuntime preserves executable bit on runtime/lib/* (jsp
   zip.addFile('runtime/lib/jspawnhelper', Buffer.from('#!/bin/sh\necho fake-helper\n'), '', 0o755);
   // A non-executable sibling in the same dir must stay non-executable (modes honored, not blanket +x).
   zip.addFile('runtime/lib/modules', Buffer.from('not-executable\n'), '', 0o644);
+  // A file nested under an auto-created directory — guards the plan caveat that honoring
+  // stored modes must not leave any directory non-traversable.
+  zip.addFile('runtime/lib/server/classes.jsa', Buffer.from('nested\n'), '', 0o644);
   const zipBytes = zip.toBuffer();
 
   const server = await startServer(zipBytes);
@@ -137,6 +161,11 @@ test('integration: installRuntime preserves executable bit on runtime/lib/* (jsp
 
   const modules = path.join(libDir, 'modules');
   assert.ok((fs.statSync(modules).mode & 0o111) === 0, 'runtime/lib/modules must remain non-executable (modes honored, not blanket +x)');
+
+  // The whole tree must stay traversable: reading a file under an auto-created subdir proves
+  // no directory was left without its execute/traverse bit.
+  const nested = fs.readFileSync(path.join(libDir, 'server', 'classes.jsa'), 'utf8');
+  assert.equal(nested, 'nested\n', 'nested file under an auto-created dir must be readable');
 });
 
 test('integration: installRuntime throws if extracted zip is missing bin/shipsmooth', async () => {

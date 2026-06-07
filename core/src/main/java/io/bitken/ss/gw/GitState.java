@@ -82,8 +82,18 @@ public class GitState {
 
     private int runExitCode(String... cmd) {
         try {
-            return new ProcessBuilder(cmd).directory(workDir.toFile()).start().waitFor();
+            Process p = new ProcessBuilder(cmd).directory(workDir.toFile())
+                    .redirectErrorStream(true)
+                    .start();
+            String output = new String(p.getInputStream().readAllBytes());
+            int exit = p.waitFor();
+            if (exit != 0 && !output.isBlank()) {
+                System.err.println(String.join(" ", cmd) + " failed (exit " + exit + "): " + output.strip());
+            }
+            return exit;
         } catch (IOException | InterruptedException e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            System.err.println(String.join(" ", cmd) + " could not run: " + e.getMessage());
             return -1;
         }
     }
