@@ -4,7 +4,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -89,6 +91,38 @@ public class GitStateTest {
         git("branch", "t/pb-99-existing");
         boolean created = gitState.createBranch("t/pb-99-existing");
         assertFalse(created);
+    }
+
+    @Test
+    void createBranchFailureSurfacesGitStderr() throws Exception {
+        git("branch", "t/pb-99-existing");
+        PrintStream originalErr = System.err;
+        ByteArrayOutputStream captured = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(captured));
+        try {
+            assertFalse(gitState.createBranch("t/pb-99-existing"));
+        } finally {
+            System.setErr(originalErr);
+        }
+        String err = captured.toString();
+        assertTrue(err.contains("already exists"),
+                "git's stderr should be surfaced on failure, got: " + err);
+    }
+
+    @Test
+    void createBranchReturnsFalseAndReportsWhenGitCannotRun() {
+        // Working dir does not exist -> ProcessBuilder.start() throws IOException.
+        GitState broken = new GitState(repoDir.resolve("does-not-exist"));
+        PrintStream originalErr = System.err;
+        ByteArrayOutputStream captured = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(captured));
+        try {
+            assertFalse(broken.createBranch("t/pb-99-anything"));
+        } finally {
+            System.setErr(originalErr);
+        }
+        assertTrue(captured.toString().contains("could not run"),
+                "a git that cannot be launched should report why, got: " + captured);
     }
 
     @Test

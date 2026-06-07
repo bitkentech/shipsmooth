@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>72</plan>
+    <plan-version>plan-72-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-07</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>3</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Fix runtime-install exec bits — `jspawnhelper` EACCES</name>
+            <commit>adfcf863f0b89ed0c4bd71eee6cc61e29673ea89</commit>
+            <created-from>plan-72-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T22:12:56.520+05:30</timestamp>
+                    <message>De-risk draft: extractAllTo keepOriginalPermission=true makes the jspawnhelper integration test green (real-zip fix already proven). Discovered test fixtures must use raw perms (0o755) not 0o755&lt;&lt;16. Pre-existing flaky test 8 (os.tmpdir snapshot race) unrelated.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Final full-parity sign-off (all 5 payloads + runtime zip)</name>
+            <commit>321ce70b49527c6e4ebf61abcc7f388602868171</commit>
+            <created-from>plan-72-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T22:42:34.225+05:30</timestamp>
+                    <message>De-risk: parity harness validated on claude-dev (PARITY OK). Reusable script .agents/tmp/parity-72.sh diffs mvn -o -P&lt;profile&gt; baseline vs gradle assembleX. KEY FINDING: only known-noise is the version stamp — poms pinned 0.3.14, gradle.properties 0.3.15 — so every payload shows 0.3.14-&gt;0.3.15 diffs (normalized in the script; vanishes when Task 2 deletes poms). Plus the existing jq stamp in session-start-config.json. Clean Maven baseline (rm -rf build* first) is mandatory — mvn compile is incremental and leaves stale files otherwise. Remaining 4 variants to run in harden.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Remove Maven + cutover docs/CI</name>
+            <commit></commit>
+            <created-from>plan-72-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-07T23:00:29.240+05:30</timestamp>
+                    <message>Removed from plan-72 (rescoped v2). Maven removal moved to plan-73, gated on a patch release from main proving good after plan-72 merges. Task 2 here is closed, not executed.</message>
+                </deviation>
+            </deviations>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Give claude/gemini a clean task (base plugin)</name>
+            <commit>7d132d1b2028c5191dc52b0858d078f85c709c37</commit>
+            <created-from>plan-72-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-07T21:40:59.864+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T23:03:39.288+05:30</timestamp>
+            <message>plan-72 complete: runtime-install exec-bit fix (Task 3, jspawnhelper) + final Maven-&gt;Gradle parity sign-off (Task 1, all 5 payloads + runtime zip). Task 2 (Maven removal) closed and moved to plan-73. Ready to squash-merge to main and cut a patch release; Maven removal follows in plan-73 once that release is verified good.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T23:16:35.311+05:30</timestamp>
+            <message>Reopened at plan-72-v3: added Task 4 (give claude/gemini a clean task via the base plugin) — build-hygiene gap found while cleaning artifacts after Tasks 3+1. plan-72-complete tag deleted (lifecycle marker, not a version tag).</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T23:21:21.796+05:30</timestamp>
+            <message>plan-72 complete (v3): Task 3 jspawnhelper install fix, Task 1 parity sign-off, Task 4 claude/gemini clean task. Task 2 (Maven removal) moved to plan-73. Ready to squash-merge to main + cut a patch release; Maven removal follows in plan-73 once that release is verified good.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
