@@ -4,7 +4,7 @@
 # Usage: ./scripts/release.sh <version>
 # Example: ./scripts/release.sh 0.2.0
 #
-# Prerequisites: jq, gh (GitHub CLI, authenticated), maven, git
+# Prerequisites: jq, gh (GitHub CLI, authenticated), git (build is Gradle)
 
 set -euo pipefail
 
@@ -34,9 +34,9 @@ fi
 
 ORIGINAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-echo "==> Bumping Maven project version to ${VERSION}..."
-mvn versions:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false -q
-git add $(git ls-files '**/pom.xml' pom.xml)
+echo "==> Bumping plugin.version to ${VERSION} in gradle.properties..."
+sed -i.bak "s/^plugin.version=.*/plugin.version=${VERSION}/" gradle.properties && rm -f gradle.properties.bak
+git add gradle.properties
 git commit -m "chore: bump version to ${VERSION}"
 
 MAIN_SHA=$(git rev-parse --short HEAD)
@@ -44,13 +44,10 @@ MAIN_SHA=$(git rev-parse --short HEAD)
 echo "==> Cleaning build/ directory..."
 rm -rf build/
 
-echo "==> Building production plugin (mvn compile -Pprod -P\!dev)..."
-mvn compile -Pprod -P'!dev' -q
-
-echo "==> Stamping version ${VERSION} into build/.claude-plugin/plugin.json..."
-tmp=$(mktemp)
-jq --arg v "$VERSION" '. + {"version": $v}' build/.claude-plugin/plugin.json > "$tmp"
-mv "$tmp" build/.claude-plugin/plugin.json
+echo "==> Building production plugin (./gradlew assembleClaudeProd)..."
+# The Gradle manifest task expands plugin.version into plugin.json at build time,
+# so no post-build jq version stamp is needed (the version is already correct).
+./gradlew assembleClaudeProd -Pbuild.outputDir="${REPO_ROOT}/build" -q
 
 echo "==> Switching to orphan releases branch..."
 git checkout releases
@@ -58,12 +55,13 @@ git checkout releases
 echo "==> Replacing dist/ contents with new build..."
 rm -rf dist
 mkdir -p dist
+# The jlink-restructured build emits only these subpaths (the SessionStart hook
+# runs dist/session-start.js directly; build/scripts + build/package.json are no
+# longer produced). Keep in sync with PublishRelease.SHIPPED_BUILD_SUBPATHS.
 cp -r build/.claude-plugin dist/
 cp -r build/hooks dist/
 cp -r build/dist dist/
-cp -r build/scripts dist/
 cp -r build/skills dist/
-cp build/package.json dist/
 
 echo "==> Committing release ${TAG}..."
 git add dist/

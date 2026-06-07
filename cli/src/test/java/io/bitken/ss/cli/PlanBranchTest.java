@@ -71,6 +71,32 @@ public class PlanBranchTest {
         assertEquals(1, exit);
     }
 
+    @Test
+    void createsBranchFromPlanNumberWithoutIssue() {
+        List<String> created = new ArrayList<>();
+        GitState state = stub(false, name -> { created.add(name); return true; });
+        int exit = run(state, "--plan", "71", "--desc", "gradle skills trial");
+        assertEquals(0, exit);
+        assertEquals(List.of("t/71-gradle-skills-trial"), created);
+        assertTrue(out.toString().contains("git push"), out.toString());
+    }
+
+    @Test
+    void failsIfNeitherIssueNorPlanProvided() {
+        GitState state = stub(false, name -> true);
+        int exit = run(state, "--desc", "some feature");
+        assertEquals(1, exit);
+        assertTrue(out.toString().contains("ERROR"), out.toString());
+    }
+
+    @Test
+    void failsIfBothIssueAndPlanProvided() {
+        GitState state = stub(false, name -> true);
+        int exit = run(state, "--issue", "pb-99", "--plan", "71", "--desc", "some feature");
+        assertEquals(1, exit);
+        assertTrue(out.toString().contains("ERROR"), out.toString());
+    }
+
     @FunctionalInterface
     interface BranchCreator { boolean create(String name); }
 

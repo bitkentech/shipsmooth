@@ -118,6 +118,13 @@
                   <value>${build.platform}</value>
                 </systemProperty>
                 <systemProperty>
+                  <!-- Forward build.os so the windows profile renders the
+                       %LOCALAPPDATA%\...\shipsmooth.cmd cliBin. Without this the
+                       render always saw the "posix" default. (plan-71 Task 20) -->
+                  <key>build.os</key>
+                  <value>${build.os}</value>
+                </systemProperty>
+                <systemProperty>
                   <key>plugin.base.name</key>
                   <value>${plugin.base.name}</value>
                 </systemProperty>

@@ -1,0 +1,597 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>71</plan>
+    <plan-version>plan-71-v15</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>in-review</status>
+        <created>2026-06-05</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Fix `repoRoot` resolved from `Paths.get(".")`</name>
+            <commit>0b061d4</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Add `plan branch --plan` for Local mode</name>
+            <commit>23508bb</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>`buildSrc` convention plugin + `settings.gradle.kts`</name>
+            <commit>f6802a5</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-05T22:14:20.058+05:30</timestamp>
+                    <message>Dropped JvmVendorSpec.IBM from the convention plugin: skills/pkg has no jlink/SCC/OpenJ9 dependency, so any JDK 25 suffices. Semeru pin stays relevant only for cli/packaging in a later phase.</message>
+                </deviation>
+            </deviations>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Node/TS pipeline with real input tracking</name>
+            <commit>2c0ea7c</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-05T21:55:40.777+05:30</timestamp>
+                    <message>De-risk draft ready for review (commit d0b8b75): node-gradle 7.1.0 runs with system Node; compileTs UP-TO-DATE on no-op, re-runs on real .ts edit.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>JTE staging + precompile</name>
+            <commit>2777592</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-05T22:14:56.018+05:30</timestamp>
+                    <message>De-risk draft ready (commit c5be186): stageJte + gg.jte.gradle generate mode produces 61 template classes, FQN-identical to Maven. Open question resolved (3.1.15 works on JDK 25). Dropped Semeru vendor pin.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>`Target` render variant tasks</name>
+            <commit>4eaa00e</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-05T22:28:36.086+05:30</timestamp>
+                    <message>De-risk draft (2ab11cd): RenderSpec + renderClaudeDev/renderGeminiDev. claude-dev byte-identical to mvn -Pdev (6/6 files). Parity diff caught + fixed 2 wiring bugs (version, repo-root).</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>4,5</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Existing tests pass under Gradle</name>
+            <commit>a9dfc61</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Parity verification + go/no-go judgement</name>
+            <commit>83d662f</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-05T22:46:13.983+05:30</timestamp>
+                    <message>Trial-result doc moved to docs/observations/ (plan-71.md text says docs/proposals/). Human-requested relocation; fixed the relative link to ../proposals/build-migrate.md. Plan file not edited per contract.</message>
+                </deviation>
+            </deviations>
+            <depends-on>6,7</depends-on>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Root `settings.gradle.kts` + full `buildSrc` for the reactor</name>
+            <commit>9c8f230</commit>
+            <created-from>plan-71-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-05T23:38:51.489+05:30</timestamp>
+                    <message>De-risk draft (548999b): buildSrc/wrapper/settings relocated to root; :skills:pkg builds + tests green as subproject. Fixed bytecode to Java 21 (--release) for Maven parity; Semeru confirmed jlink-only, not compile toolchain.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>8</depends-on>
+        </task>
+        <task>
+            <id>10</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>`core` compiles (no codegen, no shade)</name>
+            <commit>a217325</commit>
+            <created-from>plan-71-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T00:09:07.847+05:30</timestamp>
+                    <message>De-risk draft (2c9a5b8): core compiles with JAXB+Dagger+Build codegen; :core:test green (69 tests); generated JAXB list + Build.java byte-identical to Maven. Fixed xjc API, Groovy dotted-token expansion, dagger classpath scope.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-06T00:18:23.876+05:30</timestamp>
+                    <message>Hardened: Build flags from gradle.properties, jacoco excludes generated. Coverage parity with Maven (~74% both, generated excluded). :core:test 69 green; clean build green; skills unaffected.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-05T23:56:18.013+05:30</timestamp>
+                    <message>Absorbed former Task 12 (core codegen): JAXB xjc + Dagger APT + Build constants. core can't compile without generated types, so compile/codegen split was artificial. Risk raised Medium-&gt;High. (plan-71-v3)</message>
+                </deviation>
+            </deviations>
+            <depends-on>9</depends-on>
+        </task>
+        <task>
+            <id>11</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>`cli` compiles against `core` (no jlink)</name>
+            <commit>414d7ff</commit>
+            <created-from>plan-71-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T00:24:55.306+05:30</timestamp>
+                    <message>De-risk draft (414d7ff): cli compiles + tests green (83 tests); :cli:run --help works end-to-end against core. Fixed core JAXB api-scope so it's transitively visible to cli.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-06T00:28:07.683+05:30</timestamp>
+                    <message>Hardened (verification-only, no code changes): clean :cli:build green; coverage exact parity with Maven (688/783=87%); --help output byte-identical to Maven-built CLI. Draft commit 414d7ff is final.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>10</depends-on>
+        </task>
+        <task>
+            <id>12</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>`core` codegen — JAXB xjc, Dagger APT, `Build` constants</name>
+            <commit></commit>
+            <created-from>plan-71-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-05T23:56:18.529+05:30</timestamp>
+                    <message>Retired: merged into Task 10 at plan-71-v3. Number kept stable to avoid shifting downstream dependency references.</message>
+                </deviation>
+            </deviations>
+            <depends-on>10</depends-on>
+        </task>
+        <task>
+            <id>13</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Conditional Dagger shade + `module-info` re-injection</name>
+            <commit>1df82da</commit>
+            <created-from>plan-71-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T00:35:10.706+05:30</timestamp>
+                    <message>De-risk draft (2345344): Shadow shade + Semeru jar module-info re-injection. Shaded core jar byte-parity with Maven jlink jar (dagger=78, javax.inject=7, module-info present, 0 sig files); jar --describe-module identical. :core:test green with/without -PjlinkBuild.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-06T00:41:14.799+05:30</timestamp>
+                    <message>Hardened: reinject UP-TO-DATE via stamp file. module-info behaviour-equivalent to Maven (describe-module + ModulePackages identical; ~13-byte constant-pool diff allowed by byte-OR-behaviour parity bar). Clean jlink build green, tests green.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-06T00:54:54.822+05:30</timestamp>
+                    <message>Stamp-file up-to-date tracking (added in t13 harden) let reinjectModuleInfo skip after shadowJar rebuilt the jar, breaking cli jlink module resolution. Fixed in d3efd18: shaded jar declared as reinject's output instead.</message>
+                </deviation>
+            </deviations>
+            <depends-on>12</depends-on>
+        </task>
+        <task>
+            <id>14</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>5-platform jlink images + SCC launcher + smoke tests</name>
+            <commit>d3efd18</commit>
+            <created-from>plan-71-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T00:54:54.259+05:30</timestamp>
+                    <message>De-risk draft (d3efd18): linux jlink image builds + runs (--help works, correct modules); SCC smoke tests pass (plan show --plan 27 renders real output through SCC JRE). 4 platform tasks wired. Also fixed a latent Task 13 stamp-ordering bug that broke core module resolution.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-06T01:02:57.464+05:30</timestamp>
+                    <message>Hardened (verification-only): all 4 platform images build (correct modules via release file); clean-from-scratch full jlink build green (4 images + 2 smoke tests); Maven parity confirmed — module sets + dir structure identical, plan show --plan 27 byte-identical through both Gradle &amp; Maven images. Draft d3efd18 is final.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>13</depends-on>
+        </task>
+        <task>
+            <id>15</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>`claude`/`gemini` manifest filtering</name>
+            <commit>6519b81</commit>
+            <created-from>plan-71-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-06T01:15:56.162+05:30</timestamp>
+                    <message>Beyond porting: fixed a latent bug found via parity diff — Maven gemini-prod profile missing &lt;plugin.name&gt;, shipping literal ${plugin.name}. Fixed in both pom.xml and Gradle (user-directed). All 4 variants now byte-identical.</message>
+                </deviation>
+            </deviations>
+            <depends-on>11</depends-on>
+        </task>
+        <task>
+            <id>16</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>`packaging` assembly + release entrypoints</name>
+            <commit>cf6ca4b9ee25690f27cfc1f760421b809a253e59</commit>
+            <created-from>plan-71-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T01:35:39.519+05:30</timestamp>
+                    <message>De-risk draft (72af949): packageRuntime_linux-x64 zip structurally identical to Maven (163 entries); ValidateRelease passes on prod manifests. 4 platform tasks + copyDist wired. PublishRelease wired-only (never run). PackageRuntime.main path-hardcoding handled via image staging (Java untouched).</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-06T14:17:25.447+05:30</timestamp>
+                    <message>Ported the claude-profile copy-scripts/copy-ts-source (JS+TS -&gt; build/scripts/tasks/) into packaging as copyScripts/copyTsSource; not listed in task-16 plan text but a packaging-module concern that ValidateRelease payload parity depends on. Human-approved.</message>
+                </deviation>
+            </deviations>
+            <depends-on>14,15</depends-on>
+        </task>
+        <task>
+            <id>17</id>
+            <risk>high</risk>
+            <status>needs-triage</status>
+            <name>Full parity sign-off + remove `pom.xml` files</name>
+            <commit></commit>
+            <created-from>plan-71-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T14:18:52.489+05:30</timestamp>
+                    <message>Deferred to plan-72 (Maven teardown). Decision: prove the Gradle build+release on main FIRST (cut a real release via the Task-26 Gradle path), THEN delete the poms in a separate plan. plan-71 closes with the full Gradle build + all 5 assemblies + Gradle-native release path proven, coexisting with Maven (Gradle is the path, Maven best-effort). The 9-pom deletion + dead package-tasks-java.sh removal + docs/CI cutover + final parity sign-off + tag all move to plan-72.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>16,21,22,23,24,25,26</depends-on>
+        </task>
+        <task>
+            <id>18</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Prod render variant tasks</name>
+            <commit>7fe75da</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T17:33:40.607+05:30</timestamp>
+                    <message>De-risk draft ready (7fe75da): renderClaudeProd/renderGeminiProd/renderWindows all byte-identical to mvn -P prod/gemini/windows render. Parity diff caught + fixed 3 divergences (gemini jlinkDir, windows build.os, windows hook command).</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-06T17:58:52.959+05:30</timestamp>
+                    <message>Hardened: implementation already at quality bar (3 documented RenderSpec.copy variants, existing buildSrc infra). Clean-tree re-verify: claude-prod/gemini-prod/windows all byte-identical to fresh mvn -P prod/gemini/windows baselines; :skills:pkg:test 57 green (incl TargetIntegrationTest). No code churn needed. Note: renderWindows matches Maven's current posix cliBin; Task 20 corrects that in both systems.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>5,6</depends-on>
+        </task>
+        <task>
+            <id>19</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Run the TS tests in the build</name>
+            <commit>47fb3a6</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T02:37:02.707+05:30</timestamp>
+                    <message>De-risk draft ready (commit 47fb3a6). testTs NpmTask wired into check; 24 TS tests green, broken test fails the build, rerun UP-TO-DATE. Ran before Task 17 (recorded deviation).</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-07T02:36:46.143+05:30</timestamp>
+                    <message>Executed Task 19 BEFORE Task 17 despite the plan's 'Depends-on: 17'. Task 19 only wires the existing TS suite into skills/pkg/build.gradle.kts; it needs nothing from Task 17's cutover. Correct order is 19-before-17: wire+verify TS tests while the build is stable, not after the pom-deletion cutover. Task 17's parity sign-off remains the final step.</message>
+                </deviation>
+            </deviations>
+            <depends-on>17</depends-on>
+        </task>
+        <task>
+            <id>20</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Fix Windows SKILL cliBin path (forward build.os to render)</name>
+            <commit>4e15fe7</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T19:07:31.580+05:30</timestamp>
+                    <message>De-risk draft ready (4e15fe7): build.os forwarded in both systems; windows SKILL now %LOCALAPPDATA%\...\shipsmooth.cmd + install-runtime.bat, Gradle==Maven byte-identical; claude/gemini-prod unaffected; 57 tests green.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-06T19:14:41.103+05:30</timestamp>
+                    <message>Hardened: 2-line fix already at bar, no churn. Clean-tree re-verify: claude-prod/gemini-prod/windows all byte-identical to fresh Maven baselines; windows SKILL carries shipsmooth.cmd cliBin; :skills:pkg:test green. Both build systems now forward build.os.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>18</depends-on>
+        </task>
+        <task>
+            <id>21</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>assembleClaudeDev (+ shared renderOutputDir mechanism)</name>
+            <commit>dcce08e</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-06T22:09:15.523+05:30</timestamp>
+                    <message>De-risk draft ready (b5684de): assembleClaudeDev byte-identical to fresh mvn -Pdev (10 files, empty diff). Shared mechanism landed: renderOutputDir override + JS/TS copies moved out of packaging into skills/pkg. packaging compiles; tests green.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-06T22:28:54.611+05:30</timestamp>
+                    <message>Refined to no-default-variants (92c8392): claude manifest is now a per-variant factory (copyClaudeMetaDev/Prod), no global -Pvariant default. assembleClaudeDev byte-identical to fresh mvn -Pdev with NO -Pvariant flag; claude has zero variant defaults; tests green.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-07T00:46:13.208+05:30</timestamp>
+                    <message>De-risk draft (85da0e4): assembleClaudeDev byte-identical to fresh mvn -Pdev; Bazel-style VerifyNoOverlappingOutputs in buildSrc — payload-only (md/js/json/toml/bat/ts), file/dir ownership w/ file-match precedence; teeth proven (fails on same-file overlap + undeclared strays, passes clean). copyDist/scripts/ts moved out of packaging; claude manifest factory declares exact files. Follow-ups: move entry point to claude module; verify UP-TO-DATE.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-07T01:12:23.339+05:30</timestamp>
+                    <message>Closed (dcce08e): assembleClaudeDev in claude module (isolation by audience), reusable registerPayloadAssembly + VerifyNoOverlappingOutputs in buildSrc. Byte-identical to mvn -Pdev; overlap-check teeth proven; UP-TO-DATE on no-op via output stamp (outside payload). copyDist/scripts/ts moved out of packaging; claude manifest factory declares exact files. Ready to reuse for Tasks 22-25.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>18,20</depends-on>
+        </task>
+        <task>
+            <id>22</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>assembleGeminiDev</name>
+            <commit>c546c52e960fc4ba5131373553a6462b823c50b0</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T01:38:10.366+05:30</timestamp>
+                    <message>De-risk draft ready for review (commit dae7e43). assembleGeminiDev parity-clean vs mvn gemini-dev; overlap-check UP-TO-DATE on no-op, fails on overlap/stray. Includes a scope decision: gemini payload no longer ships .claude-plugin/ (Maven gemini+gemini-dev set skip.copy-plugin-meta=true) — recorded as a minor deviation.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-07T01:29:13.925+05:30</timestamp>
+                    <message>Gemini payload drops .claude-plugin plugin/marketplace json (Claude-marketplace metadata, never belonged in a Gemini extension; gemini profiles also never set marketplace.name/description so marketplace.json shipped half-filtered with a literal token). Fixed Maven gemini-dev+gemini profiles to skip.copy-plugin-meta=true; assembleGeminiDev producers = renderGeminiDev + copyDist + gemini manifest/commands/README only. Deliberate divergence from prior buggy Maven output; same shape as the gemini-prod plugin.name fix.</message>
+                </deviation>
+            </deviations>
+            <depends-on>21</depends-on>
+        </task>
+        <task>
+            <id>23</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>assembleClaudeProd</name>
+            <commit>55cdc5f769f832db4a12f76c2e94e5c5d250d6a6</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T02:01:58.601+05:30</timestamp>
+                    <message>De-risk draft ready (commit 69002b2). assembleClaudeProd parity-clean vs mvn prod baseline via new prod Sync mode (registerPayloadSync in buildSrc); Sync is sole writer of the final dir. Dev assemblies regression-clean.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-07T02:04:19.631+05:30</timestamp>
+                    <message>Removed dead copyScripts/copyTsSource tasks from skills/pkg. Plan/comments claimed claude-prod+windows use a scripts/tasks/ tree (Used by Tasks 23/25), but fresh Maven prod AND windows baselines emit NO scripts/tasks/ — verified. No consumer existed. Comment left for Task 25 to re-add against a real Windows baseline if needed.</message>
+                </deviation>
+            </deviations>
+            <depends-on>21</depends-on>
+        </task>
+        <task>
+            <id>24</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>assembleGeminiProd</name>
+            <commit>5c19a6420e88df386e7d75235f7eba87ae3828d6</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T02:14:18.603+05:30</timestamp>
+                    <message>De-risk draft ready (commit 5c19a64). assembleGeminiProd parity-clean vs mvn gemini-prod baseline; reuses Task 23 Sync machinery. All 4 assemblies regression-clean.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>22,23</depends-on>
+        </task>
+        <task>
+            <id>25</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>assembleWindows</name>
+            <commit>155ba42</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T02:26:22.912+05:30</timestamp>
+                    <message>De-risk draft ready (commit 155ba42). assembleWindows parity-clean vs mvn -P windows; no copyDist (no dist/*.js), windows tokens + windows README + install-runtime.bat all correct. All 5 assemblies regression-clean.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>23</depends-on>
+        </task>
+        <task>
+            <id>26</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Gradle-native release path (de-Maven the release entrypoints)</name>
+            <commit>809cfc968473392e8e8ad015c768931c0db21105</commit>
+            <created-from>plan-71-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T13:31:25.544+05:30</timestamp>
+                    <message>De-risk draft (2d9d95b): PublishRelease.java de-Maven'd — 3 mvn build calls -&gt; gradlew (jlinkImage_*, assembleClaudeProd, assembleWindows); mvn versions:set -&gt; gradle.properties plugin.version rewrite. assembleClaudeProd verified to run with ZERO mvn and stamp the version into plugin.json directly (jq stamp redundant). FINDING: manifest/render tasks don't declare plugin.version as a task input, so a bump leaves them UP-TO-DATE with the OLD version (--rerun-tasks confirms cause); harden by declaring it an input. Awaiting approval.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-07T13:33:44.422+05:30</timestamp>
+                    <message>Scope constraint (human): do NOT move functionality between Java and scripts in this plan — this is a pure mvn-&gt;gradle migration in place. So: PublishRelease.java stays Java-only (no gemini logic added to it); release.sh / release-gemini.sh / package-tasks-java.sh keep their current responsibilities and entrypoints, only their mvn calls become gradlew calls. The plan's 'prefer making PublishRelease the single entrypoint / retire the shell scripts' suggestion is explicitly DECLINED. jq stamp is dropped only where it is a verified no-op (manifest already stamped by Gradle expand()).</message>
+                </deviation>
+            </deviations>
+            <depends-on>14,16,23,24,25</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-05T23:06:15.140+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T14:35:50.839+05:30</timestamp>
+            <message>Task 17 blocked: prod render variants were never built. Task 6 (Phase-0 trial) scoped only renderClaudeDev/renderGeminiDev; no task created renderClaudeProd/renderGeminiProd/renderWindows. Three of the four prod payloads (build/ prod, build-gemini/, build-windows/) cannot be produced by Gradle, so the task-17 four-payload parity diff cannot run. Needs a plan revision adding prod render variant task(s) before task 17.</message>
+            <blocked>true</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T14:48:56.530+05:30</timestamp>
+            <message>Unblocked at plan-71-v3: added Task 18 (Prod render variant tasks: renderClaudeProd/renderGeminiProd/renderWindows). Task 17 now Depends-on 16,18. Task 18 executes before 17.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T17:54:45.463+05:30</timestamp>
+            <message>plan-71-v6: added Task 20 (fix Windows SKILL cliBin). Latent bug found in Task 18 — render exec never forwarded build.os in any commit (git -S empty), so build-windows/ SKILL ships posix path not %LOCALAPPDATA%\...\shipsmooth.cmd. Half-wired since plan-61/pb-55, not a regression; install works via install-runtime.bat. Task 17 now Depends-on 16,18,20.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T21:31:50.175+05:30</timestamp>
+            <message>plan-71-v7: split out Task 21 (Gradle payload assembly orchestration). Task 17's four-payload diff was blocked — render tasks hardcode outputDir to build/render/&lt;variant&gt;/, so no Gradle invocation assembles a full payload (claude/gemini/packaging compose fine; render is the blocker). Task 21 makes render outputDir overridable + adds assembleProd/Gemini/Windows aggregates. Task 17 now Depends-on 16,18,20,21.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T21:50:44.934+05:30</timestamp>
+            <message>plan-71-v8: reworked payload assembly into 5 per-variant tasks (21 assembleClaudeDev, 22 GeminiDev, 23 ClaudeProd, 24 GeminiProd, 25 Windows), migrated one at a time starting ClaudeDev. Deleted the stale/inconsistent committed build*/ dirs; parity baseline is now a fresh mvn -P&lt;profile&gt; build per variant. JS/TS copies move out of packaging (assembly must not invoke packaging). Task 17 now Depends-on 16,21,22,23,24,25.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T22:24:36.109+05:30</timestamp>
+            <message>plan-71-v9: design decision recorded — NO default variants. The Maven -Pvariant/activeByDefault ?:'dev' fallback was a Maven-land UI shortcut; Gradle won't have it. claude/gemini manifest tasks become per-variant via a factory (copyClaudeMetaDev/Prod, copyGeminiDev/Prod); each assembleX depends on its own variant's task; no global variant property. Lands incrementally across Tasks 21-25.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T22:51:03.428+05:30</timestamp>
+            <message>plan-71-v10: fix inverted dependency. assembleClaude*/assembleGemini* move into the claude/gemini integration modules (not skills/pkg). skills/pkg exposes render+copy as reusable parameterized building blocks; integration modules drive them with explicit output dir + variant (no shared global -Pbuild.outputDir). Direction is integration-&gt;skills:pkg, never reverse. The Task-21 draft's skills/pkg-&gt;:claude:copyPluginMeta dependsOn is being corrected.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T23:29:58.576+05:30</timestamp>
+            <message>plan-71-v11: dual-mode assembly (supersedes v10 consumable-config hand-off). Dev = producers co-deposit directly into build/&lt;variant&gt; (fast, no copy), guarded by a buildSrc overlap-check that FAILS on intersecting declared producer outputs (file-granular, declares inputs so it's UP-TO-DATE on no-op -&gt; zero hot-loop cost). Prod = producers write private dirs, assemble Syncs into build/&lt;variant&gt; as sole writer (overlap-immune). Producers take explicit output dir + declare file-granular outputs (render's whole-dir outputs.dir must be tightened). Shared TS/hooks stay in skills/pkg (gemini uses them too). Task 21 lands the check + dev assembleClaudeDev.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-06T23:54:45.102+05:30</timestamp>
+            <message>plan-71-v12: overlap-check walks disk (corrects v11's 'never walk the tree'). The Task-21 spike disproved the cheap declared-output check: Gradle Copy tasks declare a DIRECTORY output, not files, so it can't distinguish dist/*.js from dist/session-start-config.json without disk-walking or fragile hand-enumeration. The check now globs each producer's output dir after they run and asserts real files pairwise-disjoint. Cheap (~15 files, ms). dependsOn the producers.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T00:09:41.073+05:30</timestamp>
+            <message>plan-71-v13: Bazel-inspired exact-output declaration resolves the overlap-check. After two rejected designs (declared-DIR check can't see files; naive disk-walk can't attribute co-deposited files), adopt Bazel's 'declare exact output files' model: each producer declares outputs.file(&lt;each file&gt;) not outputs.dir(). The cheap in-memory declared-output check then works (filter to file entries, assert disjoint, UP-TO-DATE-friendly, no disk walk). A separate completeness pass walks the assembled dir for undeclared strays (Gradle has no Bazel sandbox). Validated by spike v3.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T00:16:03.991+05:30</timestamp>
+            <message>plan-71-v14: scope the overlap-check to PAYLOAD content files only — the .md/.js/.json/.toml/.bat/.ts that land in build/&lt;variant&gt;/, for skills/claude/gemini only. Opt-in per assembleX over an explicit producer list (never auto-discovers tasks); extension allowlist {md,js,json,toml,bat,ts} as a guard so .class files / JARs / generated sources / node_modules can never be dragged in. core/cli/packaging never get the check. (Survey: a fresh build of all 5 variants emits only those extensions.)</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T00:52:09.039+05:30</timestamp>
+            <message>plan-71-v15: isolation by audience. assembleClaude* lives in claude/build.gradle.kts, assembleGemini* in gemini/ — each self-contained, naming only its own producers, never referencing the other integration (so the Claude owner needn't understand Gemini's build). Top-level root build.gradle.kts REJECTED (would force both owners into one file). Reusable machinery (VerifyNoOverlappingOutputs + a registerPayloadAssembly helper) lives in buildSrc as common helpers. Corrects the de-risk draft which put assembleClaudeDev in skills/pkg.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T13:05:37.871+05:30</timestamp>
+            <message>plan-71-v16: added Task 26 (Gradle-native release path) before the cutover. Task 17 was unshippable as written — deleting the poms strands the project with no release path. PublishRelease.java (the canonical entrypoint, wrapped as a JavaExec in Task 16) still shells out to mvn in 4 places (versions:set L94, -Pjlink package L130, compile -Pprod L135, compile -Pwindows L154); release.sh/release-gemini.sh and package-tasks-java.sh likewise. Task 26 swaps each for its existing Gradle equivalent (jlinkImage_*, assembleClaudeProd/GeminiProd/Windows, PackageRuntime), moves the version bump to gradle.properties plugin.version as single source of truth, and resolves the 'modulo jq stamp' caveat (manifests already expand plugin.version at build time). Dry-run-verified vs Maven while poms still exist. Task 17 now Depends-on 16,21,22,23,24,25,26; pom count corrected 7-&gt;9 (root + skills aggregator + 7 modules).</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T14:23:06.311+05:30</timestamp>
+            <message>plan-71 closed in-review (v17). Maven-&gt;Gradle migration functionally complete: all 7 modules build under Gradle, all 5 payloads assemble byte-identical to Maven, 5-platform jlink + SCC launcher, TS tests in check, Gradle-native release path (Task 26). 24 tasks closed, Task 12 closed, Task 17 needs-triage DEFERRED to plan-72. Sequence: merge to main with both build systems -&gt; cut a real release via the proven Gradle path -&gt; remove Maven in plan-72. Gradle is the build/release path on main; Maven best-effort until plan-72. plan-72.md created (tasks deferred until that plan starts).</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
