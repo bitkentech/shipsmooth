@@ -27,12 +27,17 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Final full-parity sign-off (all 5 payloads + runtime zip)</name>
             <commit></commit>
             <created-from>plan-72-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T22:42:34.225+05:30</timestamp>
+                    <message>De-risk: parity harness validated on claude-dev (PARITY OK). Reusable script .agents/tmp/parity-72.sh diffs mvn -o -P&lt;profile&gt; baseline vs gradle assembleX. KEY FINDING: only known-noise is the version stamp — poms pinned 0.3.14, gradle.properties 0.3.15 — so every payload shows 0.3.14-&gt;0.3.15 diffs (normalized in the script; vanishes when Task 2 deletes poms). Plus the existing jq stamp in session-start-config.json. Clean Maven baseline (rm -rf build* first) is mandatory — mvn compile is incremental and leaves stale files otherwise. Remaining 4 variants to run in harden.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
