@@ -71,9 +71,10 @@ actually removed. Confirmed this cycle: there is **no CI** — no `.github/` dir
 
 ## Tasks
 
-_Tasks are listed in risk-sorted execution order: 3 → 1. Both High. Task 3 (independent, the
-release-blocking install fix) runs first; Task 1 is the parity sign-off. Maven removal is
-plan-73, not a task here._
+_Tasks are listed in risk-sorted execution order: 3 → 1 → 4. Maven removal is plan-73, not a
+task here. Task 3 (High) is the release-blocking install fix; Task 1 (High) is the parity
+sign-off; Task 4 (Low) is build-hygiene found during cleanup. Tasks 3 and 1 are already done
+(agent-coded); Task 4 was added at v3 after they completed._
 
 ### Task 3: Fix runtime-install exec bits — `jspawnhelper` EACCES [High]
 
@@ -152,6 +153,26 @@ This is the last point Maven exists to diff against (before plan-73 removes it).
 
 Acceptance: every payload parity-clean (or documented known-noise only); sign-off recorded in
 a short note (e.g. `docs/observations/`).
+
+### Task 4: Give `claude`/`gemini` a `clean` task [Low]
+
+*Depends-on:*
+
+**Build hygiene found while cleaning artifacts after Tasks 3+1.** The `claude` and `gemini`
+integration modules apply **no Gradle plugin** ("no java-conventions here — resource filtering
+only"), so they have **no `clean` task**. The root `./gradlew clean` runs `:cli:clean`,
+`:core:clean`, `:packaging:clean`, `:skills:pkg:clean` but cannot touch `claude/build` or
+`gemini/build` — those dirs accumulate and can only be removed with `rm`. (`:claude:clean`
+errors: "task 'clean' not found in project ':claude'".)
+
+Fix: apply the `base` plugin to each module — it provides `clean` plus the lifecycle tasks
+(`assembleX` already hook in) **without** a Java toolchain, the idiomatic Gradle answer for a
+resource-only module. Purely additive; no behaviour or payload-output change.
+
+Acceptance: `./gradlew :claude:clean :gemini:clean` succeeds and removes both `build/` dirs;
+root `./gradlew clean` now sweeps them too (note: `buildSrc/build` is a separate included build
+— still cleaned via `./gradlew -p buildSrc clean`, by design, not this task). No change to any
+assembled payload.
 
 ---
 

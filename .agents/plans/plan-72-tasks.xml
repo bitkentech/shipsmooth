@@ -4,7 +4,7 @@
     <plan-version>plan-72-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>complete</status>
+        <status>active</status>
         <created>2026-06-07</created>
     </metadata>
     <tasks>
@@ -58,6 +58,17 @@
             </deviations>
             <depends-on>1</depends-on>
         </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Give claude/gemini a clean task (base plugin)</name>
+            <commit></commit>
+            <created-from>plan-72-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
     </tasks>
     <project-updates>
         <update>
@@ -68,6 +79,11 @@
         <update>
             <timestamp>2026-06-07T23:03:39.288+05:30</timestamp>
             <message>plan-72 complete: runtime-install exec-bit fix (Task 3, jspawnhelper) + final Maven-&gt;Gradle parity sign-off (Task 1, all 5 payloads + runtime zip). Task 2 (Maven removal) closed and moved to plan-73. Ready to squash-merge to main and cut a patch release; Maven removal follows in plan-73 once that release is verified good.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T23:16:35.311+05:30</timestamp>
+            <message>Reopened at plan-72-v3: added Task 4 (give claude/gemini a clean task via the base plugin) — build-hygiene gap found while cleaning artifacts after Tasks 3+1. plan-72-complete tag deleted (lifecycle marker, not a version tag).</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
