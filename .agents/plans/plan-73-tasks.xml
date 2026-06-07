@@ -11,13 +11,19 @@
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Remove Maven + cutover docs</name>
-            <commit></commit>
+            <commit>9ddef0bcba734dc48549a7fd348d531ac362d487</commit>
             <created-from>plan-73-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-07T23:41:19.423+05:30</timestamp>
+                    <message>Scope refinement on the acceptance grep. Beyond the 4 named items, 'mvn' also appears in: (a) IntegrationDefaults.VERIFY_CMD (live experimental-integrate default, already TODO-flagged wrong, refs non-existent plugin-tasks-java module) — LEFT as-is (behaviour/experimental, out of scope), logged as follow-up; (b) 2 dead experiment scripts (experiment-startup-matrix.sh, experiment-jlink-with-shr.sh) referencing the gone 'app' module — LEFT (only package-tasks-java.sh deleted per plan); (c) docs/observations/* — KEPT as historical like docs/proposals. Acceptance grep excludes all of these.</message>
+                </deviation>
+            </deviations>
         </task>
     </tasks>
     <project-updates>
