@@ -91,24 +91,58 @@ public class PublishRelease {
     }
 
     private void bumpAndCommitVersion() throws IOException, InterruptedException {
-        runCommand(List.of("mvn", "-f", repoRoot.resolve("pom.xml").toString(), "versions:set", "-DnewVersion=" + version, "-DgenerateBackupPoms=false"), repoRoot);
-
-        List<String> addCmd = new ArrayList<>(List.of("git", "add"));
-        try (var stream = Files.walk(repoRoot)) {
-            stream.filter(p -> p.getFileName().toString().equals("pom.xml"))
-                  .map(p -> repoRoot.relativize(p).toString())
-                  .forEach(addCmd::add);
-        }
-        runCommand(addCmd, repoRoot);
-
-        // skip commit if nothing changed (version was already set)
-        ProcessBuilder status = new ProcessBuilder("git", "diff", "--cached", "--quiet")
-                .directory(repoRoot.toFile());
-        if (status.start().waitFor() != 0) {
-            git("commit", "-m", "chore: bump version to " + version);
-        } else {
+        boolean changed = bumpVersionInGradleProperties(repoRoot, version);
+        if (!changed) {
             System.out.println("Version already at " + version + ", skipping bump commit.");
+            return;
         }
+        git("add", "gradle.properties");
+        git("commit", "-m", "chore: bump version to " + version);
+    }
+
+    /**
+     * Post-cutover single source of truth for the build version: the
+     * {@code plugin.version} line in {@code gradle.properties}. Replaces
+     * {@code mvn versions:set} (there are no poms after Task 17). Returns
+     * {@code true} if the file changed (a bump happened), {@code false} if the
+     * version was already at the target.
+     */
+    static boolean bumpVersionInGradleProperties(Path repoRoot, String version) throws IOException {
+        Path gp = repoRoot.resolve("gradle.properties");
+        String content = Files.readString(gp);
+        String target = "plugin.version=" + version;
+        if (content.contains(target)) return false;
+        String updated = content.replaceAll("(?m)^plugin\\.version=.*$", "plugin.version=" + version);
+        if (updated.equals(content)) {
+            throw new IllegalStateException("No plugin.version line found in " + gp);
+        }
+        Files.writeString(gp, updated);
+        return true;
+    }
+
+    private static String gradlew(Path repoRoot) {
+        return repoRoot.resolve("gradlew").toString();
+    }
+
+    /** All four jlink platform images, gated on {@code -PjlinkBuild}. Replaces {@code mvn -Pjlink package}. */
+    static List<String> jlinkBuildCommand(Path repoRoot) {
+        return List.of(gradlew(repoRoot), "-PjlinkBuild",
+                ":cli:jlinkImage_linux-x64",
+                ":cli:jlinkImage_darwin-x64",
+                ":cli:jlinkImage_darwin-arm64",
+                ":cli:jlinkImage_windows-x64");
+    }
+
+    /** Prod claude payload into {@code build/}. Replaces {@code mvn compile -Pprod -P!dev}. */
+    static List<String> assembleProdCommand(Path repoRoot) {
+        return List.of(gradlew(repoRoot), "assembleClaudeProd",
+                "-Pbuild.outputDir=" + repoRoot.resolve("build"));
+    }
+
+    /** Windows payload into {@code build-windows/}. Replaces {@code mvn compile -Pwindows -P!dev}. */
+    static List<String> assembleWindowsCommand(Path repoRoot) {
+        return List.of(gradlew(repoRoot), "assembleWindows",
+                "-Pbuild.outputDir=" + repoRoot.resolve("build-windows"));
     }
 
     static void validateBuildOutput(Path buildDir) throws IOException {
@@ -127,12 +161,9 @@ public class PublishRelease {
         Path buildDir = repoRoot.resolve("build");
         if (Files.exists(buildDir)) deleteDirectory(buildDir);
 
-        runCommand(List.of("mvn", "-f", repoRoot.resolve("pom.xml").toString(),
-                "-pl", "cli", "-am", "-Pjlink",
-                "-Dexperimental.enabled=false",
-                "package"), repoRoot);
+        runCommand(jlinkBuildCommand(repoRoot), repoRoot);
 
-        runCommand(List.of("mvn", "-f", repoRoot.resolve("pom.xml").toString(), "compile", "-Pprod", "-P!dev"), repoRoot);
+        runCommand(assembleProdCommand(repoRoot), repoRoot);
         maybeValidateBuildOutput(buildDir, skipValidation);
 
         Path outputDir = repoRoot.resolve("packaging/target/dist");
@@ -151,8 +182,7 @@ public class PublishRelease {
         Path buildDir = repoRoot.resolve("build-windows");
         if (Files.exists(buildDir)) deleteDirectory(buildDir);
 
-        runCommand(List.of("mvn", "-f", repoRoot.resolve("pom.xml").toString(),
-                "compile", "-Pwindows", "-P!dev"), repoRoot);
+        runCommand(assembleWindowsCommand(repoRoot), repoRoot);
         System.out.println("Windows plugin build complete: " + buildDir);
     }
 
