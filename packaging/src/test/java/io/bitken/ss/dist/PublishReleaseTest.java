@@ -177,6 +177,25 @@ public class PublishReleaseTest {
                 && a.endsWith("build-windows")), cmd.toString());
     }
 
+    // PackageRuntime must read the jlink image from the GRADLE output dir
+    // (cli/build/...), not the old Maven location (cli/target/...). Reading the
+    // Maven path packaged a stale image, or none on a clean tree.
+    @Test
+    void jlinkImagePathPointsAtGradleBuildDir() {
+        Path p = PublishRelease.jlinkImagePath(tempDir, "linux-x64");
+        assertEquals(tempDir.resolve("cli/build/jlink-image-linux-x64"), p);
+        assertFalse(p.toString().contains("cli/target"),
+                "must not read the Maven jlink image path: " + p);
+    }
+
+    @Test
+    void jlinkImagePathUsesPlatformSuffix() {
+        assertTrue(PublishRelease.jlinkImagePath(tempDir, "windows-x64").toString()
+                .endsWith("cli/build/jlink-image-windows-x64"));
+        assertTrue(PublishRelease.jlinkImagePath(tempDir, "darwin-arm64").toString()
+                .endsWith("cli/build/jlink-image-darwin-arm64"));
+    }
+
     @Test
     void validateBuildOutputPassesOnCleanManifests() throws IOException {
         Path claudePlugin = tempDir.resolve(".claude-plugin");

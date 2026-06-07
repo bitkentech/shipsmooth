@@ -168,14 +168,25 @@ public class PublishRelease {
 
         Path outputDir = repoRoot.resolve("packaging/target/dist");
         Files.createDirectories(outputDir);
-        new PackageRuntime("linux-x64", linuxJdkHome, repoRoot.resolve("cli/target/jlink-image-linux-x64"), outputDir, version).run();
+        new PackageRuntime("linux-x64", linuxJdkHome, jlinkImagePath(repoRoot, "linux-x64"), outputDir, version).run();
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-" + version + "-linux-x64.zip"));
-        new PackageRuntime("darwin-x64", darwinX64JdkHome, repoRoot.resolve("cli/target/jlink-image-darwin-x64"), outputDir, version).run();
+        new PackageRuntime("darwin-x64", darwinX64JdkHome, jlinkImagePath(repoRoot, "darwin-x64"), outputDir, version).run();
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-" + version + "-darwin-x64.zip"));
-        new PackageRuntime("darwin-arm64", darwinArm64JdkHome, repoRoot.resolve("cli/target/jlink-image-darwin-arm64"), outputDir, version).run();
+        new PackageRuntime("darwin-arm64", darwinArm64JdkHome, jlinkImagePath(repoRoot, "darwin-arm64"), outputDir, version).run();
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-" + version + "-darwin-arm64.zip"));
-        new PackageRuntime("win32-x64", windowsX64JdkHome, repoRoot.resolve("cli/target/jlink-image-windows-x64"), outputDir, version).run();
+        new PackageRuntime("win32-x64", windowsX64JdkHome, jlinkImagePath(repoRoot, "windows-x64"), outputDir, version).run();
         System.out.println("Runtime zip: " + outputDir.resolve("shipsmooth-" + version + "-win32-x64.zip"));
+    }
+
+    /**
+     * Location of a platform's jlink image. The Gradle {@code jlinkImage_<platform>}
+     * tasks write to {@code cli/build/jlink-image-<platform>} (the old Maven build
+     * wrote to {@code cli/target/...} — reading there packaged a stale image, or
+     * none on a clean tree). The platform key matches the Gradle task suffix:
+     * linux-x64, darwin-x64, darwin-arm64, windows-x64.
+     */
+    static Path jlinkImagePath(Path repoRoot, String platform) {
+        return repoRoot.resolve("cli/build/jlink-image-" + platform);
     }
 
     private void buildWindowsPlugin() throws IOException, InterruptedException {
@@ -202,7 +213,7 @@ public class PublishRelease {
         copyRecursive(buildDir.resolve(".claude-plugin"), windowsRepoPath.resolve(".claude-plugin"));
         copyRecursive(buildDir.resolve("hooks"),          windowsRepoPath.resolve("hooks"));
         copyRecursive(buildDir.resolve("skills"),         windowsRepoPath.resolve("skills"));
-        copyRecursive(repoRoot.resolve("cli/target/jlink-image-windows-x64"),
+        copyRecursive(jlinkImagePath(repoRoot, "windows-x64"),
                       windowsRepoPath.resolve("runtime"));
 
         runCommand(List.of("git", "add", "."), windowsRepoPath);
