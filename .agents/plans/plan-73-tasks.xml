@@ -4,7 +4,7 @@
     <plan-version>plan-73-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-07</created>
     </metadata>
     <tasks>
@@ -30,6 +30,11 @@
         <update>
             <timestamp>2026-06-07T23:01:04.389+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-07T23:50:56.472+05:30</timestamp>
+            <message>plan-73 complete: Maven removed. All 9 poms + dead package-tasks-java.sh deleted; DEVELOPMENT.md + smoke-gemini.sh + gradle.properties cut to Gradle. ./gradlew build green with no poms; :skills:pkg:check runs TS tests; grep mvn clean outside documented exclusions (docs historical; VERIFY_CMD + 2 dead experiment scripts left as follow-ups).</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
