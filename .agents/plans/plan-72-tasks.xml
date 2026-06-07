@@ -11,12 +11,17 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Fix runtime-install exec bits — `jspawnhelper` EACCES</name>
             <commit></commit>
             <created-from>plan-72-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-07T22:12:56.520+05:30</timestamp>
+                    <message>De-risk draft: extractAllTo keepOriginalPermission=true makes the jspawnhelper integration test green (real-zip fix already proven). Discovered test fixtures must use raw perms (0o755) not 0o755&lt;&lt;16. Pre-existing flaky test 8 (os.tmpdir snapshot race) unrelated.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>

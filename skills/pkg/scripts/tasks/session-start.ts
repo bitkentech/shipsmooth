@@ -81,7 +81,9 @@ async function downloadAndInstall(version: string, runtimeDir: string, platform:
   try {
     await downloadFile(url, zipFile);
     fs.mkdirSync(extractDir, { recursive: true });
-    new AdmZip(zipFile).extractAllTo(extractDir, true);
+    // keepOriginalPermission=true preserves the unix mode stored in each zip entry
+    // (notably the +x on runtime/lib/jspawnhelper, which OpenJ9 needs to spawn subprocesses).
+    new AdmZip(zipFile).extractAllTo(extractDir, true, true);
     const extractedBin = runtimeBin(extractDir, platform);
     if (!fs.existsSync(extractedBin)) {
       throw new Error(`shipsmooth: extracted archive is missing ${path.relative(extractDir, extractedBin)} (from ${url})`);

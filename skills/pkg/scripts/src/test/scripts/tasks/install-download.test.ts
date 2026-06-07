@@ -112,12 +112,15 @@ test('integration: installRuntime preserves executable bit on runtime/lib/* (jsp
   const pluginRoot = makeTmpDir();
   const version = '9.9.9-jspawn';
 
+  // NB: addFile's attr arg is RAW unix perms (e.g. 0o755), not shifted `<< 16`.
+  // The shifted form does not round-trip through AdmZip's own reader (extracts as 0666),
+  // which is how the real release zip's modes are recovered on install.
   const zip = new AdmZip();
-  zip.addFile('bin/shipsmooth', Buffer.from('#!/bin/sh\necho ok\n'), '', 0o755 << 16);
+  zip.addFile('bin/shipsmooth', Buffer.from('#!/bin/sh\necho ok\n'), '', 0o755);
   // Executable helper in runtime/lib/, exactly like the real jlink image's jspawnhelper.
-  zip.addFile('runtime/lib/jspawnhelper', Buffer.from('#!/bin/sh\necho fake-helper\n'), '', 0o755 << 16);
+  zip.addFile('runtime/lib/jspawnhelper', Buffer.from('#!/bin/sh\necho fake-helper\n'), '', 0o755);
   // A non-executable sibling in the same dir must stay non-executable (modes honored, not blanket +x).
-  zip.addFile('runtime/lib/modules', Buffer.from('not-executable\n'), '', 0o644 << 16);
+  zip.addFile('runtime/lib/modules', Buffer.from('not-executable\n'), '', 0o644);
   const zipBytes = zip.toBuffer();
 
   const server = await startServer(zipBytes);
