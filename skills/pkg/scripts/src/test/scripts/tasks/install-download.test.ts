@@ -103,6 +103,39 @@ test('integration: installRuntime chmods runtime/bin/* to executable after extra
   }
 });
 
+test('integration: installRuntime preserves executable bit on runtime/lib/* (jspawnhelper)', async () => {
+  // End-to-end regression for the jspawnhelper EACCES bug: a file under runtime/lib/
+  // whose zip entry is marked 0755 must end up executable after install. The old
+  // extractor dropped unix modes and only re-chmod'd runtime/bin/*, leaving
+  // runtime/lib/jspawnhelper at 0666 -> OpenJ9 could not spawn any subprocess.
+  const cacheDir = makeTmpDir();
+  const pluginRoot = makeTmpDir();
+  const version = '9.9.9-jspawn';
+
+  const zip = new AdmZip();
+  zip.addFile('bin/shipsmooth', Buffer.from('#!/bin/sh\necho ok\n'), '', 0o755 << 16);
+  // Executable helper in runtime/lib/, exactly like the real jlink image's jspawnhelper.
+  zip.addFile('runtime/lib/jspawnhelper', Buffer.from('#!/bin/sh\necho fake-helper\n'), '', 0o755 << 16);
+  // A non-executable sibling in the same dir must stay non-executable (modes honored, not blanket +x).
+  zip.addFile('runtime/lib/modules', Buffer.from('not-executable\n'), '', 0o644 << 16);
+  const zipBytes = zip.toBuffer();
+
+  const server = await startServer(zipBytes);
+  try {
+    await installRuntime({ version, cacheDir, pluginRoot, forcePlatform: 'linux-x64', releaseUrlBase: server.url } as any);
+  } finally {
+    await server.close();
+  }
+
+  const libDir = path.join(cacheDir, `runtime-${version}`, 'runtime', 'lib');
+  const helper = path.join(libDir, 'jspawnhelper');
+  assert.ok(fs.existsSync(helper), 'jspawnhelper should exist');
+  assert.ok((fs.statSync(helper).mode & 0o111) !== 0, 'runtime/lib/jspawnhelper must be executable');
+
+  const modules = path.join(libDir, 'modules');
+  assert.ok((fs.statSync(modules).mode & 0o111) === 0, 'runtime/lib/modules must remain non-executable (modes honored, not blanket +x)');
+});
+
 test('integration: installRuntime throws if extracted zip is missing bin/shipsmooth', async () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
