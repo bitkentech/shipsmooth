@@ -27,9 +27,9 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Final full-parity sign-off (all 5 payloads + runtime zip)</name>
-            <commit></commit>
+            <commit>321ce70b49527c6e4ebf61abcc7f388602868171</commit>
             <created-from>plan-72-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
