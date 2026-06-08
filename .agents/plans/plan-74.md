@@ -214,6 +214,37 @@ a wrong classifier or module-path reference breaks the jlink image link.
 
 **Risk: Low** — docs + verification; no production code.
 
+### Task 9: Rename `jlinkImage_<platform>` → `image_<platform>` [Low]
+
+*Depends-on: 7*
+
+**v4 addition (user).** The jlink image build task name leaks the mechanism
+(`jlink`). Rename the cli per-platform task `jlinkImage_<platform>` →
+`image_<platform>` (keeping the existing `<base>_<hyphenated-platform>` fan-out
+convention — e.g. `:cli:image_linux-x64`). **Scope: the build task only.** Leave
+unchanged: the output dir `cli/build/jlink-image-<platform>/`, the Java path
+identifiers (`PackageRuntime.jlinkImage`, `PublishRelease.jlinkImagePath`), and the
+sibling tasks (`stageJlinkImage_*`, `packageRuntime_*`, `jlinkSmoke*`).
+
+Reference sites to update (7 active; historical `plan-*.md` left as-is):
+- `cli/build.gradle.kts` — the `tasks.register("jlinkImage_$platform")` definition.
+- `skills/pkg/build.gradle.kts` — dev wiring `tasks.named("jlinkImage_$hostTag")`
+  → `"image_$hostTag"`, plus the `jlinkImage_<host>` comment references.
+- `packaging/build.gradle.kts` — `dependsOn(":cli:jlinkImage_$target")` + comment.
+- `packaging/.../PublishRelease.java` — the four `:cli:jlinkImage_*` names in
+  `jlinkBuildCommand()` (+ the `jlinkImagePath` javadoc that names the task).
+- `packaging/.../PublishReleaseTest.java` — the four name assertions.
+- `DEVELOPMENT.md` — `:cli:jlinkImage_<host>` and `jlinkImage_windows-x64` refs.
+- comments in `core/build.gradle.kts`, `claude/build.gradle.kts`.
+
+Verify: `./gradlew :cli:image_linux-x64` builds the image; `:packaging:test` green;
+`:claude:devInstall` still auto-builds the host image; no `jlinkImage_` task-name
+refs remain (`grep -rn 'jlinkImage_' --include=*.kts --include=*.java --include=*.md`
+returns only historical `plan-*.md`).
+
+**Risk: Low** — pure rename of validated tasks; covered by `:packaging:test` +
+re-running the devInstall verification.
+
 ---
 
 ## Coverage & verification (no automated tests)
