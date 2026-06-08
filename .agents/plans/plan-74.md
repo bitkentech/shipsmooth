@@ -63,6 +63,26 @@ Core Invariant #3.)
 
 ---
 
+## v5 naming refinements (user, during execution)
+
+Three task names were refined after the tasks shipped (the dependency wiring and
+behaviour are unchanged — these are pure renames, each verified by re-running the
+affected build):
+
+1. **`:cli:jlinkImage_<platform>` → `:cli:image_<platform>`** (Task 9): drop the
+   `jlink` mechanism leak from the per-platform image build task. Output dir
+   (`cli/build/jlink-image-<platform>`), Java path identifiers, and `jlinkSmoke*`
+   are intentionally unchanged.
+2. **`stageJlinkImage_<platform>` → `stageImage_<platform>`** (packaging, folded
+   into Task 9): mirror the `image_<platform>` name on its staging sibling.
+3. **`:claude:devInstall` → `:claude:devBuild`** (Task 6): "install" implied
+   copying the payload elsewhere; the task only assembles into repo-root `build/`,
+   so "build" is accurate.
+
+The original task headings/bodies below predate these renames and use the old
+names; this note is the reconciliation. The `windows-x64` vs `win32-x64` platform-key
+split (cli jmods key vs Node/release tag) was reviewed and left as-is.
+
 ## Tasks
 
 ### Task 1: Un-gate core jlink shading (remove `-PjlinkBuild` guard in core) [High]
@@ -153,13 +173,13 @@ Verify `./gradlew :skills:pkg:renderClaudeDev` resolves and that requesting it p
 the crux that makes the whole fix work, and cross-project `tasks.named` ordering can be
 fragile.
 
-### Task 6: Simplify `:claude:devInstall`; drop release `-PjlinkBuild` [Low]
+### Task 6: Simplify `:claude:devBuild` (née `devInstall`); drop release `-PjlinkBuild` [Low]
 
 *Depends-on: 5*
 
-- `claude/build.gradle.kts`: keep `devInstall` assembling claude-dev into repo-root
-  `build/`; the jlink image now arrives via the render dependency (no manual `dependsOn`,
-  no flag).
+- `claude/build.gradle.kts`: keep `devBuild` (renamed from `devInstall` in v5)
+  assembling claude-dev into repo-root `build/`; the jlink image now arrives via the
+  render dependency (no manual `dependsOn`, no flag).
 - `packaging/.../PublishRelease.java`: remove `-PjlinkBuild` from `jlinkBuildCommand()`
   (the four `:cli:jlinkImage_*` task names stay). Confirm the release path is otherwise
   unchanged.
