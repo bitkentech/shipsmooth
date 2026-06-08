@@ -143,15 +143,19 @@
         <task>
             <id>8</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Classify the shaded core jar (fix overlapping-output collision)</name>
-            <commit></commit>
+            <commit>c05ed36d1242dfacfe8e30c473d09cfd0c00633d</commit>
             <created-from>plan-74-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
                     <timestamp>2026-06-09T00:16:18.659+05:30</timestamp>
                     <message>De-risk: classifier 'jlink' -&gt; core-jlink.jar; cli points at it. Previously-failing mixed-graph command now passes; separate jars coexist; image runs; normal build clean.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-09T00:32:20.207+05:30</timestamp>
+                    <message>Harden: no code changes (de-risk followed patterns; comments explain the why). Complete at c05ed36d1242dfacfe8e30c473d09cfd0c00633d.</message>
                 </comment>
             </comments>
             <deviations/>
