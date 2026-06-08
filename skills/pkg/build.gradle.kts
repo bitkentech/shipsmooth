@@ -159,6 +159,9 @@ val claudeDevSpec = RenderSpec(
     outputDir = renderOutputDir("claude-dev"),
     experimentalEnabled = true,
     pluginHookCommand = "node \"\${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"",
+    // ObjectFactory for RenderSpec's independent constant providers. The .copy()
+    // chain below (gemini-dev, prod, windows) inherits this same instance.
+    objects = objects,
 )
 
 val geminiDevSpec = claudeDevSpec.copy(
