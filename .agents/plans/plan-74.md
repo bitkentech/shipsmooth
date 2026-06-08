@@ -98,13 +98,25 @@ config-time performance for all builds.
 
 *Depends-on:*
 
-Add `buildSrc/src/main/kotlin/HostPlatform.kt`: `HostPlatform.tag()` mapping
-`os.name`/`os.arch` → `linux-x64` / `darwin-x64` / `darwin-arm64` / `win32-x64`, matching
-`detectPlatform()` in `skills/pkg/scripts/tasks/session-start.ts` (note JVM spellings:
-`amd64`/`x86_64`→`x64`, `aarch64`/`arm64`→`arm64`). Unit-test the mapping for the four
-supported tags + an unsupported-OS/arch error path.
+Add `buildSrc/src/main/kotlin/HostPlatform.kt`: `HostPlatform.tag()` reading
+`os.name`/`os.arch` via `System.getProperty` and mapping to
+`linux-x64` / `darwin-x64` / `darwin-arm64` / `win32-x64`, matching `detectPlatform()`
+in `skills/pkg/scripts/tasks/session-start.ts` (note JVM spellings:
+`amd64`/`x86_64`→`x64`, `aarch64`/`arm64`→`arm64`); unsupported OS/arch must `error()`
+loudly. Single public `tag()` (no pure-params split). **No unit test** (user decision —
+JVM-prop mapping; correctness is guaranteed by the Task 5 dependency-edge integration
+test, not line coverage). Verify by compiling and confirming `tag()` returns this host's
+tag.
 
-**Risk: Low** — pure self-contained function with a unit test; no build-graph impact.
+Rationale for JVM props over Gradle's `BuildPlatform`: the public
+`org.gradle.platform.BuildPlatform` API cannot detect the build host —
+`BuildPlatformFactory.of(arch, os)` only *wraps* an os/arch you already determined; the
+actual host detector (`CurrentBuildPlatform`) is an `.internal.` class. So
+`System.getProperty` is the substantive step either path requires, not a shortcut around
+a cleaner API.
+
+**Risk: Low** — self-contained function; no build-graph impact. (Value only becomes
+load-bearing once wired with a real task-dependency edge in Task 5.)
 
 ### Task 4: Lazy `RenderSpec.jlinkDir` across all variants [Medium]
 
@@ -186,3 +198,11 @@ test.
    directory exists and contains `bin/shipsmooth`.
 
 (Keep to ≤2 integration tests per the workflow; both must fail before any task code.)
+
+## Coverage
+
+This plan is almost entirely Gradle build-script + buildSrc wiring, which is not
+line-coverable the same way as application code. Per the migration-parity convention,
+correctness is guaranteed by the two integration tests above (the behavioral contract),
+not a line-coverage gate. `HostPlatform.tag()` is intentionally untested (user decision).
+No 95% net-new gate applies here.
