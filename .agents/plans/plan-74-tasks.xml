@@ -138,7 +138,19 @@
                     <message>Verification exposed a pre-existing plan-71 shaded-jar collision: core shadowJar/reinjectModuleInfo overwrite core/build/libs/core.jar (empty archiveClassifier), the same path cli:compileJava reads via the project core dependency. Un-gating jlink surfaces Gradle uses-this-output-without-dependency validation when reinject and a plain-core.jar consumer share one graph. Order-dependent. Normal build and devInstall work; Task 7 verify command fails reliably. Fix needs a design change: classifier on the shaded jar plus cli module-path substitution.</message>
                 </deviation>
             </deviations>
-            <depends-on>6</depends-on>
+            <depends-on>6,8</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Classify the shaded core jar (fix overlapping-output collision)</name>
+            <commit></commit>
+            <created-from>plan-74-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
         </task>
     </tasks>
     <project-updates>
@@ -151,6 +163,11 @@
             <timestamp>2026-06-08T23:49:46.861+05:30</timestamp>
             <message>Blocked at Task 7 verification: pre-existing shaded-core.jar overlapping-output collision (plan-71 empty archiveClassifier) surfaces an order-dependent Gradle validation failure once jlink is un-gated. Needs a plan decision on the shaded-jar location fix.</message>
             <blocked>true</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-09T00:12:20.045+05:30</timestamp>
+            <message>Unblocked: v3 adds Task 8 (classify shaded core jar -&gt; core-jlink.jar) to fix the overlapping-output collision. Fix prototype-validated. Resuming: Task 8 then Task 7 (docs+verify).</message>
+            <blocked>false</blocked>
         </update>
     </project-updates>
 </plan-tasks>
