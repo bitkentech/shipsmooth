@@ -265,6 +265,35 @@ returns only historical `plan-*.md`).
 **Risk: Low** — pure rename of validated tasks; covered by `:packaging:test` +
 re-running the devInstall verification.
 
+### Task 10: Decouple `RenderSpec` constants from `jlinkDir` (code-review #1) [Low]
+
+*Depends-on: 5*
+
+**v6 addition (`/code-review high` finding).** `RenderSpec.constant()` derived every
+constant `-D` property from `jlinkDir.map { value }`. For the dev variant, whose
+`jlinkDir` is the cli `image_<host>` task output, this coupled logically-independent
+constants (e.g. `build.platform`) to the 87 MB jlink image build — a constant could
+not resolve without building the runtime. (The shortcut was taken because the
+buildSrc `RenderSpec` value object had no Gradle service handle.)
+
+Fix: inject an `ObjectFactory` into `RenderSpec`; `constant(value)` now returns
+`objects.property(String::class.java).convention(value)` — a genuinely independent
+provider. Only `shipsmooth.jlink.dir` keeps the image task dependency. The single
+`claudeDevSpec` construction site passes `objects = objects`; the `.copy()` chain
+inherits it. This also makes the systemProperties() javadoc (which already claimed
+the constants were independently wrapped) accurate (code-review #3 resolves with it).
+
+Verify: `:buildSrc:build` compiles; all 5 render variants build green; dev
+`session-start-config.json.jlinkDir` still = `cli/build/jlink-image-<host>` and
+`renderClaudeDev` still pulls `:cli:image_<host>` (the real jlinkDir wiring is
+unchanged); `./gradlew build` green and clean.
+
+**Risk: Low** — buildSrc value-object refactor; load-bearing jlinkDir wiring
+unchanged, verified by the dev render still producing the correct path + edge.
+
+(Code-review findings #2 — `outputs.files.singleFile` brittleness — left as a noted
+minor; the image task declares a single output dir, so it is safe today.)
+
 ---
 
 ## Coverage & verification (no automated tests)
