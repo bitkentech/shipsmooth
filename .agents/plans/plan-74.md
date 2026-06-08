@@ -164,10 +164,10 @@ fragile.
   (the four `:cli:jlinkImage_*` task names stay). Confirm the release path is otherwise
   unchanged.
 
-**Risk: Low** — mechanical removal once the gates are gone; covered by the Task 8
+**Risk: Low** — mechanical removal once the gates are gone; covered by the Task 7
 end-to-end verification (release `jlinkBuildCommand()` still lists all four platforms).
 
-### Task 7: Classify the shaded core jar (fix overlapping-output collision) [Medium]
+### Task 8: Classify the shaded core jar (fix overlapping-output collision) [Medium]
 
 *Depends-on: 2*
 
@@ -193,9 +193,12 @@ both `core.jar` and `core-jlink.jar` exist as separate files; the image launcher
 **Risk: Medium** — touches the core/cli shading substitution shipped in Tasks 1–2;
 a wrong classifier or module-path reference breaks the jlink image link.
 
-### Task 8: Docs + final verification [Low]
+(Numbered Task 8 because it was appended in v3; the dependency edge — not the number
+— orders it. The Task 7 verification depends on this fix and so runs after it.)
 
-*Depends-on: 7*
+### Task 7: Docs + final verification [Low]
+
+*Depends-on: 8*
 
 - `DEVELOPMENT.md`: drop `-PjlinkBuild` from the documented `jlinkImage_windows-x64`
   invocation and the release notes; add a one-line `:claude:devInstall` dev-loop entry.
