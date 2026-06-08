@@ -164,13 +164,19 @@
         <task>
             <id>9</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Rename jlinkImage_&lt;platform&gt; -&gt; image_&lt;platform&gt;</name>
-            <commit></commit>
+            <commit>1de90354342c078ac5b22afdfe064581bf68fe6b</commit>
             <created-from>plan-74-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-09T00:46:06.987+05:30</timestamp>
+                    <message>DEVELOPMENT.md task-name refs renamed but committed with Task 7 (the file's Task 9 rename lines and Task 7 held doc content overlap; kept together to avoid splitting one file across two commits).</message>
+                </deviation>
+            </deviations>
             <depends-on>7</depends-on>
         </task>
     </tasks>
