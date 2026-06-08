@@ -58,9 +58,9 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`HostPlatform.tag()` buildSrc helper</name>
-            <commit></commit>
+            <commit>78d1a34affac1ccb38d3edd52c469b093883cd51</commit>
             <created-from>plan-74-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
