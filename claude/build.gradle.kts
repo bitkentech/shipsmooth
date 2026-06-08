@@ -120,7 +120,7 @@ registerPayloadAssembly(
 )
 
 // ---------------------------------------------------------------------------
-// devInstall: local dev-loop convenience. assembleClaudeDev's producers resolve
+// devBuild: local dev-loop convenience. assembleClaudeDev's producers resolve
 // their output dir from the project-wide `build.outputDir` property at configuration
 // time (renderOutputDir in skills:pkg), so a no-arg `assembleClaudeDev` would
 // co-deposit only the manifests into build/ and render the skills into
@@ -133,10 +133,10 @@ registerPayloadAssembly(
 // The host jlink image is built automatically: assembleClaudeDev -> renderClaudeDev,
 // whose dev jlinkDir provider is the :cli:image_<host> task output (plan-74
 // Task 5). No manual dependsOn and no -PjlinkBuild flag — the dependency edge does it.
-// Run: ./gradlew :claude:devInstall  (then point Claude / shipsmooth-dev at build/).
-val devInstall by tasks.registering(GradleBuild::class) {
+// Run: ./gradlew :claude:devBuild  (then point Claude / shipsmooth-dev at build/).
+val devBuild by tasks.registering(GradleBuild::class) {
     group = "assemble"
-    description = "Assemble the full claude-dev payload into repo-root build/ for local install/test."
+    description = "Assemble the full claude-dev payload into repo-root build/ for local dev/test."
     dir = rootProject.projectDir
     tasks = listOf(":claude:assembleClaudeDev")
     startParameter.projectProperties = startParameter.projectProperties +
