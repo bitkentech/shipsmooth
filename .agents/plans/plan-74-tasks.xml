@@ -37,12 +37,21 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Un-gate cli jlink tasks + lazy command line</name>
-            <commit></commit>
+            <commit>cb6f8a0e30808c65122691360fcbea37eacaa992</commit>
             <created-from>plan-74-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-08T21:00:44.122+05:30</timestamp>
+                    <message>De-risk draft ready (cb6f8a0): cli un-gated, jlinkImage_* use lazy argumentProviders. Verified build graph clean of jlink; linux-x64 image builds via cross-project edge to core shaded jar and the launcher runs.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-08T21:02:26.970+05:30</timestamp>
+                    <message>Harden: no code changes needed. Verified full './gradlew build' (real, all modules) is green with both core+cli un-gated — no jlink/shadow executed. Complete at de-risk commit.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
