@@ -101,7 +101,7 @@ fun Task.verifyJlinkImageStaged() = doFirst {
 // class is left untouched for parity (its constructor already takes the path;
 // only main() is path-bound).
 semeruByTarget.forEach { (target, jdkHome) ->
-    val stageImage = tasks.register<Copy>("stageJlinkImage_$target") {
+    val stageImage = tasks.register<Copy>("stageImage_$target") {
         group = "release"
         description = "Stage the Gradle jlink image for $target into the Maven-expected path."
         dependsOn(":cli:image_$target")
