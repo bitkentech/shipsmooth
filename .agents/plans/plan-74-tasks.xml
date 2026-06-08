@@ -131,7 +131,13 @@
             <created-from>plan-74-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-08T23:49:21.318+05:30</timestamp>
+                    <message>Verification exposed a pre-existing plan-71 shaded-jar collision: core shadowJar/reinjectModuleInfo overwrite core/build/libs/core.jar (empty archiveClassifier), the same path cli:compileJava reads via the project core dependency. Un-gating jlink surfaces Gradle uses-this-output-without-dependency validation when reinject and a plain-core.jar consumer share one graph. Order-dependent. Normal build and devInstall work; Task 7 verify command fails reliably. Fix needs a design change: classifier on the shaded jar plus cli module-path substitution.</message>
+                </deviation>
+            </deviations>
             <depends-on>6</depends-on>
         </task>
     </tasks>
@@ -140,6 +146,11 @@
             <timestamp>2026-06-08T13:04:17.245+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-08T23:49:46.861+05:30</timestamp>
+            <message>Blocked at Task 7 verification: pre-existing shaded-core.jar overlapping-output collision (plan-71 empty archiveClassifier) surfaces an order-dependent Gradle validation failure once jlink is un-gated. Needs a plan decision on the shaded-jar location fix.</message>
+            <blocked>true</blocked>
         </update>
     </project-updates>
 </plan-tasks>
