@@ -103,10 +103,10 @@ Add `buildSrc/src/main/kotlin/HostPlatform.kt`: `HostPlatform.tag()` reading
 `linux-x64` / `darwin-x64` / `darwin-arm64` / `win32-x64`, matching `detectPlatform()`
 in `skills/pkg/scripts/tasks/session-start.ts` (note JVM spellings:
 `amd64`/`x86_64`→`x64`, `aarch64`/`arm64`→`arm64`); unsupported OS/arch must `error()`
-loudly. Single public `tag()` (no pure-params split). **No unit test** (user decision —
-JVM-prop mapping; correctness is guaranteed by the Task 5 dependency-edge integration
-test, not line coverage). Verify by compiling and confirming `tag()` returns this host's
-tag.
+loudly. Single public `tag()` (no pure-params split). **No unit test** (v2: no tests in
+this plan; JVM-prop mapping correctness is established by the Task 5 dependency-edge
+verification — `--dry-run` shows the wired `:cli:jlinkImage_<host>` — not line coverage).
+Verify by compiling and confirming `tag()` returns this host's tag.
 
 Rationale for JVM props over Gradle's `BuildPlatform`: the public
 `org.gradle.platform.BuildPlatform` API cannot detect the build host —
@@ -164,8 +164,8 @@ fragile.
   (the four `:cli:jlinkImage_*` task names stay). Confirm the release path is otherwise
   unchanged.
 
-**Risk: Low** — mechanical removal once the gates are gone; covered by the integration
-test.
+**Risk: Low** — mechanical removal once the gates are gone; covered by the Task 7
+end-to-end verification (release `jlinkBuildCommand()` still lists all four platforms).
 
 ### Task 7: Docs + final verification [Low]
 
@@ -186,23 +186,22 @@ test.
 
 ---
 
-## Integration tests (Phase 2 preamble)
+## Coverage & verification (no automated tests)
 
-1. **Gradle dependency-edge test:** assert that requesting `:skills:pkg:renderClaudeDev`
-   (or `:claude:assembleClaudeDev`) includes `:cli:jlinkImage_<host>` in the task graph
-   (`./gradlew :claude:assembleClaudeDev --dry-run` contains the jlink task), AND that
-   `./gradlew build --dry-run` does NOT. This is the behavioral contract for the whole
-   plan (auto-build-on-devInstall + no-jlink-on-normal-build).
-2. **Rendered-config test:** after `:claude:devInstall`, `session-start-config.json`'s
-   `jlinkDir` equals the host `cli/build/jlink-image-<HostPlatform.tag()>` path and that
-   directory exists and contains `bin/shipsmooth`.
+**v2 decision (user):** this plan is entirely Gradle build-script + buildSrc wiring, so
+**no automated tests are written** — neither the integration-test preamble nor unit tests.
+There is no line-coverage gate. Correctness is established by the **manual verification
+steps embedded in each task** and the Task 7 end-to-end check, which together cover the
+behavioral contract that the test preamble would have asserted:
 
-(Keep to ≤2 integration tests per the workflow; both must fail before any task code.)
+- **Auto-build-on-devInstall:** requesting `:claude:assembleClaudeDev` (or
+  `:skills:pkg:renderClaudeDev`) pulls `:cli:jlinkImage_<host>` into the task graph
+  (`--dry-run`), and after `:claude:devInstall` the rendered
+  `session-start-config.json.jlinkDir` = `cli/build/jlink-image-<HostPlatform.tag()>`,
+  which exists and contains `bin/shipsmooth`.
+- **No-jlink-on-normal-build:** `./gradlew build --dry-run` lists no jlink/shadow tasks.
 
-## Coverage
-
-This plan is almost entirely Gradle build-script + buildSrc wiring, which is not
-line-coverable the same way as application code. Per the migration-parity convention,
-correctness is guaranteed by the two integration tests above (the behavioral contract),
-not a line-coverage gate. `HostPlatform.tag()` is intentionally untested (user decision).
-No 95% net-new gate applies here.
+Each task below carries its own `Verify …` line; those are the acceptance checks for this
+plan in lieu of tests. The per-task De-risk/Harden cycle still applies for the High/Medium
+tasks (draft → approval → harden), but "green tests" is replaced by "verification command
+passes".
