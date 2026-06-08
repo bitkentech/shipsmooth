@@ -42,13 +42,15 @@ val platformJmods = mapOf(
     "windows-x64" to "/opt/installers/jdk-semeru-win-x64/jdk-25.0.2+10/jmods",
 )
 
-// The shaded core jar (core:reinjectModuleInfo) must replace the plain core jar on
-// the module path, exactly as the Maven jlink profile pins ${core.jar} to the
-// shaded jar. Referenced by path + string task dependency to avoid cross-project
-// typed task access (the Shadow type isn't on cli's build classpath).
+// The shaded core jar (core:reinjectModuleInfo, classifier "jlink" => core-jlink.jar)
+// replaces the plain core jar on the module path, exactly as the Maven jlink profile
+// pins ${core.jar} to the shaded jar. It is a SEPARATE file from the plain core.jar
+// (which :cli:compileJava reads) — that separation is what avoids the overlapping-
+// output collision (plan-74 Task 8). Referenced by path + string task dependency to
+// avoid cross-project typed task access (the Shadow type isn't on cli's build classpath).
 val coreProject = project(":core")
 val shadedCoreJarTask = "${coreProject.path}:reinjectModuleInfo"
-val shadedCoreJarFile = coreProject.layout.buildDirectory.file("libs/core.jar")
+val shadedCoreJarFile = coreProject.layout.buildDirectory.file("libs/core-jlink.jar")
 
 // Runtime module path: cli jar + shaded core jar + the cli runtime-classpath
 // dependency jars (picocli, jaxb, jackson, jakarta.* — the same set Maven

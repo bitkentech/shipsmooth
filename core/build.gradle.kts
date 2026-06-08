@@ -75,9 +75,14 @@ val semeruHome = (findProperty("jlink.exec.home") as String?)
 val classesDir = layout.buildDirectory.dir("classes/java/main")
 
 tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
-    // Replace the plain core jar (no classifier) so the jlink module path
-    // picks up the shaded jar in its place, exactly as Maven does.
-    archiveClassifier.set("")
+    // Emit the shaded jar under a DISTINCT name (core-jlink.jar) rather than
+    // overwriting the plain core.jar. Overwriting collided with :cli:compileJava,
+    // which reads the plain core.jar via the project(":core") dependency: once jlink
+    // was un-gated, Gradle flagged the shared output as an undeclared cross-task
+    // dependency ("uses this output … without declaring a dependency"). cli's
+    // runtimeModulePath() substitutes this classified jar onto the jlink module path
+    // in place of the plain one (plan-74 Task 8).
+    archiveClassifier.set("jlink")
     // Shade ONLY dagger + javax.inject; everything else stays a module dep.
     dependencies {
         include(dependency("com.google.dagger:dagger:.*"))
