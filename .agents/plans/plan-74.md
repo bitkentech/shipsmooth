@@ -164,12 +164,38 @@ fragile.
   (the four `:cli:jlinkImage_*` task names stay). Confirm the release path is otherwise
   unchanged.
 
-**Risk: Low** — mechanical removal once the gates are gone; covered by the Task 7
+**Risk: Low** — mechanical removal once the gates are gone; covered by the Task 8
 end-to-end verification (release `jlinkBuildCommand()` still lists all four platforms).
 
-### Task 7: Docs + final verification [Low]
+### Task 7: Classify the shaded core jar (fix overlapping-output collision) [Medium]
 
-*Depends-on: 6*
+*Depends-on: 2*
+
+**v3 addition.** Un-gating jlink (Tasks 1–2) exposed a pre-existing plan-71 defect:
+`core/build.gradle.kts` shades with `archiveClassifier.set("")`, so
+`:core:shadowJar` / `:core:reinjectModuleInfo` **overwrite the canonical
+`core/build/libs/core.jar`** — the same path `:cli:compileJava` reads via
+`implementation(project(":core"))`. When `reinject` and a plain-`core.jar` consumer
+land in one task graph, Gradle aborts with *"uses this output of task … without
+declaring a dependency"*. It is order-dependent: `./gradlew build` and
+`:claude:devInstall` (nested build) are fine, but `:core:reinjectModuleInfo
+:cli:jlinkImage_linux-x64` fails reliably, and `PublishRelease.jlinkBuildCommand()`
+runs the four images as one isolated invocation that also compiles cli — a latent
+**release-path race**.
+
+Fix (prototype-validated): give the shaded jar a distinct classifier
+(`archiveClassifier.set("jlink")` → `core-jlink.jar`) so it no longer overwrites the
+plain `core.jar`, and point cli's `shadedCoreJarFile` at `libs/core-jlink.jar`
+(`runtimeModulePath()` already drops the plain `core*` jar and substitutes this one).
+Verify: `./gradlew clean :core:reinjectModuleInfo :cli:jlinkImage_linux-x64` succeeds;
+both `core.jar` and `core-jlink.jar` exist as separate files; the image launcher runs.
+
+**Risk: Medium** — touches the core/cli shading substitution shipped in Tasks 1–2;
+a wrong classifier or module-path reference breaks the jlink image link.
+
+### Task 8: Docs + final verification [Low]
+
+*Depends-on: 7*
 
 - `DEVELOPMENT.md`: drop `-PjlinkBuild` from the documented `jlinkImage_windows-x64`
   invocation and the release notes; add a one-line `:claude:devInstall` dev-loop entry.
@@ -180,7 +206,8 @@ end-to-end verification (release `jlinkBuildCommand()` still lists all four plat
     complete (`.claude-plugin/`, `dist/`, `hooks/`, `skills/`),
     `session-start-config.json.jlinkDir` = `cli/build/jlink-image-<host>`.
   - `./gradlew build` → green, and NO jlink/shadow tasks executed (check task list).
-  - `./gradlew :core:reinjectModuleInfo :cli:jlinkImage_linux-x64` → both succeed.
+  - `./gradlew :core:reinjectModuleInfo :cli:jlinkImage_linux-x64` → both succeed
+    (the Task 7 collision fix is the precondition for this passing).
 
 **Risk: Low** — docs + verification; no production code.
 
