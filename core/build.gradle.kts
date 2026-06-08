@@ -58,49 +58,56 @@ sourceSets.main {
 }
 
 // ---------------------------------------------------------------------------
-// jlink build only (-PjlinkBuild): shade dagger + javax.inject into the core jar
-// and re-inject module-info.class (Shadow, like Maven shade, strips it).
-// Mirrors the Maven core jlink profile exactly: include com.google.dagger:dagger
-// + javax.inject:javax.inject, drop signature files, then $SEMERU/bin/jar --update.
+// jlink shading: shade dagger + javax.inject into the core jar and re-inject
+// module-info.class (Shadow, like Maven shade, strips it). Mirrors the Maven core
+// jlink profile exactly: include com.google.dagger:dagger + javax.inject:javax.inject,
+// drop signature files, then $SEMERU/bin/jar --update.
+//
+// Registered UNCONDITIONALLY (no -PjlinkBuild gate). Lazy configuration means this
+// is zero-cost unless something pulls reinjectModuleInfo into the graph (cli's
+// jlinkImage_* tasks). It is deliberately NOT wired into `assemble`/`build`, so a
+// normal `./gradlew build` neither shades nor runs the Semeru jar tool — the only
+// consumer is the cli jlink build, which dependsOn this task directly.
 // ---------------------------------------------------------------------------
-if (project.hasProperty("jlinkBuild")) {
-    val semeruHome = (findProperty("jlink.exec.home") as String?)
-        ?: "/opt/installers/jdk-semeru/jdk-25.0.2+10"
+val semeruHome = (findProperty("jlink.exec.home") as String?)
+    ?: "/opt/installers/jdk-semeru/jdk-25.0.2+10"
 
-    val classesDir = layout.buildDirectory.dir("classes/java/main")
+val classesDir = layout.buildDirectory.dir("classes/java/main")
 
-    tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
-        // Replace the plain core jar (no classifier) so the jlink module path
-        // picks up the shaded jar in its place, exactly as Maven does.
-        archiveClassifier.set("")
-        // Shade ONLY dagger + javax.inject; everything else stays a module dep.
-        dependencies {
-            include(dependency("com.google.dagger:dagger:.*"))
-            include(dependency("javax.inject:javax.inject:.*"))
-        }
-        // Drop signature files (Maven shade filter *.SF/*.DSA/*.RSA).
-        exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
+tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    // Replace the plain core jar (no classifier) so the jlink module path
+    // picks up the shaded jar in its place, exactly as Maven does.
+    archiveClassifier.set("")
+    // Shade ONLY dagger + javax.inject; everything else stays a module dep.
+    dependencies {
+        include(dependency("com.google.dagger:dagger:.*"))
+        include(dependency("javax.inject:javax.inject:.*"))
     }
+    // Drop signature files (Maven shade filter *.SF/*.DSA/*.RSA).
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
+}
 
-    // Shadow strips module-info.class; restore it from the compiled classes with
-    // the Semeru jar so core stays a named JPMS module on the jlink module path.
-    // The shaded jar is declared as this task's OUTPUT (the task updates it in
-    // place): when shadowJar reruns and replaces the jar, Gradle sees the output
-    // changed out from under it and re-runs the re-injection — no stale stamp.
-    val reinjectModuleInfo by tasks.registering(Exec::class) {
-        dependsOn("shadowJar")
-        val shadedJar = tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar")
-            .flatMap { it.archiveFile }
-        inputs.file(classesDir.map { it.file("module-info.class") })
-        outputs.file(shadedJar)
-        workingDir(classesDir)
-        commandLine(
-            "$semeruHome/bin/jar",
+// Shadow strips module-info.class; restore it from the compiled classes with
+// the Semeru jar so core stays a named JPMS module on the jlink module path.
+// The shaded jar is declared as this task's OUTPUT (the task updates it in
+// place): when shadowJar reruns and replaces the jar, Gradle sees the output
+// changed out from under it and re-runs the re-injection — no stale stamp.
+val reinjectModuleInfo by tasks.registering(Exec::class) {
+    dependsOn("shadowJar")
+    val shadedJar = tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar")
+        .flatMap { it.archiveFile }
+    inputs.file(classesDir.map { it.file("module-info.class") })
+    outputs.file(shadedJar)
+    workingDir(classesDir)
+    // Lazy command line — argumentProviders defers the shadedJar path resolution
+    // to execution time, so merely registering this task resolves no jar at config
+    // time (the eager `shadedJar.get()` would have run on every `./gradlew build`).
+    executable = "$semeruHome/bin/jar"
+    argumentProviders.add {
+        listOf(
             "--update",
             "--file=${shadedJar.get().asFile.absolutePath}",
             "module-info.class",
         )
     }
-
-    tasks.named("assemble") { dependsOn(reinjectModuleInfo) }
 }
