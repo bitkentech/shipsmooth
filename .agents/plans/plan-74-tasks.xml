@@ -119,6 +119,11 @@
                     <timestamp>2026-06-08T21:50:58.253+05:30</timestamp>
                     <message>devInstall did not pre-exist on the branch (it was only in stash@{0}); Task 6 added it fresh rather than 'simplifying' an existing task. End state matches the plan: edge-driven, no flag/dependsOn.</message>
                 </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-09T00:59:47.967+05:30</timestamp>
+                    <message>Renamed devInstall -&gt; devBuild (user): 'install' implied copying elsewhere; the task only assembles into repo-root build/. Verified cold devBuild still auto-builds host image + full payload.</message>
+                </deviation>
             </deviations>
             <depends-on>5</depends-on>
         </task>
@@ -175,6 +180,11 @@
                     <type>minor</type>
                     <timestamp>2026-06-09T00:46:06.987+05:30</timestamp>
                     <message>DEVELOPMENT.md task-name refs renamed but committed with Task 7 (the file's Task 9 rename lines and Task 7 held doc content overlap; kept together to avoid splitting one file across two commits).</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-09T00:56:24.677+05:30</timestamp>
+                    <message>Scope extended (user): also renamed stageJlinkImage_&lt;platform&gt; -&gt; stageImage_&lt;platform&gt; in packaging to mirror image_&lt;platform&gt;. jlinkSmoke* and win32-x64 key intentionally left unchanged.</message>
                 </deviation>
             </deviations>
             <depends-on>7</depends-on>
