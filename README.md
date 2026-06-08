@@ -7,7 +7,7 @@ The below demo shows one workflow: **Plan ➔ Generate tasks ➔ Execute ➔ Som
 
 ## Features (aspirations?) of the workflow
 
-The workflow borrows ideas from the [Spiral Model](https://en.wikipedia.org/wiki/Spiral_model) and [Agile](https://en.wikipedia.org/wiki/Agile_software_development) principles. You first de-risk any feature work by tackling the unknown parts - sometimes that's the end-user experience, at other times it could be technical components. Only after the approach has been validated by implementing the risky parts, you pick up the low risk tasks and focus on code quality, test coverage.
+The [workflow spec](https://github.com/bitkentech/shipsmooth/blob/releases/dist/skills/start/SKILL.md) borrows ideas from the [Spiral Model](https://en.wikipedia.org/wiki/Spiral_model) and [Agile](https://en.wikipedia.org/wiki/Agile_software_development) principles. You first de-risk any feature work by tackling the unknown parts - sometimes that's the end-user experience, at other times it could be technical components. Only after the approach has been validated by implementing the risky parts, you pick up the low risk tasks and focus on code quality, test coverage.
 
 - **Plan-driven execution.** Every feature has a plan file checked into version control ([an example plan file](.agents/plans/plan-17.md)), and the agent executes against this plan. The plan is broken down into tasks ([an example tasks file](.agents/plans/plan-17-tasks.xml)). You can pause the execution any time, modify the plan and resume.
 - **Risk-first ordering and vertical slices.** Planned tasks are ranked as High, Medium, or Low risk. High-risk tasks are tackled first so that you can validate important assumptions and fail fast. As far as possible, the tasks will represent vertical slices of functionality. Git commits are created as progress is made.
@@ -50,7 +50,7 @@ Load the skill as `/shipsmooth:start`. Start discussing the feature with Claude.
 3. **Execute** - Work through tasks in order. High-risk tasks go through a de-risk/harden cycle (prove the approach first, then polish). Low-risk tasks are single-pass.
 4. **Close out** - Tag the plan complete, archive the task state, and squash merge to main.
 
-The full workflow specification lives in [SKILL.md](plugin-skill/src/main/jte-src/skills/SKILL.jte.md).
+You can read the full workflow [SKILL.md](https://github.com/bitkentech/shipsmooth/blob/releases/dist/skills/start/SKILL.md).
 
 ## Uninstall
 
