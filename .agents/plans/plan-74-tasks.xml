@@ -29,6 +29,7 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
+            <depends-on>1</depends-on>
         </task>
         <task>
             <id>3</id>
@@ -51,6 +52,7 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
+            <depends-on>3</depends-on>
         </task>
         <task>
             <id>5</id>
@@ -62,6 +64,7 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
+            <depends-on>2,4</depends-on>
         </task>
         <task>
             <id>6</id>
@@ -73,6 +76,7 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
+            <depends-on>5</depends-on>
         </task>
         <task>
             <id>7</id>
@@ -84,11 +88,12 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
+            <depends-on>6</depends-on>
         </task>
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-06-08T12:52:53.295+05:30</timestamp>
+            <timestamp>2026-06-08T12:56:29.997+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>

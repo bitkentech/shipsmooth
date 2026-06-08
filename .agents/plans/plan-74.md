@@ -81,7 +81,7 @@ depends on; an eager-resolution regression would slow/break every build.
 
 ### Task 2: Un-gate cli jlink tasks + lazy command line [High]
 
-*Depends-on:* 1
+*Depends-on: 1*
 
 Remove the `-PjlinkBuild` guard in `cli/build.gradle.kts`; register `jlinkImage_*`,
 `writeSccLauncher`, `jlinkSmoke*` unconditionally. Move `runtimeModulePath()` resolution
@@ -108,7 +108,7 @@ supported tags + an unsupported-OS/arch error path.
 
 ### Task 4: Lazy `RenderSpec.jlinkDir` across all variants [Medium]
 
-*Depends-on:* 3
+*Depends-on: 3*
 
 In `buildSrc/src/main/kotlin/RenderSpec.kt`: change `jlinkDir: String` →
 `jlinkDir: Provider<String>` and `systemProperties()` →
@@ -122,7 +122,7 @@ conversion breaks the build for every target.
 
 ### Task 5: Wire dev `jlinkDir` to the cli jlink task output; convert all specs [Medium]
 
-*Depends-on:* 2, 4
+*Depends-on: 2, 4*
 
 In `skills/pkg/build.gradle.kts`:
 - Dev spec `jlinkDir` = a `Provider<String>` from the cli `jlinkImage_${HostPlatform.tag()}`
@@ -143,7 +143,7 @@ fragile.
 
 ### Task 6: Simplify `:claude:devInstall`; drop release `-PjlinkBuild` [Low]
 
-*Depends-on:* 5
+*Depends-on: 5*
 
 - `claude/build.gradle.kts`: keep `devInstall` assembling claude-dev into repo-root
   `build/`; the jlink image now arrives via the render dependency (no manual `dependsOn`,
@@ -157,7 +157,7 @@ test.
 
 ### Task 7: Docs + final verification [Low]
 
-*Depends-on:* 6
+*Depends-on: 6*
 
 - `DEVELOPMENT.md`: drop `-PjlinkBuild` from the documented `jlinkImage_windows-x64`
   invocation and the release notes; add a one-line `:claude:devInstall` dev-loop entry.
