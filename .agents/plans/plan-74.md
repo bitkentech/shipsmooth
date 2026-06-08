@@ -1,0 +1,317 @@
+# Plan 74 — Dev jlink runtime wiring: lazy `jlinkDir`, host detection, drop `-PjlinkBuild`
+
+## Context
+
+`./gradlew :claude:devInstall` (a convenience wrapper added mid-session to assemble the
+full claude-dev payload into repo-root `build/`) produces a plugin whose
+`session-start-config.json` points at a **non-existent runtime image**. Investigation
+found three compounding defects:
+
+1. **Stale path (plan-71 migration miss).** The dev `jlinkDir` in
+   `skills/pkg/build.gradle.kts` is hardcoded to the Maven path
+   `cli/target/jlink-image`. Maven was removed in plan-73; the Gradle cli build emits
+   per-platform images to `cli/build/jlink-image-<platform>`. The dev `jlinkDir` was
+   therefore **never correct** post-migration — it just wasn't exercised until a dev
+   install was attempted.
+
+2. **No dependency edge.** `jlinkDir` is a config-time frozen `String` baked into the
+   `renderClaudeDev` task's inputs. `installRuntime` (`session-start.ts`) copies that dir
+   **verbatim** into the runtime cache (no platform-suffix logic). Because there is no
+   modeled producer→consumer dependency from the render to the jlink image, running
+   `:claude:devInstall` does **not** build the image — so even with the right path the
+   dir is empty and the installer silently falls through to the release-download path.
+
+3. **Hardcoded platform + the `-PjlinkBuild` smell.** The host platform was pinned in the
+   string. Worse, the jlink tasks themselves only **exist** when `-PjlinkBuild` is set
+   (`if (project.hasProperty("jlinkBuild")) { tasks.register(...) }` in BOTH
+   `cli/build.gradle.kts` and `core/build.gradle.kts`). Conditional task *registration*
+   is a Maven-profile holdover and an anti-pattern: it makes the tasks unresolvable for
+   lazy `Provider` wiring and defeats Gradle's lazy-configuration model.
+
+### Root cause
+
+`jlinkDir` should be a **lazy `Provider<String>` resolved from the producing jlink task's
+output**, not a config-time string. Modeling it as a real task output establishes the
+dependency edge that makes `devInstall` build the image automatically, makes host
+detection happen at read time, and removes the need for the `-PjlinkBuild` existence gate.
+
+### Backlog feature
+
+Parent feature (permanent): **"Maven→Gradle build migration & dev-loop tooling"** — the
+line of work delivered by plans 71/72/73. This plan completes the dev-install loop and
+removes a migration-era smell. (No external tracker; recorded here per Local mode,
+Core Invariant #3.)
+
+### Constraints / invariants discovered
+
+- **core + cli un-gate together.** cli's `jlinkImage_*` reads core's shaded
+  `reinjectModuleInfo` jar. Both `-PjlinkBuild` guards must drop together or cli jlink
+  links an unshaded core.
+- **Shadow plugin is already applied unconditionally** in core (only its *config* is
+  guarded) — un-gating the config block is safe.
+- **`PublishRelease.java` drives the release jlink** via `jlinkBuildCommand()`, which
+  passes `-PjlinkBuild` + lists all four `:cli:jlinkImage_*` tasks. Removing the flag
+  must keep this working (release builds all four platforms explicitly).
+- **`RenderSpec` is the drift-guard** (buildSrc, shared by all 5 variants). Making
+  `jlinkDir` lazy must keep one consistent shape across dev/prod/gemini/windows
+  (user: consistency over per-variant perf).
+- **Normal builds must NOT trigger jlink.** Un-gating registration must not cause
+  `./gradlew build` to resolve jars / run jlink at config time → use lazy
+  `argumentProviders {}` for the jlink command line.
+- **Windows is a cross-build target**, not host-derived: its `jlinkDir` stays pinned to
+  the `windows-x64` image regardless of build host.
+
+---
+
+## v5 naming refinements (user, during execution)
+
+Three task names were refined after the tasks shipped (the dependency wiring and
+behaviour are unchanged — these are pure renames, each verified by re-running the
+affected build):
+
+1. **`:cli:jlinkImage_<platform>` → `:cli:image_<platform>`** (Task 9): drop the
+   `jlink` mechanism leak from the per-platform image build task. Output dir
+   (`cli/build/jlink-image-<platform>`), Java path identifiers, and `jlinkSmoke*`
+   are intentionally unchanged.
+2. **`stageJlinkImage_<platform>` → `stageImage_<platform>`** (packaging, folded
+   into Task 9): mirror the `image_<platform>` name on its staging sibling.
+3. **`:claude:devInstall` → `:claude:devBuild`** (Task 6): "install" implied
+   copying the payload elsewhere; the task only assembles into repo-root `build/`,
+   so "build" is accurate.
+
+The original task headings/bodies below predate these renames and use the old
+names; this note is the reconciliation. The `windows-x64` vs `win32-x64` platform-key
+split (cli jmods key vs Node/release tag) was reviewed and left as-is.
+
+## Tasks
+
+### Task 1: Un-gate core jlink shading (remove `-PjlinkBuild` guard in core) [High]
+
+*Depends-on:*
+
+Remove the `if (project.hasProperty("jlinkBuild"))` wrapper in `core/build.gradle.kts`;
+register `shadowJar` config + `reinjectModuleInfo` unconditionally (lazy — zero cost
+unless pulled into the graph). Ensure no eager jar/classpath resolution at config time:
+the `semeruHome` property read stays defaulted; the Exec command line resolves lazily.
+Verify `./gradlew :core:build` does NOT run shadowJar/reinjectModuleInfo, and
+`./gradlew :core:reinjectModuleInfo` still produces the shaded module-info-bearing jar.
+
+**Risk: High** — touches the Shadow/module-info chain that the entire jlink runtime
+depends on; an eager-resolution regression would slow/break every build.
+
+### Task 2: Un-gate cli jlink tasks + lazy command line [High]
+
+*Depends-on: 1*
+
+Remove the `-PjlinkBuild` guard in `cli/build.gradle.kts`; register `jlinkImage_*`,
+`writeSccLauncher`, `jlinkSmoke*` unconditionally. Move `runtimeModulePath()` resolution
+out of the eager `commandLine(...)` into a lazy `argumentProviders {}` block (and
+similarly for `writeSccLauncher`'s module path) so registering the tasks resolves no
+jars/classpath at config time. Keep semeru/jre/jmods as defaulted gradle properties.
+Verify `./gradlew build` triggers NO jlink/jar resolution at config time, and
+`./gradlew :cli:jlinkImage_linux-x64` still builds the image.
+
+**Risk: High** — same eager-resolution hazard; this is the task most able to regress
+config-time performance for all builds.
+
+### Task 3: `HostPlatform.tag()` buildSrc helper [Low]
+
+*Depends-on:*
+
+Add `buildSrc/src/main/kotlin/HostPlatform.kt`: `HostPlatform.tag()` reading
+`os.name`/`os.arch` via `System.getProperty` and mapping to
+`linux-x64` / `darwin-x64` / `darwin-arm64` / `win32-x64`, matching `detectPlatform()`
+in `skills/pkg/scripts/tasks/session-start.ts` (note JVM spellings:
+`amd64`/`x86_64`→`x64`, `aarch64`/`arm64`→`arm64`); unsupported OS/arch must `error()`
+loudly. Single public `tag()` (no pure-params split). **No unit test** (v2: no tests in
+this plan; JVM-prop mapping correctness is established by the Task 5 dependency-edge
+verification — `--dry-run` shows the wired `:cli:jlinkImage_<host>` — not line coverage).
+Verify by compiling and confirming `tag()` returns this host's tag.
+
+Rationale for JVM props over Gradle's `BuildPlatform`: the public
+`org.gradle.platform.BuildPlatform` API cannot detect the build host —
+`BuildPlatformFactory.of(arch, os)` only *wraps* an os/arch you already determined; the
+actual host detector (`CurrentBuildPlatform`) is an `.internal.` class. So
+`System.getProperty` is the substantive step either path requires, not a shortcut around
+a cleaner API.
+
+**Risk: Low** — self-contained function; no build-graph impact. (Value only becomes
+load-bearing once wired with a real task-dependency edge in Task 5.)
+
+### Task 4: Lazy `RenderSpec.jlinkDir` across all variants [Medium]
+
+*Depends-on: 3*
+
+In `buildSrc/src/main/kotlin/RenderSpec.kt`: change `jlinkDir: String` →
+`jlinkDir: Provider<String>` and `systemProperties()` →
+`Map<String, Provider<String>>` (wrap all keys uniformly, one shape). Update the
+buildSrc unit/contract expectations if any. This is a shared type — it will not compile
+until Task 5 updates all construction sites, so Tasks 4 + 5 land together but are split
+for review clarity (4 = type change, 5 = wiring).
+
+**Risk: Medium** — shared type used by all 5 render variants; a missed provider
+conversion breaks the build for every target.
+
+### Task 5: Wire dev `jlinkDir` to the cli jlink task output; convert all specs [Medium]
+
+*Depends-on: 2, 4*
+
+In `skills/pkg/build.gradle.kts`:
+- Dev spec `jlinkDir` = a `Provider<String>` from the cli `jlinkImage_${HostPlatform.tag()}`
+  task's output dir (`cliProject.tasks.named(...).map { it.outputs.files.singleFile.path }`),
+  establishing the producer→consumer edge.
+- Prod (`/dev/null`), gemini-prod (`""`), windows (`cli/build/jlink-image-windows-x64`):
+  wrap their literals in providers for the same shape.
+- Update the render task's `systemProperties(...)` + `inputs.property(...)` loop to accept
+  `Provider` values.
+- Drop the stale `val jlinkDir = repoRoot.dir("cli/target/jlink-image")...` line.
+
+Verify `./gradlew :skills:pkg:renderClaudeDev` resolves and that requesting it pulls in
+`:cli:jlinkImage_<host>` (dependency edge present in `--dry-run`).
+
+**Risk: Medium** — cross-project lazy wiring (skills:pkg → cli); the dependency edge is
+the crux that makes the whole fix work, and cross-project `tasks.named` ordering can be
+fragile.
+
+### Task 6: Simplify `:claude:devBuild` (née `devInstall`); drop release `-PjlinkBuild` [Low]
+
+*Depends-on: 5*
+
+- `claude/build.gradle.kts`: keep `devBuild` (renamed from `devInstall` in v5)
+  assembling claude-dev into repo-root `build/`; the jlink image now arrives via the
+  render dependency (no manual `dependsOn`, no flag).
+- `packaging/.../PublishRelease.java`: remove `-PjlinkBuild` from `jlinkBuildCommand()`
+  (the four `:cli:jlinkImage_*` task names stay). Confirm the release path is otherwise
+  unchanged.
+
+**Risk: Low** — mechanical removal once the gates are gone; covered by the Task 7
+end-to-end verification (release `jlinkBuildCommand()` still lists all four platforms).
+
+### Task 8: Classify the shaded core jar (fix overlapping-output collision) [Medium]
+
+*Depends-on: 2*
+
+**v3 addition.** Un-gating jlink (Tasks 1–2) exposed a pre-existing plan-71 defect:
+`core/build.gradle.kts` shades with `archiveClassifier.set("")`, so
+`:core:shadowJar` / `:core:reinjectModuleInfo` **overwrite the canonical
+`core/build/libs/core.jar`** — the same path `:cli:compileJava` reads via
+`implementation(project(":core"))`. When `reinject` and a plain-`core.jar` consumer
+land in one task graph, Gradle aborts with *"uses this output of task … without
+declaring a dependency"*. It is order-dependent: `./gradlew build` and
+`:claude:devInstall` (nested build) are fine, but `:core:reinjectModuleInfo
+:cli:jlinkImage_linux-x64` fails reliably, and `PublishRelease.jlinkBuildCommand()`
+runs the four images as one isolated invocation that also compiles cli — a latent
+**release-path race**.
+
+Fix (prototype-validated): give the shaded jar a distinct classifier
+(`archiveClassifier.set("jlink")` → `core-jlink.jar`) so it no longer overwrites the
+plain `core.jar`, and point cli's `shadedCoreJarFile` at `libs/core-jlink.jar`
+(`runtimeModulePath()` already drops the plain `core*` jar and substitutes this one).
+Verify: `./gradlew clean :core:reinjectModuleInfo :cli:jlinkImage_linux-x64` succeeds;
+both `core.jar` and `core-jlink.jar` exist as separate files; the image launcher runs.
+
+**Risk: Medium** — touches the core/cli shading substitution shipped in Tasks 1–2;
+a wrong classifier or module-path reference breaks the jlink image link.
+
+(Numbered Task 8 because it was appended in v3; the dependency edge — not the number
+— orders it. The Task 7 verification depends on this fix and so runs after it.)
+
+### Task 7: Docs + final verification [Low]
+
+*Depends-on: 8*
+
+- `DEVELOPMENT.md`: drop `-PjlinkBuild` from the documented `jlinkImage_windows-x64`
+  invocation and the release notes; add a one-line `:claude:devInstall` dev-loop entry.
+- `docs/proposals/build-migrate.md`: leave as historical (it's a proposal record), but
+  note if any active instruction references the flag.
+- Full verification:
+  - clean `./gradlew :claude:devInstall` → host jlink image builds, `build/` payload
+    complete (`.claude-plugin/`, `dist/`, `hooks/`, `skills/`),
+    `session-start-config.json.jlinkDir` = `cli/build/jlink-image-<host>`.
+  - `./gradlew build` → green, and NO jlink/shadow tasks executed (check task list).
+  - `./gradlew :core:reinjectModuleInfo :cli:jlinkImage_linux-x64` → both succeed
+    (the Task 7 collision fix is the precondition for this passing).
+
+**Risk: Low** — docs + verification; no production code.
+
+### Task 9: Rename `jlinkImage_<platform>` → `image_<platform>` [Low]
+
+*Depends-on: 7*
+
+**v4 addition (user).** The jlink image build task name leaks the mechanism
+(`jlink`). Rename the cli per-platform task `jlinkImage_<platform>` →
+`image_<platform>` (keeping the existing `<base>_<hyphenated-platform>` fan-out
+convention — e.g. `:cli:image_linux-x64`). **Scope: the build task only.** Leave
+unchanged: the output dir `cli/build/jlink-image-<platform>/`, the Java path
+identifiers (`PackageRuntime.jlinkImage`, `PublishRelease.jlinkImagePath`), and the
+sibling tasks (`stageJlinkImage_*`, `packageRuntime_*`, `jlinkSmoke*`).
+
+Reference sites to update (7 active; historical `plan-*.md` left as-is):
+- `cli/build.gradle.kts` — the `tasks.register("jlinkImage_$platform")` definition.
+- `skills/pkg/build.gradle.kts` — dev wiring `tasks.named("jlinkImage_$hostTag")`
+  → `"image_$hostTag"`, plus the `jlinkImage_<host>` comment references.
+- `packaging/build.gradle.kts` — `dependsOn(":cli:jlinkImage_$target")` + comment.
+- `packaging/.../PublishRelease.java` — the four `:cli:jlinkImage_*` names in
+  `jlinkBuildCommand()` (+ the `jlinkImagePath` javadoc that names the task).
+- `packaging/.../PublishReleaseTest.java` — the four name assertions.
+- `DEVELOPMENT.md` — `:cli:jlinkImage_<host>` and `jlinkImage_windows-x64` refs.
+- comments in `core/build.gradle.kts`, `claude/build.gradle.kts`.
+
+Verify: `./gradlew :cli:image_linux-x64` builds the image; `:packaging:test` green;
+`:claude:devInstall` still auto-builds the host image; no `jlinkImage_` task-name
+refs remain (`grep -rn 'jlinkImage_' --include=*.kts --include=*.java --include=*.md`
+returns only historical `plan-*.md`).
+
+**Risk: Low** — pure rename of validated tasks; covered by `:packaging:test` +
+re-running the devInstall verification.
+
+### Task 10: Decouple `RenderSpec` constants from `jlinkDir` (code-review #1) [Low]
+
+*Depends-on: 5*
+
+**v6 addition (`/code-review high` finding).** `RenderSpec.constant()` derived every
+constant `-D` property from `jlinkDir.map { value }`. For the dev variant, whose
+`jlinkDir` is the cli `image_<host>` task output, this coupled logically-independent
+constants (e.g. `build.platform`) to the 87 MB jlink image build — a constant could
+not resolve without building the runtime. (The shortcut was taken because the
+buildSrc `RenderSpec` value object had no Gradle service handle.)
+
+Fix: inject an `ObjectFactory` into `RenderSpec`; `constant(value)` now returns
+`objects.property(String::class.java).convention(value)` — a genuinely independent
+provider. Only `shipsmooth.jlink.dir` keeps the image task dependency. The single
+`claudeDevSpec` construction site passes `objects = objects`; the `.copy()` chain
+inherits it. This also makes the systemProperties() javadoc (which already claimed
+the constants were independently wrapped) accurate (code-review #3 resolves with it).
+
+Verify: `:buildSrc:build` compiles; all 5 render variants build green; dev
+`session-start-config.json.jlinkDir` still = `cli/build/jlink-image-<host>` and
+`renderClaudeDev` still pulls `:cli:image_<host>` (the real jlinkDir wiring is
+unchanged); `./gradlew build` green and clean.
+
+**Risk: Low** — buildSrc value-object refactor; load-bearing jlinkDir wiring
+unchanged, verified by the dev render still producing the correct path + edge.
+
+(Code-review findings #2 — `outputs.files.singleFile` brittleness — left as a noted
+minor; the image task declares a single output dir, so it is safe today.)
+
+---
+
+## Coverage & verification (no automated tests)
+
+**v2 decision (user):** this plan is entirely Gradle build-script + buildSrc wiring, so
+**no automated tests are written** — neither the integration-test preamble nor unit tests.
+There is no line-coverage gate. Correctness is established by the **manual verification
+steps embedded in each task** and the Task 7 end-to-end check, which together cover the
+behavioral contract that the test preamble would have asserted:
+
+- **Auto-build-on-devInstall:** requesting `:claude:assembleClaudeDev` (or
+  `:skills:pkg:renderClaudeDev`) pulls `:cli:jlinkImage_<host>` into the task graph
+  (`--dry-run`), and after `:claude:devInstall` the rendered
+  `session-start-config.json.jlinkDir` = `cli/build/jlink-image-<HostPlatform.tag()>`,
+  which exists and contains `bin/shipsmooth`.
+- **No-jlink-on-normal-build:** `./gradlew build --dry-run` lists no jlink/shadow tasks.
+
+Each task below carries its own `Verify …` line; those are the acceptance checks for this
+plan in lieu of tests. The per-task De-risk/Harden cycle still applies for the High/Medium
+tasks (draft → approval → harden), but "green tests" is replaced by "verification command
+passes".

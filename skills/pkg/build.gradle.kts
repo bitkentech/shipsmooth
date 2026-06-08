@@ -112,10 +112,31 @@ tasks.named("generateJte") { dependsOn(stageJte) }
 // property so it stays in lockstep with the Maven <version> (0.3.14).
 val pluginVersion = (findProperty("plugin.version") as String?)
     ?: error("plugin.version must be set (gradle.properties) to match the Maven project version")
-// This build's root project IS skills/pkg, so the repo root is two levels up
+// skills:pkg is a subproject; the repo root is two levels up
 // (skills/pkg -> skills -> repo root), not one.
 val repoRoot = layout.projectDirectory.dir("../..")
-val jlinkDir = repoRoot.dir("cli/target/jlink-image").asFile.path
+
+// Dev jlinkDir resolves LAZILY from the cli jlink image for THIS build host. Using
+// the task's output dir (not a hardcoded path) establishes the producer->consumer
+// edge: requesting a dev render/install pulls in :cli:image_<host>, so the
+// image is built automatically and the path is always correct. HostPlatform.tag()
+// (buildSrc) matches detectPlatform() in session-start.ts. The .map keeps it lazy —
+// the cli task is only resolved when the render actually runs (see jvmArgumentProviders
+// in registerRender), so a normal build never pulls jlink into the graph.
+val cliProject = project(":cli")
+// Ensure :cli is configured before we look up its jlink task by name — the
+// image_* tasks are registered in cli's build script, and cross-project
+// tasks.named() resolves against the target project's already-evaluated task
+// container. Without this, skills:pkg can evaluate first and the lookup fails.
+evaluationDependsOn(":cli")
+val hostTag = HostPlatform.tag()
+val devJlinkDir: Provider<String> =
+    cliProject.tasks.named("image_$hostTag")
+        .map { it.outputs.files.singleFile.path }
+
+// Wrap a constant in a provider so the non-dev variants share devJlinkDir's
+// Provider<String> shape (RenderSpec.jlinkDir is a Provider across all variants).
+fun constJlink(value: String): Provider<String> = provider { value }
 
 // Resolve a render output dir: -Pbuild.outputDir overrides (so an assembleX task
 // can target the shared build/ payload tree), else the per-variant default under
@@ -133,11 +154,14 @@ val claudeDevSpec = RenderSpec(
     pluginDescription = "Agent coding workflow (dev build)",
     pluginSkillStartBasename = "start",
     skillFrontmatter = "",
-    jlinkDir = jlinkDir,
+    jlinkDir = devJlinkDir,
     pluginRepoName = "shipsmooth",
     outputDir = renderOutputDir("claude-dev"),
     experimentalEnabled = true,
     pluginHookCommand = "node \"\${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"",
+    // ObjectFactory for RenderSpec's independent constant providers. The .copy()
+    // chain below (gemini-dev, prod, windows) inherits this same instance.
+    objects = objects,
 )
 
 val geminiDevSpec = claudeDevSpec.copy(
@@ -163,14 +187,23 @@ fun registerRender(taskName: String, spec: RenderSpec) =
         val runtimeClasspath = sourceSets["main"].runtimeClasspath
         classpath = runtimeClasspath
         mainClass.set("io.bitken.ss.resources.Target")
-        systemProperties(spec.systemProperties())
+
+        val props = spec.systemProperties() // Map<String, Provider<String>>
+        // -D system properties resolved at EXECUTION time via jvmArgumentProviders,
+        // so registering the render never forces a provider. This matters for the dev
+        // variant: its jlinkDir provider is the cli jlink task output, so an eager
+        // resolve here would pull :cli:image_<host> into every build's graph.
+        jvmArgumentProviders.add {
+            props.map { (key, value) -> "-D$key=${value.get()}" }
+        }
 
         // Inputs: the render is a pure function of (a) the RenderSpec tuple and
         // (b) the runtime classpath — which carries the compiled JTE template
         // classes, so a .jte.md edit (-> stageJte -> generateJte -> compileJava)
         // busts this task. With these declared, an unchanged render is
-        // UP-TO-DATE instead of re-running every invocation.
-        spec.systemProperties().forEach { (key, value) -> inputs.property(key, value) }
+        // UP-TO-DATE instead of re-running every invocation. inputs.property
+        // accepts the Provider directly; Gradle resolves it lazily for the check.
+        props.forEach { (key, value) -> inputs.property(key, value) }
         inputs.files(runtimeClasspath).withNormalizer(ClasspathNormalizer::class.java)
         // Declare what the render OWNS at the right granularity (Task 21, Bazel-style):
         // the skills/ and hooks/ subtrees (variant-dependent file sets) plus the single
@@ -200,7 +233,7 @@ val claudeProdSpec = claudeDevSpec.copy(
     buildEnv = "prod",
     pluginDescription = prodDescription,
     skillFrontmatter = "",
-    jlinkDir = "/dev/null",
+    jlinkDir = constJlink("/dev/null"),
     outputDir = layout.buildDirectory.dir("render/claude-prod").get().asFile.path,
     experimentalEnabled = false,
 )
@@ -216,7 +249,7 @@ val geminiProdSpec = claudeProdSpec.copy(
     // The Maven gemini profile sets no shipsmooth.jlink.dir, so Target defaults it
     // to "" and omits the jlinkDir line. Inheriting claudeProd's "/dev/null" would
     // diverge — parity diff caught this. Keep it empty.
-    jlinkDir = "",
+    jlinkDir = constJlink(""),
     outputDir = layout.buildDirectory.dir("render/gemini-prod").get().asFile.path,
     pluginHookCommand = "node \"\${extensionPath}/dist/session-start.js\"",
 )
@@ -230,7 +263,10 @@ val geminiProdSpec = claudeProdSpec.copy(
 val windowsSpec = claudeProdSpec.copy(
     buildOs = "windows",
     pluginDescription = "Agent coding workflow (Windows)",
-    jlinkDir = repoRoot.dir("cli/target/jlink-image-windows-x64").asFile.path,
+    // Windows is a cross-build target, NOT host-derived: pin to the windows-x64
+    // image regardless of build host. (Path corrected to the Gradle cli output
+    // dir; the old cli/target/... was a plan-71 Maven-migration leftover.)
+    jlinkDir = constJlink(repoRoot.dir("cli/build/jlink-image-windows-x64").asFile.path),
     pluginHookCommand = "",
     outputDir = layout.buildDirectory.dir("render/windows").get().asFile.path,
 )

@@ -120,6 +120,30 @@ registerPayloadAssembly(
 )
 
 // ---------------------------------------------------------------------------
+// devBuild: local dev-loop convenience. assembleClaudeDev's producers resolve
+// their output dir from the project-wide `build.outputDir` property at configuration
+// time (renderOutputDir in skills:pkg), so a no-arg `assembleClaudeDev` would
+// co-deposit only the manifests into build/ and render the skills into
+// skills/pkg/build/render — a confusing split. Rather than retarget the carefully
+// module-local render defaults, this spawns a nested build with build.outputDir=build
+// set, so the FULL claude-dev payload (skills/ + hooks/ + dist/ + .claude-plugin/)
+// lands in repo-root build/ — the dir Claude reads the dev plugin from
+// (docs/proposals/build-migrate.md §3).
+//
+// The host jlink image is built automatically: assembleClaudeDev -> renderClaudeDev,
+// whose dev jlinkDir provider is the :cli:image_<host> task output (plan-74
+// Task 5). No manual dependsOn and no -PjlinkBuild flag — the dependency edge does it.
+// Run: ./gradlew :claude:devBuild  (then point Claude / shipsmooth-dev at build/).
+val devBuild by tasks.registering(GradleBuild::class) {
+    group = "assemble"
+    description = "Assemble the full claude-dev payload into repo-root build/ for local dev/test."
+    dir = rootProject.projectDir
+    tasks = listOf(":claude:assembleClaudeDev")
+    startParameter.projectProperties = startParameter.projectProperties +
+        mapOf("build.outputDir" to rootProject.layout.projectDirectory.dir("build").asFile.absolutePath)
+}
+
+// ---------------------------------------------------------------------------
 // assembleClaudeProd (Task 23): the full claude-prod plugin payload, via the prod
 // dual-mode Sync path. Each producer writes into its OWN private staging dir —
 // renderClaudeProd (skills/ + hooks/ + dist/session-start-config.json) into

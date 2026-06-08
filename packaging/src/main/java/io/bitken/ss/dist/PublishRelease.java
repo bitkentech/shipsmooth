@@ -124,13 +124,18 @@ public class PublishRelease {
         return repoRoot.resolve("gradlew").toString();
     }
 
-    /** All four jlink platform images, gated on {@code -PjlinkBuild}. Replaces {@code mvn -Pjlink package}. */
+    /**
+     * All four jlink platform images. Replaces {@code mvn -Pjlink package}. The jlink
+     * tasks are now registered unconditionally (plan-74 dropped the {@code -PjlinkBuild}
+     * existence gate — lazy configuration keeps them zero-cost on normal builds), so the
+     * release just names the four platform tasks explicitly.
+     */
     static List<String> jlinkBuildCommand(Path repoRoot) {
-        return List.of(gradlew(repoRoot), "-PjlinkBuild",
-                ":cli:jlinkImage_linux-x64",
-                ":cli:jlinkImage_darwin-x64",
-                ":cli:jlinkImage_darwin-arm64",
-                ":cli:jlinkImage_windows-x64");
+        return List.of(gradlew(repoRoot),
+                ":cli:image_linux-x64",
+                ":cli:image_darwin-x64",
+                ":cli:image_darwin-arm64",
+                ":cli:image_windows-x64");
     }
 
     /** Prod claude payload into {@code build/}. Replaces {@code mvn compile -Pprod -P!dev}. */
@@ -179,7 +184,7 @@ public class PublishRelease {
     }
 
     /**
-     * Location of a platform's jlink image. The Gradle {@code jlinkImage_<platform>}
+     * Location of a platform's jlink image. The Gradle {@code image_<platform>}
      * tasks write to {@code cli/build/jlink-image-<platform>} (the old Maven build
      * wrote to {@code cli/target/...} — reading there packaged a stale image, or
      * none on a clean tree). The platform key matches the Gradle task suffix:

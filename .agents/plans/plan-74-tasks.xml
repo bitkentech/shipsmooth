@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>74</plan>
+    <plan-version>plan-74-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-08</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Un-gate core jlink shading (remove `-PjlinkBuild` guard in core)</name>
+            <commit>b21a9809303a3ccd59e4fb7d715e0a219dff7e8e</commit>
+            <created-from>plan-74-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-08T14:49:30.158+05:30</timestamp>
+                    <message>De-risk draft ready (b21a980): core un-gated, lazy argumentProviders, assemble edge dropped. Verified normal build skips shading; reinjectModuleInfo produces shaded module-info jar.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-08T14:51:07.893+05:30</timestamp>
+                    <message>Harden: no code changes needed (de-risk followed project patterns). Verified full './gradlew build --dry-run' graph contains NO shadow/reinject/jlink tasks — config phase resolves no jars. Comments at harden quality. Task complete at de-risk commit.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-08T14:45:19.222+05:30</timestamp>
+                    <message>Plan v2: no automated tests (build-script only). Acceptance = each task's Verify line + Task 7 e2e. De-risk/harden cycle still applies; 'green tests' replaced by 'verification command passes'.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Un-gate cli jlink tasks + lazy command line</name>
+            <commit>cb6f8a0e30808c65122691360fcbea37eacaa992</commit>
+            <created-from>plan-74-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-08T21:00:44.122+05:30</timestamp>
+                    <message>De-risk draft ready (cb6f8a0): cli un-gated, jlinkImage_* use lazy argumentProviders. Verified build graph clean of jlink; linux-x64 image builds via cross-project edge to core shaded jar and the launcher runs.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-08T21:02:26.970+05:30</timestamp>
+                    <message>Harden: no code changes needed. Verified full './gradlew build' (real, all modules) is green with both core+cli un-gated — no jlink/shadow executed. Complete at de-risk commit.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>`HostPlatform.tag()` buildSrc helper</name>
+            <commit>78d1a34affac1ccb38d3edd52c469b093883cd51</commit>
+            <created-from>plan-74-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Lazy `RenderSpec.jlinkDir` across all variants</name>
+            <commit>0504bd8452a8d7afe556fd6bfcb802f0004f79db</commit>
+            <created-from>plan-74-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-08T21:24:38.039+05:30</timestamp>
+                    <message>De-risk draft: RenderSpec.jlinkDir-&gt;Provider&lt;String&gt;, systemProperties()-&gt;Map&lt;String,Provider&lt;String&gt;&gt; (uniform). constant() reuses jlinkDir.map to avoid threading Project. Expected: only the 4 call-site type errors remain (Task 5 wires them).</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Wire dev `jlinkDir` to the cli jlink task output; convert all specs</name>
+            <commit>0504bd8452a8d7afe556fd6bfcb802f0004f79db</commit>
+            <created-from>plan-74-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-08T21:37:59.844+05:30</timestamp>
+                    <message>De-risk: dev jlinkDir wired to cli jlink output via lazy .map + evaluationDependsOn(:cli). All 5 specs converted to Provider. Verified edge present (renderClaudeDev-&gt;jlinkImage_linux-x64), no build leakage, rendered jlinkDir=cli/build/jlink-image-linux-x64 with image auto-built.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-08T21:39:20.686+05:30</timestamp>
+                    <message>Harden: no code changes (de-risk followed patterns; comments at quality). Tasks 4+5 complete at commit 0504bd8452a8d7afe556fd6bfcb802f0004f79db.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>2,4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Simplify `:claude:devInstall`; drop release `-PjlinkBuild`</name>
+            <commit>ee83ffc2175776afb3211c78df9bc985d79bc33a</commit>
+            <created-from>plan-74-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-08T21:50:58.253+05:30</timestamp>
+                    <message>devInstall did not pre-exist on the branch (it was only in stash@{0}); Task 6 added it fresh rather than 'simplifying' an existing task. End state matches the plan: edge-driven, no flag/dependsOn.</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-09T00:59:47.967+05:30</timestamp>
+                    <message>Renamed devInstall -&gt; devBuild (user): 'install' implied copying elsewhere; the task only assembles into repo-root build/. Verified cold devBuild still auto-builds host image + full payload.</message>
+                </deviation>
+            </deviations>
+            <depends-on>5</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Docs + final verification</name>
+            <commit>eb93324abc25d412e11455381ef9c47b0f90f07f</commit>
+            <created-from>plan-74-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-09T01:02:58.818+05:30</timestamp>
+                    <message>Docs committed (devBuild + image_ names) + full e2e verification green: cold devBuild builds host image &amp; correct payload/jlinkDir; build clean of jlink; original blocker (reinject + image_linux-x64) passes.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-08T23:49:21.318+05:30</timestamp>
+                    <message>Verification exposed a pre-existing plan-71 shaded-jar collision: core shadowJar/reinjectModuleInfo overwrite core/build/libs/core.jar (empty archiveClassifier), the same path cli:compileJava reads via the project core dependency. Un-gating jlink surfaces Gradle uses-this-output-without-dependency validation when reinject and a plain-core.jar consumer share one graph. Order-dependent. Normal build and devInstall work; Task 7 verify command fails reliably. Fix needs a design change: classifier on the shaded jar plus cli module-path substitution.</message>
+                </deviation>
+            </deviations>
+            <depends-on>6,8</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Classify the shaded core jar (fix overlapping-output collision)</name>
+            <commit>c05ed36d1242dfacfe8e30c473d09cfd0c00633d</commit>
+            <created-from>plan-74-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-09T00:16:18.659+05:30</timestamp>
+                    <message>De-risk: classifier 'jlink' -&gt; core-jlink.jar; cli points at it. Previously-failing mixed-graph command now passes; separate jars coexist; image runs; normal build clean.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-09T00:32:20.207+05:30</timestamp>
+                    <message>Harden: no code changes (de-risk followed patterns; comments explain the why). Complete at c05ed36d1242dfacfe8e30c473d09cfd0c00633d.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename jlinkImage_&lt;platform&gt; -&gt; image_&lt;platform&gt;</name>
+            <commit>1de90354342c078ac5b22afdfe064581bf68fe6b</commit>
+            <created-from>plan-74-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-09T00:46:06.987+05:30</timestamp>
+                    <message>DEVELOPMENT.md task-name refs renamed but committed with Task 7 (the file's Task 9 rename lines and Task 7 held doc content overlap; kept together to avoid splitting one file across two commits).</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-09T00:56:24.677+05:30</timestamp>
+                    <message>Scope extended (user): also renamed stageJlinkImage_&lt;platform&gt; -&gt; stageImage_&lt;platform&gt; in packaging to mirror image_&lt;platform&gt;. jlinkSmoke* and win32-x64 key intentionally left unchanged.</message>
+                </deviation>
+            </deviations>
+            <depends-on>7</depends-on>
+        </task>
+        <task>
+            <id>10</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Decouple RenderSpec constants from jlinkDir (code-review #1)</name>
+            <commit>dda57bca694718682a4ca8df1e598e85d2355fd0</commit>
+            <created-from>plan-74-v6</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-09T01:28:08.472+05:30</timestamp>
+                    <message>Code-review #1 fix: ObjectFactory-injected independent constant providers. Load-bearing jlinkDir wiring unchanged (dev render still pulls image + correct path). Resolves review #3 (javadoc now accurate).</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-08T13:04:17.245+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-08T23:49:46.861+05:30</timestamp>
+            <message>Blocked at Task 7 verification: pre-existing shaded-core.jar overlapping-output collision (plan-71 empty archiveClassifier) surfaces an order-dependent Gradle validation failure once jlink is un-gated. Needs a plan decision on the shaded-jar location fix.</message>
+            <blocked>true</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-09T00:12:20.045+05:30</timestamp>
+            <message>Unblocked: v3 adds Task 8 (classify shaded core jar -&gt; core-jlink.jar) to fix the overlapping-output collision. Fix prototype-validated. Resuming: Task 8 then Task 7 (docs+verify).</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-09T01:30:17.308+05:30</timestamp>
+            <message>Plan complete. All 10 tasks agent-coded; dev-build loop fixed (lazy jlinkDir + auto host image), -PjlinkBuild removed, shaded-jar collision fixed (core-jlink.jar), names cleaned (image_/stageImage_/devBuild), code-review #1 fixed. Squash-merging to main.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

@@ -152,13 +152,14 @@ public class PublishReleaseTest {
     }
 
     @Test
-    void jlinkBuildCommandBuildsAllFourPlatformsWithFlag() {
+    void jlinkBuildCommandBuildsAllFourPlatformsWithoutFlag() {
         List<String> cmd = PublishRelease.jlinkBuildCommand(tempDir);
-        assertTrue(cmd.contains("-PjlinkBuild"), cmd.toString());
-        assertTrue(cmd.contains(":cli:jlinkImage_linux-x64"), cmd.toString());
-        assertTrue(cmd.contains(":cli:jlinkImage_darwin-x64"), cmd.toString());
-        assertTrue(cmd.contains(":cli:jlinkImage_darwin-arm64"), cmd.toString());
-        assertTrue(cmd.contains(":cli:jlinkImage_windows-x64"), cmd.toString());
+        // plan-74: -PjlinkBuild gate removed; the four platform tasks stay listed.
+        assertFalse(cmd.contains("-PjlinkBuild"), cmd.toString());
+        assertTrue(cmd.contains(":cli:image_linux-x64"), cmd.toString());
+        assertTrue(cmd.contains(":cli:image_darwin-x64"), cmd.toString());
+        assertTrue(cmd.contains(":cli:image_darwin-arm64"), cmd.toString());
+        assertTrue(cmd.contains(":cli:image_windows-x64"), cmd.toString());
     }
 
     @Test

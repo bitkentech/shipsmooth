@@ -41,6 +41,12 @@ build/
 > `assembleClaudeDev` renders `SKILL.md`, `hooks/hooks.json`, and
 > `dist/session-start-config.json` and composes the full payload into `build/`.
 
+**Dev-loop shortcut:** `./gradlew :claude:devBuild` assembles the same full
+payload into repo-root `build/` *and* auto-builds the host jlink runtime image
+(the dev `session-start-config.json` `jlinkDir` is wired to `:cli:image_<host>`,
+so the image is built on demand — no `-PjlinkBuild` flag needed). Point Claude at
+`build/` and you have a runnable dev plugin backed by a local runtime.
+
 ## Register the dev build with Claude Code
 
 Add to `~/.claude/settings.json`:
@@ -232,7 +238,7 @@ needed.
 
 `PublishRelease` performs these steps for Windows (as part of the same run):
 1. Bumps `plugin.version` in `gradle.properties` and commits
-2. Builds the jlink image (`./gradlew jlinkImage_windows-x64`) and `build-windows/` artifacts
+2. Builds the jlink image (`./gradlew :cli:image_windows-x64`) and `build-windows/` artifacts
 3. Resolves the `shipsmooth-windows` sibling repo
 4. Assembles `runtime/`, `hooks/`, `skills/`, and `.claude-plugin/` into that directory
 5. Creates a fresh orphan commit (no prior history)
@@ -246,7 +252,7 @@ as it bumps `gradle.properties` and bakes the suffix into the build artifacts.
 
 ```bash
 # Step 1: rebuild the jlink image (only needed if shipsmooth changed)
-./gradlew jlinkImage_windows-x64 -PjlinkBuild
+./gradlew :cli:image_windows-x64
 
 # Step 2: build the Windows plugin artifacts (plugin.version stays at e.g. 0.3.10)
 ./gradlew assembleWindows -Pbuild.outputDir=build-windows
