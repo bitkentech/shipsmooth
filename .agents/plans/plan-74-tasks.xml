@@ -194,6 +194,23 @@
             </deviations>
             <depends-on>7</depends-on>
         </task>
+        <task>
+            <id>10</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Decouple RenderSpec constants from jlinkDir (code-review #1)</name>
+            <commit>dda57bca694718682a4ca8df1e598e85d2355fd0</commit>
+            <created-from>plan-74-v6</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-09T01:28:08.472+05:30</timestamp>
+                    <message>Code-review #1 fix: ObjectFactory-injected independent constant providers. Load-bearing jlinkDir wiring unchanged (dev render still pulls image + correct path). Resolves review #3 (javadoc now accurate).</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
