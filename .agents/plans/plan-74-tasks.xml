@@ -4,7 +4,7 @@
     <plan-version>plan-74-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-08</created>
     </metadata>
     <tasks>
@@ -226,6 +226,11 @@
         <update>
             <timestamp>2026-06-09T00:12:20.045+05:30</timestamp>
             <message>Unblocked: v3 adds Task 8 (classify shaded core jar -&gt; core-jlink.jar) to fix the overlapping-output collision. Fix prototype-validated. Resuming: Task 8 then Task 7 (docs+verify).</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-09T01:30:17.308+05:30</timestamp>
+            <message>Plan complete. All 10 tasks agent-coded; dev-build loop fixed (lazy jlinkDir + auto host image), -PjlinkBuild removed, shaded-jar collision fixed (core-jlink.jar), names cleaned (image_/stageImage_/devBuild), code-review #1 fixed. Squash-merging to main.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
