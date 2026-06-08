@@ -107,13 +107,19 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Simplify `:claude:devInstall`; drop release `-PjlinkBuild`</name>
-            <commit></commit>
+            <commit>ee83ffc2175776afb3211c78df9bc985d79bc33a</commit>
             <created-from>plan-74-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-08T21:50:58.253+05:30</timestamp>
+                    <message>devInstall did not pre-exist on the branch (it was only in stash@{0}); Task 6 added it fresh rather than 'simplifying' an existing task. End state matches the plan: edge-driven, no flag/dependsOn.</message>
+                </deviation>
+            </deviations>
             <depends-on>5</depends-on>
         </task>
         <task>
