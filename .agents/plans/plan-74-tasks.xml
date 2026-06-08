@@ -130,12 +130,17 @@
         <task>
             <id>7</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Docs + final verification</name>
-            <commit></commit>
+            <commit>eb93324abc25d412e11455381ef9c47b0f90f07f</commit>
             <created-from>plan-74-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-09T01:02:58.818+05:30</timestamp>
+                    <message>Docs committed (devBuild + image_ names) + full e2e verification green: cold devBuild builds host image &amp; correct payload/jlinkDir; build clean of jlink; original blocker (reinject + image_linux-x64) passes.</message>
+                </comment>
+            </comments>
             <deviations>
                 <deviation>
                     <type>major</type>
