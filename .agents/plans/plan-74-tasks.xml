@@ -69,24 +69,38 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Lazy `RenderSpec.jlinkDir` across all variants</name>
-            <commit></commit>
+            <commit>0504bd8452a8d7afe556fd6bfcb802f0004f79db</commit>
             <created-from>plan-74-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-08T21:24:38.039+05:30</timestamp>
+                    <message>De-risk draft: RenderSpec.jlinkDir-&gt;Provider&lt;String&gt;, systemProperties()-&gt;Map&lt;String,Provider&lt;String&gt;&gt; (uniform). constant() reuses jlinkDir.map to avoid threading Project. Expected: only the 4 call-site type errors remain (Task 5 wires them).</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>3</depends-on>
         </task>
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Wire dev `jlinkDir` to the cli jlink task output; convert all specs</name>
-            <commit></commit>
+            <commit>0504bd8452a8d7afe556fd6bfcb802f0004f79db</commit>
             <created-from>plan-74-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-08T21:37:59.844+05:30</timestamp>
+                    <message>De-risk: dev jlinkDir wired to cli jlink output via lazy .map + evaluationDependsOn(:cli). All 5 specs converted to Provider. Verified edge present (renderClaudeDev-&gt;jlinkImage_linux-x64), no build leakage, rendered jlinkDir=cli/build/jlink-image-linux-x64 with image auto-built.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-08T21:39:20.686+05:30</timestamp>
+                    <message>Harden: no code changes (de-risk followed patterns; comments at quality). Tasks 4+5 complete at commit 0504bd8452a8d7afe556fd6bfcb802f0004f79db.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>2,4</depends-on>
         </task>
