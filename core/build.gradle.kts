@@ -65,7 +65,7 @@ sourceSets.main {
 //
 // Registered UNCONDITIONALLY (no -PjlinkBuild gate). Lazy configuration means this
 // is zero-cost unless something pulls reinjectModuleInfo into the graph (cli's
-// jlinkImage_* tasks). It is deliberately NOT wired into `assemble`/`build`, so a
+// image_* tasks). It is deliberately NOT wired into `assemble`/`build`, so a
 // normal `./gradlew build` neither shades nor runs the Semeru jar tool — the only
 // consumer is the cli jlink build, which dependsOn this task directly.
 // ---------------------------------------------------------------------------

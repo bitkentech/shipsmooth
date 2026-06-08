@@ -132,10 +132,10 @@ public class PublishRelease {
      */
     static List<String> jlinkBuildCommand(Path repoRoot) {
         return List.of(gradlew(repoRoot),
-                ":cli:jlinkImage_linux-x64",
-                ":cli:jlinkImage_darwin-x64",
-                ":cli:jlinkImage_darwin-arm64",
-                ":cli:jlinkImage_windows-x64");
+                ":cli:image_linux-x64",
+                ":cli:image_darwin-x64",
+                ":cli:image_darwin-arm64",
+                ":cli:image_windows-x64");
     }
 
     /** Prod claude payload into {@code build/}. Replaces {@code mvn compile -Pprod -P!dev}. */
@@ -184,7 +184,7 @@ public class PublishRelease {
     }
 
     /**
-     * Location of a platform's jlink image. The Gradle {@code jlinkImage_<platform>}
+     * Location of a platform's jlink image. The Gradle {@code image_<platform>}
      * tasks write to {@code cli/build/jlink-image-<platform>} (the old Maven build
      * wrote to {@code cli/target/...} — reading there packaged a stale image, or
      * none on a clean tree). The platform key matches the Gradle task suffix:

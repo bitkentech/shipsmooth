@@ -67,7 +67,7 @@ fun runtimeModulePath(): String {
 }
 
 platformJmods.forEach { (platform, jmods) ->
-    tasks.register<Exec>("jlinkImage_$platform") {
+    tasks.register<Exec>("image_$platform") {
         dependsOn("jar", shadedCoreJarTask)
         val outDir = layout.buildDirectory.dir("jlink-image-$platform")
         outputs.dir(outDir)

@@ -118,20 +118,20 @@ val repoRoot = layout.projectDirectory.dir("../..")
 
 // Dev jlinkDir resolves LAZILY from the cli jlink image for THIS build host. Using
 // the task's output dir (not a hardcoded path) establishes the producer->consumer
-// edge: requesting a dev render/install pulls in :cli:jlinkImage_<host>, so the
+// edge: requesting a dev render/install pulls in :cli:image_<host>, so the
 // image is built automatically and the path is always correct. HostPlatform.tag()
 // (buildSrc) matches detectPlatform() in session-start.ts. The .map keeps it lazy —
 // the cli task is only resolved when the render actually runs (see jvmArgumentProviders
 // in registerRender), so a normal build never pulls jlink into the graph.
 val cliProject = project(":cli")
 // Ensure :cli is configured before we look up its jlink task by name — the
-// jlinkImage_* tasks are registered in cli's build script, and cross-project
+// image_* tasks are registered in cli's build script, and cross-project
 // tasks.named() resolves against the target project's already-evaluated task
 // container. Without this, skills:pkg can evaluate first and the lookup fails.
 evaluationDependsOn(":cli")
 val hostTag = HostPlatform.tag()
 val devJlinkDir: Provider<String> =
-    cliProject.tasks.named("jlinkImage_$hostTag")
+    cliProject.tasks.named("image_$hostTag")
         .map { it.outputs.files.singleFile.path }
 
 // Wrap a constant in a provider so the non-dev variants share devJlinkDir's
@@ -189,7 +189,7 @@ fun registerRender(taskName: String, spec: RenderSpec) =
         // -D system properties resolved at EXECUTION time via jvmArgumentProviders,
         // so registering the render never forces a provider. This matters for the dev
         // variant: its jlinkDir provider is the cli jlink task output, so an eager
-        // resolve here would pull :cli:jlinkImage_<host> into every build's graph.
+        // resolve here would pull :cli:image_<host> into every build's graph.
         jvmArgumentProviders.add {
             props.map { (key, value) -> "-D$key=${value.get()}" }
         }

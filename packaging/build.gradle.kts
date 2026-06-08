@@ -89,7 +89,7 @@ fun Task.verifyJlinkImageStaged() = doFirst {
     if (!launcher.exists()) {
         throw GradleException(
             "jlink image not found at ${launcher.path}. " +
-                "Staging (:cli:jlinkImage_<target>) did not produce a launcher.",
+                "Staging (:cli:image_<target>) did not produce a launcher.",
         )
     }
 }
@@ -104,7 +104,7 @@ semeruByTarget.forEach { (target, jdkHome) ->
     val stageImage = tasks.register<Copy>("stageJlinkImage_$target") {
         group = "release"
         description = "Stage the Gradle jlink image for $target into the Maven-expected path."
-        dependsOn(":cli:jlinkImage_$target")
+        dependsOn(":cli:image_$target")
         val dest = repoRoot.dir("cli/target/jlink-image")
         // jlink writes read-only legal/ files; a stale dest blocks overwrite, so
         // clear it first (chmod to make it deletable).
