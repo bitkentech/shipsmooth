@@ -148,7 +148,7 @@ fun renderOutputDir(variantDefault: String): String =
 val claudeDevSpec = RenderSpec(
     buildPlatform = "claude",
     buildOs = "posix",
-    buildEnv = "dev",
+    buildEnv = BuildEnv.DEV,
     pluginBaseName = "shipsmooth",
     pluginVersion = pluginVersion,
     pluginDescription = "Agent coding workflow (dev build)",
@@ -180,7 +180,7 @@ val geminiDevSpec = claudeDevSpec.copy(
 fun registerRender(taskName: String, spec: RenderSpec) =
     tasks.register<JavaExec>(taskName) {
         group = "render"
-        description = "Render the ${spec.buildPlatform}-${spec.buildEnv} plugin variant via Target."
+        description = "Render the ${spec.buildPlatform}-${spec.buildEnv.value} plugin variant via Target."
         dependsOn(tasks.named("compileJava"), compileTs)
 
         val runtimeClasspath = sourceSets["main"].runtimeClasspath
@@ -231,7 +231,7 @@ val prodDescription = "Agent coding workflow with plan-before-implement discipli
 val claudeProdSpec = claudeDevSpec.copy(
     // buildEnv=prod now AUTOMATICALLY derives experimentalEnabled=false (RenderSpec
     // derives it from buildEnv) — no separate field to keep in sync.
-    buildEnv = "prod",
+    buildEnv = BuildEnv.PROD,
     pluginDescription = prodDescription,
     skillFrontmatter = "",
     jlinkDir = constJlink("/dev/null"),
