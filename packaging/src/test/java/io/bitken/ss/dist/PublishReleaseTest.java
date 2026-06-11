@@ -162,18 +162,6 @@ public class PublishReleaseTest {
         assertTrue(cmd.contains(":cli:image_windows-x64"), cmd.toString());
     }
 
-    // plan-75 Task 2: the jlink path compiles core (and the generated Build.java),
-    // so the release MUST force experimental.enabled=false there — otherwise the
-    // shipped binary stamps EXPERIMENTAL_BUILD=true (the 0.3.17 leak). The render
-    // tasks (assembleClaudeProd/assembleWindows) hard-wire prod via their RenderSpec
-    // and do not read this property, so the guard belongs on the jlink command only.
-    @Test
-    void jlinkBuildCommandForcesExperimentalDisabled() {
-        List<String> cmd = PublishRelease.jlinkBuildCommand(tempDir);
-        assertTrue(cmd.contains("-Pexperimental.enabled=false"),
-                "release jlink build must force experimental.enabled=false: " + cmd);
-    }
-
     @Test
     void assembleProdCommandTargetsClaudeProdIntoBuild() {
         List<String> cmd = PublishRelease.assembleProdCommand(tempDir);

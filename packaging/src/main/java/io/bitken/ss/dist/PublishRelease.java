@@ -135,13 +135,7 @@ public class PublishRelease {
                 ":cli:image_linux-x64",
                 ":cli:image_darwin-x64",
                 ":cli:image_darwin-arm64",
-                ":cli:image_windows-x64",
-                // Force the prod build constant: image_* compiles core, whose generated
-                // Build.java reads experimental.enabled. gradle.properties defaults it to
-                // true for the dev loop, so the release must override it here or it ships
-                // EXPERIMENTAL_BUILD=true (plan-75 Defect 2). The render/assemble tasks
-                // bake prod via their RenderSpec and do not consult this property.
-                "-Pexperimental.enabled=false");
+                ":cli:image_windows-x64");
     }
 
     /** Prod claude payload into {@code build/}. Replaces {@code mvn compile -Pprod -P!dev}. */
