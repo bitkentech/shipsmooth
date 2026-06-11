@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>75</plan>
+    <plan-version>plan-75-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>active</status>
+        <created>2026-06-11</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Track `expand()` values as inputs of `generateBuildConstants`</name>
+            <commit></commit>
+            <created-from>plan-75-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Bake prod constants into the release build path</name>
+            <commit></commit>
+            <created-from>plan-75-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Gate the `ledger` subcommand behind experimental mode</name>
+            <commit></commit>
+            <created-from>plan-75-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Remove ledger references from the base `start` skill</name>
+            <commit></commit>
+            <created-from>plan-75-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Release-time binary guard</name>
+            <commit></commit>
+            <created-from>plan-75-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Docs, e2e verification, 0.3.18 release prep</name>
+            <commit></commit>
+            <created-from>plan-75-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2,3,4,5</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-11T11:09:58.232+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
