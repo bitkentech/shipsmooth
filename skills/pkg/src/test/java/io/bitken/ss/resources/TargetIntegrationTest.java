@@ -215,23 +215,48 @@ class TargetIntegrationTest {
     }
 
     /**
-     * Plan-75 end-to-end guard: the prod base {@code start} skill payload must
-     * contain zero references to the {@code ledger} subcommand, which plan-75
-     * makes experimental. Today the base skill documents {@code ledger list} /
-     * {@code ledger verify} and the ledger/objects mechanics, so this is RED
-     * until Task 4 conditions those fragments on {@code experimental.enabled}.
-     *
-     * <p>This drives the real JTE render pipeline ({@code Target.main}) for the
-     * prod claude profile — the exact payload that ships.
+     * Plan-75 Task 4 guard: the prod base {@code start} skill payload must contain
+     * zero references to the {@code ledger} subcommand (made experimental in Task 3).
+     * The ledger/objects paragraph is conditioned on {@code experimentalEnabled} in
+     * the JTE, so prod drops it. Drives the real render pipeline ({@code Target.main}).
      */
     @Test
     void prodBaseSkillHasNoLedgerReference() throws Exception {
         setProdProps();
         Target.main(new String[]{});
+        assertProdBaseSkillHasNoLedger(tempDir.resolve("skills/start/SKILL.md"));
+    }
 
-        Path baseSkill = tempDir.resolve("skills/start/SKILL.md");
+    @Test
+    void prodGeminiBaseSkillHasNoLedgerReference() throws Exception {
+        setProdProps();
+        System.setProperty("build.platform", "gemini");
+        Target.main(new String[]{});
+        assertProdBaseSkillHasNoLedger(tempDir.resolve("skills/start/SKILL.md"));
+    }
+
+    @Test
+    void prodWindowsBaseSkillHasNoLedgerReference() throws Exception {
+        setWindowsProps();
+        Target.main(new String[]{});
+        assertProdBaseSkillHasNoLedger(tempDir.resolve("skills/start/SKILL.md"));
+    }
+
+    /** The dev counterpart: {@code start-dev} keeps the ledger paragraph (the
+     *  experimental-conditioned fragment renders when experimental is enabled). */
+    @Test
+    void devBaseSkillKeepsLedgerReference() throws Exception {
+        setDevProps();
+        Target.main(new String[]{});
+
+        Path devSkill = tempDir.resolve("skills/start-dev/SKILL.md");
+        assertTrue(Files.exists(devSkill), "dev base SKILL.md should be written");
+        assertTrue(Files.readString(devSkill).contains("ledger"),
+            "dev 'start-dev' skill must keep the ledger/objects paragraph");
+    }
+
+    private void assertProdBaseSkillHasNoLedger(Path baseSkill) throws Exception {
         assertTrue(Files.exists(baseSkill), "prod base SKILL.md should be written");
-
         String content = Files.readString(baseSkill);
         assertFalse(content.contains("ledger"),
             "prod base 'start' skill must not reference the experimental 'ledger' "
