@@ -102,12 +102,17 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Release-time binary guard</name>
             <commit></commit>
             <created-from>plan-75-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-11T19:29:22.449+05:30</timestamp>
+                    <message>De-risk proven on REAL prod artifacts: assertBuildConstantsAreProd passes the generated Build.java (EXPERIMENTAL_BUILD=false, VERSION=0.3.17); guardLinuxLauncher execs the real linux-x64 prod launcher (--version + no experimental in --help); wrong-version case throws. 7 pure-logic unit tests. De-risk caught a wrapper bug (relative launcher path -&gt; absolute). Harden = wire guardLinuxLauncher + guardBuildConstants into PublishRelease.buildAndPackage (between jlink build and PackageRuntime).</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1,2</depends-on>
         </task>
