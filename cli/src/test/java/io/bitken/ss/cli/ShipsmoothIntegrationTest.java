@@ -80,16 +80,29 @@ public class ShipsmoothIntegrationTest {
         assertTrue(ev.payload().contains("agent-coded"));
     }
 
+    // plan-75 Task 3: the ledger group is experimental, so it registers only under
+    // --enable-experimental (mirroring worker/integrate). Its leaves work once the
+    // flag is set.
     @Test
     public void ledgerListViaCliExitsZero() throws Exception {
-        int exit = run("ledger", "list");
+        int exit = run("--enable-experimental", "ledger", "list");
         assertEquals(0, exit);
     }
 
     @Test
     public void ledgerVerifyViaCliExitsZero() throws Exception {
-        int exit = run("ledger", "verify");
+        int exit = run("--enable-experimental", "ledger", "verify");
         assertEquals(0, exit);
+    }
+
+    // plan-75 Task 3: the positive gating proof — without --enable-experimental the
+    // ledger group is not registered, so picocli rejects it (exit 2), exactly like
+    // integrate/worker. This is what keeps ledger out of the prod --help surface.
+    @Test
+    public void ledgerRefusedWithoutFlag() {
+        int exit = run("ledger", "list");
+        assertEquals(2, exit,
+            "experimental 'ledger' group must be refused (exit 2) without --enable-experimental");
     }
 
     @Test

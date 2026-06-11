@@ -57,7 +57,7 @@ class CommandTree {
             worker,
             new Claim(app.taskStore(), app.worktreeService(), app.eventLedger()),
             integrate,
-            new Ledger(app.eventLedger(), app.experimentalMode()),
+            new Ledger(app.eventLedger()),
         };
     }
 
