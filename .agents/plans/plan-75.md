@@ -150,45 +150,68 @@ always ships* — `--enable-experimental` and the experimental subcommands
 So Task 2 is not about a different *build*, only about baking
 `EXPERIMENTAL_BUILD = false` into the *released* binary.
 
-**Mechanism (decided): the release compiles the jlink image with the prod flag and
-writes it to a prod-specific folder; the release reads only that folder.** A dev
-build writes the image to `cli/build/jlink-image-<platform>`; the release writes to
-`cli/build/jlink-image-<platform>-prod`. Because the `-prod` folder is written only
-by a prod-flagged build, the release **cannot reuse a stale dev image** — clean
-provenance comes by construction from the path separation, not from a `clean` task or
-from trusting incremental invalidation. Core still compiles once per invocation; no
-parallel source set, no second artifact lineage.
+**Mechanism (decided): one prod signal — `-Pbuild.env=prod` — that every variant
+property derives from; the prod image goes to a prod-specific folder the release
+alone reads.** The release does **not** pass `-Pexperimental.enabled=false` (and must
+not grow a `-Pfoo=false` per future variant knob). Instead it passes a single
+`-Pbuild.env=prod`, and each build-variant property is *derived* from that one axis:
 
-Two coordinated changes drive this from a single flag, so the baked constant and the
-output path can never disagree:
+- `isProd = findProperty("build.env") == "prod"` (absent → dev, matching the
+  `gradle.properties` dev loop). Reuses the `build.env` name the render side already
+  uses (`Target.java` reads system property `build.env`).
+- `experimental.enabled` derives: `experimentalEnabled = !isProd`, **unless**
+  `experimental.enabled` is passed explicitly (keep it as a direct override so
+  existing callers / `TargetIntegrationTest` aren't broken; `build.env` is the
+  primary signal, `experimental.enabled` an explicit escape hatch).
+- the image output folder derives: `isProd → jlink-image-<platform>-prod`, else
+  `jlink-image-<platform>`.
+- any *future* variant property does the same: `if (isProd) PROD_VAL else DEV_VAL`,
+  never its own caller-passed `-Pbar=false`.
 
-- `cli/build.gradle.kts` — `image_*` derives its output dir from the experimental
-  flag: `experimental.enabled=false` → `jlink-image-<platform>-prod`, otherwise
-  `jlink-image-<platform>`. (The same `-Pexperimental.enabled=false` already flips
-  the baked `Build.java` via core's `generateBuildConstants`, input-tracked in Task 1.)
-- `PublishRelease` — `jlinkBuildCommand()` passes `-Pexperimental.enabled=false`, and
-  `jlinkImagePath()` resolves to the `-prod` directory. The release reads only the
-  `-prod` image; a dev image in the non-`-prod` directory is invisible to it.
+So one flag (`-Pbuild.env=prod`) drives the baked `Build.EXPERIMENTAL_BUILD=false`
+(via core's `generateBuildConstants`, input-tracked in Task 1) **and** the `-prod`
+folder, and they cannot disagree. Because the `-prod` folder is written only by a
+prod build, the release **cannot reuse a stale dev image** — clean provenance by path,
+not by a `clean` task or by trusting incremental invalidation. Core compiles once per
+invocation; no parallel source set.
 
-Render side needs **no change**: `claudeProdSpec`/`geminiProdSpec`/windows specs in
-`skills/pkg/build.gradle.kts` hard-code `experimentalEnabled = false` in the
-`RenderSpec`, and `Target.java` reads that, never the Gradle property — so
-`assembleProdCommand` / `assembleWindowsCommand` are already prod. `packageRuntime_*`
-package an already-built image and don't recompile core; they read whatever path
-they're handed, so the `-prod` path the release passes is sufficient (doc note, no
+**What `EXPERIMENTAL_BUILD` controls (clarified):** experimental *code always ships* —
+`--enable-experimental` and the experimental subcommands (`ledger`/`worker`/`claim`/
+`integrate`) are present and runnable in every build. `Build.EXPERIMENTAL_BUILD` has
+exactly one effect (`CommandTree.java:77`, `.hidden(!Build.EXPERIMENTAL_BUILD)`):
+whether `--enable-experimental` is *shown in `--help`*. Prod hides the flag; it does
+not strip the feature.
+
+Touch points:
+
+- `core/build.gradle.kts` — derive `experimentalEnabled` from `build.env` (with the
+  explicit `experimental.enabled` override preserved); `pluginVersion` guard unchanged.
+- `cli/build.gradle.kts` — derive both `experimentalEnabled` and the `image_*` output
+  folder suffix from `build.env`.
+- `PublishRelease` — `jlinkBuildCommand()` passes `-Pbuild.env=prod` (not the
+  experimental flag); `jlinkImagePath()` resolves to the `-prod` directory.
+
+Render side needs **no change**: `claudeProdSpec`/windows specs hard-code
+`experimentalEnabled = false` in the `RenderSpec`; `assembleProdCommand` /
+`assembleWindowsCommand` are already prod. `packageRuntime_*` package an already-built
+image at whatever path they're handed, so the `-prod` path suffices (doc note, no
 hard-wire — confirm in harden).
 
 Verify:
-- `PublishRelease.jlinkBuildCommand()` carries `-Pexperimental.enabled=false`, and
-  `jlinkImagePath()` resolves to a `-prod` directory (unit tests).
-- `image_<host> -Pexperimental.enabled=false` writes `jlink-image-<host>-prod` with a
-  `Build.java` of `EXPERIMENTAL_BUILD = false` and the configured version.
-- A plain dev `image_<host>` still writes `jlink-image-<host>` with
-  `EXPERIMENTAL_BUILD = true`, and leaves the `-prod` directory untouched/absent.
+- `PublishRelease.jlinkBuildCommand()` carries `-Pbuild.env=prod` (and no
+  `-Pexperimental.enabled`); `jlinkImagePath()` resolves to a `-prod` directory (unit
+  tests).
+- `image_<host> -Pbuild.env=prod` writes `jlink-image-<host>-prod` with a `Build.java`
+  of `EXPERIMENTAL_BUILD = false` and the configured version; the staged launcher's
+  `--help` hides `--enable-experimental`.
+- A plain dev `image_<host>` (no `build.env`) writes `jlink-image-<host>` with
+  `EXPERIMENTAL_BUILD = true` and leaves the `-prod` directory untouched/absent.
+- An explicit `-Pexperimental.enabled=false` still overrides (back-compat).
 
-Medium risk: the `image_*` output path now forks on a property and `PublishRelease`'s
-`jlinkImagePath` must track it in lockstep — a cross-module (`cli`↔`packaging`) path
-contract that plan-74-era output wiring made fragile.
+Medium risk: introduces a new `build.env` Gradle-property axis read in two modules,
+and the `image_*` output path + `PublishRelease.jlinkImagePath` must track it in
+lockstep — a cross-module (`core`/`cli`/`packaging`) contract where plan-74-era output
+wiring was fragile.
 
 ### Task 3: Gate the `ledger` subcommand behind experimental mode [Low]
 
