@@ -64,7 +64,9 @@ class CommandTree {
     private static CommandSpec buildRootSpec() {
         CommandSpec spec = CommandSpec.create();
         spec.name("shipsmooth");
-        spec.usageMessage().description("CLI to manage tasks, subagents and ledger for shipsmooth");
+        // Description must not name experimental surface (e.g. the ledger group) — it
+        // shows in prod --help where those commands are hidden (plan-75 no-leakage rule).
+        spec.usageMessage().description("CLI to manage tasks and subagents for shipsmooth");
         spec.version(Build.VERSION);
         spec.mixinStandardHelpOptions(true);
         // Build is generated at compile time from

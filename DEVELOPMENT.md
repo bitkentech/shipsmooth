@@ -159,12 +159,26 @@ Releases are orchestrated by `PublishRelease.java` in `packaging`, wrapped as th
 `PublishRelease` performs these steps:
 1. Asserts clean working tree and that tag `v<version>` does not exist
 2. Bumps `plugin.version` in `gradle.properties` (the single version source) and commits
-3. Builds the full plugin (`./gradlew assembleClaudeProd`) and the 5-platform jlink images
-4. Packages the runtime zip (`shipsmooth-<version>-linux-x64.zip`)
-5. Checks out the `releases` branch, replaces `dist/` with the new build output
-6. Commits, tags `v<version>`, pushes `releases` branch and tag
-7. Creates a GitHub Release and uploads the runtime zip as an asset
-8. Returns to the original branch
+3. Builds the full plugin (`./gradlew assembleClaudeProd`) and the 4-platform jlink images
+   with `-Pbuild.env=prod` (see *Prod builds* below) — **you do not pass any flag**; the
+   release path supplies it
+4. **Runs the release guard:** verifies the `EXPERIMENTAL_BUILD`/`VERSION` constants baked
+   into every shipped image and execs the linux-x64 launcher's `--version`/`--help`. The
+   release aborts here if a binary is stale or leaks the experimental surface
+5. Packages the runtime zip (`shipsmooth-<version>-linux-x64.zip`)
+6. Checks out the `releases` branch, replaces `dist/` with the new build output
+7. Commits, tags `v<version>`, pushes `releases` branch and tag
+8. Creates a GitHub Release and uploads the runtime zip as an asset
+9. Returns to the original branch
+
+#### Prod builds (`-Pbuild.env=prod`)
+
+`build.env` is the single prod/dev signal. A prod build bakes `EXPERIMENTAL_BUILD=false`
+(hiding `--enable-experimental` and the experimental subcommands from `--help`) **and**
+writes each jlink image to a `-prod` folder (`cli/build/jlink-image-<platform>-prod`) that
+the release reads exclusively — so a release can never reuse a stale dev image. `publishRelease`
+passes `-Pbuild.env=prod` for you; a plain `./gradlew` build (no `build.env`) is a dev build.
+Any *manual* image/assemble invocation intended for release must pass `-Pbuild.env=prod`.
 
 Structure of the `releases` branch:
 ```
@@ -251,8 +265,10 @@ The `-fixN` suffix is only a label in the release commit message — do **not** 
 as it bumps `gradle.properties` and bakes the suffix into the build artifacts.
 
 ```bash
-# Step 1: rebuild the jlink image (only needed if shipsmooth changed)
-./gradlew :cli:image_windows-x64
+# Step 1: rebuild the jlink image as PROD (only needed if shipsmooth changed).
+# -Pbuild.env=prod bakes EXPERIMENTAL_BUILD=false and writes to the -prod folder;
+# omitting it would ship a dev binary that leaks the experimental surface.
+./gradlew :cli:image_windows-x64 -Pbuild.env=prod
 
 # Step 2: build the Windows plugin artifacts (plugin.version stays at e.g. 0.3.10)
 ./gradlew assembleWindows -Pbuild.outputDir=build-windows
@@ -268,7 +284,8 @@ git rm -rf --quiet .
 # Note: cp -r with . skips hidden dirs — copy .claude-plugin separately
 cp -r /path/to/shipsmooth/build-windows/. .
 cp -r /path/to/shipsmooth/build-windows/.claude-plugin .
-cp -r /path/to/shipsmooth/cli/build/jlink-image-windows-x64 runtime
+# Read the PROD image folder (-prod), not the dev one:
+cp -r /path/to/shipsmooth/cli/build/jlink-image-windows-x64-prod runtime
 
 # Step 5: commit and force-push
 git add .

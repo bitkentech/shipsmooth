@@ -76,6 +76,32 @@ public class ProdSurfaceIntegrationTest {
         }
     }
 
+    /**
+     * plan-75: the root usage description is prose that shows even in prod --help, so it
+     * must not advertise an experimental command (it once read "...tasks, subagents and
+     * ledger...", naming the now-experimental ledger group).
+     */
+    @Test
+    public void prodHelpDescriptionNamesNoExperimentalCommand() {
+        int exit = runProd("--help");
+        assertEquals(0, exit);
+        String description = firstDescriptionLine(outBuf.toString());
+        for (String name : EXPERIMENTAL_NAMES) {
+            assertFalse(description.toLowerCase().contains(name),
+                "prod --help description must not name experimental command '" + name
+                    + "'; got: " + description);
+        }
+    }
+
+    /** The usage description line (the prose between the Usage: line and the options). */
+    private static String firstDescriptionLine(String helpOutput) {
+        String[] lines = helpOutput.split("\\R");
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].startsWith("Usage:") && i + 1 < lines.length) return lines[i + 1];
+        }
+        return "";
+    }
+
     private static boolean containsSubcommandLine(String helpOutput, String subcommand) {
         for (String line : helpOutput.split("\\R")) {
             if (line.trim().startsWith(subcommand + " ") || line.trim().equals(subcommand)) return true;
