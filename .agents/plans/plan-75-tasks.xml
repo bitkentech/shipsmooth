@@ -4,7 +4,7 @@
     <plan-version>plan-75-v6</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-11</created>
     </metadata>
     <tasks>
@@ -139,6 +139,11 @@
         <update>
             <timestamp>2026-06-11T11:09:58.232+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-11T20:39:41.778+05:30</timestamp>
+            <message>All 6 tasks agent-coded and verified on real binaries. Prod build leak + stale-version defects fixed; ledger gated; release guard added; docs updated. Ships as 0.3.18 (human cuts release).</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
