@@ -27,31 +27,43 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`Os.Posix.hookCommand()` writes the script (side-effect)</name>
-            <commit></commit>
+            <commit>90f5d3e454846d989854155c8a439255db9e45f1</commit>
             <created-from>plan-76-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-11T22:36:40.288+05:30</timestamp>
+                    <message>Subsumed into Task 1: Os.Posix.hookCommand copies install-shipsmooth.sh next to hooks.json (classpath resource, mirrors Os.Windows .bat) — implemented and tested as part of the Task 1 vertical slice (commit 90f5d3e).</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Wire prod variants' `pluginHookCommand` to the sh invocation</name>
-            <commit></commit>
+            <commit>90f5d3e454846d989854155c8a439255db9e45f1</commit>
             <created-from>plan-76-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-11T22:36:40.921+05:30</timestamp>
+                    <message>Subsumed into Task 1: claude/gemini prod pluginHookCommand wired to sh ".../install-shipsmooth.sh" shipsmooth &lt;version&gt;; verified via real renderClaudeProd/renderGeminiProd (commit 90f5d3e).</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Keep dev on Node, lock the split with a test</name>
-            <commit></commit>
+            <commit>2eb10535254403432c8286b48a55e052619e75a2</commit>
             <created-from>plan-76-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -60,12 +72,17 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Docs + version bump + release-readiness note</name>
-            <commit></commit>
+            <commit>9f0ed3140f3f9d3e61b85be868df1c65d01a2dbe</commit>
             <created-from>plan-76-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-11T22:43:07.315+05:30</timestamp>
+                    <message>DEFERRED post-release verification (human, on real macOS): after the v0.3.19 release is cut, install the plugin on a Mac and confirm (a) ls -l ~/.cache/shipsmooth/runtime-0.3.19/runtime/lib/jspawnhelper shows -rwxr-xr-x, and (b) ~/.cache/shipsmooth/runtime-0.3.19/bin/shipsmooth plan resume --plan 75 exits 0 with no OpenJ9 EACCES. This proves macOS unzip restores exec bits (only Linux Info-ZIP was provable in-repo).</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
     </tasks>
