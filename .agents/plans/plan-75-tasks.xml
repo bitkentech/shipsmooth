@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>75</plan>
-    <plan-version>plan-75-v2</plan-version>
+    <plan-version>plan-75-v3</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -22,8 +22,8 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>de-risked</status>
-            <name>Bake prod constants into the release build path</name>
+            <status>in-progress</status>
+            <name>Release depends on a prod-only jlink output</name>
             <commit></commit>
             <created-from>plan-75-v1</created-from>
             <closed-at-version></closed-at-version>
@@ -33,7 +33,13 @@
                     <message>De-risk draft ready for review. Finding: jlinkBuildCommand is the sole release-side core compile; render tasks already hard-wire prod via RenderSpec so need no change. Flag proven to flow into Build.java.</message>
                 </comment>
             </comments>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-11T12:30:35.147+05:30</timestamp>
+                    <message>Mechanism pivot at plan-75-v3: prod-only jlink output (image_*_prod) the release depends on, replacing the -Pexperimental.enabled=false flag draft (reverted in b92e692). Render side already prod via RenderSpec; scope narrowed to core-&gt;jlink chain.</message>
+                </deviation>
+            </deviations>
             <depends-on>1</depends-on>
         </task>
         <task>
