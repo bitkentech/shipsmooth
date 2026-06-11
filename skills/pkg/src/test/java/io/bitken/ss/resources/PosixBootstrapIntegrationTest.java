@@ -97,6 +97,47 @@ class PosixBootstrapIntegrationTest {
     }
 
     /**
+     * Gemini prod locates the script via {@code ${extensionPath}} (not CLAUDE_PLUGIN_ROOT)
+     * — the gemini-specific plugin-root placeholder — and still copies the script.
+     */
+    @Test
+    void prodGeminiRender_bootstrapsViaShScript_withExtensionPath() throws Exception {
+        setProdPosixProps();
+        System.setProperty("build.platform", "gemini");
+        System.setProperty("plugin.hook.command",
+            "sh \"${extensionPath}/hooks/install-shipsmooth.sh\" shipsmooth 0.2.0");
+        Target.main(new String[]{});
+
+        String hooksJson = Files.readString(tempDir.resolve("hooks/hooks.json"));
+        assertTrue(hooksJson.contains("install-shipsmooth.sh"),
+            "gemini prod hook must invoke the sh installer");
+        assertTrue(hooksJson.contains("extensionPath"),
+            "gemini hook must locate the script via extensionPath");
+        assertFalse(hooksJson.contains("CLAUDE_PLUGIN_ROOT"),
+            "gemini hook must not use the claude placeholder");
+        assertFalse(hooksJson.contains("session-start.js"),
+            "gemini prod hook must not reference the Node entry point");
+        assertTrue(Files.exists(tempDir.resolve("hooks/install-shipsmooth.sh")),
+            "gemini prod render must copy the script");
+    }
+
+    /** Gemini dev, like claude dev, keeps the Node bootstrap this cycle. */
+    @Test
+    void devGeminiRender_keepsNodeBootstrap() throws Exception {
+        setDevPosixProps();
+        System.setProperty("build.platform", "gemini");
+        System.setProperty("plugin.hook.command",
+            "node \"${extensionPath}/dist/session-start.js\"");
+        Target.main(new String[]{});
+
+        String hooksJson = Files.readString(tempDir.resolve("hooks/hooks.json"));
+        assertTrue(hooksJson.contains("session-start.js"),
+            "gemini dev hook must keep the Node entry point");
+        assertFalse(hooksJson.contains("install-shipsmooth.sh"),
+            "gemini dev hook must NOT use the sh installer this cycle");
+    }
+
+    /**
      * End-to-end: render prod, then actually RUN the copied script against a synthetic
      * "release zip" served over file://. Proves the real download -> unzip -> chmod -> mv
      * flow and, critically, that unzip restores the stored +x bit (the OpenJ9 jspawnhelper
