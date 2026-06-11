@@ -66,10 +66,20 @@ fun runtimeModulePath(): String {
     return (listOf(cliJar, core) + depJars).joinToString(":") { it.absolutePath }
 }
 
+// Prod releases pass -Pbuild.env=prod (the single prod signal — see core's
+// generateBuildConstants and plan-75 Task 2). A prod image bakes
+// EXPERIMENTAL_BUILD=false (hiding --enable-experimental from --help) AND lands in a
+// prod-specific folder (jlink-image-<platform>-prod), so the release reads only its
+// own artifact and can never reuse a stale dev image — clean provenance by path. The
+// SAME build.env drives both the baked constant (via core) and this suffix, so they
+// cannot disagree. experimental.enabled stays an explicit override for back-compat.
+val isProd = (findProperty("build.env") as String?) == "prod"
+val imageDirSuffix = if (isProd) "-prod" else ""
+
 platformJmods.forEach { (platform, jmods) ->
     tasks.register<Exec>("image_$platform") {
         dependsOn("jar", shadedCoreJarTask)
-        val outDir = layout.buildDirectory.dir("jlink-image-$platform")
+        val outDir = layout.buildDirectory.dir("jlink-image-$platform$imageDirSuffix")
         outputs.dir(outDir)
         doFirst { delete(outDir) }
         executable = "$semeruHome/bin/jlink"
