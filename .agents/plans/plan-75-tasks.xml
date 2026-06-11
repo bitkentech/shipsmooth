@@ -79,12 +79,17 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Remove ledger references from the base `start` skill</name>
             <commit></commit>
             <created-from>plan-75-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-11T18:37:53.597+05:30</timestamp>
+                    <message>De-risk proven on real renders: prod claude/gemini/windows base start skills have 0 ledger refs + 0 experimental-surface mentions; dev keeps the paragraph. Also unified the render's experimentalEnabled to derive from buildEnv via buildSrc (was a hand-coded per-variant field — the same manual-sync divergence Task 2 fixed for core). Harden = full TargetIntegrationTest sweep + dedicated assertions + check no other PluginModel consumer broke.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>3</depends-on>
         </task>
