@@ -156,17 +156,16 @@ alone reads.** The release does **not** pass `-Pexperimental.enabled=false` (and
 not grow a `-Pfoo=false` per future variant knob). Instead it passes a single
 `-Pbuild.env=prod`, and each build-variant property is *derived* from that one axis:
 
-- `isProd = findProperty("build.env") == "prod"` (absent → dev, matching the
-  `gradle.properties` dev loop). Reuses the `build.env` name the render side already
-  uses (`Target.java` reads system property `build.env`).
-- `experimental.enabled` derives: `experimentalEnabled = !isProd`, **unless**
-  `experimental.enabled` is passed explicitly (keep it as a direct override so
-  existing callers / `TargetIntegrationTest` aren't broken; `build.env` is the
-  primary signal, `experimental.enabled` an explicit escape hatch).
-- the image output folder derives: `isProd → jlink-image-<platform>-prod`, else
+- The `build.env` rule lives once in buildSrc `BuildEnv.kt` (finalised in Task 4 as a
+  typed `enum class BuildEnv`): `isProdBuild()` / `experimentalEnabled()` derive from
+  it; absent → dev (the dev loop), so there is **no** separate `experimental.enabled`
+  property (a `gradle.properties` value would mask `build.env`, since `findProperty`
+  can't distinguish it from a `-P`). `experimental.enabled` is removed from
+  `gradle.properties`.
+- the image output folder derives: prod → `jlink-image-<platform>-prod`, else
   `jlink-image-<platform>`.
-- any *future* variant property does the same: `if (isProd) PROD_VAL else DEV_VAL`,
-  never its own caller-passed `-Pbar=false`.
+- any *future* variant property does the same: derive from `build.env` via
+  `BuildEnv.kt`, never its own caller-passed `-Pbar=false`.
 
 So one flag (`-Pbuild.env=prod`) drives the baked `Build.EXPERIMENTAL_BUILD=false`
 (via core's `generateBuildConstants`, input-tracked in Task 1) **and** the `-prod`
@@ -230,15 +229,35 @@ always present.
 
 *Depends-on: 3*
 
-The base skill currently documents `ledger list` / `ledger verify` and the
-ledger/objects mechanics in the `[Local]` execution section. Condition those
-template fragments on `experimental.enabled` so the base (`start`) payload has
-zero ledger references while `start-dev` keeps them. Audit the full rendered
-base payload (all variants: claude prod, gemini, windows) for any other
-experimental leakage while in there.
+The base skill documents the ledger/objects mechanics in one paragraph of the
+`[Local]` execution section (`skills/shared/workflow/phase2-execute.jte.md`),
+including `ledger list` / `ledger verify`. After Task 3 those commands are
+experimental, so a prod skill that documents them points the user at commands the
+prod CLI won't expose — the leak. Wrap that fragment in
+`@if(model.experimentalEnabled())` so the base (`start`) payload has zero ledger
+references while `start-dev` keeps them. Audit the full rendered base payload (all
+prod variants: claude, gemini, windows) for any other experimental leakage.
 
-Medium risk: JTE template conditioning across 5 render variants is where
-plan-71-era regressions have repeatedly hidden.
+**Scope expansion (settled in de-risk):** the render's `experimentalEnabled` was a
+*hand-coded per-variant `RenderSpec` field*, NOT derived from `build.env` like core —
+the same manual-sync divergence Task 2 fixed for core (and that the 0.3.17 leak grew
+from). So Task 4 also **unifies the render's experimental source onto the shared
+build-env rule**: model build env as a typed `enum class BuildEnv(DEV/PROD)` in
+buildSrc `BuildEnv.kt` (`.value` = wire string, `.experimentalEnabled = (this==DEV)`,
+`from(String?)` = null→DEV / unknown→`GradleException`). `RenderSpec.buildEnv` becomes
+`BuildEnv` (type-safe), `experimentalEnabled` derives from it (field removed from the
+5 specs), and core/cli `isProdBuild()`/`experimentalEnabled()` route through the same
+enum. To reach the template, thread `experimentalEnabled` onto `PluginModel`/`Target`
+so `@if(model.experimentalEnabled())` works.
+
+Verify:
+- Prod `start` skill (claude/gemini/windows) has zero ledger refs and zero
+  experimental-surface mentions; dev `start-dev` keeps the ledger paragraph.
+- `-Pbuild.env=<typo>` fails loudly; absent `build.env` → dev.
+
+Medium risk: JTE template conditioning across the render variants is where
+plan-71-era regressions have repeatedly hidden; plus the `PluginModel` record and
+`RenderSpec` signature changes ripple to their test fixtures.
 
 ### Task 5: Release-time binary guard [Medium]
 
