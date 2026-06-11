@@ -157,7 +157,6 @@ val claudeDevSpec = RenderSpec(
     jlinkDir = devJlinkDir,
     pluginRepoName = "shipsmooth",
     outputDir = renderOutputDir("claude-dev"),
-    experimentalEnabled = true,
     pluginHookCommand = "node \"\${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"",
     // ObjectFactory for RenderSpec's independent constant providers. The .copy()
     // chain below (gemini-dev, prod, windows) inherits this same instance.
@@ -230,12 +229,13 @@ val prodDescription = "Agent coding workflow with plan-before-implement discipli
     "TDD, vertical slices, Linear integration, and immutable git-based plan versioning."
 
 val claudeProdSpec = claudeDevSpec.copy(
+    // buildEnv=prod now AUTOMATICALLY derives experimentalEnabled=false (RenderSpec
+    // derives it from buildEnv) — no separate field to keep in sync.
     buildEnv = "prod",
     pluginDescription = prodDescription,
     skillFrontmatter = "",
     jlinkDir = constJlink("/dev/null"),
     outputDir = layout.buildDirectory.dir("render/claude-prod").get().asFile.path,
-    experimentalEnabled = false,
 )
 
 val geminiProdSpec = claudeProdSpec.copy(

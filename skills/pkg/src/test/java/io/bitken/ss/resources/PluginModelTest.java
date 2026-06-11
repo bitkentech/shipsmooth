@@ -11,7 +11,7 @@ class PluginModelTest {
             "shipsmooth", "0.3.10", "desc", "start",
             Os.POSIX.cliBinPath("shipsmooth", "0.3.10", Platform.CLAUDE.cacheSubdir("shipsmooth", Env.PROD)),
             "", Platform.CLAUDE.skillFragmentDir(), false,
-            Os.POSIX, Env.PROD, "", null
+            Os.POSIX, Env.PROD, "", null, false
         );
     }
 
@@ -20,7 +20,7 @@ class PluginModelTest {
             "shipsmooth", "0.3.10", "desc", "start",
             Os.WINDOWS.cliBinPath("shipsmooth", "0.3.10", Platform.CLAUDE.cacheSubdir("shipsmooth", Env.PROD)),
             "", Platform.CLAUDE.skillFragmentDir(), false,
-            Os.WINDOWS, Env.PROD, "", "shipsmooth-windows"
+            Os.WINDOWS, Env.PROD, "", "shipsmooth-windows", false
         );
     }
 
@@ -64,7 +64,7 @@ class PluginModelTest {
             "shipsmooth", "0.3.10", "desc", "start",
             Os.POSIX.cliBinPath("shipsmooth", "0.3.10", Platform.GEMINI.cacheSubdir("shipsmooth", Env.PROD)),
             "", Platform.GEMINI.skillFragmentDir(), true,
-            Os.POSIX, Env.PROD, "", null
+            Os.POSIX, Env.PROD, "", null, false
         );
         assertTrue(m.isGemini());
     }

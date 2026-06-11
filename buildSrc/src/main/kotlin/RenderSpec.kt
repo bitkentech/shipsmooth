@@ -35,10 +35,13 @@ data class RenderSpec(
     val jlinkDir: Provider<String>,
     val pluginRepoName: String,
     val outputDir: String,
-    val experimentalEnabled: Boolean,
     val pluginHookCommand: String,
     val objects: ObjectFactory,
 ) {
+    // Derived from buildEnv via the one shared rule (buildSrc BuildEnv.kt), NOT a
+    // separately-set field — so a variant can never declare buildEnv=prod yet
+    // experimentalEnabled=true (the manual-sync divergence behind the 0.3.17 leak).
+    val experimentalEnabled: Boolean get() = experimentalEnabledFor(buildEnv)
     /**
      * The -D system properties to hand io.bitken.ss.resources.Target, each as a
      * Provider<String> so the render task can resolve them lazily (one uniform

@@ -22,3 +22,12 @@ fun Project.isProdBuild(): Boolean =
  * shows it. The experimental *code* ships either way — this only toggles visibility.
  */
 fun Project.experimentalEnabled(): Boolean = !isProdBuild()
+
+/**
+ * The same rule, keyed on an explicit env string ("dev"/"prod") rather than the
+ * `build.env` project property — for the render variants (RenderSpec), each of which
+ * carries its own `buildEnv`. Keeping this here means core's build and the render
+ * variants derive experimental-ness from ONE definition instead of hand-coding it
+ * per variant (the manual-sync divergence that the 0.3.17 leak grew from).
+ */
+fun experimentalEnabledFor(buildEnv: String): Boolean = buildEnv != "prod"
