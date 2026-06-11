@@ -94,20 +94,48 @@ code only.
 
 ## Tasks
 
-### Task 1: Track `expand()` values as inputs of `generateBuildConstants` [Low]
+### Task 1: Track `expand()` values as inputs of `generateBuildConstants` + harden its defaults [Low]
 
-Add `inputs.property("experimentalEnabled", experimentalEnabled)` and
-`inputs.property("pluginVersion", pluginVersion)` to the
-`generateBuildConstants` task in `core/build.gradle.kts`.
+Three changes to the `generateBuildConstants` wiring in `core/build.gradle.kts`,
+all in the same block (lines 42–55):
 
-Low risk (two-line, well-understood Gradle idiom) but listed first as a hard
-technical dependency of Task 2: without it, no release-path property override
-has any effect on an incremental build.
+1. **Track the inputs.** Add `inputs.property("experimentalEnabled", experimentalEnabled)`
+   and `inputs.property("pluginVersion", pluginVersion)` to the task so a change
+   to either value invalidates the up-to-date / build-cache key and regenerates
+   `Build.java` (root-cause fix for the stale-constants defect). `Boolean` and
+   `String` are both `Serializable`, so the simple-value `inputs.property` form is
+   the canonical idiom; both vals are resolved eagerly at line 42–43, so the same
+   resolved values feed both the fingerprint and `expand()` — no divergence path.
 
-Verify: `./gradlew :core:generateBuildConstants -Pexperimental.enabled=false`
-regenerates `Build.java` with `EXPERIMENTAL_BUILD = false`; flipping back
-regenerates again; same for a `plugin.version` change; unchanged properties stay
-`UP-TO-DATE`.
+2. **Make the experimental default safe.** Flip the absent-property fallback from
+   `?: true` to `?: false` on line 42. This brings `core` into line with the rest
+   of the build, which already defaults experimental to `false`
+   (`skills/pkg/.../Target.java` uses `System.getProperty("experimental.enabled", "false")`).
+   Dev is unaffected: `gradle.properties` explicitly sets `experimental.enabled=true`,
+   so the dev loop reads the properties file, never the code default. Only the
+   property-*absent* edge case changes — and it changes to the safe prod value.
+
+3. **Fail loud on a missing version.** Replace the stale-literal fallback
+   `?: "0.3.14"` on line 43 with a configuration-time `throw GradleException(...)`
+   when `plugin.version` is unset. A release stamping a wrong/old version is the
+   exact failure class this plan kills; in the real build `gradle.properties`
+   always supplies it, so this only fires on a genuine misconfiguration — and then
+   it should stop the build, not silently stamp `0.3.14`. Configuration-time
+   (not `doFirst`) so it fails fast before any task runs.
+
+Low risk (small, well-understood Gradle idioms) but listed first as a hard
+technical dependency of Task 2: without change 1, no release-path property
+override has any effect on an incremental build.
+
+Verify:
+- `./gradlew :core:generateBuildConstants -Pexperimental.enabled=false`
+  regenerates `Build.java` with `EXPERIMENTAL_BUILD = false`; flipping back
+  regenerates again; same for a `plugin.version` change; unchanged properties
+  stay `UP-TO-DATE`.
+- A normal build (`gradle.properties` present) still defaults experimental
+  correctly and stamps the configured version.
+- Invoking with `plugin.version` removed fails at configuration with the
+  GradleException message (not a silent `0.3.14` stamp).
 
 ### Task 2: Bake prod constants into the release build path [Medium]
 
