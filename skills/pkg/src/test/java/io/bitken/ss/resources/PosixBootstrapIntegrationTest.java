@@ -59,6 +59,9 @@ class PosixBootstrapIntegrationTest {
             "prod Posix hook must NOT reference the Node entry point");
         assertTrue(hooksJson.contains("CLAUDE_PLUGIN_ROOT"),
             "claude hook must locate the script via CLAUDE_PLUGIN_ROOT");
+        // name + version are passed as args, not baked into the script body.
+        assertTrue(hooksJson.contains("shipsmooth 0.2.0"),
+            "hook must pass the cache-subdir name and version as args");
 
         Path script = tempDir.resolve("hooks/install-shipsmooth.sh");
         assertTrue(Files.exists(script), "install-shipsmooth.sh must be emitted next to hooks.json");
@@ -68,7 +71,8 @@ class PosixBootstrapIntegrationTest {
         assertTrue(sh.contains("curl"), "installer must download with curl (no Node, no wget)");
         assertFalse(sh.contains("wget"), "installer must not use wget (absent on stock macOS)");
         assertTrue(sh.contains("unzip"), "installer must extract with unzip");
-        assertTrue(sh.contains("0.2.0"), "installer must bake the runtime version");
+        // The script is static (args-driven), so the version is NOT baked into its body.
+        assertFalse(sh.contains("0.2.0"), "static installer must not bake the version");
     }
 
     /**
@@ -100,9 +104,9 @@ class PosixBootstrapIntegrationTest {
         System.setProperty("skill.frontmatter", "");
         System.setProperty("shipsmooth.jlink.dir", "/dev/null");
         System.setProperty("experimental.enabled", "false");
-        // Mirrors build.gradle.kts claudeProdSpec after Task 3.
+        // Mirrors build.gradle.kts claudeProdSpec after Task 3 (name + version as args).
         System.setProperty("plugin.hook.command",
-            "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/install-shipsmooth.sh\"");
+            "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth 0.2.0");
     }
 
     private void setDevPosixProps() {

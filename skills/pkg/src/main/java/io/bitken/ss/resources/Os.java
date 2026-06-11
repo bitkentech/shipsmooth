@@ -3,11 +3,15 @@ package io.bitken.ss.resources;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 public sealed interface Os permits Os.Posix, Os.Windows {
 
     Os POSIX   = new Posix();
     Os WINDOWS = new Windows();
+
+    /** Filename of the Node-free POSIX bootstrap script bundled as a classpath resource. */
+    String INSTALL_SCRIPT_NAME = "install-shipsmooth.sh";
 
     String launcherFileName();
     String javaExe();
@@ -42,8 +46,27 @@ public sealed interface Os permits Os.Posix, Os.Windows {
         }
 
         @Override
-        public String hookCommand(Path hooksDir, String repoName, String pluginName, String version) {
-            return System.getProperty("plugin.hook.command", "node \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"");
+        public String hookCommand(Path hooksDir, String repoName, String pluginName, String version) throws IOException {
+            String command = System.getProperty("plugin.hook.command",
+                "node \"${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"");
+            // When the hook bootstraps via the Node-free sh installer (prod variants),
+            // copy the static script next to hooks.json — the Posix sibling of the
+            // Windows install-runtime.bat. The hook passes name+version as args, so the
+            // script itself is a plain, lintable file with no baked values.
+            if (command.contains(INSTALL_SCRIPT_NAME)) {
+                copyInstallScript(hooksDir);
+            }
+            return command;
+        }
+
+        private void copyInstallScript(Path hooksDir) throws IOException {
+            Files.createDirectories(hooksDir);
+            try (var in = Os.class.getResourceAsStream("/" + INSTALL_SCRIPT_NAME)) {
+                if (in == null) {
+                    throw new IOException("bundled " + INSTALL_SCRIPT_NAME + " not found on classpath");
+                }
+                Files.copy(in, hooksDir.resolve(INSTALL_SCRIPT_NAME), StandardCopyOption.REPLACE_EXISTING);
+            }
         }
     }
 

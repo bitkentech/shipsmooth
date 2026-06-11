@@ -236,6 +236,11 @@ val claudeProdSpec = claudeDevSpec.copy(
     skillFrontmatter = "",
     jlinkDir = constJlink("/dev/null"),
     outputDir = layout.buildDirectory.dir("render/claude-prod").get().asFile.path,
+    // plan-76: prod bootstraps without Node. The hook runs the static POSIX installer
+    // (Os.Posix.hookCommand copies it next to hooks.json), passing the cache-subdir name
+    // and version as args. Dev keeps the node command (it needs the TS local-jlink branch).
+    pluginHookCommand =
+        "sh \"\${CLAUDE_PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion",
 )
 
 val geminiProdSpec = claudeProdSpec.copy(
@@ -251,7 +256,8 @@ val geminiProdSpec = claudeProdSpec.copy(
     // diverge — parity diff caught this. Keep it empty.
     jlinkDir = constJlink(""),
     outputDir = layout.buildDirectory.dir("render/gemini-prod").get().asFile.path,
-    pluginHookCommand = "node \"\${extensionPath}/dist/session-start.js\"",
+    pluginHookCommand =
+        "sh \"\${extensionPath}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion",
 )
 
 // buildOs="windows" so Target renders the Windows cliBin
