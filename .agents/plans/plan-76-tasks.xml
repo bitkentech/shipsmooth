@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>76</plan>
+    <plan-version>plan-76-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-11</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>POSIX `install-shipsmooth.sh` generator + script</name>
+            <commit>90f5d3e454846d989854155c8a439255db9e45f1</commit>
+            <created-from>plan-76-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-11T22:10:24.791+05:30</timestamp>
+                    <message>De-risk draft ready for review: static install-shipsmooth.sh (CLI args, no JTE/no baked values). Validated end-to-end on Linux — installs runtime, jspawnhelper +x preserved, launcher runs git-shelling cmd, idempotent rerun no-ops.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>`Os.Posix.hookCommand()` writes the script (side-effect)</name>
+            <commit>90f5d3e454846d989854155c8a439255db9e45f1</commit>
+            <created-from>plan-76-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-11T22:36:40.288+05:30</timestamp>
+                    <message>Subsumed into Task 1: Os.Posix.hookCommand copies install-shipsmooth.sh next to hooks.json (classpath resource, mirrors Os.Windows .bat) — implemented and tested as part of the Task 1 vertical slice (commit 90f5d3e).</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Wire prod variants' `pluginHookCommand` to the sh invocation</name>
+            <commit>90f5d3e454846d989854155c8a439255db9e45f1</commit>
+            <created-from>plan-76-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-11T22:36:40.921+05:30</timestamp>
+                    <message>Subsumed into Task 1: claude/gemini prod pluginHookCommand wired to sh ".../install-shipsmooth.sh" shipsmooth &lt;version&gt;; verified via real renderClaudeProd/renderGeminiProd (commit 90f5d3e).</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Keep dev on Node, lock the split with a test</name>
+            <commit>2eb10535254403432c8286b48a55e052619e75a2</commit>
+            <created-from>plan-76-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Docs + version bump + release-readiness note</name>
+            <commit>9f0ed3140f3f9d3e61b85be868df1c65d01a2dbe</commit>
+            <created-from>plan-76-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-11T22:43:07.315+05:30</timestamp>
+                    <message>DEFERRED post-release verification (human, on real macOS): after the v0.3.19 release is cut, install the plugin on a Mac and confirm (a) ls -l ~/.cache/shipsmooth/runtime-0.3.19/runtime/lib/jspawnhelper shows -rwxr-xr-x, and (b) ~/.cache/shipsmooth/runtime-0.3.19/bin/shipsmooth plan resume --plan 75 exits 0 with no OpenJ9 EACCES. This proves macOS unzip restores exec bits (only Linux Info-ZIP was provable in-repo).</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-11T21:53:20.174+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-11T22:48:02.149+05:30</timestamp>
+            <message>Node-free POSIX bootstrap (install-shipsmooth.sh) shipped; dev keeps node backup. All tasks closed. macOS exec-bit verification deferred to post-v0.3.19 release (Task 5 comment).</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

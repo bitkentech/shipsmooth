@@ -67,7 +67,13 @@ class TargetIntegrationTest {
 
         String content = Files.readString(output);
         assertFalse(content.contains("shipsmooth-dev"), "prod command should not reference dev cache dir");
-        assertTrue(content.contains("session-start.js"), "command should invoke session-start.js");
+        // plan-76: prod bootstraps Node-free via the sh installer, not session-start.js.
+        assertTrue(content.contains("install-shipsmooth.sh"),
+            "prod command should invoke the sh installer");
+        assertFalse(content.contains("session-start.js"),
+            "prod command must not reference the Node entry point");
+        assertTrue(Files.exists(tempDir.resolve("hooks/install-shipsmooth.sh")),
+            "prod render must copy install-shipsmooth.sh next to hooks.json");
     }
 
     @Test
@@ -316,6 +322,9 @@ class TargetIntegrationTest {
         System.setProperty("skill.frontmatter", "");
         System.setProperty("shipsmooth.jlink.dir", "/dev/null");
         System.setProperty("experimental.enabled", "false");
+        // plan-76: prod (claude) bootstraps via the Node-free sh installer.
+        System.setProperty("plugin.hook.command",
+            "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth 0.2.0");
     }
 
     private void setWindowsProps() {

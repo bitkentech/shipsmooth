@@ -39,7 +39,13 @@ See the [shipsmooth-windows README](https://github.com/bitkentech/shipsmooth-win
 gemini extensions install https://github.com/bitkentech/shipsmooth-gemini
 ```
 
-On first session start, the hook installs dependencies and copies scripts into `~/.cache/shipsmooth/`.
+On first session start, a `SessionStart` hook downloads the self-contained Java
+runtime into `~/.cache/shipsmooth/` (`%LOCALAPPDATA%\shipsmooth\` on Windows).
+
+No Node.js or JDK is required: on macOS/Linux the bootstrap is a small POSIX shell
+script (`install-shipsmooth.sh`) that uses only tools present on a stock system
+(`sh`, `curl`, `unzip`), and on Windows it is a `.bat`. The downloaded runtime is a
+jlink image, so there is nothing else to install.
 
 ## How to use the workflow
 
