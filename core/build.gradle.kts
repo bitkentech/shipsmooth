@@ -39,16 +39,10 @@ xjc {
 // Build constants (VERSION, EXPERIMENTAL_BUILD) — replaces templating-maven-plugin
 // filter-sources. Expand the @-token template into a generated source dir and add
 // it to the main source set.
-// build.env is the SINGLE prod/dev signal: the release passes -Pbuild.env=prod and
-// every build-variant property derives from it (so the release never grows a
-// -Pfoo=false per variant knob — plan-75 Task 2). Absent -> dev (the inner loop /
-// devBuild never sets build.env). Deliberately NOT keyed on a separate
-// experimental.enabled property: findProperty() can't tell a gradle.properties value
-// from a -P one, so a properties-file experimental.enabled would permanently mask
-// build.env. experimental.enabled is gone from the build inputs; build.env is the
-// only knob.
-val isProd = (findProperty("build.env") as String?) == "prod"
-val experimentalEnabled = !isProd
+// Experimental visibility derives from the single build.env signal (plan-75 Task 2).
+// The rule ("what build.env means") lives once in buildSrc BuildEnv.kt; every module
+// calls it rather than re-reading the property, so the derivation can't drift.
+val experimentalEnabled = experimentalEnabled()
 // Fail loud rather than stamp a stale literal: a release that silently bakes the
 // wrong VERSION is exactly the failure plan-75 exists to kill. gradle.properties
 // always supplies plugin.version, so this only fires on a real misconfiguration.

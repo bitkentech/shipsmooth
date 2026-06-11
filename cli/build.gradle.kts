@@ -66,16 +66,13 @@ fun runtimeModulePath(): String {
     return (listOf(cliJar, core) + depJars).joinToString(":") { it.absolutePath }
 }
 
-// Prod releases pass -Pbuild.env=prod (the single prod signal — see core's
-// generateBuildConstants and plan-75 Task 2). A prod image bakes
-// EXPERIMENTAL_BUILD=false (hiding --enable-experimental from --help) AND lands in a
-// prod-specific folder (jlink-image-<platform>-prod), so the release reads only its
-// own artifact and can never reuse a stale dev image — clean provenance by path. The
-// SAME build.env drives both the baked constant (via core) and this suffix, so they
-// cannot disagree. build.env is the only knob — there is no experimental.enabled
-// build property (a gradle.properties value would have masked build.env).
-val isProd = (findProperty("build.env") as String?) == "prod"
-val imageDirSuffix = if (isProd) "-prod" else ""
+// A prod build (build.env=prod — the single signal, see buildSrc BuildEnv.kt) bakes
+// EXPERIMENTAL_BUILD=false (hiding --enable-experimental from --help, via core) AND
+// lands the jlink image in a prod-specific folder (jlink-image-<platform>-prod), so
+// the release reads only its own artifact and can never reuse a stale dev image —
+// clean provenance by path. The SAME build.env drives both the baked constant and
+// this suffix, so they cannot disagree.
+val imageDirSuffix = if (isProdBuild()) "-prod" else ""
 
 platformJmods.forEach { (platform, jmods) ->
     tasks.register<Exec>("image_$platform") {
