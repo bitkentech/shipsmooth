@@ -24,7 +24,7 @@
             <risk>medium</risk>
             <status>agent-coded</status>
             <name>Release builds the jlink image into a prod-specific folder</name>
-            <commit>9b388c3bd24d60ef21548cedbe2eb20b3caf300b</commit>
+            <commit>8ba3f63cc77a6c3242124b8d12efaf8c9ccd6858</commit>
             <created-from>plan-75-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
@@ -56,6 +56,11 @@
                     <type>minor</type>
                     <timestamp>2026-06-11T16:08:17.956+05:30</timestamp>
                     <message>Refined at plan-75-v5: single -Pbuild.env=prod signal instead of -Pexperimental.enabled=false; variant props (experimental.enabled, image folder) derive from build.env (absent-&gt;dev). Scales to future variant flags. experimental.enabled retained as explicit override.</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-11T17:57:57.585+05:30</timestamp>
+                    <message>Refactor follow-up: consolidated the build-time build.env prod-derivation (was duplicated in core + cli) into buildSrc/BuildEnv.kt (Project.isProdBuild()/experimentalEnabled()). Behavior-preserving, verified on real binaries. Task 2 stays agent-coded; commit 8ba3f63.</message>
                 </deviation>
             </deviations>
             <depends-on>1</depends-on>
