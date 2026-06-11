@@ -77,6 +77,19 @@ val imageDirSuffix = if (isProdBuild()) "-prod" else ""
 platformJmods.forEach { (platform, jmods) ->
     tasks.register<Exec>("image_$platform") {
         dependsOn("jar", shadedCoreJarTask)
+        // Track the jars this image packs as INPUTS, not just dependsOn ordering. The
+        // image is assembled from runtimeModulePath() (cli jar + shaded core-jlink.jar +
+        // runtime dep jars). dependsOn only orders the build — it does NOT make jlink
+        // re-run when a jar's CONTENTS change. A version bump rewrites Build.class inside
+        // core-jlink.jar without touching any task-graph input, so without this the image
+        // stays UP-TO-DATE and ships a stale VERSION (caught by the release guard,
+        // plan-75). ClasspathNormalizer ignores jar timestamps/order so only real content
+        // changes bust it.
+        inputs.files(
+            tasks.named<Jar>("jar").flatMap { it.archiveFile },
+            shadedCoreJarFile,
+            configurations.named("runtimeClasspath"),
+        ).withNormalizer(ClasspathNormalizer::class.java)
         val outDir = layout.buildDirectory.dir("jlink-image-$platform$imageDirSuffix")
         outputs.dir(outDir)
         doFirst { delete(outDir) }
