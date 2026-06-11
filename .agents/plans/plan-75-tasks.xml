@@ -79,9 +79,9 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Remove ledger references from the base `start` skill</name>
-            <commit></commit>
+            <commit>0d6fcc99fe1d47ac0cb81bae4d730686326e5fb0</commit>
             <created-from>plan-75-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
