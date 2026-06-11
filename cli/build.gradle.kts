@@ -72,7 +72,8 @@ fun runtimeModulePath(): String {
 // prod-specific folder (jlink-image-<platform>-prod), so the release reads only its
 // own artifact and can never reuse a stale dev image — clean provenance by path. The
 // SAME build.env drives both the baked constant (via core) and this suffix, so they
-// cannot disagree. experimental.enabled stays an explicit override for back-compat.
+// cannot disagree. build.env is the only knob — there is no experimental.enabled
+// build property (a gradle.properties value would have masked build.env).
 val isProd = (findProperty("build.env") as String?) == "prod"
 val imageDirSuffix = if (isProd) "-prod" else ""
 

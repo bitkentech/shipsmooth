@@ -135,7 +135,13 @@ public class PublishRelease {
                 ":cli:image_linux-x64",
                 ":cli:image_darwin-x64",
                 ":cli:image_darwin-arm64",
-                ":cli:image_windows-x64");
+                ":cli:image_windows-x64",
+                // The SINGLE prod signal (plan-75 Task 2): -Pbuild.env=prod bakes
+                // EXPERIMENTAL_BUILD=false (hiding --enable-experimental from --help) via
+                // core's generateBuildConstants AND routes each image into its -prod
+                // folder (see cli/build.gradle.kts). No per-knob -Pexperimental.enabled —
+                // future build-variant properties derive from build.env too.
+                "-Pbuild.env=prod");
     }
 
     /** Prod claude payload into {@code build/}. Replaces {@code mvn compile -Pprod -P!dev}. */
@@ -191,7 +197,11 @@ public class PublishRelease {
      * linux-x64, darwin-x64, darwin-arm64, windows-x64.
      */
     static Path jlinkImagePath(Path repoRoot, String platform) {
-        return repoRoot.resolve("cli/build/jlink-image-" + platform);
+        // Read the PROD image (plan-75 Task 2): the prod jlink build writes to the
+        // -prod folder, while a dev build writes to the non-prod folder. Reading only
+        // -prod means the release can never package a stale dev image left behind in
+        // cli/build — clean provenance by path, no clean task required.
+        return repoRoot.resolve("cli/build/jlink-image-" + platform + "-prod");
     }
 
     private void buildWindowsPlugin() throws IOException, InterruptedException {
