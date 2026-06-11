@@ -68,9 +68,9 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Gate the `ledger` subcommand behind experimental mode</name>
-            <commit></commit>
+            <commit>21bf016e62afc89ee2e6b828ad1c32f19e9b9a0c</commit>
             <created-from>plan-75-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
