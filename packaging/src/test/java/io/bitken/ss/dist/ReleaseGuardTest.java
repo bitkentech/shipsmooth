@@ -47,40 +47,39 @@ public class ReleaseGuardTest {
         assertTrue(ex.getMessage().contains("ledger"), ex.getMessage());
     }
 
-    // --- Build.java source guard (the non-executable check, all platforms) ---
+    // --- baked-constants guard (the per-image check, all 4 platforms) ---
+    // Input is `javap -p -constants` output read from the Build.class inside a shipped
+    // image. javap renders the two fields identically to source, so these fixtures
+    // mirror real javap output.
+
+    private static String javapOutput(String experimental, String version) {
+        return """
+            Compiled from "Build.java"
+            public final class io.bitken.ss.Build {
+              public static final boolean EXPERIMENTAL_BUILD = %s;
+              public static final java.lang.String VERSION = "%s";
+              private io.bitken.ss.Build();
+            }
+            """.formatted(experimental, version);
+    }
 
     @Test
-    void buildConstantsGuardPassesOnProdSource() {
-        String src = """
-            package io.bitken.ss;
-            public final class Build {
-                public static final boolean EXPERIMENTAL_BUILD = false;
-                public static final String VERSION = "0.3.18";
-                private Build() {}
-            }
-            """;
-        assertDoesNotThrow(() -> ReleaseGuard.assertBuildConstantsAreProd(src, "0.3.18"));
+    void buildConstantsGuardPassesOnProdImage() {
+        assertDoesNotThrow(() ->
+            ReleaseGuard.assertBuildConstantsAreProd(javapOutput("false", "0.3.18"), "0.3.18"));
     }
 
     @Test
     void buildConstantsGuardFailsOnExperimentalTrue() {
-        String src = """
-            public static final boolean EXPERIMENTAL_BUILD = true;
-            public static final String VERSION = "0.3.18";
-            """;
         IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
-            ReleaseGuard.assertBuildConstantsAreProd(src, "0.3.18"));
+            ReleaseGuard.assertBuildConstantsAreProd(javapOutput("true", "0.3.18"), "0.3.18"));
         assertTrue(ex.getMessage().contains("EXPERIMENTAL_BUILD"), ex.getMessage());
     }
 
     @Test
     void buildConstantsGuardFailsOnWrongVersion() {
-        String src = """
-            public static final boolean EXPERIMENTAL_BUILD = false;
-            public static final String VERSION = "0.3.16";
-            """;
         IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
-            ReleaseGuard.assertBuildConstantsAreProd(src, "0.3.18"));
+            ReleaseGuard.assertBuildConstantsAreProd(javapOutput("false", "0.3.16"), "0.3.18"));
         assertTrue(ex.getMessage().contains("0.3.16"), ex.getMessage());
     }
 }

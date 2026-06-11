@@ -221,6 +221,15 @@ public class PublishReleaseTest {
                 "release must read the prod image folder: " + p);
     }
 
+    // plan-75 Task 5: the release guard verifies the baked Build constants in every
+    // shipped platform image (read from the image bytes), not just the runnable one.
+    @Test
+    void releaseGuardCoversAllFourPlatforms() {
+        assertEquals(
+            List.of("linux-x64", "darwin-x64", "darwin-arm64", "windows-x64"),
+            PublishRelease.GUARDED_PLATFORMS);
+    }
+
     @Test
     void validateBuildOutputPassesOnCleanManifests() throws IOException {
         Path claudePlugin = tempDir.resolve(".claude-plugin");

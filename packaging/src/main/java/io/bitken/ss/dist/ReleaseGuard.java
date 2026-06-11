@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -56,26 +57,29 @@ public final class ReleaseGuard {
     }
 
     /**
-     * Assert the generated {@code Build.java} source has {@code EXPERIMENTAL_BUILD =
-     * false} and {@code VERSION = expectedVersion}. Covers every platform image,
-     * including the ones that can't be executed on the release host.
+     * Assert the disassembled {@code io.bitken.ss.Build} constants have
+     * {@code EXPERIMENTAL_BUILD = false} and {@code VERSION = expectedVersion}. The
+     * input is {@code javap -constants} output read from the {@code Build.class} that
+     * is actually baked into a shipped jlink image (see {@link #guardImageConstants}),
+     * so this verifies the real artifact, per platform — not an intermediate source
+     * file that a later compile could have changed.
      */
-    static void assertBuildConstantsAreProd(String buildJavaSource, String expectedVersion) {
-        Matcher exp = EXPERIMENTAL_BUILD_FIELD.matcher(buildJavaSource);
+    static void assertBuildConstantsAreProd(String javapOutput, String expectedVersion) {
+        Matcher exp = EXPERIMENTAL_BUILD_FIELD.matcher(javapOutput);
         if (!exp.find()) {
-            throw new IllegalStateException("Release guard: no EXPERIMENTAL_BUILD field found in Build.java.");
+            throw new IllegalStateException("Release guard: no EXPERIMENTAL_BUILD constant found in Build.class.");
         }
         if (!"false".equals(exp.group(1))) {
             throw new IllegalStateException(
-                "Release guard: Build.java has EXPERIMENTAL_BUILD = true; a prod build must bake false.");
+                "Release guard: image Build.EXPERIMENTAL_BUILD = true; a prod build must bake false.");
         }
-        Matcher ver = VERSION_FIELD.matcher(buildJavaSource);
+        Matcher ver = VERSION_FIELD.matcher(javapOutput);
         if (!ver.find()) {
-            throw new IllegalStateException("Release guard: no VERSION field found in Build.java.");
+            throw new IllegalStateException("Release guard: no VERSION constant found in Build.class.");
         }
         if (!ver.group(1).equals(expectedVersion)) {
             throw new IllegalStateException(
-                "Release guard: Build.java VERSION is '" + ver.group(1) + "' but the release version is '"
+                "Release guard: image Build.VERSION is '" + ver.group(1) + "' but the release version is '"
                     + expectedVersion + "'.");
         }
     }
@@ -98,6 +102,41 @@ public final class ReleaseGuard {
 
     // ---- exec/IO wrappers (driven on the real release path) ----
 
+    /**
+     * Verify the {@code io.bitken.ss.Build} constants baked into a shipped jlink image
+     * — the actual artifact, not an intermediate source file. The class lives packed in
+     * the image's {@code lib/modules}; {@code jimage} extracts it and {@code javap}
+     * disassembles its constant values. Both are host JDK tools that read the image as
+     * data, so this verifies EVERY platform image (including darwin/windows, which can't
+     * be executed on the release host) from its real shipped bytes.
+     *
+     * @param jdkHome host JDK with {@code bin/jimage} + {@code bin/javap}
+     */
+    static void guardImageConstants(Path jdkHome, Path imageDir, String expectedVersion)
+            throws IOException, InterruptedException {
+        Path modules = imageDir.resolve("lib/modules");
+        if (!Files.exists(modules)) {
+            throw new IllegalStateException("Release guard: no lib/modules in image: " + imageDir);
+        }
+        Path tmp = Files.createTempDirectory("ss-release-guard-" + UUID.randomUUID());
+        try {
+            PublishRelease.runCommand(List.of(
+                jdkHome.resolve("bin/jimage").toString(), "extract",
+                "--include", "**/io/bitken/ss/Build.class",
+                "--dir", tmp.toString(),
+                modules.toString()), imageDir);
+            // jimage lays the class under <tmp>/<module-name>/io/bitken/ss/Build.class;
+            // point javap at the module-name dir as the classpath root.
+            Path classpathRoot = tmp.resolve("io.bitken.ss.core");
+            String javap = PublishRelease.runCommand(List.of(
+                jdkHome.resolve("bin/javap").toString(), "-p", "-constants",
+                "-cp", classpathRoot.toString(), "io.bitken.ss.Build"), imageDir);
+            assertBuildConstantsAreProd(javap, expectedVersion);
+        } finally {
+            deleteRecursive(tmp);
+        }
+    }
+
     /** Exec the staged linux-x64 launcher and run the pure launcher guard against it. */
     static void guardLinuxLauncher(Path linuxImageDir, String expectedVersion)
             throws IOException, InterruptedException {
@@ -113,11 +152,12 @@ public final class ReleaseGuard {
         assertLauncherOutputIsProd(version, help, expectedVersion);
     }
 
-    /** Read the generated Build.java and run the pure source guard against it. */
-    static void guardBuildConstants(Path generatedBuildJava, String expectedVersion) throws IOException {
-        if (!Files.exists(generatedBuildJava)) {
-            throw new IllegalStateException("Release guard: generated Build.java not found: " + generatedBuildJava);
+    private static void deleteRecursive(Path dir) throws IOException {
+        if (!Files.exists(dir)) return;
+        try (var paths = Files.walk(dir)) {
+            paths.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
+                try { Files.delete(p); } catch (IOException ignored) { }
+            });
         }
-        assertBuildConstantsAreProd(Files.readString(generatedBuildJava), expectedVersion);
     }
 }
