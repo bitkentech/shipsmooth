@@ -102,9 +102,9 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Release-time binary guard</name>
-            <commit></commit>
+            <commit>90f9e86912dab5a92a824d6142b81d8f4351ea26</commit>
             <created-from>plan-75-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
@@ -113,7 +113,13 @@
                     <message>De-risk proven on REAL prod artifacts: assertBuildConstantsAreProd passes the generated Build.java (EXPERIMENTAL_BUILD=false, VERSION=0.3.17); guardLinuxLauncher execs the real linux-x64 prod launcher (--version + no experimental in --help); wrong-version case throws. 7 pure-logic unit tests. De-risk caught a wrapper bug (relative launcher path -&gt; absolute). Harden = wire guardLinuxLauncher + guardBuildConstants into PublishRelease.buildAndPackage (between jlink build and PackageRuntime).</message>
                 </comment>
             </comments>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-11T20:20:18.010+05:30</timestamp>
+                    <message>De-risk read core/build Build.java (mutable, race-prone). Hardened to read the baked Build.class FROM each shipped image via host jimage+javap (per-platform, covers darwin/windows without exec) — user's 'encode into the binary' suggestion. Proven: guard passes on prod image even with a deliberately-staled Build.java source. Guard wired into PublishRelease.buildAndPackage after jlink, before packaging.</message>
+                </deviation>
+            </deviations>
             <depends-on>1,2</depends-on>
         </task>
         <task>
