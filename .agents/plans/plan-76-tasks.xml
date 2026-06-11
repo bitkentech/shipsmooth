@@ -4,14 +4,14 @@
     <plan-version>plan-76-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-11</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>POSIX `install-shipsmooth.sh` generator + script</name>
             <commit>90f5d3e454846d989854155c8a439255db9e45f1</commit>
             <created-from>plan-76-v1</created-from>
@@ -27,7 +27,7 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`Os.Posix.hookCommand()` writes the script (side-effect)</name>
             <commit>90f5d3e454846d989854155c8a439255db9e45f1</commit>
             <created-from>plan-76-v1</created-from>
@@ -44,7 +44,7 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Wire prod variants' `pluginHookCommand` to the sh invocation</name>
             <commit>90f5d3e454846d989854155c8a439255db9e45f1</commit>
             <created-from>plan-76-v1</created-from>
@@ -61,7 +61,7 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Keep dev on Node, lock the split with a test</name>
             <commit>2eb10535254403432c8286b48a55e052619e75a2</commit>
             <created-from>plan-76-v1</created-from>
@@ -72,7 +72,7 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Docs + version bump + release-readiness note</name>
             <commit>9f0ed3140f3f9d3e61b85be868df1c65d01a2dbe</commit>
             <created-from>plan-76-v1</created-from>
@@ -90,6 +90,11 @@
         <update>
             <timestamp>2026-06-11T21:53:20.174+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-11T22:48:02.149+05:30</timestamp>
+            <message>Node-free POSIX bootstrap (install-shipsmooth.sh) shipped; dev keeps node backup. All tasks closed. macOS exec-bit verification deferred to post-v0.3.19 release (Task 5 comment).</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
