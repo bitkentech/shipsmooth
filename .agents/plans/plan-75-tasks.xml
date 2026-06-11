@@ -22,7 +22,7 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>in-progress</status>
+            <status>de-risked</status>
             <name>Release builds the jlink image into a prod-specific folder</name>
             <commit></commit>
             <created-from>plan-75-v1</created-from>
@@ -35,6 +35,10 @@
                 <comment>
                     <timestamp>2026-06-11T12:33:55.901+05:30</timestamp>
                     <message>De-risk spike ready (prod-only output): generateBuildConstantsProd emits EXPERIMENTAL_BUILD=false ignoring -Pexperimental.enabled=true, coexists with dev generator. Harden = prodMain compile -&gt; prod shaded jar -&gt; image_*_prod -&gt; PublishRelease rewire.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-11T16:20:27.692+05:30</timestamp>
+                    <message>De-risk proven (build.env design) on real linux-x64 binaries: -Pbuild.env=prod -&gt; jlink-image-linux-x64-prod, Build EXPERIMENTAL_BUILD=false, --version 0.3.17, --enable-experimental hidden; dev (absent build.env) -&gt; plain folder, flag shown, -prod untouched (mtime-verified). De-risk caught a bug: a gradle.properties experimental.enabled value masked build.env (findProperty can't tell -P from properties file) — fixed by making build.env the sole signal and removing experimental.enabled from gradle.properties. Harden = PublishRelease (jlinkBuildCommand passes -Pbuild.env=prod; jlinkImagePath -&gt; -prod) + tests.</message>
                 </comment>
             </comments>
             <deviations>
