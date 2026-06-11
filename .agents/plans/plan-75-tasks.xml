@@ -125,9 +125,9 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Docs, e2e verification, 0.3.18 release prep</name>
-            <commit></commit>
+            <commit>c485f0284da0bf24ac80f5ecf5ec4085af6788a6</commit>
             <created-from>plan-75-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
