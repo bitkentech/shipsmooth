@@ -22,9 +22,9 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Release builds the jlink image into a prod-specific folder</name>
-            <commit></commit>
+            <commit>9b388c3bd24d60ef21548cedbe2eb20b3caf300b</commit>
             <created-from>plan-75-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
