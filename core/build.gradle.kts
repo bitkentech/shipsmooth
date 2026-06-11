@@ -77,6 +77,25 @@ sourceSets.main {
 }
 
 // ---------------------------------------------------------------------------
+// DE-RISK SPIKE (plan-75 Task 2): a prod-pinned Build.java materialized as a
+// DISTINCT generated source, independent of the experimental.enabled property.
+// Proves the prod-only-output approach: this generator hard-codes enabled=false,
+// so a prod image keyed off it is experimental=false BY CONSTRUCTION — no -P.
+// (Spike: generator + an isolated javac of just Build.java. The full
+//  prodMain compile / shaded-jar / image_*_prod wiring comes in the harden pass.)
+// ---------------------------------------------------------------------------
+val generateBuildConstantsProd by tasks.registering(Copy::class) {
+    from(layout.projectDirectory.dir("src/main/java-templates"))
+    into(layout.buildDirectory.dir("generated/sources/build-constants-prod"))
+    inputs.property("experimentalEnabled", false)
+    inputs.property("pluginVersion", pluginVersion)
+    expand(
+        "experimental" to mapOf("enabled" to false),
+        "project" to mapOf("version" to pluginVersion),
+    )
+}
+
+// ---------------------------------------------------------------------------
 // jlink shading: shade dagger + javax.inject into the core jar and re-inject
 // module-info.class (Shadow, like Maven shade, strips it). Mirrors the Maven core
 // jlink profile exactly: include com.google.dagger:dagger + javax.inject:javax.inject,
