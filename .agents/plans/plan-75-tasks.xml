@@ -22,12 +22,17 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Bake prod constants into the release build path</name>
             <commit></commit>
             <created-from>plan-75-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-11T12:24:22.798+05:30</timestamp>
+                    <message>De-risk draft ready for review. Finding: jlinkBuildCommand is the sole release-side core compile; render tasks already hard-wire prod via RenderSpec so need no change. Flag proven to flow into Build.java.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
