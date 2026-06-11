@@ -214,6 +214,31 @@ class TargetIntegrationTest {
             "Windows SKILL.md must not reference XDG_CACHE_HOME");
     }
 
+    /**
+     * Plan-75 end-to-end guard: the prod base {@code start} skill payload must
+     * contain zero references to the {@code ledger} subcommand, which plan-75
+     * makes experimental. Today the base skill documents {@code ledger list} /
+     * {@code ledger verify} and the ledger/objects mechanics, so this is RED
+     * until Task 4 conditions those fragments on {@code experimental.enabled}.
+     *
+     * <p>This drives the real JTE render pipeline ({@code Target.main}) for the
+     * prod claude profile — the exact payload that ships.
+     */
+    @Test
+    void prodBaseSkillHasNoLedgerReference() throws Exception {
+        setProdProps();
+        Target.main(new String[]{});
+
+        Path baseSkill = tempDir.resolve("skills/start/SKILL.md");
+        assertTrue(Files.exists(baseSkill), "prod base SKILL.md should be written");
+
+        String content = Files.readString(baseSkill);
+        assertFalse(content.contains("ledger"),
+            "prod base 'start' skill must not reference the experimental 'ledger' "
+                + "subcommand (no-experimental-leakage rule); got a ledger mention in:\n"
+                + content);
+    }
+
     @Test
     void refineSkillRendersTwoPhaseContractWithProvenanceSplit() throws Exception {
         setDevProps();
