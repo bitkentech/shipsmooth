@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>75</plan>
-    <plan-version>plan-75-v4</plan-version>
+    <plan-version>plan-75-v5</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -47,6 +47,11 @@
                     <type>major</type>
                     <timestamp>2026-06-11T15:34:11.328+05:30</timestamp>
                     <message>Mechanism re-settled at plan-75-v4: clarified EXPERIMENTAL_BUILD only hides --enable-experimental from --help (experimental code always ships). Task 2 = bake EXPERIMENTAL_BUILD=false into the released binary via -Pexperimental.enabled=false AND write the image to cli/build/jlink-image-&lt;p&gt;-prod (release reads only that folder, so a stale dev image cannot be reused). Dropped the prod-output spike and the prod-only-compilation idea.</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-11T16:08:17.956+05:30</timestamp>
+                    <message>Refined at plan-75-v5: single -Pbuild.env=prod signal instead of -Pexperimental.enabled=false; variant props (experimental.enabled, image folder) derive from build.env (absent-&gt;dev). Scales to future variant flags. experimental.enabled retained as explicit override.</message>
                 </deviation>
             </deviations>
             <depends-on>1</depends-on>
