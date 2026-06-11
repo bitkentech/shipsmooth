@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Track `expand()` values as inputs of `generateBuildConstants`</name>
-            <commit></commit>
+            <commit>0b75417ff6daed763b3c60e70964e8905f3a3396</commit>
             <created-from>plan-75-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
