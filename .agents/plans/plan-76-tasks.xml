@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>POSIX `install-shipsmooth.sh` generator + script</name>
-            <commit></commit>
+            <commit>90f5d3e454846d989854155c8a439255db9e45f1</commit>
             <created-from>plan-76-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
