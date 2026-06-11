@@ -66,19 +66,10 @@ fun runtimeModulePath(): String {
     return (listOf(cliJar, core) + depJars).joinToString(":") { it.absolutePath }
 }
 
-// Prod releases bake EXPERIMENTAL_BUILD=false (hiding --enable-experimental from
-// --help) by passing -Pexperimental.enabled=false. The image then lands in a
-// prod-specific folder (jlink-image-<platform>-prod) rather than the dev one, so the
-// release reads only its own artifact and can never reuse a stale dev image — clean
-// provenance by path (plan-75 Task 2). The SAME flag drives both the baked constant
-// (via core:generateBuildConstants) and this suffix, so they cannot disagree.
-val experimentalEnabled = (findProperty("experimental.enabled") as String?)?.toBoolean() ?: false
-val imageDirSuffix = if (experimentalEnabled) "" else "-prod"
-
 platformJmods.forEach { (platform, jmods) ->
     tasks.register<Exec>("image_$platform") {
         dependsOn("jar", shadedCoreJarTask)
-        val outDir = layout.buildDirectory.dir("jlink-image-$platform$imageDirSuffix")
+        val outDir = layout.buildDirectory.dir("jlink-image-$platform")
         outputs.dir(outDir)
         doFirst { delete(outDir) }
         executable = "$semeruHome/bin/jlink"
