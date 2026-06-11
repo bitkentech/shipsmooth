@@ -11,12 +11,17 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>POSIX `install-shipsmooth.sh` generator + script</name>
             <commit></commit>
             <created-from>plan-76-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-11T22:10:24.791+05:30</timestamp>
+                    <message>De-risk draft ready for review: static install-shipsmooth.sh (CLI args, no JTE/no baked values). Validated end-to-end on Linux — installs runtime, jspawnhelper +x preserved, launcher runs git-shelling cmd, idempotent rerun no-ops.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>

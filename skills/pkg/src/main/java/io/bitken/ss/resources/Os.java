@@ -54,18 +54,23 @@ public sealed interface Os permits Os.Posix, Os.Windows {
             // Windows install-runtime.bat. The hook passes name+version as args, so the
             // script itself is a plain, lintable file with no baked values.
             if (command.contains(INSTALL_SCRIPT_NAME)) {
-                copyInstallScript(hooksDir);
+                copyResource(INSTALL_SCRIPT_NAME, hooksDir.resolve(INSTALL_SCRIPT_NAME));
             }
             return command;
         }
 
-        private void copyInstallScript(Path hooksDir) throws IOException {
-            Files.createDirectories(hooksDir);
-            try (var in = Os.class.getResourceAsStream("/" + INSTALL_SCRIPT_NAME)) {
+        /**
+         * Copies a bundled classpath resource to {@code dest}, creating parent dirs.
+         * Package-private (not private) so a test can drive the missing-resource branch
+         * with a bogus name without reflection.
+         */
+        void copyResource(String resourceName, Path dest) throws IOException {
+            Files.createDirectories(dest.getParent());
+            try (var in = Os.class.getResourceAsStream("/" + resourceName)) {
                 if (in == null) {
-                    throw new IOException("bundled " + INSTALL_SCRIPT_NAME + " not found on classpath");
+                    throw new IOException("bundled " + resourceName + " not found on classpath");
                 }
-                Files.copy(in, hooksDir.resolve(INSTALL_SCRIPT_NAME), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
             }
         }
     }

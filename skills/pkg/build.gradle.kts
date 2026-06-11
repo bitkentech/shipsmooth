@@ -70,6 +70,27 @@ val testTs by tasks.registering(NpmTask::class) {
 // Fail `check`/`build` if the TS suite fails (recommended in the plan).
 tasks.named("check") { dependsOn(testTs) }
 
+// plan-76: lint the static POSIX bootstrap script. `sh -n` (syntax) always runs;
+// `shellcheck` runs only when installed (stock CI/dev boxes may lack it), so the
+// build never hard-fails on a missing optional linter but enforces it where present.
+val installScript = layout.projectDirectory.file("src/main/resources/install-shipsmooth.sh")
+val lintInstallScript by tasks.registering(Exec::class) {
+    description = "Syntax-check install-shipsmooth.sh (sh -n always; shellcheck if available)."
+    group = "verification"
+    inputs.file(installScript)
+    // Marker output keeps the task UP-TO-DATE when the script is unchanged.
+    val marker = layout.buildDirectory.file("lint/install-shipsmooth.ok")
+    outputs.file(marker)
+    val scriptPath = installScript.asFile.path
+    val markerPath = marker.get().asFile.path
+    commandLine("sh", "-c",
+        "set -e; sh -n \"$scriptPath\"; " +
+        "if command -v shellcheck >/dev/null 2>&1; then shellcheck -s sh \"$scriptPath\"; " +
+        "else echo 'shellcheck not installed; ran sh -n only'; fi; " +
+        "mkdir -p \"$(dirname \"$markerPath\")\"; : > \"$markerPath\"")
+}
+tasks.named("check") { dependsOn(lintInstallScript) }
+
 // Reproduce the antrun rename step: copy the sibling start/, experimental/,
 // shared/ trees from the repo's skills/ dir into a staging root, renaming
 // *.jte.md -> *.jte. The start/experimental/shared prefix is preserved so the

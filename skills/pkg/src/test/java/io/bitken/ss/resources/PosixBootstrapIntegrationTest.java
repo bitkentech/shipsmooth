@@ -4,10 +4,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
+import java.util.Set;
 
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -90,6 +94,87 @@ class PosixBootstrapIntegrationTest {
             "dev Posix hook must keep the Node entry point (backup bootstrap)");
         assertFalse(hooksJson.contains("install-shipsmooth.sh"),
             "dev Posix hook must NOT use the sh installer this cycle");
+    }
+
+    /**
+     * End-to-end: render prod, then actually RUN the copied script against a synthetic
+     * "release zip" served over file://. Proves the real download -> unzip -> chmod -> mv
+     * flow and, critically, that unzip restores the stored +x bit (the OpenJ9 jspawnhelper
+     * hazard). Hermetic — builds its own zip, no network and no gitignored release artifact.
+     * Skips where the POSIX toolchain (sh/zip/unzip) is unavailable (e.g. Windows CI).
+     */
+    @Test
+    void copiedScript_installsRuntime_preservingExecBit(@TempDir Path work) throws Exception {
+        assumeTrue(toolsPresent("sh", "zip", "unzip"),
+            "requires sh + zip + unzip on PATH");
+
+        setProdPosixProps();
+        Target.main(new String[]{});
+        Path script = tempDir.resolve("hooks/install-shipsmooth.sh");
+        assertTrue(Files.exists(script), "render must have copied the script");
+
+        // Build a fake release: bin/shipsmooth (executable, +x stored in the zip).
+        Path stage = Files.createDirectories(work.resolve("stage/bin"));
+        Path fakeBin = stage.resolve("shipsmooth");
+        Files.writeString(fakeBin, "#!/bin/sh\necho fake-runtime\n");
+        Files.setPosixFilePermissions(fakeBin, Set.of(
+            PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+            PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
+            PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE));
+        Path releases = Files.createDirectories(work.resolve("releases"));
+        // Zip name must match what the script builds: <name>-<version>-<platform>.zip
+        String platform = detectLinuxOrDarwinPlatform();
+        Path zip = releases.resolve("shipsmooth-0.2.0-" + platform + ".zip");
+        run(work.resolve("stage"), "zip", "-q", "-r", "-X", zip.toString(), "bin");
+
+        Path cache = work.resolve("cache");
+        int code = runInstaller(script, cache, releases, "shipsmooth", "0.2.0");
+        assertEquals(0, code, "installer must exit 0");
+
+        Path installedBin = cache.resolve("shipsmooth/runtime-0.2.0/bin/shipsmooth");
+        assertTrue(Files.exists(installedBin), "runtime launcher must be installed");
+        assertTrue(Files.isExecutable(installedBin),
+            "unzip must restore the stored +x bit on the launcher");
+
+        // Idempotent: a second run sees the executable launcher and no-ops (exit 0).
+        assertEquals(0, runInstaller(script, cache, releases, "shipsmooth", "0.2.0"),
+            "second install must no-op");
+    }
+
+    private int runInstaller(Path script, Path cache, Path releases, String name, String version)
+            throws IOException, InterruptedException {
+        ProcessBuilder pb = new ProcessBuilder(
+            "sh", script.toString(), name, version).inheritIO();
+        pb.environment().put("XDG_CACHE_HOME", cache.toString());
+        pb.environment().put("SS_URL_BASE", releases.toUri().toString());
+        return pb.start().waitFor();
+    }
+
+    private void run(Path cwd, String... cmd) throws IOException, InterruptedException {
+        int code = new ProcessBuilder(cmd).directory(cwd.toFile()).inheritIO().start().waitFor();
+        assertEquals(0, code, "command failed: " + String.join(" ", cmd));
+    }
+
+    private static String detectLinuxOrDarwinPlatform() {
+        String os = System.getProperty("os.name", "").toLowerCase();
+        String arch = System.getProperty("os.arch", "").toLowerCase();
+        String o = os.contains("mac") ? "darwin" : "linux";
+        String a = (arch.contains("aarch64") || arch.contains("arm64")) ? "arm64" : "x64";
+        return o + "-" + a;
+    }
+
+    private static boolean toolsPresent(String... tools) {
+        for (String t : tools) {
+            try {
+                if (new ProcessBuilder("sh", "-c", "command -v " + t)
+                        .redirectErrorStream(true).start().waitFor() != 0) {
+                    return false;
+                }
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void setProdPosixProps() {
