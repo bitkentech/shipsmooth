@@ -137,26 +137,57 @@ Verify:
 - Invoking with `plugin.version` removed fails at configuration with the
   GradleException message (not a silent `0.3.14` stamp).
 
-### Task 2: Bake prod constants into the release build path [Medium]
+### Task 2: Release depends on a prod-only jlink output [Medium]
 
 *Depends-on: 1*
 
-Restore the Maven prod-profile behavior: every release-side Gradle invocation
-that compiles core must pass `-Pexperimental.enabled=false` (the version comes
-from `gradle.properties`, already bumped by `PublishRelease` before building).
+**Mechanism (decided): a prod-only output the release consumes, not a caller-passed
+flag.** Rather than trust `PublishRelease` to spell `-Pexperimental.enabled=false`
+on the spawned Gradle command (a string a future edit can silently drop), wire the
+build so the release depends on a *prod-named jlink image* that is `experimental=false`
+**by construction**. A dev image cannot satisfy that dependency, so the release path
+is correct structurally — the dependency edge enforces it, not a convention.
 
-Touch points:
+De-risk finding (carried from the flag draft, plan-75-v2): the render side is
+**already** correct — `claudeProdSpec`/`geminiProdSpec`/windows specs in
+`skills/pkg/build.gradle.kts` hard-code `experimentalEnabled = false` in the
+`RenderSpec`, and `Target.java` reads that, never the Gradle property. So
+`assembleProdCommand` / `assembleWindowsCommand` need **no change**. The jlink path
+(`:cli:image_*` → `reinjectModuleInfo` → `core:compileJava` → `generateBuildConstants`)
+is the *sole* release-side consumer of `experimental.enabled`, so the prod-output
+treatment is confined to the core→jlink chain.
 
-- `PublishRelease.jlinkBuildCommand()` — add the property to the `image_*`
-  invocation (and audit `assembleProdCommand` / `assembleWindowsCommand`: the
-  rendered payloads embed experimental-conditioned skill text and must also be
-  prod).
-- `packaging/build.gradle.kts` `packageRuntime_*` — document or enforce that a
-  manually-invoked package run uses the prod flag (decide: hard-wire vs. doc).
+Shape (settle exact form in de-risk):
 
-Medium risk: the right *mechanism* (flag on the spawned Gradle command vs.
-hard-wiring in the packaging tasks vs. a dedicated prod variant of the image
-tasks) is a design decision with cross-module consequences.
+- Introduce prod-variant jlink outputs `:cli:image_<platform>_prod` whose
+  transitive `generateBuildConstants` input is pinned to `experimental.enabled=false`
+  intrinsically (not via an ambient `-P`). Because `Build.java` is a compile-time
+  constant on core's single main source set, the prod constants must be materialized
+  as a *distinct* generated source / compilation / shaded jar so dev and prod images
+  don't share one `Build.java` — reuse the plan-74 `core-jlink.jar` classifier
+  pattern (a distinct named artifact avoiding overlapping-output collision) as the
+  template.
+- `PublishRelease.jlinkBuildCommand()` names the four `image_<platform>_prod` tasks.
+  No `-Pexperimental.enabled` on the command line at all — prod-ness rides the task
+  identity.
+- Dev (`devBuild` / host `image_<host>`) keeps the existing property-parameterized
+  image tasks (still `experimental=true` via `gradle.properties`), so the inner loop
+  is unchanged.
+- `packaging/build.gradle.kts` `packageRuntime_*` package an *already-built* image
+  and don't recompile core; they inherit whatever image they're pointed at. With the
+  release naming `_prod` images, a doc note suffices (no hard-wire) — confirm in
+  de-risk.
+
+Verify:
+- `PublishRelease.jlinkBuildCommand()` lists `:cli:image_<platform>_prod` (unit
+  test on the command list).
+- Building a `_prod` image produces a `Build.java` with `EXPERIMENTAL_BUILD = false`
+  and the configured version, with **no** `-P` override passed.
+- The dev `image_<host>` / `devBuild` path still yields `EXPERIMENTAL_BUILD = true`.
+
+Medium risk: introduces a second jlink artifact lineage; the core compile-constant
+duplication and the cross-project (`core`↔`cli`) wiring are where plan-74-era
+output-collision issues lived.
 
 ### Task 3: Gate the `ledger` subcommand behind experimental mode [Low]
 
