@@ -114,7 +114,7 @@ public class PublishReleaseTest {
         Files.writeString(tempDir.resolve("gradle.properties"), """
                 org.gradle.java.installations.auto-download=false
                 plugin.version=0.3.14
-                experimental.enabled=true
+                org.gradle.java.installations.paths=/opt/jdk
                 """);
 
         boolean changed = PublishRelease.bumpVersionInGradleProperties(tempDir, "0.4.0");
@@ -124,7 +124,7 @@ public class PublishReleaseTest {
         assertTrue(after.contains("plugin.version=0.4.0"), after);
         assertFalse(after.contains("plugin.version=0.3.14"), after);
         // other lines untouched
-        assertTrue(after.contains("experimental.enabled=true"), after);
+        assertTrue(after.contains("org.gradle.java.installations.paths=/opt/jdk"), after);
         assertTrue(after.contains("org.gradle.java.installations.auto-download=false"), after);
     }
 
@@ -162,6 +162,19 @@ public class PublishReleaseTest {
         assertTrue(cmd.contains(":cli:image_windows-x64"), cmd.toString());
     }
 
+    // plan-75 Task 2: the release builds the prod jlink image by passing the SINGLE
+    // prod signal -Pbuild.env=prod (not a per-knob -Pexperimental.enabled). That one
+    // flag bakes EXPERIMENTAL_BUILD=false AND routes the image into the -prod folder.
+    @Test
+    void jlinkBuildCommandPassesProdBuildEnv() {
+        List<String> cmd = PublishRelease.jlinkBuildCommand(tempDir);
+        assertTrue(cmd.contains("-Pbuild.env=prod"),
+                "release jlink build must pass the prod signal -Pbuild.env=prod: " + cmd);
+        assertFalse(cmd.contains("-Pexperimental.enabled=false"),
+                "release must use the single build.env signal, not a per-knob "
+                    + "experimental flag: " + cmd);
+    }
+
     @Test
     void assembleProdCommandTargetsClaudeProdIntoBuild() {
         List<String> cmd = PublishRelease.assembleProdCommand(tempDir);
@@ -180,11 +193,13 @@ public class PublishReleaseTest {
 
     // PackageRuntime must read the jlink image from the GRADLE output dir
     // (cli/build/...), not the old Maven location (cli/target/...). Reading the
-    // Maven path packaged a stale image, or none on a clean tree.
+    // Maven path packaged a stale image, or none on a clean tree. plan-75 Task 2: the
+    // release reads the PROD image (-prod folder), so a stale dev image (written to
+    // the non-prod folder) can never be packaged by accident.
     @Test
     void jlinkImagePathPointsAtGradleBuildDir() {
         Path p = PublishRelease.jlinkImagePath(tempDir, "linux-x64");
-        assertEquals(tempDir.resolve("cli/build/jlink-image-linux-x64"), p);
+        assertEquals(tempDir.resolve("cli/build/jlink-image-linux-x64-prod"), p);
         assertFalse(p.toString().contains("cli/target"),
                 "must not read the Maven jlink image path: " + p);
     }
@@ -192,9 +207,27 @@ public class PublishReleaseTest {
     @Test
     void jlinkImagePathUsesPlatformSuffix() {
         assertTrue(PublishRelease.jlinkImagePath(tempDir, "windows-x64").toString()
-                .endsWith("cli/build/jlink-image-windows-x64"));
+                .endsWith("cli/build/jlink-image-windows-x64-prod"));
         assertTrue(PublishRelease.jlinkImagePath(tempDir, "darwin-arm64").toString()
-                .endsWith("cli/build/jlink-image-darwin-arm64"));
+                .endsWith("cli/build/jlink-image-darwin-arm64-prod"));
+    }
+
+    // plan-75 Task 2: the release reads ONLY the -prod image, so it can never reuse a
+    // stale dev image written to the non-prod folder.
+    @Test
+    void jlinkImagePathReadsProdFolderOnly() {
+        Path p = PublishRelease.jlinkImagePath(tempDir, "linux-x64");
+        assertTrue(p.toString().endsWith("-prod"),
+                "release must read the prod image folder: " + p);
+    }
+
+    // plan-75 Task 5: the release guard verifies the baked Build constants in every
+    // shipped platform image (read from the image bytes), not just the runnable one.
+    @Test
+    void releaseGuardCoversAllFourPlatforms() {
+        assertEquals(
+            List.of("linux-x64", "darwin-x64", "darwin-arm64", "windows-x64"),
+            PublishRelease.GUARDED_PLATFORMS);
     }
 
     @Test

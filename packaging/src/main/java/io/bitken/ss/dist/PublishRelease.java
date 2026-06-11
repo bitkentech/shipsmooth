@@ -135,7 +135,13 @@ public class PublishRelease {
                 ":cli:image_linux-x64",
                 ":cli:image_darwin-x64",
                 ":cli:image_darwin-arm64",
-                ":cli:image_windows-x64");
+                ":cli:image_windows-x64",
+                // The SINGLE prod signal (plan-75 Task 2): -Pbuild.env=prod bakes
+                // EXPERIMENTAL_BUILD=false (hiding --enable-experimental from --help) via
+                // core's generateBuildConstants AND routes each image into its -prod
+                // folder (see cli/build.gradle.kts). No per-knob -Pexperimental.enabled —
+                // future build-variant properties derive from build.env too.
+                "-Pbuild.env=prod");
     }
 
     /** Prod claude payload into {@code build/}. Replaces {@code mvn compile -Pprod -P!dev}. */
@@ -162,11 +168,35 @@ public class PublishRelease {
         validateBuildOutput(buildDir);
     }
 
+    /** The four platform image tags whose baked Build constants the guard verifies. */
+    static final List<String> GUARDED_PLATFORMS =
+        List.of("linux-x64", "darwin-x64", "darwin-arm64", "windows-x64");
+
+    private void maybeRunReleaseGuard(boolean skip) throws IOException, InterruptedException {
+        if (skip) {
+            System.out.println("WARNING: release prod guard skipped — --dangerous-skip-release-validation was passed");
+            return;
+        }
+        // Verify the baked Build constants in EACH shipped image (read from the image's
+        // own bytes via host jimage/javap — covers darwin/windows we can't exec here),
+        // then exec the one launcher this host can run for the end-to-end --help check.
+        for (String platform : GUARDED_PLATFORMS) {
+            ReleaseGuard.guardImageConstants(linuxJdkHome, jlinkImagePath(repoRoot, platform), version);
+        }
+        ReleaseGuard.guardLinuxLauncher(jlinkImagePath(repoRoot, "linux-x64"), version);
+        System.out.println("Release prod guard: all 4 image Build constants + linux-x64 launcher verified for v"
+            + version + ".");
+    }
+
     private void buildAndPackage() throws IOException, InterruptedException {
         Path buildDir = repoRoot.resolve("build");
         if (Files.exists(buildDir)) deleteDirectory(buildDir);
 
         runCommand(jlinkBuildCommand(repoRoot), repoRoot);
+
+        // Fail the release NOW if the freshly-built prod artifacts are wrong — before
+        // anything is packaged or published. Catches both 0.3.17 defects (plan-75 Task 5).
+        maybeRunReleaseGuard(skipValidation);
 
         runCommand(assembleProdCommand(repoRoot), repoRoot);
         maybeValidateBuildOutput(buildDir, skipValidation);
@@ -191,7 +221,11 @@ public class PublishRelease {
      * linux-x64, darwin-x64, darwin-arm64, windows-x64.
      */
     static Path jlinkImagePath(Path repoRoot, String platform) {
-        return repoRoot.resolve("cli/build/jlink-image-" + platform);
+        // Read the PROD image (plan-75 Task 2): the prod jlink build writes to the
+        // -prod folder, while a dev build writes to the non-prod folder. Reading only
+        // -prod means the release can never package a stale dev image left behind in
+        // cli/build — clean provenance by path, no clean task required.
+        return repoRoot.resolve("cli/build/jlink-image-" + platform + "-prod");
     }
 
     private void buildWindowsPlugin() throws IOException, InterruptedException {

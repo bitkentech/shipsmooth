@@ -1,7 +1,7 @@
 package io.bitken.ss.cli.ledger;
 
 import io.bitken.ss.cli.HasSpec;
-import io.bitken.ss.conf.ExperimentalMode;
+import io.bitken.ss.conf.FeatureFlags;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventLedger;
 import picocli.CommandLine.Model.CommandSpec;
@@ -10,25 +10,34 @@ import picocli.CommandLine.Model.PositionalParamSpec;
 
 import java.util.concurrent.Callable;
 
-public class Ledger implements Callable<Integer>, HasSpec {
+/**
+ * {@code ledger} noun group. The whole group is experimental, so it implements
+ * {@link FeatureFlags} and is registered by {@code CommandTree} only under
+ * {@code --enable-experimental} — mirroring {@code worker} (plan-75 Task 3). Because
+ * the group as a whole is gated at that single site, the leaves no longer need their
+ * own runtime mode split: when the group registers, all its leaves register with it.
+ */
+public class Ledger implements Callable<Integer>, HasSpec, FeatureFlags {
+
+    @Override public boolean isExperimental() { return true; }
 
     private final CommandSpec spec;
     private final EventLedger ledgerService;
 
-    public Ledger(EventLedger ledgerService, ExperimentalMode mode) {
+    public Ledger(EventLedger ledgerService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.ledgerService = ledgerService;
         this.spec.name("ledger");
         this.spec.usageMessage().description("Inspect and record entries in the append-only task ledger.");
 
-        addLeaves(spec, new ListCmd(ledgerService), new VerifyCmd(ledgerService), new ReadCmd(ledgerService));
-        if (mode.enabled()) {
-            addLeaves(spec,
-                new LedgerRecordCommit(ledgerService),
-                new LedgerRecordPatchIntegrated(ledgerService),
-                new LedgerResolverComplete(ledgerService),
-                new LedgerWatch());
-        }
+        addLeaves(spec,
+            new ListCmd(ledgerService),
+            new VerifyCmd(ledgerService),
+            new ReadCmd(ledgerService),
+            new LedgerRecordCommit(ledgerService),
+            new LedgerRecordPatchIntegrated(ledgerService),
+            new LedgerResolverComplete(ledgerService),
+            new LedgerWatch());
     }
 
     public CommandSpec getSpec() {

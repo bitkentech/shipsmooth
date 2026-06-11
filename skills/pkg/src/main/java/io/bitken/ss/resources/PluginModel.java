@@ -12,12 +12,14 @@ public record PluginModel(
     Os os,
     Env env,
     String jlinkDir,
-    String repoName
+    String repoName,
+    boolean experimentalEnabled
 ) {
     public PluginModel withSkill(String newSkillName, String newFrontmatter) {
         return new PluginModel(
             pluginName, pluginVersion, pluginDescription,
-            newSkillName, cliBin, newFrontmatter, skillFragmentDir, gemini, os, env, jlinkDir, repoName
+            newSkillName, cliBin, newFrontmatter, skillFragmentDir, gemini, os, env, jlinkDir, repoName,
+            experimentalEnabled
         );
     }
 

@@ -39,11 +39,28 @@ xjc {
 // Build constants (VERSION, EXPERIMENTAL_BUILD) — replaces templating-maven-plugin
 // filter-sources. Expand the @-token template into a generated source dir and add
 // it to the main source set.
-val experimentalEnabled = (findProperty("experimental.enabled") as String?)?.toBoolean() ?: true
-val pluginVersion = (findProperty("plugin.version") as String?) ?: "0.3.14"
+// Experimental visibility derives from the single build.env signal (plan-75 Task 2).
+// The rule ("what build.env means") lives once in buildSrc BuildEnv.kt; every module
+// calls it rather than re-reading the property, so the derivation can't drift.
+val experimentalEnabled = experimentalEnabled()
+// Fail loud rather than stamp a stale literal: a release that silently bakes the
+// wrong VERSION is exactly the failure plan-75 exists to kill. gradle.properties
+// always supplies plugin.version, so this only fires on a real misconfiguration.
+val pluginVersion = (findProperty("plugin.version") as String?)?.takeIf { it.isNotBlank() }
+    ?: throw GradleException(
+        "plugin.version is not set — refusing to generate Build constants. " +
+        "Set it in gradle.properties or pass -Pplugin.version=<version>."
+    )
 val generateBuildConstants by tasks.registering(Copy::class) {
     from(layout.projectDirectory.dir("src/main/java-templates"))
     into(layout.buildDirectory.dir("generated/sources/build-constants"))
+    // expand() values are NOT part of a Copy task's default up-to-date check —
+    // only the source files are fingerprinted. Declare them as explicit inputs so
+    // that flipping experimental.enabled or bumping plugin.version invalidates the
+    // task (and the build-cache key) and regenerates Build.java. Without this a
+    // stale Build.java ships — the 0.3.17 prod leak (see plan-75 Defect 1).
+    inputs.property("experimentalEnabled", experimentalEnabled)
+    inputs.property("pluginVersion", pluginVersion)
     // The template uses Maven-style dotted tokens (${experimental.enabled},
     // ${project.version}). Gradle's expand() is Groovy SimpleTemplateEngine, which
     // reads those as nested property access, so supply nested maps rather than

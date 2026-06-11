@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>75</plan>
+    <plan-version>plan-75-v6</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-11</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Track `expand()` values as inputs of `generateBuildConstants`</name>
+            <commit>0b75417ff6daed763b3c60e70964e8905f3a3396</commit>
+            <created-from>plan-75-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Release builds the jlink image into a prod-specific folder</name>
+            <commit>8ba3f63cc77a6c3242124b8d12efaf8c9ccd6858</commit>
+            <created-from>plan-75-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-11T12:24:22.798+05:30</timestamp>
+                    <message>De-risk draft ready for review. Finding: jlinkBuildCommand is the sole release-side core compile; render tasks already hard-wire prod via RenderSpec so need no change. Flag proven to flow into Build.java.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-11T12:33:55.901+05:30</timestamp>
+                    <message>De-risk spike ready (prod-only output): generateBuildConstantsProd emits EXPERIMENTAL_BUILD=false ignoring -Pexperimental.enabled=true, coexists with dev generator. Harden = prodMain compile -&gt; prod shaded jar -&gt; image_*_prod -&gt; PublishRelease rewire.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-11T16:20:27.692+05:30</timestamp>
+                    <message>De-risk proven (build.env design) on real linux-x64 binaries: -Pbuild.env=prod -&gt; jlink-image-linux-x64-prod, Build EXPERIMENTAL_BUILD=false, --version 0.3.17, --enable-experimental hidden; dev (absent build.env) -&gt; plain folder, flag shown, -prod untouched (mtime-verified). De-risk caught a bug: a gradle.properties experimental.enabled value masked build.env (findProperty can't tell -P from properties file) — fixed by making build.env the sole signal and removing experimental.enabled from gradle.properties. Harden = PublishRelease (jlinkBuildCommand passes -Pbuild.env=prod; jlinkImagePath -&gt; -prod) + tests.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-11T12:30:35.147+05:30</timestamp>
+                    <message>Mechanism pivot at plan-75-v3: prod-only jlink output (image_*_prod) the release depends on, replacing the -Pexperimental.enabled=false flag draft (reverted in b92e692). Render side already prod via RenderSpec; scope narrowed to core-&gt;jlink chain.</message>
+                </deviation>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-11T15:34:11.328+05:30</timestamp>
+                    <message>Mechanism re-settled at plan-75-v4: clarified EXPERIMENTAL_BUILD only hides --enable-experimental from --help (experimental code always ships). Task 2 = bake EXPERIMENTAL_BUILD=false into the released binary via -Pexperimental.enabled=false AND write the image to cli/build/jlink-image-&lt;p&gt;-prod (release reads only that folder, so a stale dev image cannot be reused). Dropped the prod-output spike and the prod-only-compilation idea.</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-11T16:08:17.956+05:30</timestamp>
+                    <message>Refined at plan-75-v5: single -Pbuild.env=prod signal instead of -Pexperimental.enabled=false; variant props (experimental.enabled, image folder) derive from build.env (absent-&gt;dev). Scales to future variant flags. experimental.enabled retained as explicit override.</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-11T17:57:57.585+05:30</timestamp>
+                    <message>Refactor follow-up: consolidated the build-time build.env prod-derivation (was duplicated in core + cli) into buildSrc/BuildEnv.kt (Project.isProdBuild()/experimentalEnabled()). Behavior-preserving, verified on real binaries. Task 2 stays agent-coded; commit 8ba3f63.</message>
+                </deviation>
+            </deviations>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Gate the `ledger` subcommand behind experimental mode</name>
+            <commit>21bf016e62afc89ee2e6b828ad1c32f19e9b9a0c</commit>
+            <created-from>plan-75-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Remove ledger references from the base `start` skill</name>
+            <commit>0d6fcc99fe1d47ac0cb81bae4d730686326e5fb0</commit>
+            <created-from>plan-75-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-11T18:37:53.597+05:30</timestamp>
+                    <message>De-risk proven on real renders: prod claude/gemini/windows base start skills have 0 ledger refs + 0 experimental-surface mentions; dev keeps the paragraph. Also unified the render's experimentalEnabled to derive from buildEnv via buildSrc (was a hand-coded per-variant field — the same manual-sync divergence Task 2 fixed for core). Harden = full TargetIntegrationTest sweep + dedicated assertions + check no other PluginModel consumer broke.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-11T19:04:37.919+05:30</timestamp>
+                    <message>Scope expansion at plan-75-v6: also unified the render's experimentalEnabled onto the shared build-env rule (was a hand-coded per-variant RenderSpec field), modelled as a typed BuildEnv enum in buildSrc. Threaded experimentalEnabled onto PluginModel/Target for the JTE @if. Reconciled Task 2 plan text to the enum design.</message>
+                </deviation>
+            </deviations>
+            <depends-on>3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Release-time binary guard</name>
+            <commit>90f9e86912dab5a92a824d6142b81d8f4351ea26</commit>
+            <created-from>plan-75-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-11T19:29:22.449+05:30</timestamp>
+                    <message>De-risk proven on REAL prod artifacts: assertBuildConstantsAreProd passes the generated Build.java (EXPERIMENTAL_BUILD=false, VERSION=0.3.17); guardLinuxLauncher execs the real linux-x64 prod launcher (--version + no experimental in --help); wrong-version case throws. 7 pure-logic unit tests. De-risk caught a wrapper bug (relative launcher path -&gt; absolute). Harden = wire guardLinuxLauncher + guardBuildConstants into PublishRelease.buildAndPackage (between jlink build and PackageRuntime).</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-11T20:20:18.010+05:30</timestamp>
+                    <message>De-risk read core/build Build.java (mutable, race-prone). Hardened to read the baked Build.class FROM each shipped image via host jimage+javap (per-platform, covers darwin/windows without exec) — user's 'encode into the binary' suggestion. Proven: guard passes on prod image even with a deliberately-staled Build.java source. Guard wired into PublishRelease.buildAndPackage after jlink, before packaging.</message>
+                </deviation>
+            </deviations>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Docs, e2e verification, 0.3.18 release prep</name>
+            <commit>c485f0284da0bf24ac80f5ecf5ec4085af6788a6</commit>
+            <created-from>plan-75-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2,3,4,5</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-11T11:09:58.232+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-11T20:39:41.778+05:30</timestamp>
+            <message>All 6 tasks agent-coded and verified on real binaries. Prod build leak + stale-version defects fixed; ledger gated; release guard added; docs updated. Ships as 0.3.18 (human cuts release).</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

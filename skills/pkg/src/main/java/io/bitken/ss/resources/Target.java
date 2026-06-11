@@ -30,7 +30,8 @@ public class Target {
             platform.skillFragmentDir(),
             platform instanceof Platform.Gemini,
             os, env, jlinkDir,
-            repoName != null ? repoName : name
+            repoName != null ? repoName : name,
+            experimentalEnabled
         );
         Path outDir             = Path.of(outputDir);
         ObjectMapper mapper     = new ObjectMapper();

@@ -148,7 +148,7 @@ fun renderOutputDir(variantDefault: String): String =
 val claudeDevSpec = RenderSpec(
     buildPlatform = "claude",
     buildOs = "posix",
-    buildEnv = "dev",
+    buildEnv = BuildEnv.DEV,
     pluginBaseName = "shipsmooth",
     pluginVersion = pluginVersion,
     pluginDescription = "Agent coding workflow (dev build)",
@@ -157,7 +157,6 @@ val claudeDevSpec = RenderSpec(
     jlinkDir = devJlinkDir,
     pluginRepoName = "shipsmooth",
     outputDir = renderOutputDir("claude-dev"),
-    experimentalEnabled = true,
     pluginHookCommand = "node \"\${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"",
     // ObjectFactory for RenderSpec's independent constant providers. The .copy()
     // chain below (gemini-dev, prod, windows) inherits this same instance.
@@ -181,7 +180,7 @@ val geminiDevSpec = claudeDevSpec.copy(
 fun registerRender(taskName: String, spec: RenderSpec) =
     tasks.register<JavaExec>(taskName) {
         group = "render"
-        description = "Render the ${spec.buildPlatform}-${spec.buildEnv} plugin variant via Target."
+        description = "Render the ${spec.buildPlatform}-${spec.buildEnv.value} plugin variant via Target."
         dependsOn(tasks.named("compileJava"), compileTs)
 
         val runtimeClasspath = sourceSets["main"].runtimeClasspath
@@ -230,12 +229,13 @@ val prodDescription = "Agent coding workflow with plan-before-implement discipli
     "TDD, vertical slices, Linear integration, and immutable git-based plan versioning."
 
 val claudeProdSpec = claudeDevSpec.copy(
-    buildEnv = "prod",
+    // buildEnv=prod now AUTOMATICALLY derives experimentalEnabled=false (RenderSpec
+    // derives it from buildEnv) — no separate field to keep in sync.
+    buildEnv = BuildEnv.PROD,
     pluginDescription = prodDescription,
     skillFrontmatter = "",
     jlinkDir = constJlink("/dev/null"),
     outputDir = layout.buildDirectory.dir("render/claude-prod").get().asFile.path,
-    experimentalEnabled = false,
 )
 
 val geminiProdSpec = claudeProdSpec.copy(

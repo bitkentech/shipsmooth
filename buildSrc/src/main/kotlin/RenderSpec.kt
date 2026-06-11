@@ -26,7 +26,7 @@ import org.gradle.api.provider.Provider
 data class RenderSpec(
     val buildPlatform: String,
     val buildOs: String,
-    val buildEnv: String,
+    val buildEnv: BuildEnv,
     val pluginBaseName: String,
     val pluginVersion: String,
     val pluginDescription: String,
@@ -35,10 +35,13 @@ data class RenderSpec(
     val jlinkDir: Provider<String>,
     val pluginRepoName: String,
     val outputDir: String,
-    val experimentalEnabled: Boolean,
     val pluginHookCommand: String,
     val objects: ObjectFactory,
 ) {
+    // Derived from buildEnv (the shared BuildEnv enum), NOT a separately-set field —
+    // so a variant can never declare buildEnv=PROD yet experimentalEnabled=true (the
+    // manual-sync divergence behind the 0.3.17 leak).
+    val experimentalEnabled: Boolean get() = buildEnv.experimentalEnabled
     /**
      * The -D system properties to hand io.bitken.ss.resources.Target, each as a
      * Provider<String> so the render task can resolve them lazily (one uniform
@@ -48,7 +51,7 @@ data class RenderSpec(
     fun systemProperties(): Map<String, Provider<String>> = mapOf(
         "build.platform" to constant(buildPlatform),
         "build.os" to constant(buildOs),
-        "build.env" to constant(buildEnv),
+        "build.env" to constant(buildEnv.value),
         "plugin.base.name" to constant(pluginBaseName),
         "plugin.version" to constant(pluginVersion),
         "plugin.description" to constant(pluginDescription),

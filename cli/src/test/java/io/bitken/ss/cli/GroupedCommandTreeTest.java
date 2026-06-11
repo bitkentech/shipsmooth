@@ -177,11 +177,16 @@ public class GroupedCommandTreeTest {
         }
     }
 
-    /** Non-experimental {@code ledger list} stays available under the group. */
+    /**
+     * The whole {@code ledger} group is experimental (plan-75 Task 3), so it
+     * registers only under {@code --enable-experimental}. This app runs with
+     * {@code ExperimentalMode(true)}, so {@code ledger list} dispatches through the
+     * group and works.
+     */
     @Test
-    void ledgerListRemainsNonExperimental() {
+    void ledgerListWorksUnderExperimentalMode() {
         int exit = run("ledger", "list");
-        assertEquals(0, exit, "non-experimental 'ledger list' must work");
+        assertEquals(0, exit, "'ledger list' must work when experimental mode is on");
     }
 
     /** Bare {@code shipsmooth worker} (no subcommand) prints group usage listing its verbs. */
