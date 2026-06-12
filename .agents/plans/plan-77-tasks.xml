@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>77</plan>
-    <plan-version>plan-77-v2</plan-version>
+    <plan-version>plan-77-v3</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -117,6 +117,42 @@
                 </deviation>
             </deviations>
         </task>
+        <task>
+            <id>9</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Emit the git-subdir release marketplace.json variant</name>
+            <commit></commit>
+            <created-from>plan-77-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>7</depends-on>
+        </task>
+        <task>
+            <id>10</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Publish the codex payload to dist-codex/ on releases</name>
+            <commit></commit>
+            <created-from>plan-77-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>9</depends-on>
+        </task>
+        <task>
+            <id>11</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Fix README + seed the codex-plugins pointer repo</name>
+            <commit></commit>
+            <created-from>plan-77-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>10</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
@@ -137,6 +173,16 @@
         <update>
             <timestamp>2026-06-12T17:20:59.199+05:30</timestamp>
             <message>All 8 tasks closed. Codex CLI support complete: Platform.Codex + 3-way template dispatch + render specs + 13 codex fragments (sequential-only parallel) + SessionStart hook + codex/ Gradle module + release validation/parity/docs. claude/gemini parity byte-identical throughout. Version bump + release deferred to human at merge.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-12T17:50:47.677+05:30</timestamp>
+            <message></message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-12T18:10:10.702+05:30</timestamp>
+            <message>REOPENED as v3 before merge. Design review found Task 8 wired only release VALIDATION, not the PUBLISH half — Codex installs from a marketplace that must point at a published payload, neither existed. Modelled on claude-plugins (thin pointer repo, git-subdir source -&gt; dist/ on releases branch). Added Tasks 9 (git-subdir marketplace variant), 10 (publishRelease push codex payload to dist-codex/ on releases), 11 (README fix + codex-plugins pointer repo). Codex supports the identical git-subdir source schema as Claude, so no separate release-only repo needed beyond a thin codex-plugins pointer.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>

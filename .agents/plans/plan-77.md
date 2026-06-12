@@ -398,6 +398,67 @@ mid-branch one — bumping now (a) is premature while plan-77 is unmerged and (b
 pre-empts the number the next release chooses. The human bumps + cuts the release
 at merge time; everything in this plan works at the current `0.3.19`.
 
+## v3 — release distribution wiring (added before merge)
+
+v3 reopens the plan after a design review surfaced that Task 8 wired only the
+**validation** half of "release wiring", not the **publish** half. Codex installs
+from a marketplace, and the marketplace must point at a published payload — neither
+existed. Modelled on how Claude ships (verified by reading the live repos):
+
+- **`bitkentech/claude-plugins`** is a thin *pointer* repo: one
+  `.claude-plugin/marketplace.json` whose plugin `source` is a **`git-subdir`**
+  block (`url=…/shipsmooth.git`, `path=dist`, `ref=releases`). It carries no
+  payload — the real artifact is `dist/` on the monorepo's **`releases`** branch,
+  pushed by `PublishRelease.syncDistAndPublish` (`SHIPPED_BUILD_SUBPATHS` →
+  repo-root `dist/`, committed to `releases`, tagged `v<ver>`).
+- Codex supports the **identical** `git-subdir` source schema
+  (`source`/`url`/`path`/`ref`), so Codex mirrors Claude exactly: a thin
+  **`bitkentech/codex-plugins`** pointer repo → `dist-codex/` on `releases`.
+- Two marketplace.json forms are needed: **local** (`source: local`, for
+  `codex plugin marketplace add /path/to/build-codex` dev installs — what the
+  codex module emits today) and **git-subdir** (for the `codex-plugins` repo).
+- Gemini is NOT published by `publishRelease` (only claude+windows are), so there
+  is no gemini precedent to copy for the push step — claude's is the model.
+
+### Task 9: Emit the git-subdir release marketplace.json variant [Medium]
+
+*Depends-on:* 7
+
+The codex module currently emits one `marketplace.json` with `source: local`
+(correct for local dev installs). Add a **second** variant with the `git-subdir`
+source (`url=https://github.com/bitkentech/shipsmooth.git`, `path=dist-codex`,
+`ref=releases`) for the published `codex-plugins` pointer repo. Keep the local one
+for `build-codex/` dev. Mirror claude's split (its `claude/` module manifest vs
+`claude-plugins`' git-subdir manifest). Test: the release marketplace.json parses,
+carries a `git-subdir` source with the three fields, and `plugins[0].name=shipsmooth`.
+
+### Task 10: Publish the codex payload to `dist-codex/` on `releases` [Medium]
+
+*Depends-on:* 9
+
+Extend `PublishRelease.syncDistAndPublish` (which runs on the `releases` branch) to
+also assemble the codex prod payload and copy it to repo-root `dist-codex/`
+alongside `dist/`, so the same `git add . && commit && push origin releases` ships
+both. The codex payload's plugin tree goes under `dist-codex/` such that the
+`codex-plugins` git-subdir `path=dist-codex` resolves to a marketplace root
+(i.e. `dist-codex/.agents/plugins/marketplace.json` + `dist-codex/plugins/…`).
+Decide whether to call `assembleCodexProd` from the release flow or copy a
+pre-assembled dir. Test the layout assertion; do **not** run the real
+`publishRelease`.
+
+### Task 11: Fix README + seed the `codex-plugins` pointer repo [Low]
+
+*Depends-on:* 10
+
+Correct the README Codex install command from the (non-existent)
+`bitkentech/shipsmooth-codex` to `codex plugin marketplace add bitkentech/codex-plugins`
++ `codex plugin add shipsmooth@bitkentech` — matching Claude's two-step UX, no
+`--sparse`. Provide the `codex-plugins` repo's `.agents/plugins/marketplace.json`
+content (the git-subdir variant from Task 9) so the human can seed
+`bitkentech/codex-plugins` (a new repo, sibling to `claude-plugins`). Note in the
+plan that creating/pushing that repo + running `publishRelease` are the human's
+release-time steps.
+
 ## Risk summary (pre-calibration defaults)
 
 | Task | Default risk | Why |
@@ -410,8 +471,12 @@ at merge time; everything in this plan works at the current `0.3.19`.
 | 6 | Medium | SessionStart hook (runtime bootstrap); `${PLUGIN_ROOT}` placeholder delta. |
 | 7 | Medium | New Gradle module + manifest/marketplace emission + payload assembly; output-dir vs de-risk artifact. |
 | 8 | Low | Release-dir wiring, parity gate lock, docs, version bump. |
+| 9 | Medium | git-subdir marketplace variant; release-distribution correctness. |
+| 10 | Medium | publishRelease push of codex payload to releases branch; release-path code. |
+| 11 | Low | README fix + codex-plugins pointer-repo content for the human to seed. |
 
 Dependency note: 1 → 2 is the hard structural spine (both High, in order). Tasks
 4, 5, 6 all depend on 3 and can proceed in parallel once the render variant
-exists; 7 joins 5+6; 8 is the closeout. Risk-sorted order respects the
-dependency chain (no Low task gates a High one).
+exists; 7 joins 5+6; 8 is the v2 closeout. v3 distribution chain: 7 → 9 → 10 → 11
+(git-subdir manifest → publish push → README/pointer-repo). Risk-sorted order
+respects the dependency chain (no Low task gates a High one).
