@@ -157,7 +157,7 @@ public class PublishRelease {
     }
 
     static void validateBuildOutput(Path buildDir) throws IOException {
-        ValidateRelease.validate(buildDir, null);
+        ValidateRelease.validate(buildDir, null, null);
     }
 
     static void maybeValidateBuildOutput(Path buildDir, boolean skip) throws IOException {

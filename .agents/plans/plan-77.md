@@ -380,15 +380,23 @@ marketplace.json gates JSON validity.
 
 *Depends-on:* 7
 
-Extend `packaging/build.gradle.kts` `validateRelease` and the per-platform package
-step to cover the codex payload dir (mirror the `build-gemini/` lines). Add a
-CI/build parity assertion that claude-prod and gemini-prod renders are unchanged by
-this plan (lock Task 2's invariant). Document Codex support — install via
-`codex plugin marketplace add <root>` then `codex plugin add shipsmooth@<marketplace>`
-(the de-risk-verified flow, not manual `cp -R`); the SessionStart hook bootstraps
-the runtime, no Node required — wherever the install story lives (README /
-DEVELOPMENT.md). Bump the patch version per the release process. Do **not** run
-`publishRelease`.
+Extend `packaging/build.gradle.kts` `validateRelease` (+ `ValidateRelease.java`) to
+cover the codex payload dir via a `build.codex.outputDir` property and a
+`validateCodexPayload` that checks the nested `.agents/plugins/marketplace.json`
+(name, plugins[0].name, source.path) + `plugins/<name>/.codex-plugin/plugin.json`
+(name/version/description/skills) — the Codex marketplace entry has no `description`
+field, so it needs its own validator, not the Claude one. Add a build parity gate
+(integration tests) that the 3-way host dispatch keeps hosts isolated: Codex's
+sequential-only content must not leak into claude/gemini, and gemini's `invoke_agent`
+must not leak into codex. Document Codex support — install via
+`codex plugin marketplace add bitkentech/shipsmooth-codex` then
+`codex plugin add shipsmooth@bitkentech` (the de-risk-verified flow, not manual
+`cp -R`) — in the README. Do **not** run `publishRelease`.
+
+**Version bump DEFERRED (deviation):** the patch bump is a release-time step, not a
+mid-branch one — bumping now (a) is premature while plan-77 is unmerged and (b)
+pre-empts the number the next release chooses. The human bumps + cuts the release
+at merge time; everything in this plan works at the current `0.3.19`.
 
 ## Risk summary (pre-calibration defaults)
 
