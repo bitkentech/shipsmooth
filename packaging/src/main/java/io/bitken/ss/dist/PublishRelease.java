@@ -150,6 +150,12 @@ public class PublishRelease {
                 "-Pbuild.outputDir=" + repoRoot.resolve("build"));
     }
 
+    // plan-77: assemble the codex prod payload (marketplace-root layout) into build-codex/.
+    static List<String> assembleCodexProdCommand(Path repoRoot) {
+        return List.of(gradlew(repoRoot), "assembleCodexProd",
+                "-Pbuild.outputDir=" + repoRoot.resolve("build-codex"));
+    }
+
     /** Windows payload into {@code build-windows/}. Replaces {@code mvn compile -Pwindows -P!dev}. */
     static List<String> assembleWindowsCommand(Path repoRoot) {
         return List.of(gradlew(repoRoot), "assembleWindows",
@@ -200,6 +206,10 @@ public class PublishRelease {
 
         runCommand(assembleProdCommand(repoRoot), repoRoot);
         maybeValidateBuildOutput(buildDir, skipValidation);
+
+        // plan-77: assemble the codex prod payload into build-codex/ so the
+        // releases-branch push can stage its flat plugin folder at dist-codex/.
+        runCommand(assembleCodexProdCommand(repoRoot), repoRoot);
 
         Path outputDir = repoRoot.resolve("packaging/target/dist");
         Files.createDirectories(outputDir);
@@ -272,7 +282,11 @@ public class PublishRelease {
             copyRecursive(buildDir.resolve(sub), distDir.resolve(sub));
         }
 
-        git("add", "dist/");
+        // plan-77: stage the codex flat plugin folder at dist-codex/ (the codex-plugins
+        // marketplace's git-subdir source points here: path=dist-codex, ref=releases).
+        stageCodexDist(repoRoot.resolve("build-codex"), "shipsmooth", repoRoot.resolve("dist-codex"));
+
+        git("add", "dist/", "dist-codex/");
         git("commit", "-m", "release: v" + version);
         git("tag", "v" + version);
         git("push", "origin", "releases", "v" + version);
@@ -328,7 +342,7 @@ public class PublishRelease {
         if (!remoteOut.isEmpty()) throw new IllegalStateException("Tag already exists on remote: " + tag);
     }
 
-    private void deleteDirectory(Path dir) throws IOException {
+    private static void deleteDirectory(Path dir) throws IOException {
         Files.walkFileTree(dir, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
@@ -346,6 +360,28 @@ public class PublishRelease {
     }
 
     private void copyRecursive(Path src, Path dst) throws IOException {
+        copyTree(src, dst);
+    }
+
+    /**
+     * plan-77 Task 10: stage the codex release payload at {@code distCodexDir}.
+     *
+     * <p>{@code assembleCodexProd} emits a marketplace-root layout
+     * ({@code plugins/<name>/{.codex-plugin,skills,hooks,dist}} + a local
+     * {@code .agents/plugins/marketplace.json}). For the release branch, the
+     * {@code codex-plugins} marketplace's {@code git-subdir} source has
+     * {@code path=dist-codex}, and Codex resolves that path to the PLUGIN folder
+     * itself (mirroring claude's {@code path=dist}). So {@code dist-codex/} must be
+     * the FLAT plugin folder — just {@code plugins/<name>/}'s contents, dropping the
+     * {@code plugins/} wrapper and the local-dev marketplace.
+     */
+    static void stageCodexDist(Path codexPayloadRoot, String pluginName, Path distCodexDir) throws IOException {
+        if (Files.exists(distCodexDir)) deleteDirectory(distCodexDir);
+        Files.createDirectories(distCodexDir);
+        copyTree(codexPayloadRoot.resolve("plugins").resolve(pluginName), distCodexDir);
+    }
+
+    private static void copyTree(Path src, Path dst) throws IOException {
         if (!Files.exists(src)) return;
         Files.walkFileTree(src, new SimpleFileVisitor<>() {
             @Override
