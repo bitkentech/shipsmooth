@@ -42,9 +42,9 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>`codexDevSpec`/`codexProdSpec` render variants</name>
-            <commit></commit>
+            <commit>adfe216</commit>
             <created-from>plan-77-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
