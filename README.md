@@ -7,7 +7,7 @@ The below demo shows one example flow: **Plan ➔ Generate tasks ➔ Execute ➔
 
 ## How to use the workflow
 
-Load [the skill](https://github.com/bitkentech/shipsmooth/blob/releases/dist/skills/start/SKILL.md) as `/shipsmooth:start`. Start discussing the work with Claude. The workflow will take you along these steps.
+Load [the skill](https://github.com/bitkentech/shipsmooth/blob/releases/dist/skills/start/SKILL.md) as `/shipsmooth:start`. Discuss your work with the agent. The skill will guide you along these steps.
 
 1. **Plan** - After discussion, a plan file is created and committed  (.agents/plans/plan-{N}.md). It will have a list of tasks in it.
 2. **Calibrate** - You can override the default risk level (High/Medium/Low) for each task. The riskiest work will be executed first.
