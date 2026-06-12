@@ -198,6 +198,16 @@ val geminiDevSpec = claudeDevSpec.copy(
     pluginHookCommand = "node \"\${extensionPath}/dist/session-start.js\"",
 )
 
+// Codex dev (plan-77): a Codex plugin bundles the skill as skills/start/SKILL.md.
+// Like gemini-dev, the dev hook keeps the Node session-start.ts path (it needs the
+// TS local-jlink branch); Codex's plugin-root placeholder is ${PLUGIN_ROOT}. The
+// frontmatter name is `start` (folder = skill name), matching the de-risk artifact.
+val codexDevSpec = geminiDevSpec.copy(
+    buildPlatform = "codex",
+    outputDir = renderOutputDir("codex-dev"),
+    pluginHookCommand = "node \"\${PLUGIN_ROOT}/dist/session-start.js\"",
+)
+
 fun registerRender(taskName: String, spec: RenderSpec) =
     tasks.register<JavaExec>(taskName) {
         group = "render"
@@ -237,6 +247,7 @@ fun registerRender(taskName: String, spec: RenderSpec) =
 
 val renderClaudeDev = registerRender("renderClaudeDev", claudeDevSpec)
 val renderGeminiDev = registerRender("renderGeminiDev", geminiDevSpec)
+val renderCodexDev = registerRender("renderCodexDev", codexDevSpec)
 
 // ---------------------------------------------------------------------------
 // Prod render variants (Task 18) — mirror the Maven `prod`, `gemini`, `windows`
@@ -281,6 +292,17 @@ val geminiProdSpec = claudeProdSpec.copy(
         "sh \"\${extensionPath}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion",
 )
 
+// Codex prod (plan-77): mirrors gemini-prod (no jlinkDir, prod `name: start`
+// frontmatter), but the SessionStart hook uses Codex's ${PLUGIN_ROOT} placeholder.
+// Os.Posix.hookCommand copies install-shipsmooth.sh next to hooks.json because the
+// command references it (plan-76), bootstrapping the runtime per session.
+val codexProdSpec = geminiProdSpec.copy(
+    buildPlatform = "codex",
+    outputDir = layout.buildDirectory.dir("render/codex-prod").get().asFile.path,
+    pluginHookCommand =
+        "sh \"\${PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion",
+)
+
 // buildOs="windows" so Target renders the Windows cliBin
 // (%LOCALAPPDATA%\...\runtime\bin\shipsmooth.cmd) and the install-runtime.bat hook.
 // The Maven render now forwards build.os too (Task 20 fixed both systems), so the
@@ -300,6 +322,7 @@ val windowsSpec = claudeProdSpec.copy(
 
 val renderClaudeProd = registerRender("renderClaudeProd", claudeProdSpec)
 val renderGeminiProd = registerRender("renderGeminiProd", geminiProdSpec)
+val renderCodexProd = registerRender("renderCodexProd", codexProdSpec)
 val renderWindows = registerRender("renderWindows", windowsSpec)
 
 // ---------------------------------------------------------------------------
