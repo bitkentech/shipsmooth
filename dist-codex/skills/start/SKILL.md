@@ -1,4 +1,7 @@
-
+---
+name: start
+description: Use when starting any task — applies the shipsmooth agent coding workflow.
+---
 
 # start — Agent Coding Workflow
 
