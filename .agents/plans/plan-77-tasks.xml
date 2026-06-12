@@ -81,9 +81,9 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Codex `SessionStart` hook (runtime bootstrap)</name>
-            <commit></commit>
+            <commit>ceb2620</commit>
             <created-from>plan-77-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -92,9 +92,9 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>`codex/` Gradle module + assembleCodex{Dev,Prod}</name>
-            <commit></commit>
+            <commit>9841d6b</commit>
             <created-from>plan-77-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -103,13 +103,19 @@
         <task>
             <id>8</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Release wiring + parity gate + docs + version bump</name>
-            <commit></commit>
+            <commit>9b28eeb</commit>
             <created-from>plan-77-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-12T17:20:58.657+05:30</timestamp>
+                    <message>Version bump DEFERRED to release/merge time: bumping mid-branch (plan-77 unmerged) is premature and pre-empts the next release's chosen number. Everything works at 0.3.19; human bumps + cuts release at merge.</message>
+                </deviation>
+            </deviations>
         </task>
     </tasks>
     <project-updates>
@@ -126,6 +132,11 @@
         <update>
             <timestamp>2026-06-12T01:30:00.000+05:30</timestamp>
             <message>v2 de-risk VERIFIED end-to-end on codex-cli 0.139.0 (still v2; refinements only, no pivot). Plan/tasks updated with verified findings: skill name = "start" (not "shipsmooth"); exact marketplace layout (.agents/plugins/marketplace.json + plugins/PLUGIN/); real install flow via codex plugin marketplace add + plugin add. Task 6 narrowed to the SessionStart hook only; manifest + marketplace emission moved into Task 7 (the module's payload assembly). Task 1 de-risk slice confirmed DONE and proven (skill triggers, shells out to real runtime).</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-12T17:20:59.199+05:30</timestamp>
+            <message>All 8 tasks closed. Codex CLI support complete: Platform.Codex + 3-way template dispatch + render specs + 13 codex fragments (sequential-only parallel) + SessionStart hook + codex/ Gradle module + release validation/parity/docs. claude/gemini parity byte-identical throughout. Version bump + release deferred to human at merge.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
