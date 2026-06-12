@@ -2,7 +2,7 @@
 
 An AI assistant plugin that enables a plan-driven, risk-prioritised, checkpoint based, agentic coding workflow.
 
-The below demo shows one workflow: **Plan ➔ Generate tasks ➔ Execute ➔ Something went wrong! ➔ Pause execution ➔ Update plan (and tasks) ➔ Resume execution ➔ Stop session ➔ Resume next day!**
+The below demo shows one example flow: **Plan ➔ Generate tasks ➔ Execute ➔ Something went wrong! ➔ Pause execution ➔ Update plan (and tasks) ➔ Resume execution ➔ Stop session ➔ Resume next day!**
 ![shipsmooth demo](docs/demo-small.gif)
 
 ## How to use the workflow
