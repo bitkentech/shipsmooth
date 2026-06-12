@@ -1,7 +1,7 @@
 # Development
 
 ## Prerequisites
-- Java 21
+- JDK 25 (the build runs on a Java 25 toolchain; bytecode targets Java 21)
 - Node.js 18+
 
 (The build uses the Gradle wrapper, `./gradlew` — no separate Gradle install needed.)
