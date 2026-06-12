@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>77</plan>
-    <plan-version>plan-77-v1</plan-version>
+    <plan-version>plan-77-v2</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>planning</status>
@@ -12,11 +12,20 @@
             <id>1</id>
             <risk>high</risk>
             <status>pending</status>
-            <name>`Platform.Codex` + per-platform discriminator on the model</name>
+            <name>De-risk — hand-build a Codex plugin + `Platform.Codex` discriminator</name>
             <commit></commit>
             <created-from>plan-77-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-12T00:30:00.000+05:30</timestamp>
+                    <message>De-risk slice DONE: hand-built a real Codex plugin at build-codex/ per the docs' manual-create/manual-install sections. JSON + frontmatter validated. This de-risk corrected the plan to v2: Codex uses a PLUGIN model (closest to Claude) and DOES support a SessionStart hook. Code slice (Platform.Codex + PluginModel discriminator) still TODO.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-12T01:30:00.000+05:30</timestamp>
+                    <message>De-risk VERIFIED end-to-end on codex-cli 0.139.0: corrected layout = marketplace root holds .agents/plugins/marketplace.json (NOT loose), plugins under plugins/PLUGIN/, skill folder = skills/start/ with frontmatter "name: start" (matches Claude/Gemini, not "shipsmooth"). Install flow = "codex plugin marketplace add ROOT" then "codex plugin add shipsmooth@MARKETPLACE" (NOT cp -R). /skills lists "start"; triggering it shelled out to the real ~/.cache/shipsmooth/runtime-0.3.19/bin/shipsmooth (Os.Posix.cliBinPath). agents/openai.yaml and hooks/ confirmed OPTIONAL. Out-of-scope env issues noted: plan resume NPE on a null status element in a stale plan XML; Codex bwrap sandbox blocked by Ubuntu 24.04 AppArmor apparmor_restrict_unprivileged_userns=1. Plan/tasks updated: Task 6 narrowed to SessionStart hook only (manifest+marketplace emission moved to Task 7).</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
@@ -67,7 +76,7 @@
             <id>6</id>
             <risk>medium</risk>
             <status>pending</status>
-            <name>One-time Codex installer (no SessionStart hook)</name>
+            <name>Codex `SessionStart` hook (runtime bootstrap)</name>
             <commit></commit>
             <created-from>plan-77-v1</created-from>
             <closed-at-version></closed-at-version>
@@ -100,7 +109,17 @@
     <project-updates>
         <update>
             <timestamp>2026-06-12T00:00:00.000+05:30</timestamp>
-            <message>Plan drafted. Surface = Codex skills (~/.codex/skills/SKILL.md, custom prompts deprecated); template dispatch = per-platform fragment selector replacing binary isGemini(); no Codex SessionStart hook so activation is a one-time installer (Task 6).</message>
+            <message>Plan drafted (v1). Surface = Codex skills (~/.codex/skills/SKILL.md, custom prompts deprecated); template dispatch = per-platform fragment selector replacing binary isGemini(); no Codex SessionStart hook so activation is a one-time installer (Task 6).</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-12T00:30:00.000+05:30</timestamp>
+            <message>v2 — Task 1 de-risk (hand-built Codex plugin at build-codex/) corrected two v1 premises: (1) Codex uses a first-class PLUGIN model (.codex-plugin/plugin.json + bundled skills/ + hooks/hooks.json + marketplace.json), closest to Claude not Gemini; (2) Codex DOES support a SessionStart hook (same schema as Claude, ${PLUGIN_ROOT}). Retargeted: payload is a plugin tree (not loose ~/.codex/skills/); old Task 6 one-time installer DROPPED.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-12T01:30:00.000+05:30</timestamp>
+            <message>v2 de-risk VERIFIED end-to-end on codex-cli 0.139.0 (still v2; refinements only, no pivot). Plan/tasks updated with verified findings: skill name = "start" (not "shipsmooth"); exact marketplace layout (.agents/plugins/marketplace.json + plugins/PLUGIN/); real install flow via codex plugin marketplace add + plugin add. Task 6 narrowed to the SessionStart hook only; manifest + marketplace emission moved into Task 7 (the module's payload assembly). Task 1 de-risk slice confirmed DONE and proven (skill triggers, shells out to real runtime).</message>
             <blocked>false</blocked>
         </update>
     </project-updates>

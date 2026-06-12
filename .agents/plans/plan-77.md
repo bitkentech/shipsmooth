@@ -1,5 +1,12 @@
 # plan-77 — Codex CLI support (third agent host)
 
+*Version: plan-77-v2. v2 corrects v1 after the Task 1 de-risk built a real Codex
+plugin by hand: Codex uses a first-class **plugin** model (closest to Claude, not
+Gemini) and **does** support a `SessionStart` hook — so the v1 "one-time installer"
+(old Task 6) is dropped in favour of a per-session hook, and the payload is a
+plugin tree (`.codex-plugin/plugin.json` + bundled `skills/` + `hooks/hooks.json`),
+not a loose `~/.codex/skills/` drop.*
+
 ## Context
 
 **Backlog feature:** Let users run the shipsmooth agent-coding workflow under
@@ -9,60 +16,106 @@ external Linear issue; tracked here.)
 Today shipsmooth renders two host variants from one set of JTE skill templates:
 
 - **Claude** — a Claude Code plugin (`.claude-plugin/{plugin,marketplace}.json`,
-  `SessionStart` hook).
+  bundled `skills/`, `hooks/hooks.json` SessionStart hook).
 - **Gemini** — a Gemini CLI extension (`gemini-extension.json`, TOML commands,
   `SessionStart` hook).
 
-Codex CLI shares **neither** manifest model.
+### Research findings (authoritative, June 2026 — corrected at v2)
 
-### Research findings (authoritative, June 2026)
+Source: `developers.openai.com/codex/plugins/build`,
+`developers.openai.com/codex/skills`. v2 supersedes v1's premises after the
+**Task 1 de-risk** built a real Codex plugin by hand.
 
-1. **Codex custom prompts are DEPRECATED** in favour of **Codex skills**
-   (`developers.openai.com/codex/skills`). A Codex skill is a directory under
-   `~/.codex/skills/<name>/` containing a **`SKILL.md`** with YAML frontmatter
-   (**required** `name` + `description`) and a markdown body. The `description`
-   field is the *trigger* — Codex loads the skill by matching it, there is no
-   slash-command or session-start wiring needed for activation.
+1. **Codex ships a first-class PLUGIN model — closest to Claude, not Gemini.**
+   A Codex plugin is a directory with:
+   - `.codex-plugin/plugin.json` — JSON manifest, required fields `name`
+     (kebab-case), `version`, `description`, `skills: "./skills/"`.
+   - `skills/<name>/SKILL.md` — bundled skill(s): YAML frontmatter (**required**
+     `name` matching the folder + `description`) + markdown body.
+   - optional `agents/openai.yaml` (per-skill + plugin-root UI metadata),
+     `hooks/hooks.json`, `.mcp.json` (bundled MCP server), `.app.json`, `assets/`.
 
-2. **This is the SAME shape shipsmooth already renders for Claude.** The existing
-   `start/SKILL.jte.md` → `SKILL.md` pipeline (with `skill.frontmatter`) maps
-   almost directly onto `~/.codex/skills/shipsmooth/SKILL.md`. Codex support is
-   therefore *much* closer to the Claude render than to the Gemini extension —
-   no new manifest format, no TOML commands.
+2. **Codex DOES support a `SessionStart` hook** (v1 was wrong). `hooks/hooks.json`
+   uses the **same event schema as Claude**:
+   `{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"…"}]}]}}`,
+   with `${PLUGIN_ROOT}` as the plugin-root placeholder. So the jlink runtime can
+   be bootstrapped **per session** exactly like Claude/Gemini (reusing plan-76's
+   `install-shipsmooth.sh`) — **no one-time installer is needed**. The v1 "Task 6
+   one-time installer" is dropped.
 
-3. **Codex has NO `SessionStart` hook.** The Claude/Gemini install path runs
-   `install-shipsmooth.sh` on every session start to bootstrap the jlink runtime
-   (plan-76). Codex offers no equivalent per-session hook, so runtime
-   bootstrapping must move to a **one-time install** step (the design is settled
-   in Task 6 below; flagged "decide during planning" at intake, resolved here).
+3. **Codex custom prompts are DEPRECATED** in favour of skills — confirming the
+   skill-based surface, but the skill is now *bundled inside the plugin* rather
+   than dropped loose into `~/.codex/skills/`.
 
-### Decisions locked at intake
+4. **The SKILL.md body is the SAME shape shipsmooth already renders.** The
+   existing `start/SKILL.jte.md` → `SKILL.md` pipeline maps directly onto the
+   plugin's `skills/start/SKILL.md`. The skill is named **`start`** (folder
+   `skills/start/`, frontmatter `name: start`) — consistent with the Claude/Gemini
+   hosts; Codex triggers it by `description`, not by name.
 
-- **Surface:** Codex **skills** (`~/.codex/skills/`), not the deprecated custom
-  prompts and not an `AGENTS.md`-only projection.
+### De-risk findings — verified against `codex-cli 0.139.0` (this box)
+
+The Task 1 de-risk built `build-codex/` by hand and ran it through a real Codex
+install. Corrections beyond the docs (docs were misleading on the layout):
+
+- **Marketplace layout is exact:** the marketplace *root* holds
+  `.agents/plugins/marketplace.json` (NOT a loose `marketplace.json`); plugins
+  live under `<root>/plugins/<name>/`. The de-risk root is `build-codex/`:
+  ```
+  build-codex/
+  ├── .agents/plugins/marketplace.json     # name/interface/plugins[] schema
+  └── plugins/shipsmooth/                   # plugin (source.path = ./plugins/shipsmooth)
+      ├── .codex-plugin/plugin.json
+      └── skills/start/SKILL.md
+  ```
+- **Install flow is CLI, not `cp -R`:** `codex plugin marketplace add <root>` →
+  `codex plugin list` (shows `start`'s plugin) → `codex plugin add
+  <plugin>@<marketplace>`. Codex caches the plugin to
+  `~/.codex/plugins/cache/<marketplace>/<plugin>/<version>/`. Re-running
+  `plugin add` refreshes the cache after a re-render (dev-iteration path; a local
+  marketplace is read live from disk, `marketplace upgrade` is Git-only).
+- **`agents/openai.yaml` and `hooks/` are OPTIONAL:** the plugin installed,
+  enabled, and `/skills` listed it with neither present. So the SessionStart hook
+  (Task 6) is additive — skill activation does not depend on it.
+- **End-to-end proven:** in a real session `/skills` showed `start`; triggering it
+  shelled out to the installed runtime at
+  `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-<ver>/bin/shipsmooth` (the exact
+  `Os.Posix.cliBinPath`). The skill→runtime round-trip works. (Two unrelated
+  environment issues surfaced and are out of plan-77 scope: a `plan resume` NPE on
+  a malformed pre-existing plan XML with a null `<status>`, and Codex's bwrap
+  sandbox failing under Ubuntu 24.04 AppArmor `apparmor_restrict_unprivileged_userns=1`.)
+
+### Decisions locked (intake + v2 de-risk)
+
+- **Surface:** a Codex **plugin** (`.codex-plugin/plugin.json` + bundled
+  `skills/start/SKILL.md` + `hooks/hooks.json`), installed via
+  `~/.agents/plugins/marketplace.json`. Not loose `~/.codex/skills/`, not the
+  deprecated custom prompts, not `AGENTS.md`-only.
 - **Template dispatch:** replace the binary `isGemini()` if/else with a
   **per-platform fragment selector**, so claude/gemini/codex each resolve their
   own `shared/workflow/<host>/` fragment. (12 branch sites today.)
-- **Install/activation:** resolved in this plan (Task 6): a one-time installer
-  that copies the rendered skill into `~/.codex/skills/` and bootstraps the
-  runtime once, since there is no per-session hook to lean on.
+- **Install/activation:** **per-session SessionStart hook** (same as Claude),
+  reusing plan-76's `install-shipsmooth.sh` with a `${PLUGIN_ROOT}` placeholder.
+  The v1 one-time-installer task is removed.
 
 ## Goals / Non-goals
 
 **Goals**
-- A `codex` render variant that emits `~/.codex/skills/shipsmooth/SKILL.md`
-  (frontmatter + body) from the existing JTE templates, with Codex-specific
-  workflow fragments where the host semantics differ from Claude/Gemini.
+- A `codex` render variant that emits a Codex **plugin** payload —
+  `.codex-plugin/plugin.json` + `skills/start/SKILL.md` + `hooks/hooks.json`
+  — from the existing JTE templates, with Codex-specific workflow fragments where
+  host semantics differ from Claude/Gemini.
 - A self-contained `codex/` Gradle module + `assembleCodexProd`/`Dev` payload,
-  mirroring the structure (not the manifest contents) of the `gemini/` module.
-- A one-time install path that lands the skill under `~/.codex/skills/` and
-  bootstraps the jlink runtime once (no SessionStart hook available).
+  reusing the claude/gemini assembly machinery (Codex's plugin shape is closest
+  to Claude's).
+- Per-session runtime bootstrap via a Codex `SessionStart` hook reusing plan-76's
+  `install-shipsmooth.sh` (`${PLUGIN_ROOT}` placeholder).
 - The binary `isGemini()` template split refactored into a clean per-platform
   dispatch so adding a 4th host later is additive, not another nested branch.
 
 **Non-goals**
-- Codex custom prompts / slash commands (deprecated; skills auto-trigger by
-  description).
+- Codex custom prompts / slash commands (deprecated; the skill is bundled in the
+  plugin and triggers by description).
 - A Windows Codex build (Codex CLI is posix-first here; mirror the existing
   `Target.guard()` rule that pins Windows to Claude only).
 - Changing the Claude or Gemini payloads' behaviour (additive only — their
@@ -115,49 +168,89 @@ split is still expressed as `@if/@elseif/@else` — but driven by a single
 an explicit host switch and each host names its own fragment. Each of the 13
 `shared/workflow/{claude,gemini}/*.jte.md` fragments gets a `codex/` sibling.
 
-**Codex fragment content.** For the first cut, Codex's host semantics most
-closely match **Gemini** (external CLI, explicit permission/consent prompts,
-shell-driven task sequencing) rather than Claude (in-process Task tool). The 13
+**Codex fragment content.** Two different "closest to" axes, don't conflate them:
+the *packaging shape* is closest to **Claude** (plugin manifest + bundled skills +
+hooks). But the *workflow command semantics* are closest to **Gemini** — Codex is
+an external CLI with explicit permission/consent prompts and shell-driven task
+sequencing, unlike Claude's in-process Task tool. So the 13
 `codex/` fragments start as copies of the `gemini/` fragments and are then
 adjusted where Codex's actual command surface differs (e.g. agent-dispatch,
 ledger-watch, resolver-call invocations). Getting each fragment's commands right
 for Codex is the substantive content work and is split across tasks by fragment
 family, not done as one blob.
 
+### Codex plugin payload shape (confirmed by the Task 1 de-risk)
+
+```
+<marketplace-root>/                       # → the dir passed to `codex plugin marketplace add`
+├── .agents/plugins/marketplace.json      # name/interface/plugins[]; source.path=./plugins/shipsmooth
+└── plugins/
+    └── shipsmooth/                        # the PLUGIN (folder = plugin name)
+        ├── .codex-plugin/
+        │   └── plugin.json                # name=shipsmooth, version, description, skills="./skills/"
+        ├── skills/
+        │   └── start/                     # the SKILL (folder = skill name = `start`)
+        │       └── SKILL.md               # name: start + description + workflow body
+        └── hooks/
+            ├── hooks.json                 # SessionStart → sh ${PLUGIN_ROOT}/hooks/install-shipsmooth.sh
+            └── install-shipsmooth.sh      # plan-76 posix bootstrap (reused)
+```
+
+The `.agents/plugins/marketplace.json` is the registration entry point (its
+location confirmed by the de-risk — NOT a loose root-level `marketplace.json`).
+This is structurally the **Claude plugin** shape (manifest + bundled `skills/` +
+`hooks/hooks.json`), with a different manifest filename/dir
+(`.codex-plugin/plugin.json` vs `.claude-plugin/plugin.json`) and the marketplace
+file living one level up in the marketplace root, not inside the plugin.
+
 ### Render variant + module
 
 - `skills/pkg/build.gradle.kts`: add `codexDevSpec`/`codexProdSpec` (`.copy()` of
-  the claude specs with `buildPlatform = "codex"`, Codex frontmatter, and the
-  Codex install hook handling per Task 6). Register `renderCodexDev`/`Prod`.
+  the claude specs with `buildPlatform = "codex"`, Codex frontmatter `name: start`,
+  and the Codex SessionStart hook string with `${PLUGIN_ROOT}`).
+  Register `renderCodexDev`/`Prod`. Reuse the existing `HooksRenderer` (Codex uses
+  the same hooks.json schema as Claude).
 - New `codex/` module (`settings.gradle.kts` += `include("codex")`): mirrors the
-  `gemini/` module's structure — a `registerCodexMeta` factory + the shared
-  `registerPayloadAssembly`/`registerPayloadSync` helpers from buildSrc — but the
-  payload is a `~/.codex/skills/`-shaped tree (`skills/shipsmooth/SKILL.md`), not
-  a `gemini-extension.json` + commands tree. No `.claude-plugin/` metadata.
+  **claude** module's structure — a `registerCodexMeta` factory emitting
+  `.codex-plugin/plugin.json` + the marketplace.json sibling — plus the shared
+  `registerPayloadAssembly`/`registerPayloadSync` helpers from buildSrc. No
+  `gemini-extension.json`, no TOML commands, no `.claude-plugin/` metadata.
 - `packaging/build.gradle.kts`: extend `validateRelease` + the per-platform
-  package step to cover the codex payload dir (`build-codex/`), mirroring the
-  `build-gemini/` wiring.
+  package step to cover the codex payload dir, mirroring the `build-gemini/`
+  wiring. (Note: the real render output dir must NOT clobber the hand-built
+  de-risk artifact at `build-codex/shipsmooth/`; pick `build-codex-dev/` for dev
+  and a staged dir for prod, or relocate the de-risk artifact — settled in Task 7.)
 
-### Install / activation (no SessionStart hook)
+### Install / activation (per-session SessionStart hook)
 
-Codex auto-loads the skill by `description`, so **activation** needs nothing once
-`~/.codex/skills/shipsmooth/SKILL.md` is present. What still needs bootstrapping
-is the **jlink runtime** the skill's CLI commands invoke. With no per-session
-hook, the plan ships a **one-time `install-shipsmooth.sh`-style installer** that
-(a) copies the rendered skill dir into `~/.codex/skills/` and (b) runs the same
-runtime-bootstrap the plan-76 posix script already performs, but once at install
-time rather than per session. The skill body references the bootstrapped launcher
-path (the existing `Os.Posix.cliBinPath`, `${XDG_CACHE_HOME:-~/.cache}/...`). The
-exact installer entry point (reuse plan-76's script with an `--into-codex` mode
-vs. a thin codex-specific wrapper) is settled in Task 6.
+Corrected at v2: Codex plugins **do** support a `SessionStart` hook
+(`hooks/hooks.json`, same schema as Claude, `${PLUGIN_ROOT}` placeholder). So the
+runtime bootstraps per session exactly like Claude/Gemini — the plan reuses
+plan-76's `install-shipsmooth.sh` with the hook string
+`sh "${PLUGIN_ROOT}/hooks/install-shipsmooth.sh" shipsmooth <version>`. The skill
+body references the bootstrapped launcher via the existing `Os.Posix.cliBinPath`
+(`${XDG_CACHE_HOME:-~/.cache}/...`). **No one-time installer** (v1 Task 6 dropped).
+Skill activation itself needs nothing beyond the plugin being installed + enabled —
+Codex triggers the bundled skill by its `description`.
 
 ## Tasks
 
-### Task 1: `Platform.Codex` + per-platform discriminator on the model [High]
+### Task 1: De-risk — hand-build a Codex plugin + `Platform.Codex` discriminator [High]
 
 *Depends-on:*
 
-Highest-leverage structural change; everything else renders through it. Add
+**De-risk slice (DONE & VERIFIED end-to-end):** hand-built a real Codex plugin at
+`build-codex/` and proved it against `codex-cli 0.139.0` — `.codex-plugin/plugin.json`
+(name/version/description/skills), `skills/start/SKILL.md` (the real gemini-prod
+start workflow body with Codex `name: start` frontmatter), `.agents/plugins/marketplace.json`,
+and a `README.md`. Verified: `codex plugin marketplace add` → `plugin list` →
+`plugin add` installs+enables; `/skills` lists `start`; triggering it shells out
+to the installed runtime at `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-<ver>/bin/shipsmooth`.
+The de-risk corrected the plan to v2 (plugin model + real SessionStart hook) and
+nailed the exact marketplace layout (`.agents/plugins/marketplace.json`, plugins
+under `plugins/<name>/`) — see Context "De-risk findings".
+
+**Code slice (TODO):** the structural change everything else renders through. Add
 `Platform.Codex` to the sealed interface (`id`, `skillFragmentDir`, `from`
 case). Replace the binary `boolean gemini` on `PluginModel` with a platform
 discriminator (`platformId` + `platformDir()`), keeping thin `isGemini()`
@@ -186,12 +279,14 @@ behaviour-preserving for the two existing hosts).
 *Depends-on:* 2
 
 Add the Codex render specs in `skills/pkg/build.gradle.kts` (`.copy()` of the
-claude specs: `buildPlatform = "codex"`, Codex `name`/`description` frontmatter
-matching the SKILL.md trigger model, posix os, install-hook handling deferred to
-Task 6). Register `renderCodexDev`/`renderCodexProd`. Verify the render emits
-`skills/shipsmooth/SKILL.md` with valid YAML frontmatter (`name: shipsmooth`,
-`description: …`) and the workflow body. At this point Codex content == Gemini
-content (placeholder fragments); that is expected.
+claude specs: `buildPlatform = "codex"`, Codex `name: start` frontmatter
+matching the SKILL.md trigger model, posix os, the Codex SessionStart hook string
+`sh "${PLUGIN_ROOT}/hooks/install-shipsmooth.sh" shipsmooth <version>` per Task 6).
+Register `renderCodexDev`/`renderCodexProd`. Verify the render emits
+`skills/start/SKILL.md` with valid YAML frontmatter (`name: start`,
+`description: …`) + workflow body, and `hooks/hooks.json` carrying the SessionStart
+hook. At this point Codex content == Gemini content (placeholder fragments); that
+is expected. Match the hand-built de-risk artifact's `skills/start/SKILL.md`.
 
 ### Task 4: Codex fragment set — execution/permission family [Medium]
 
@@ -217,57 +312,71 @@ surface — verify the dispatched-agent and resolver invocations name the Codex
 launcher correctly. Repoint the corresponding Task-2 `codex` arms; remove the
 last gemini-fragment placeholders. Re-render; claude/gemini parity check holds.
 
-### Task 6: One-time Codex installer (no SessionStart hook) [Medium]
+### Task 6: Codex `SessionStart` hook (runtime bootstrap) [Medium]
 
 *Depends-on:* 3
 
-Resolve the activation design (open at intake). Codex auto-triggers by
-`description`, so only the **runtime bootstrap** needs handling without a
-per-session hook. Provide a one-time installer that copies the rendered skill into
-`~/.codex/skills/shipsmooth/` and bootstraps the jlink runtime once — reusing
-plan-76's posix `install-shipsmooth.sh` logic (an `--into-codex` mode that targets
-the codex skills dir, or a thin codex wrapper that calls it). The Codex render spec
-(Task 3) wires the skill body to the bootstrapped `Os.Posix.cliBinPath`. Test:
-installer lands `SKILL.md` under the codex skills dir and the runtime-bootstrap
-path matches the launcher path the skill body references. Document that there is
-no per-session hook (one-time install is intentional).
+Codex plugins support `hooks/hooks.json` with the **same SessionStart schema as
+Claude** (corrected at v2; the de-risk confirmed hooks are optional, so this is a
+clean additive slice). Wire the Codex render to emit `hooks/hooks.json` whose
+SessionStart command is `sh "${PLUGIN_ROOT}/hooks/install-shipsmooth.sh" shipsmooth
+<version>` and to copy plan-76's `install-shipsmooth.sh` next to it (reuse
+`Os.Posix.hookCommand`'s script-writing side-effect; the only delta is the
+`${PLUGIN_ROOT}` placeholder vs `${CLAUDE_PLUGIN_ROOT}`/`${extensionPath}`). The
+skill body already references the bootstrapped launcher via `Os.Posix.cliBinPath`
+(de-risk verified the path resolves to the real runtime). Test: rendered
+`hooks.json` carries the SessionStart command with `${PLUGIN_ROOT}` and
+`install-shipsmooth.sh` ships alongside. (Manifest + marketplace emission moved to
+Task 7 — they belong with the module's payload assembly.)
 
 ### Task 7: `codex/` Gradle module + assembleCodex{Dev,Prod} [Medium]
 
 *Depends-on:* 5, 6
 
 Add the `codex/` module (`settings.gradle.kts` += `include("codex")`) mirroring
-`gemini/`'s structure: a `registerCodexMeta` factory and the buildSrc
-`registerPayloadAssembly` (dev) / `registerPayloadSync` (prod) helpers, producing
-a `~/.codex/skills/`-shaped payload (no `gemini-extension.json`, no commands TOML,
-no `.claude-plugin/`). `assembleCodexDev` → `build-codex-dev/`, `assembleCodexProd`
-→ `build-codex/`. Run both; assert the payload tree contains
-`skills/shipsmooth/SKILL.md` + the installer + the runtime backup, and the
-overlap-check passes (dev path) / Sync is sole writer (prod path).
+the **claude** module's structure (Codex's plugin shape is closest to Claude's): a
+`registerCodexMeta` factory that emits the **non-rendered plugin metadata** —
+`.codex-plugin/plugin.json` (name/version/description/skills, valid JSON, four
+required fields) and the `.agents/plugins/marketplace.json` registration file
+(name/interface/plugins[] with `source.path = ./plugins/shipsmooth`) — plus the
+buildSrc `registerPayloadAssembly` (dev) / `registerPayloadSync` (prod) helpers
+that fold in the Task-3 render (skills/) and Task-6 hooks/. No
+`gemini-extension.json`, no commands TOML, no `.claude-plugin/`. The assembled
+payload must match the de-risk layout: `<root>/.agents/plugins/marketplace.json`
++ `<root>/plugins/shipsmooth/{.codex-plugin/plugin.json, skills/start/SKILL.md,
+hooks/{hooks.json,install-shipsmooth.sh}}`. **Output dirs:** `assembleCodexDev` →
+`build-codex-dev/`; `assembleCodexProd` → a staged prod dir — must NOT overwrite
+the hand-built de-risk artifact at `build-codex/` (use a distinct prod dir, or
+relocate/remove the de-risk tree first; both `build-codex/` and `build-codex-dev/`
+are already gitignored). Run both; assert the payload tree and the overlap-check
+(dev) / Sync-is-sole-writer (prod); a `python3 -m json.tool` on plugin.json +
+marketplace.json gates JSON validity.
 
 ### Task 8: Release wiring + parity gate + docs + version bump [Low]
 
 *Depends-on:* 7
 
 Extend `packaging/build.gradle.kts` `validateRelease` and the per-platform package
-step to cover `build-codex/` (mirror the `build-gemini/` lines). Add a CI/build
-parity assertion that claude-prod and gemini-prod renders are unchanged by this
-plan (lock Task 2's invariant). Document Codex support (install via the one-time
-installer; no Node and no per-session hook required) wherever the install story
-lives (README / DEVELOPMENT.md). Bump the patch version per the release process.
-Do **not** run `publishRelease`.
+step to cover the codex payload dir (mirror the `build-gemini/` lines). Add a
+CI/build parity assertion that claude-prod and gemini-prod renders are unchanged by
+this plan (lock Task 2's invariant). Document Codex support — install via
+`codex plugin marketplace add <root>` then `codex plugin add shipsmooth@<marketplace>`
+(the de-risk-verified flow, not manual `cp -R`); the SessionStart hook bootstraps
+the runtime, no Node required — wherever the install story lives (README /
+DEVELOPMENT.md). Bump the patch version per the release process. Do **not** run
+`publishRelease`.
 
 ## Risk summary (pre-calibration defaults)
 
 | Task | Default risk | Why |
 |---|---|---|
-| 1 | High | Sealed-interface + model discriminator; must not perturb existing two hosts. |
+| 1 | High | De-risk plugin (done) + sealed-interface/model discriminator; must not perturb existing two hosts. |
 | 2 | High | 12-site template refactor; byte-identical claude/gemini output is the gate. |
 | 3 | Medium | New render specs; SKILL.md frontmatter must satisfy Codex's trigger model. |
 | 4 | Medium | Codex execution/consent fragment semantics (real command surface). |
 | 5 | Medium | Codex multi-agent/resolver fragment semantics. |
-| 6 | Medium | Activation design w/o SessionStart hook; one-time runtime bootstrap. |
-| 7 | Medium | New Gradle module + payload assembly/overlap wiring. |
+| 6 | Medium | SessionStart hook (runtime bootstrap); `${PLUGIN_ROOT}` placeholder delta. |
+| 7 | Medium | New Gradle module + manifest/marketplace emission + payload assembly; output-dir vs de-risk artifact. |
 | 8 | Low | Release-dir wiring, parity gate lock, docs, version bump. |
 
 Dependency note: 1 → 2 is the hard structural spine (both High, in order). Tasks
