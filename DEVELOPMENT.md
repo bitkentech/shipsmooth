@@ -4,22 +4,36 @@
 - JDK 25 (the build runs on a Java 25 toolchain; bytecode targets Java 21)
 - Node.js 18+
 
-(The build uses the Gradle wrapper, `./gradlew` — no separate Gradle install needed.)
+(The build uses the Gradle wrapper, `./gradlew`. No separate Gradle install needed.)
 
 ## Repo structure
 
 This repo uses a multi-module Gradle layout:
-- `core/` — pure domain logic (workflow, ledger, git ops, plan service); JPMS module `io.bitken.ss.core`
-- `cli/` — Java CLI (`shipsmooth`, picocli) + jlink image build; JPMS module `io.bitken.ss.cli`
-- `skills/` — the skills product:
+- `core/`: pure domain logic (workflow, ledger, git ops, plan service); JPMS module `io.bitken.ss.core`
+- `cli/` : Java CLI (`shipsmooth`, picocli) + jlink image build; JPMS module `io.bitken.ss.cli`
+- `skills/`: the skills product:
   - one folder per skill directly under `skills/` (`skills/start/`, `skills/experimental/refine/`, …), each with its `SKILL.jte.md`
-  - `skills/shared/` — partials shared across skills (`shared/workflow/`) and the target snippets the shared workflow selects (`shared/workflow/claude/`, `shared/workflow/gemini/`)
-  - `skills/pkg/` — Java renderers (`Target`, `SkillRenderer`, …) + TypeScript hook scripts (rarely touched)
-- `claude/` — Claude plugin metadata (`claude-plugin/`, `windows/`)
-- `gemini/` — Gemini extension metadata (`gemini-extension/`)
-- `packaging/` — assembles the final `build/` output from the other modules
-- `devtools/` — development-time helper scripts
-- `exp/` — exploratory work with no build wiring (e.g. `exp/model/` TLA+ specs)
+  - `skills/shared/`: partials shared across skills (`shared/workflow/`) and the target snippets the shared workflow selects (`shared/workflow/claude/`, `shared/workflow/gemini/`)
+  - `skills/pkg/`: Java renderers (`Target`, `SkillRenderer`, …) + TypeScript hook scripts (rarely touched)
+- `claude/` : Claude plugin metadata (`claude-plugin/`, `windows/`)
+- `gemini/` : Gemini extension metadata (`gemini-extension/`)
+- `packaging/`: assembles the final `build/` output from the other modules
+- `devtools/` : development-time helper scripts
+- `exp/` : exploratory work with no build wiring (e.g. `exp/model/` TLA+ specs)
+
+## How the `shipsmooth` CLI is distributed
+
+The `shipsmooth` CLI is not shipped as source or a bare jar. The `cli/` module's jlink
+build (see above) produces a self-contained **jlink image** (the CLI classes plus a
+trimmed JDK runtime), which is published as an asset on GitHub Releases. When a user
+installs the plugin, the image for their platform is downloaded from the release and
+unpacked locally.
+
+Because the jlink image bundles its own Java runtime, **the user does not need to
+install Java separately** to run `shipsmooth`. The trade-off is size: each platform's
+image is roughly **80–95 MB** unpacked on disk (the bundled runtime dominates),
+downloaded as a compressed archive of around **45–50 MB**, which is why it lives in
+Release assets rather than in the repo.
 
 ## Build the dev version
 
