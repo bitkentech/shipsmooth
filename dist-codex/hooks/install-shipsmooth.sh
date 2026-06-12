@@ -36,7 +36,7 @@ case "$arch" in
 esac
 PLATFORM="$os-$arch"
 
-RUNTIME_DIR="$CACHE_DIR/runtime-$VERSION"
+RUNTIME_DIR="$CACHE_DIR/$VERSION"
 BIN="$RUNTIME_DIR/bin/shipsmooth"
 if [ -x "$BIN" ]; then
   log "runtime $VERSION already installed at $RUNTIME_DIR"

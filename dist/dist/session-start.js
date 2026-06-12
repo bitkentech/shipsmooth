@@ -52,7 +52,7 @@ function runtimeBin(runtimeDir, platform) {
 }
 async function installRuntime(opts) {
     const { version, cacheDir, pluginRoot } = opts;
-    const runtimeDir = path.join(cacheDir, `runtime-${version}`);
+    const runtimeDir = path.join(cacheDir, version);
     const platform = opts.forcePlatform ?? detectPlatform();
     const bin = runtimeBin(runtimeDir, platform);
     if (isExecutable(bin, platform)) {
