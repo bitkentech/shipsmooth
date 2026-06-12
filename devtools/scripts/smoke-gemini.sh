@@ -65,10 +65,10 @@ else
 fi
 
 # Assert SKILL.md's cliBin resolves to the native runtime binary (jlink model)
-if grep -q "runtime-.*/bin/shipsmooth" "$BUILD_DIR/skills/start/SKILL.md"; then
-  echo "  PASS: SKILL.md uses runtime-<ver>/bin/shipsmooth cliBin"
+if grep -Eq "shipsmooth(-dev)?/[0-9][^/]*/bin/shipsmooth" "$BUILD_DIR/skills/start/SKILL.md"; then
+  echo "  PASS: SKILL.md uses <version>/bin/shipsmooth cliBin"
 else
-  echo "  FAIL: SKILL.md missing runtime-<ver>/bin/shipsmooth cliBin"
+  echo "  FAIL: SKILL.md missing <version>/bin/shipsmooth cliBin"
   exit 1
 fi
 
@@ -111,6 +111,6 @@ echo ""
 echo "=== ALL SMOKE TESTS PASSED ==="
 echo ""
 echo "Next: start 'gemini' in a repo and verify:"
-echo "  - SessionStart hook fires (session-start.js installs runtime-<ver>/bin/shipsmooth)"
+echo "  - SessionStart hook fires (session-start.js installs <version>/bin/shipsmooth)"
 echo "  - /skills shows start"
 echo "  - /start command is available"

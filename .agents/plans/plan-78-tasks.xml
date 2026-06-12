@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>78</plan>
+    <plan-version>plan-78-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-12</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Drop `runtime-` prefix from version dir + move SCC under install</name>
+            <commit>0b47d959d179fcc565d49c1d22ba07978b066781</commit>
+            <created-from>plan-78-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-12T21:56:58.517+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-12T22:18:16.665+05:30</timestamp>
+            <message>Plan complete. runtime- prefix dropped from cache version dir; SCC moved under install. Verified end-to-end via dev build (install to ~/.cache/shipsmooth-dev/0.3.20/).</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

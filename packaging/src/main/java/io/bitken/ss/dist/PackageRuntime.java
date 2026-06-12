@@ -99,7 +99,7 @@ public class PackageRuntime {
         return "@echo off\r\n"
              + "set \"DIR=%~dp0\"\r\n"
              + "set \"INSTALL=%DIR%..\"\r\n"
-             + "set \"SCC_DIR=%LOCALAPPDATA%\\shipsmooth\\scc\"\r\n"
+             + "set \"SCC_DIR=%INSTALL%\\scc\"\r\n"
              + "if not exist \"%SCC_DIR%\" mkdir \"%SCC_DIR%\"\r\n"
              + "\"%INSTALL%\\runtime\\bin\\" + os.javaExe() + "\" ^\r\n"
              + "  -Xquickstart ^\r\n"
@@ -112,7 +112,7 @@ public class PackageRuntime {
                 #!/bin/sh
                 DIR="$(cd "$(dirname "$0")" && pwd)"
                 INSTALL="$(cd "$DIR/.." && pwd)"
-                SCC_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth/scc"
+                SCC_DIR="$INSTALL/scc"
                 mkdir -p "$SCC_DIR"
                 exec "$INSTALL/runtime/bin/%s" \\
                   -Xquickstart \\

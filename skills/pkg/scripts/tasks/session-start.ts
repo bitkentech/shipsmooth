@@ -22,7 +22,7 @@ export function runtimeBin(runtimeDir: string, platform: string): string {
 
 export async function installRuntime(opts: InstallOptions): Promise<void> {
   const { version, cacheDir, pluginRoot } = opts;
-  const runtimeDir = path.join(cacheDir, `runtime-${version}`);
+  const runtimeDir = path.join(cacheDir, version);
   const platform = opts.forcePlatform ?? detectPlatform();
   const bin = runtimeBin(runtimeDir, platform);
 

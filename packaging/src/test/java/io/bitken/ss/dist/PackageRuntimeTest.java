@@ -107,7 +107,7 @@ public class PackageRuntimeTest {
             var entry = zf.getEntry("bin/shipsmooth.cmd");
             assertNotNull(entry);
             String content = new String(zf.getInputStream(entry).readAllBytes());
-            assertTrue(content.contains("%LOCALAPPDATA%"), "cmd launcher must use LOCALAPPDATA for SCC dir");
+            assertTrue(content.contains("SCC_DIR=%INSTALL%\\scc"), "cmd launcher must keep SCC under the installed version");
             assertFalse(content.contains("%USERPROFILE%"), "cmd launcher must not use USERPROFILE for SCC dir");
         }
     }
@@ -134,6 +134,10 @@ public class PackageRuntimeTest {
             assertNotNull(entry);
             String launcherContent = new String(zf.getInputStream(entry).readAllBytes());
             assertTrue(launcherContent.contains("shipsmooth_v0.3.0"), "launcher must embed version in SCC name");
+            assertTrue(launcherContent.contains("SCC_DIR=\"$INSTALL/scc\""),
+                "launcher must keep SCC under the installed version");
+            assertFalse(launcherContent.contains("/shipsmooth/scc"),
+                "launcher must not share one SCC dir across installed versions");
         }
     }
 

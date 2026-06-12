@@ -35,13 +35,13 @@ class OsTest {
     @Test
     void posix_cliBinPath_usesXdgCacheHome() {
         String result = Os.POSIX.cliBinPath("shipsmooth", "0.3.3", "shipsmooth");
-        assertEquals("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.3.3/bin/shipsmooth", result);
+        assertEquals("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.3/bin/shipsmooth", result);
     }
 
     @Test
     void posix_cliBinPath_devSubdirVariant() {
         String result = Os.POSIX.cliBinPath("shipsmooth", "0.3.3", "shipsmooth-dev");
-        assertEquals("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-0.3.3/bin/shipsmooth", result);
+        assertEquals("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/0.3.3/bin/shipsmooth", result);
     }
 
     @Test
