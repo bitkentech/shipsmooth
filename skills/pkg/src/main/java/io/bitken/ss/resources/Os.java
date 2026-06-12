@@ -42,7 +42,7 @@ public sealed interface Os permits Os.Posix, Os.Windows {
 
         @Override
         public String cliBinPath(String pluginName, String version, String cacheSubdir) {
-            return "${XDG_CACHE_HOME:-~/.cache}/" + cacheSubdir + "/runtime-" + version + "/bin/" + launcherFileName();
+            return "${XDG_CACHE_HOME:-~/.cache}/" + cacheSubdir + "/" + version + "/bin/" + launcherFileName();
         }
 
         @Override

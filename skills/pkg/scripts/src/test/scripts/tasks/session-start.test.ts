@@ -19,7 +19,7 @@ test('already cached: installRuntime is a no-op', async () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
   const version = '0.2.0';
-  const bin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth');
+  const bin = path.join(cacheDir, version, 'bin', 'shipsmooth');
   makeExecutable(bin);
 
   await installRuntime({ version, cacheDir, pluginRoot });
@@ -37,7 +37,7 @@ test('jlinkDir is a non-directory (e.g. /dev/null): does not create runtime dir 
   } catch {
     // expected: will fail trying to download (no real release at this version in test env)
   }
-  const runtimeDir = path.join(cacheDir, 'runtime-0.3.1');
+  const runtimeDir = path.join(cacheDir, '0.3.1');
   // must not be a plain file — either absent or a directory
   if (fs.existsSync(runtimeDir)) {
     assert.ok(fs.statSync(runtimeDir).isDirectory(), 'runtime path must be a directory, not a file');
@@ -53,7 +53,7 @@ test('darwin-x64: installs from jlinkDir without error', async () => {
 
   await installRuntime({ version, cacheDir, pluginRoot, jlinkDir, forcePlatform: 'darwin-x64' });
 
-  const destBin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth');
+  const destBin = path.join(cacheDir, version, 'bin', 'shipsmooth');
   assert.ok(fs.existsSync(destBin), 'darwin-x64 binary should be installed from jlinkDir');
 });
 
@@ -66,7 +66,7 @@ test('darwin-arm64: installs from jlinkDir without error', async () => {
 
   await installRuntime({ version, cacheDir, pluginRoot, jlinkDir, forcePlatform: 'darwin-arm64' });
 
-  const destBin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth');
+  const destBin = path.join(cacheDir, version, 'bin', 'shipsmooth');
   assert.ok(fs.existsSync(destBin), 'darwin-arm64 binary should be installed from jlinkDir');
 });
 
@@ -137,7 +137,7 @@ test('zip extraction: runtime/bin/* files are chmod 0755 after install', async (
   fs.chmodSync(path.join(jlinkDir, 'bin', 'shipsmooth'), 0o755);
   // jlinkDir path installs via fs.cpSync — verify launcher gets chmod'd
   await installRuntime({ version, cacheDir, pluginRoot, jlinkDir });
-  const bin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth');
+  const bin = path.join(cacheDir, version, 'bin', 'shipsmooth');
   assert.ok((fs.statSync(bin).mode & 0o111) !== 0, 'launcher must be executable');
 });
 
@@ -162,13 +162,13 @@ test('unsupported platform: error message lists supported platforms', async () =
 // Unit tests for Task 4
 test('win32-x64: runtimeBin returns .cmd path', () => {
   const { runtimeBin } = require('../../../../tasks/session-start');
-  const result = runtimeBin('/cache/runtime-0.3.9', 'win32-x64');
+  const result = runtimeBin('/cache/0.3.9', 'win32-x64');
   assert.ok(result.endsWith('shipsmooth.cmd'), `expected .cmd path, got ${result}`);
 });
 
 test('linux-x64: runtimeBin returns POSIX path', () => {
   const { runtimeBin } = require('../../../../tasks/session-start');
-  const result = runtimeBin('/cache/runtime-0.3.9', 'linux-x64');
+  const result = runtimeBin('/cache/0.3.9', 'linux-x64');
   assert.ok(!result.endsWith('.cmd'), `expected POSIX path, got ${result}`);
   assert.ok(result.endsWith('shipsmooth'), `expected shipsmooth, got ${result}`);
 });
@@ -185,6 +185,6 @@ test('win32-x64: installs from jlinkDir without error', async () => {
 
   await installRuntime({ version, cacheDir, pluginRoot, jlinkDir, forcePlatform: 'win32-x64' });
 
-  const destCmd = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth.cmd');
+  const destCmd = path.join(cacheDir, version, 'bin', 'shipsmooth.cmd');
   assert.ok(fs.existsSync(destCmd), 'win32-x64 .cmd launcher should be installed from jlinkDir');
 });

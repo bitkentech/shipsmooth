@@ -172,7 +172,7 @@ class PosixBootstrapIntegrationTest {
         int code = runInstaller(script, cache, releases, "shipsmooth", "0.2.0");
         assertEquals(0, code, "installer must exit 0");
 
-        Path installedBin = cache.resolve("shipsmooth/runtime-0.2.0/bin/shipsmooth");
+        Path installedBin = cache.resolve("shipsmooth/0.2.0/bin/shipsmooth");
         assertTrue(Files.exists(installedBin), "runtime launcher must be installed");
         assertTrue(Files.isExecutable(installedBin),
             "unzip must restore the stored +x bit on the launcher");

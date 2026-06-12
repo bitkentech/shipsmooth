@@ -40,7 +40,7 @@ class TargetIntegrationTest {
             "Claude profile should contain heading");
         assertFalse(content.stripLeading().startsWith("---"),
             "Claude profile should not start with YAML frontmatter");
-        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth"),
+        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/0.2.0/bin/shipsmooth"),
             "CLI bin path should use XDG shell expression with -dev subdir");
     }
 
@@ -283,7 +283,7 @@ class TargetIntegrationTest {
         Target.main(new String[]{});
 
         String content = Files.readString(tempDir.resolve("skills/start/SKILL.md"));
-        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/runtime-0.2.0/bin/shipsmooth"),
+        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.2.0/bin/shipsmooth"),
             "prod cliBin should use shipsmooth subdir");
         assertFalse(content.contains("shipsmooth-dev"),
             "prod cliBin must not reference shipsmooth-dev");
@@ -295,7 +295,7 @@ class TargetIntegrationTest {
         Target.main(new String[]{});
 
         String content = Files.readString(tempDir.resolve("skills/start-dev/SKILL.md"));
-        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/runtime-0.2.0/bin/shipsmooth"),
+        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/0.2.0/bin/shipsmooth"),
             "dev cliBin should use shipsmooth-dev subdir");
     }
 

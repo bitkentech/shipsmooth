@@ -41,7 +41,7 @@ function startServer(zipBytes: Buffer): Promise<{ url: string; close: () => Prom
 test('integration: installRuntime downloads from a URL override, extracts, chmods, and cleans up tmp', async () => {
   const cacheDir = makeTmpDir();
   const pluginRoot = makeTmpDir();
-  // Unique version per test run so the cacheDir/runtimeDir paths never collide with
+  // Unique version per test run so the cacheDir/version runtimeDir paths never collide with
   // a concurrently-running test (node:test runs tests concurrently).
   const version = `9.9.9-cleanup-${process.hrtime.bigint()}`;
   const zipBytes = buildFakeRuntimeZip();
@@ -59,7 +59,7 @@ test('integration: installRuntime downloads from a URL override, extracts, chmod
     await server.close();
   }
 
-  const bin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth');
+  const bin = path.join(cacheDir, version, 'bin', 'shipsmooth');
   assert.ok(fs.existsSync(bin), `binary should exist at ${bin}`);
   const mode = fs.statSync(bin).mode;
   assert.ok((mode & 0o111) !== 0, 'binary should be executable');
@@ -70,7 +70,7 @@ test('integration: installRuntime downloads from a URL override, extracts, chmod
   // No leftover .tmp extract dir for THIS install (the download-tmp cleanup invariant,
   // checked on paths this test owns rather than a shared os.tmpdir() snapshot that races
   // against concurrent installs).
-  assert.ok(!fs.existsSync(`${path.join(cacheDir, `runtime-${version}`)}.tmp`),
+  assert.ok(!fs.existsSync(`${path.join(cacheDir, version)}.tmp`),
     'extract .tmp dir should be cleaned up');
 });
 
@@ -94,7 +94,7 @@ test('integration: installRuntime keeps runtime/bin/* executable from stored zip
     await server.close();
   }
 
-  const runtimeBin = path.join(cacheDir, `runtime-${version}`, 'runtime', 'bin');
+  const runtimeBin = path.join(cacheDir, version, 'runtime', 'bin');
   for (const name of ['java', 'keytool']) {
     const f = path.join(runtimeBin, name);
     assert.ok(fs.existsSync(f), `${name} should exist`);
@@ -120,7 +120,7 @@ test('integration: installRuntime force-chmods the launcher even if its stored m
     await server.close();
   }
 
-  const bin = path.join(cacheDir, `runtime-${version}`, 'bin', 'shipsmooth');
+  const bin = path.join(cacheDir, version, 'bin', 'shipsmooth');
   assert.ok((fs.statSync(bin).mode & 0o111) !== 0, 'launcher must be executable despite non-exec stored mode');
 });
 
@@ -154,7 +154,7 @@ test('integration: installRuntime preserves executable bit on runtime/lib/* (jsp
     await server.close();
   }
 
-  const libDir = path.join(cacheDir, `runtime-${version}`, 'runtime', 'lib');
+  const libDir = path.join(cacheDir, version, 'runtime', 'lib');
   const helper = path.join(libDir, 'jspawnhelper');
   assert.ok(fs.existsSync(helper), 'jspawnhelper should exist');
   assert.ok((fs.statSync(helper).mode & 0o111) !== 0, 'runtime/lib/jspawnhelper must be executable');
@@ -197,7 +197,7 @@ test('integration: installRuntime throws if extracted zip is missing bin/shipsmo
   assert.match(err!.message, /missing bin\/shipsmooth/);
 
   // Must NOT leave a partial runtimeDir behind
-  const runtimeDir = path.join(cacheDir, `runtime-${version}`);
+  const runtimeDir = path.join(cacheDir, version);
   assert.ok(!fs.existsSync(runtimeDir), 'partial runtime directory should be cleaned up');
 });
 

@@ -102,7 +102,7 @@ This produces `build-gemini-dev/` containing the Gemini extension:
 ```
 build-gemini-dev/
   gemini-extension.json
-  skills/start/SKILL.md      (with YAML frontmatter; cliBin → runtime-<ver>/bin/shipsmooth)
+  skills/start/SKILL.md      (with YAML frontmatter; cliBin -> <version>/bin/shipsmooth)
   hooks/hooks.json           (SessionStart runs node "${extensionPath}/dist/session-start.js")
   commands/start.toml
   dist/                      (session-start.js + adm-zip-bundle.js + session-start-config.json)
@@ -122,7 +122,7 @@ Changes to source files are reflected immediately after the next `./gradlew asse
 ./devtools/scripts/smoke-gemini.sh
 ```
 
-Verifies the build layout (jlink runtime model: SKILL cliBin → `runtime-<ver>/bin/shipsmooth`, hook runs `session-start.js`, no shipped `package.json`) and links the extension.
+Verifies the build layout (jlink runtime model: SKILL cliBin -> `<version>/bin/shipsmooth`, hook runs `session-start.js`, no shipped `package.json`) and links the extension.
 
 ### Uninstall
 
