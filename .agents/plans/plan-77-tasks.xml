@@ -53,9 +53,9 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Codex fragment set — execution/permission family</name>
-            <commit></commit>
+            <commit>8d9fe90</commit>
             <created-from>plan-77-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -64,13 +64,19 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Codex fragment set — agent-dispatch/ledger family</name>
-            <commit></commit>
+            <commit>1234502</commit>
             <created-from>plan-77-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-12T16:36:58.946+05:30</timestamp>
+                    <message>Codex parallel = sequential-only this cut (audit found Codex's NL-spawn subagent model differs from both hosts; bwrap unverifiable). agent-dispatch-{independent,dependent} authored for set uniformity but unreferenced (orphans in claude/gemini too).</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>6</id>
