@@ -8,6 +8,7 @@ rootProject.name = "shipsmooth"
 include("core")
 include("cli")
 include("claude")
+include("codex")
 include("gemini")
 include("packaging")
 include("skills:pkg")

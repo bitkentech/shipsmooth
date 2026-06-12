@@ -1,0 +1,12 @@
+{
+  "name": "${plugin.name}",
+  "version": "${project.version}",
+  "description": "${plugin.description}",
+  "skills": "./skills/",
+  "author": {
+    "name": "Pramod Biligiri"
+  },
+  "homepage": "https://github.com/bitkentech/shipsmooth",
+  "repository": "https://github.com/bitkentech/shipsmooth",
+  "license": "Apache-2.0"
+}

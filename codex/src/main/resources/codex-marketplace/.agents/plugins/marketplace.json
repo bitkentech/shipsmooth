@@ -1,0 +1,20 @@
+{
+  "name": "${marketplace.name}",
+  "interface": {
+    "displayName": "${marketplace.description}"
+  },
+  "plugins": [
+    {
+      "name": "${plugin.name}",
+      "source": {
+        "source": "local",
+        "path": "./plugins/${plugin.name}"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
