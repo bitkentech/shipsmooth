@@ -119,6 +119,65 @@ class TargetIntegrationTest {
     }
 
     @Test
+    void skillMdIsRenderedForCodexProfile() throws Exception {
+        setCodexProdProps();
+        Target.main(new String[]{});
+
+        // Codex bundles the skill as skills/start/SKILL.md (folder = skill name).
+        Path output = tempDir.resolve("skills/start/SKILL.md");
+        assertTrue(Files.exists(output), "SKILL.md should be written");
+
+        String content = Files.readString(output);
+        assertTrue(content.startsWith("---\nname: start"),
+            "Codex profile should start with YAML frontmatter (name: start)");
+        assertTrue(content.contains("# start — Agent Coding Workflow"),
+            "Heading should follow frontmatter");
+    }
+
+    @Test
+    void hooksJsonIsRenderedForCodexProfile() throws Exception {
+        setCodexProdProps();
+        Target.main(new String[]{});
+
+        Path output = tempDir.resolve("hooks/hooks.json");
+        assertTrue(Files.exists(output), "hooks.json should be written");
+
+        String content = Files.readString(output);
+        // Codex SessionStart uses its own plugin-root placeholder, not Claude's/Gemini's.
+        assertTrue(content.contains("PLUGIN_ROOT"),
+            "Codex command should reference PLUGIN_ROOT");
+        assertFalse(content.contains("CLAUDE_PLUGIN_ROOT"),
+            "Codex must not use the Claude placeholder");
+        assertFalse(content.contains("extensionPath"),
+            "Codex must not use the Gemini placeholder");
+        assertTrue(content.contains("install-shipsmooth.sh"),
+            "Codex command should invoke the sh installer");
+        assertFalse(content.contains("session-start.js"),
+            "Codex prod command must not reference the Node entry point");
+        assertTrue(Files.exists(tempDir.resolve("hooks/install-shipsmooth.sh")),
+            "Codex render must copy install-shipsmooth.sh next to hooks.json");
+    }
+
+    private void setCodexProdProps() {
+        String frontmatter = "---\nname: start\ndescription: Use when starting any task — applies the shipsmooth agent coding workflow.\n---\n\n";
+        System.setProperty("build.outputDir", tempDir.toString());
+        System.setProperty("build.env", "prod");
+        System.setProperty("build.platform", "codex");
+        System.setProperty("build.os", "posix");
+        System.setProperty("plugin.base.name", "shipsmooth");
+        System.setProperty("plugin.skill.start.basename", "start");
+        System.setProperty("plugin.version", "0.2.0");
+        System.setProperty("plugin.description", "Agent coding workflow");
+        System.setProperty("skill.frontmatter", frontmatter);
+        System.setProperty("shipsmooth.jlink.dir", "");
+        System.setProperty("experimental.enabled", "false");
+        // plan-77: Codex prod bootstraps via the Node-free sh installer with the
+        // Codex plugin-root placeholder ${PLUGIN_ROOT}.
+        System.setProperty("plugin.hook.command",
+            "sh \"${PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth 0.2.0");
+    }
+
+    @Test
     void parallelContentIsRemovedFromBaseSkill() throws Exception {
         setDevProps();
         Target.main(new String[]{});
