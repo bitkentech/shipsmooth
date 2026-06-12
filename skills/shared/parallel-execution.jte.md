@@ -46,7 +46,9 @@ Before launching any subagents, ask the user:
 > 1. Yes, go ahead
 > 2. No, don't use subagents"
 
-@if(model.isGemini() || model.isCodex())
+@if(model.isCodex())
+@template.shared.workflow.codex.permission-consent(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.permission-consent(model = model)
 @else
 @template.shared.workflow.claude.permission-consent(model = model)
@@ -55,14 +57,18 @@ Before launching any subagents, ask the user:
 ### Per-task command sequence (run by the Lead Agent, not the subagent)
 
 For tasks **without** `<depends-on>`:
-@if(model.isGemini() || model.isCodex())
+@if(model.isCodex())
+@template.shared.workflow.codex.task-command-sequence-independent(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.task-command-sequence-independent(model = model)
 @else
 @template.shared.workflow.claude.task-command-sequence-independent(model = model)
 @endif
 
 For tasks **with** `<depends-on>` (run after parent batch is complete):
-@if(model.isGemini() || model.isCodex())
+@if(model.isCodex())
+@template.shared.workflow.codex.task-command-sequence-dependent(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.task-command-sequence-dependent(model = model)
 @else
 @template.shared.workflow.claude.task-command-sequence-dependent(model = model)
@@ -135,7 +141,9 @@ Then arm Monitor, passing `--after $LEDGER_SEQ`:
 
 `ledger watch` blocks until a `RESOLVER_REQUESTED` event appears in `.agents/ledger.jsonl`, prints its full JSON payload to stdout, and exits 0. It creates the ledger file if it does not yet exist, so it is safe to arm before `integrate` has started. Exit 1 means it timed out (default 30 minutes) without seeing an event.
 
-@if(model.isGemini() || model.isCodex())
+@if(model.isCodex())
+@template.shared.workflow.codex.background-execution(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.background-execution(model = model)
 @else
 @template.shared.workflow.claude.background-execution(model = model)
