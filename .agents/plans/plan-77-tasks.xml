@@ -4,16 +4,16 @@
     <plan-version>plan-77-v2</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>planning</status>
+        <status>active</status>
         <created>2026-06-12</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>De-risk — hand-build a Codex plugin + `Platform.Codex` discriminator</name>
-            <commit></commit>
+            <commit>2fcae8e</commit>
             <created-from>plan-77-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
