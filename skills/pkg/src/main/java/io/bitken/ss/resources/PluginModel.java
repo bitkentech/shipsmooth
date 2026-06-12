@@ -8,7 +8,7 @@ public record PluginModel(
     String cliBin,
     String skillFrontmatter,
     String skillFragmentDir,
-    boolean gemini,
+    String platformId,
     Os os,
     Env env,
     String jlinkDir,
@@ -18,7 +18,7 @@ public record PluginModel(
     public PluginModel withSkill(String newSkillName, String newFrontmatter) {
         return new PluginModel(
             pluginName, pluginVersion, pluginDescription,
-            newSkillName, cliBin, newFrontmatter, skillFragmentDir, gemini, os, env, jlinkDir, repoName,
+            newSkillName, cliBin, newFrontmatter, skillFragmentDir, platformId, os, env, jlinkDir, repoName,
             experimentalEnabled
         );
     }
@@ -32,6 +32,10 @@ public record PluginModel(
     }
 
     public boolean isGemini() {
-        return gemini;
+        return "gemini".equals(platformId);
+    }
+
+    public boolean isCodex() {
+        return "codex".equals(platformId);
     }
 }

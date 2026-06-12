@@ -39,6 +39,20 @@ See the [shipsmooth-windows README](https://github.com/bitkentech/shipsmooth-win
 gemini extensions install https://github.com/bitkentech/shipsmooth-gemini
 ```
 
+### Codex CLI
+
+First, register the marketplace (one-time setup):
+```bash
+codex plugin marketplace add bitkentech/codex-plugins
+```
+
+Then install the plugin and restart Codex:
+```bash
+codex plugin add shipsmooth@bitkentech
+```
+
+The workflow loads as the `start` skill (run `/skills` to confirm it is enabled).
+
 On first session start, a `SessionStart` hook downloads the self-contained Java
 runtime into `~/.cache/shipsmooth/` (`%LOCALAPPDATA%\shipsmooth\` on Windows).
 

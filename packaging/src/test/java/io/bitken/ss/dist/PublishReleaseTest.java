@@ -107,6 +107,37 @@ public class PublishReleaseTest {
                 "build/package.json is no longer produced by the jlink build");
     }
 
+    // ---- plan-77 Task 10: codex payload → dist-codex/ on releases ----
+
+    @Test
+    void stageCodexDistFlattensPluginFolderToDistCodexRoot() throws IOException {
+        // An assembled codex payload (nested marketplace-root layout, as
+        // assembleCodexProd produces): plugins/<name>/{.codex-plugin, skills, hooks, dist}
+        // plus the local marketplace at .agents/plugins/marketplace.json.
+        Path payload = tempDir.resolve("build-codex");
+        Path plugin = payload.resolve("plugins/shipsmooth");
+        Files.createDirectories(plugin.resolve(".codex-plugin"));
+        Files.writeString(plugin.resolve(".codex-plugin/plugin.json"), "{\"name\":\"shipsmooth\"}");
+        Files.createDirectories(plugin.resolve("skills/start"));
+        Files.writeString(plugin.resolve("skills/start/SKILL.md"), "---\nname: start\n---\n");
+        Files.createDirectories(plugin.resolve("hooks"));
+        Files.writeString(plugin.resolve("hooks/hooks.json"), "{}");
+        Files.createDirectories(payload.resolve(".agents/plugins"));
+        Files.writeString(payload.resolve(".agents/plugins/marketplace.json"), "{}");
+
+        Path distCodex = tempDir.resolve("dist-codex");
+        PublishRelease.stageCodexDist(payload, "shipsmooth", distCodex);
+
+        // dist-codex/ is the FLAT plugin folder (git-subdir path=dist-codex points at
+        // the plugin dir itself, like claude's dist/) — NOT a nested marketplace.
+        assertTrue(Files.exists(distCodex.resolve(".codex-plugin/plugin.json")), "plugin.json at dist-codex root");
+        assertTrue(Files.exists(distCodex.resolve("skills/start/SKILL.md")), "skills/ at dist-codex root");
+        assertTrue(Files.exists(distCodex.resolve("hooks/hooks.json")), "hooks/ at dist-codex root");
+        // The local-dev marketplace + the plugins/ wrapper must NOT be carried into the release dir.
+        assertFalse(Files.exists(distCodex.resolve(".agents")), "local marketplace must not ship in dist-codex");
+        assertFalse(Files.exists(distCodex.resolve("plugins")), "the plugins/ wrapper must be flattened away");
+    }
+
     // ---- Task 26: Gradle-native release path (de-Maven) ----
 
     @Test

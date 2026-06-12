@@ -46,7 +46,9 @@ Before launching any subagents, ask the user:
 > 1. Yes, go ahead
 > 2. No, don't use subagents"
 
-@if(model.isGemini())
+@if(model.isCodex())
+@template.shared.workflow.codex.permission-consent(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.permission-consent(model = model)
 @else
 @template.shared.workflow.claude.permission-consent(model = model)
@@ -55,20 +57,26 @@ Before launching any subagents, ask the user:
 ### Per-task command sequence (run by the Lead Agent, not the subagent)
 
 For tasks **without** `<depends-on>`:
-@if(model.isGemini())
+@if(model.isCodex())
+@template.shared.workflow.codex.task-command-sequence-independent(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.task-command-sequence-independent(model = model)
 @else
 @template.shared.workflow.claude.task-command-sequence-independent(model = model)
 @endif
 
 For tasks **with** `<depends-on>` (run after parent batch is complete):
-@if(model.isGemini())
+@if(model.isCodex())
+@template.shared.workflow.codex.task-command-sequence-dependent(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.task-command-sequence-dependent(model = model)
 @else
 @template.shared.workflow.claude.task-command-sequence-dependent(model = model)
 @endif
 
-@if(model.isGemini())
+@if(model.isCodex())
+@template.shared.workflow.codex.agent-instruction(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.agent-instruction(model = model)
 @else
 @template.shared.workflow.claude.agent-instruction(model = model)
@@ -94,7 +102,9 @@ If it fails for environment reasons (e.g. Docker not available), add the necessa
 
 **File overlap warning:** Before running `integrate`, check which tasks touch the same files:
 
-@if(model.isGemini())
+@if(model.isCodex())
+@template.shared.workflow.codex.file-overlap-check(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.file-overlap-check(model = model)
 @else
 @template.shared.workflow.claude.file-overlap-check(model = model)
@@ -127,7 +137,9 @@ LEDGER_SEQ=$(${model.cliBin()} ledger list --count)
 
 Then arm Monitor, passing `--after $LEDGER_SEQ`:
 
-@if(model.isGemini())
+@if(model.isCodex())
+@template.shared.workflow.codex.ledger-watch-cmd(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.ledger-watch-cmd(model = model)
 @else
 @template.shared.workflow.claude.ledger-watch-cmd(model = model)
@@ -135,7 +147,9 @@ Then arm Monitor, passing `--after $LEDGER_SEQ`:
 
 `ledger watch` blocks until a `RESOLVER_REQUESTED` event appears in `.agents/ledger.jsonl`, prints its full JSON payload to stdout, and exits 0. It creates the ledger file if it does not yet exist, so it is safe to arm before `integrate` has started. Exit 1 means it timed out (default 30 minutes) without seeing an event.
 
-@if(model.isGemini())
+@if(model.isCodex())
+@template.shared.workflow.codex.background-execution(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.background-execution(model = model)
 @else
 @template.shared.workflow.claude.background-execution(model = model)
@@ -143,19 +157,23 @@ Then arm Monitor, passing `--after $LEDGER_SEQ`:
 
 **When Monitor fires with a `RESOLVER_REQUESTED` line:**
 1. Parse the JSON blob from the ledger entry — it contains `payload` (the resolver prompt) and `metadata` fields including `worktree` and `task_id`.
-@if(model.isGemini())
+@if(model.isCodex())
+@template.shared.workflow.codex.agent-resolver-call(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.agent-resolver-call(model = model)
 @else
 @template.shared.workflow.claude.agent-resolver-call(model = model)
 @endif
-@if(model.isGemini())
+@if(model.isCodex())
+@template.shared.workflow.codex.resolver-complete-cmd(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.resolver-complete-cmd(model = model)
 @else
 @template.shared.workflow.claude.resolver-complete-cmd(model = model)
 @endif
 4. **Arm Monitor again (Cycle N+1)** — make a new Monitor tool call with the same command above (same `--after $LEDGER_SEQ` value) before waiting for the next event. Monitor has exited; you must re-arm it for each additional resolver cycle.
 
-@if(!model.isGemini())
+@if(!model.isGemini() && !model.isCodex())
 **When the Bash background-complete notification for `integrate` arrives with exit code 0:** stop the active Monitor tool call immediately (via TaskStop) — do not wait for it to time out. `ledger watch` will eventually exit on its own when it sees the `INTEGRATION_COMPLETE` event, but only if Monitor was armed at that moment; if it was not re-armed yet, it will hang for the full 30-minute timeout. Stopping it explicitly on integrate exit-0 is the reliable fix.
 @endif
 

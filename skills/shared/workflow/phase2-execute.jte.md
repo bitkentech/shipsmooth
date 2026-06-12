@@ -74,7 +74,9 @@ quality conforms to its instructions):
   ```
   This creates a stable rollback point. A human reviewing the PR can check out this commit to inspect each task in isolation.
 - `[Linear]` Mark the Linear issue **Agent Coded**.
-@if(model.isGemini())
+@if(model.isCodex())
+@template.shared.workflow.codex.set-commit-hardening(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.set-commit-hardening(model = model)
 @else
 @template.shared.workflow.claude.set-commit-hardening(model = model)
@@ -96,7 +98,9 @@ quality conforms to its instructions):
    git push origin t/{issue-id}-{short-description}
    ```
    - `[Linear]` Mark the Linear issue **Agent Coded**. No draft review needed.
-@if(model.isGemini())
+@if(model.isCodex())
+@template.shared.workflow.codex.set-commit-low-risk(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.set-commit-low-risk(model = model)
 @else
 @template.shared.workflow.claude.set-commit-low-risk(model = model)

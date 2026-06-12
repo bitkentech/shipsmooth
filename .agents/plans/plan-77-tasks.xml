@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>77</plan>
+    <plan-version>plan-77-v3</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-12</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>De-risk — hand-build a Codex plugin + `Platform.Codex` discriminator</name>
+            <commit>2fcae8e</commit>
+            <created-from>plan-77-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-12T00:30:00.000+05:30</timestamp>
+                    <message>De-risk slice DONE: hand-built a real Codex plugin at build-codex/ per the docs' manual-create/manual-install sections. JSON + frontmatter validated. This de-risk corrected the plan to v2: Codex uses a PLUGIN model (closest to Claude) and DOES support a SessionStart hook. Code slice (Platform.Codex + PluginModel discriminator) still TODO.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-12T01:30:00.000+05:30</timestamp>
+                    <message>De-risk VERIFIED end-to-end on codex-cli 0.139.0: corrected layout = marketplace root holds .agents/plugins/marketplace.json (NOT loose), plugins under plugins/PLUGIN/, skill folder = skills/start/ with frontmatter "name: start" (matches Claude/Gemini, not "shipsmooth"). Install flow = "codex plugin marketplace add ROOT" then "codex plugin add shipsmooth@MARKETPLACE" (NOT cp -R). /skills lists "start"; triggering it shelled out to the real ~/.cache/shipsmooth/runtime-0.3.19/bin/shipsmooth (Os.Posix.cliBinPath). agents/openai.yaml and hooks/ confirmed OPTIONAL. Out-of-scope env issues noted: plan resume NPE on a null status element in a stale plan XML; Codex bwrap sandbox blocked by Ubuntu 24.04 AppArmor apparmor_restrict_unprivileged_userns=1. Plan/tasks updated: Task 6 narrowed to SessionStart hook only (manifest+marketplace emission moved to Task 7).</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Refactor the binary `isGemini()` template branches to host dispatch</name>
+            <commit>b2139df</commit>
+            <created-from>plan-77-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>`codexDevSpec`/`codexProdSpec` render variants</name>
+            <commit>adfe216</commit>
+            <created-from>plan-77-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Codex fragment set — execution/permission family</name>
+            <commit>8d9fe90</commit>
+            <created-from>plan-77-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Codex fragment set — agent-dispatch/ledger family</name>
+            <commit>1234502</commit>
+            <created-from>plan-77-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-12T16:36:58.946+05:30</timestamp>
+                    <message>Codex parallel = sequential-only this cut (audit found Codex's NL-spawn subagent model differs from both hosts; bwrap unverifiable). agent-dispatch-{independent,dependent} authored for set uniformity but unreferenced (orphans in claude/gemini too).</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Codex `SessionStart` hook (runtime bootstrap)</name>
+            <commit>ceb2620</commit>
+            <created-from>plan-77-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>`codex/` Gradle module + assembleCodex{Dev,Prod}</name>
+            <commit>9841d6b</commit>
+            <created-from>plan-77-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Release wiring + parity gate + docs + version bump</name>
+            <commit>9b28eeb</commit>
+            <created-from>plan-77-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-12T17:20:58.657+05:30</timestamp>
+                    <message>Version bump DEFERRED to release/merge time: bumping mid-branch (plan-77 unmerged) is premature and pre-empts the next release's chosen number. Everything works at 0.3.19; human bumps + cuts release at merge.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Emit the git-subdir release marketplace.json variant</name>
+            <commit>c7239e5</commit>
+            <created-from>plan-77-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-12T18:17:24.565+05:30</timestamp>
+                    <message>RE-SCOPED to match the claude-plugins precedent: claude-plugins' marketplace.json is HAND-MAINTAINED in that repo (the shipsmooth build does not emit it — its repo is just marketplace.json + README). So codex follows the same model: the git-subdir marketplace.json is hand-authored directly in bitkentech/codex-plugins (committed c7239e5, pushed), NOT generated by the codex Gradle module. No build change needed; the module continues emitting only the local-dev marketplace (Task 7). This removes the planned 'two-variant build emission'.</message>
+                </deviation>
+            </deviations>
+            <depends-on>7</depends-on>
+        </task>
+        <task>
+            <id>10</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Publish the codex payload to dist-codex/ on releases</name>
+            <commit>c16043f</commit>
+            <created-from>plan-77-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>9</depends-on>
+        </task>
+        <task>
+            <id>11</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Fix README + seed the codex-plugins pointer repo</name>
+            <commit>ade7926</commit>
+            <created-from>plan-77-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>10</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-12T00:00:00.000+05:30</timestamp>
+            <message>Plan drafted (v1). Surface = Codex skills (~/.codex/skills/SKILL.md, custom prompts deprecated); template dispatch = per-platform fragment selector replacing binary isGemini(); no Codex SessionStart hook so activation is a one-time installer (Task 6).</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-12T00:30:00.000+05:30</timestamp>
+            <message>v2 — Task 1 de-risk (hand-built Codex plugin at build-codex/) corrected two v1 premises: (1) Codex uses a first-class PLUGIN model (.codex-plugin/plugin.json + bundled skills/ + hooks/hooks.json + marketplace.json), closest to Claude not Gemini; (2) Codex DOES support a SessionStart hook (same schema as Claude, ${PLUGIN_ROOT}). Retargeted: payload is a plugin tree (not loose ~/.codex/skills/); old Task 6 one-time installer DROPPED.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-12T01:30:00.000+05:30</timestamp>
+            <message>v2 de-risk VERIFIED end-to-end on codex-cli 0.139.0 (still v2; refinements only, no pivot). Plan/tasks updated with verified findings: skill name = "start" (not "shipsmooth"); exact marketplace layout (.agents/plugins/marketplace.json + plugins/PLUGIN/); real install flow via codex plugin marketplace add + plugin add. Task 6 narrowed to the SessionStart hook only; manifest + marketplace emission moved into Task 7 (the module's payload assembly). Task 1 de-risk slice confirmed DONE and proven (skill triggers, shells out to real runtime).</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-12T17:20:59.199+05:30</timestamp>
+            <message>All 8 tasks closed. Codex CLI support complete: Platform.Codex + 3-way template dispatch + render specs + 13 codex fragments (sequential-only parallel) + SessionStart hook + codex/ Gradle module + release validation/parity/docs. claude/gemini parity byte-identical throughout. Version bump + release deferred to human at merge.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-12T17:50:47.677+05:30</timestamp>
+            <message></message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-12T18:10:10.702+05:30</timestamp>
+            <message>REOPENED as v3 before merge. Design review found Task 8 wired only release VALIDATION, not the PUBLISH half — Codex installs from a marketplace that must point at a published payload, neither existed. Modelled on claude-plugins (thin pointer repo, git-subdir source -&gt; dist/ on releases branch). Added Tasks 9 (git-subdir marketplace variant), 10 (publishRelease push codex payload to dist-codex/ on releases), 11 (README fix + codex-plugins pointer repo). Codex supports the identical git-subdir source schema as Claude, so no separate release-only repo needed beyond a thin codex-plugins pointer.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-12T18:28:37.309+05:30</timestamp>
+            <message></message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-12T18:28:37.891+05:30</timestamp>
+            <message>v3 COMPLETE. Release distribution wired: codex-plugins thin pointer repo created+pushed (git-subdir → shipsmooth.git path=dist-codex ref=releases); publishRelease now stages the codex flat plugin folder to dist-codex/ on the releases branch alongside claude's dist/; README points at bitkentech/codex-plugins. All 11 tasks closed, full reactor build green. Human's release-time steps: run publishRelease (bumps version + pushes dist-codex/ to releases), then codex plugin marketplace add bitkentech/codex-plugins works.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

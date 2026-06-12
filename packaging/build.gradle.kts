@@ -53,6 +53,9 @@ val outputDir = (findProperty("build.outputDir") as String?)
 val geminiOutputDir = (findProperty("build.gemini.outputDir") as String?)
     ?.let { file(it) }
     ?: repoRoot.dir("build-gemini").asFile
+val codexOutputDir = (findProperty("build.codex.outputDir") as String?)
+    ?.let { file(it) }
+    ?: repoRoot.dir("build-codex").asFile
 
 // Note: the payload JS copy (copyDist, + copyDistProd) moved to skills/pkg in
 // Task 21/23 — it assembles the plugin payload, not the jlink runtime.
@@ -73,11 +76,12 @@ fun JavaExec.withDistDefaults() {
 
 // ValidateRelease: checks the assembled build/ + build-gemini/ payloads.
 val validateRelease by tasks.registering(JavaExec::class) {
-    description = "Validate the assembled prod build/ + build-gemini/ payloads."
+    description = "Validate the assembled prod build/ + build-gemini/ + build-codex/ payloads."
     withDistDefaults()
     mainClass.set("io.bitken.ss.dist.ValidateRelease")
     systemProperty("build.outputDir", outputDir.absolutePath)
     systemProperty("build.gemini.outputDir", geminiOutputDir.absolutePath)
+    systemProperty("build.codex.outputDir", codexOutputDir.absolutePath)
 }
 
 // dev-profile guard: the staged jlink image (cli/target/jlink-image/bin/shipsmooth) must

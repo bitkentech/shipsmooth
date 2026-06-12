@@ -1,4 +1,6 @@
 build/
+build-codex/
+build-codex-dev/
 build-gemini/
 build-gemini-dev/
 build-windows/
