@@ -28,7 +28,7 @@ public class Target {
             os.cliBinPath(basePluginName, version, cacheSubdir),
             frontmatter,
             platform.skillFragmentDir(),
-            platform instanceof Platform.Gemini,
+            platform.id(),
             os, env, jlinkDir,
             repoName != null ? repoName : name,
             experimentalEnabled
@@ -76,4 +76,7 @@ public class Target {
             throw new IllegalArgumentException("Windows + Dev environment is not supported");
         }
     }
+
+    // Note: the Windows guard above already rejects codex+windows (Codex is posix-only),
+    // since only Claude is permitted on Windows.
 }
