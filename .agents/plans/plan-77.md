@@ -168,16 +168,31 @@ split is still expressed as `@if/@elseif/@else` — but driven by a single
 an explicit host switch and each host names its own fragment. Each of the 13
 `shared/workflow/{claude,gemini}/*.jte.md` fragments gets a `codex/` sibling.
 
-**Codex fragment content.** Two different "closest to" axes, don't conflate them:
-the *packaging shape* is closest to **Claude** (plugin manifest + bundled skills +
-hooks). But the *workflow command semantics* are closest to **Gemini** — Codex is
-an external CLI with explicit permission/consent prompts and shell-driven task
-sequencing, unlike Claude's in-process Task tool. So the 13
-`codex/` fragments start as copies of the `gemini/` fragments and are then
-adjusted where Codex's actual command surface differs (e.g. agent-dispatch,
-ledger-watch, resolver-call invocations). Getting each fragment's commands right
-for Codex is the substantive content work and is split across tasks by fragment
-family, not done as one blob.
+**Codex fragment content (audited — supersedes the initial "Codex ≈ Gemini" guess).**
+An audit of the 13 claude/gemini fragments against Codex's real tool surface found
+the host differences split on two axes:
+- *Shell axis (`$(...)` command substitution):* Codex's shell runs `$(...)` (the
+  de-risk's bwrap shell proved this) → Codex is **claude-like**, NOT gemini-like
+  (gemini avoids `$(...)` and hand-splits into capture-then-substitute steps).
+- *Tool-vocabulary axis:* each host names its own tools — Claude `Agent` /
+  `Bash`+`run_in_background` / `Monitor` / `.claude/settings.json`; Gemini
+  `invoke_agent` / `run_shell_command`+`is_background` / `read_background_output`.
+  Codex has its **own** vocabulary again.
+
+Two **decisions** from the audit:
+1. **Author all 13 `codex/` fragments** (a full per-host set, even where 3 would be
+   byte-identical to claude — `set-commit-hardening`, `set-commit-low-risk`,
+   `file-overlap-check`). Uniform structure; no cross-host fragment sharing.
+2. **Codex parallel execution = sequential-only (this cut).** Codex's subagent model
+   is fundamentally different from both hosts: subagents are spawned by **natural
+   language** (no `Agent`/`invoke_agent` tool call) using built-in `worker`/`explorer`
+   agents (`~/.codex/agents/*.toml`), with `agents.max_threads`=6 / `agents.max_depth`=1.
+   Rather than port a parallel-dispatch flow that can't be verified end-to-end yet
+   (the bwrap sandbox is currently AppArmor-blocked on this box), the Codex
+   agent-dispatch / parallel fragments instruct the user that parallel dispatch is
+   **not yet supported on Codex** and to fall back to the **sequential per-task loop**
+   the skill already supports. Adapting to Codex's real NL-spawn parallel model is a
+   follow-up once it's verifiable.
 
 ### Codex plugin payload shape (confirmed by the Task 1 de-risk)
 
@@ -294,23 +309,32 @@ is expected. Match the hand-built de-risk artifact's `skills/start/SKILL.md`.
 
 Create `shared/workflow/codex/` and author the **execution-path** fragments
 (`permission-consent`, `task-command-sequence-{independent,dependent}`,
-`background-execution`, `set-commit-{hardening,low-risk}`) for Codex's actual
-command surface, diverging from the gemini copies where Codex's CLI invocation /
-consent model differs. Point the Task-2 `codex` arms for these fragments at the
-new files. Re-render codex-prod and eyeball the affected sections; assert
-claude/gemini output still byte-identical.
+`background-execution`, `set-commit-{hardening,low-risk}`). Per the audit: the
+`set-commit-*` fragments are claude-like (`$(git rev-parse HEAD)` inline works on
+Codex's shell); `task-command-sequence-*` and `background-execution` keep the
+`$(...)` shell style but, per the sequential-only decision, their agent-dispatch
+lines tell the user parallel dispatch is not yet supported on Codex; `permission-consent`
+drops the Claude `.claude/settings.json` patch (Codex has its own sandbox/approval
+model, no settings file to patch). Repoint the Task-2 `codex` arms for these six at
+the new files (switch from the gemini placeholder to a true 3-way codex branch).
+Re-render codex-prod and eyeball; assert claude/gemini output still byte-identical.
 
 ### Task 5: Codex fragment set — agent-dispatch/ledger family [Medium]
 
 *Depends-on:* 4
 
-Author the remaining `shared/workflow/codex/` fragments
+Author the remaining seven `shared/workflow/codex/` fragments
 (`agent-dispatch-{independent,dependent}`, `agent-instruction`,
 `agent-resolver-call`, `resolver-complete-cmd`, `ledger-watch-cmd`,
-`file-overlap-check`) for Codex. This is the parallel-execution / multi-agent
-surface — verify the dispatched-agent and resolver invocations name the Codex
-launcher correctly. Repoint the corresponding Task-2 `codex` arms; remove the
-last gemini-fragment placeholders. Re-render; claude/gemini parity check holds.
+`file-overlap-check`). Per the audit: `file-overlap-check` is claude-like (the
+`for` loop + `$(...)` works on Codex); `ledger-watch-cmd` and `resolver-complete-cmd`
+keep `$(git rev-parse --show-toplevel)` but there is **no Codex `Monitor` tool**, so
+ledger-watch runs as a normal blocking shell command. The four `agent-*` fragments
+are the sequential-only path: state that Codex parallel subagent dispatch is not yet
+supported and the Lead Agent should run the per-task loop sequentially in the main
+context (no `Agent`/`invoke_agent` call). Repoint the remaining Task-2 `codex` arms;
+remove the last gemini-fragment placeholders so every `codex` arm names a `codex/`
+fragment. Re-render; claude/gemini parity check holds.
 
 ### Task 6: Codex `SessionStart` hook (runtime bootstrap) [Medium]
 

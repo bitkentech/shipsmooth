@@ -74,7 +74,9 @@ For tasks **with** `<depends-on>` (run after parent batch is complete):
 @template.shared.workflow.claude.task-command-sequence-dependent(model = model)
 @endif
 
-@if(model.isGemini() || model.isCodex())
+@if(model.isCodex())
+@template.shared.workflow.codex.agent-instruction(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.agent-instruction(model = model)
 @else
 @template.shared.workflow.claude.agent-instruction(model = model)
@@ -100,7 +102,9 @@ If it fails for environment reasons (e.g. Docker not available), add the necessa
 
 **File overlap warning:** Before running `integrate`, check which tasks touch the same files:
 
-@if(model.isGemini() || model.isCodex())
+@if(model.isCodex())
+@template.shared.workflow.codex.file-overlap-check(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.file-overlap-check(model = model)
 @else
 @template.shared.workflow.claude.file-overlap-check(model = model)
@@ -133,7 +137,9 @@ LEDGER_SEQ=$(${model.cliBin()} ledger list --count)
 
 Then arm Monitor, passing `--after $LEDGER_SEQ`:
 
-@if(model.isGemini() || model.isCodex())
+@if(model.isCodex())
+@template.shared.workflow.codex.ledger-watch-cmd(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.ledger-watch-cmd(model = model)
 @else
 @template.shared.workflow.claude.ledger-watch-cmd(model = model)
@@ -151,12 +157,16 @@ Then arm Monitor, passing `--after $LEDGER_SEQ`:
 
 **When Monitor fires with a `RESOLVER_REQUESTED` line:**
 1. Parse the JSON blob from the ledger entry — it contains `payload` (the resolver prompt) and `metadata` fields including `worktree` and `task_id`.
-@if(model.isGemini() || model.isCodex())
+@if(model.isCodex())
+@template.shared.workflow.codex.agent-resolver-call(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.agent-resolver-call(model = model)
 @else
 @template.shared.workflow.claude.agent-resolver-call(model = model)
 @endif
-@if(model.isGemini() || model.isCodex())
+@if(model.isCodex())
+@template.shared.workflow.codex.resolver-complete-cmd(model = model)
+@elseif(model.isGemini())
 @template.shared.workflow.gemini.resolver-complete-cmd(model = model)
 @else
 @template.shared.workflow.claude.resolver-complete-cmd(model = model)
