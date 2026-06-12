@@ -5,6 +5,17 @@ An AI assistant plugin that enables a plan-driven, risk-prioritised, checkpoint 
 The below demo shows one workflow: **Plan ➔ Generate tasks ➔ Execute ➔ Something went wrong! ➔ Pause execution ➔ Update plan (and tasks) ➔ Resume execution ➔ Stop session ➔ Resume next day!**
 ![shipsmooth demo](docs/demo-small.gif)
 
+## How to use the workflow
+
+Load [the skill](https://github.com/bitkentech/shipsmooth/blob/releases/dist/skills/start/SKILL.md) as `/shipsmooth:start`. Start discussing the work with Claude. The workflow will take you along these steps.
+
+1. **Plan** - After discussion, a plan file is created and committed  (.agents/plans/plan-{N}.md). It will have a list of tasks in it.
+2. **Calibrate** - You can override the default risk level (High/Medium/Low) for each task. The riskiest work will be executed first.
+3. **Execute** - The agent works through tasks in order. High-risk tasks go through a de-risk/harden cycle (prove the approach first, then polish). Low-risk tasks are single-pass.
+4. **Close out** - Tag the plan complete, archive the task state, and squash merge to main.
+
+You can read the full workflow at [SKILL.md]().
+
 ## Features (aspirations?) of the workflow
 
 The [workflow spec](https://github.com/bitkentech/shipsmooth/blob/releases/dist/skills/start/SKILL.md) borrows ideas from the [Spiral Model](https://en.wikipedia.org/wiki/Spiral_model) and [Agile](https://en.wikipedia.org/wiki/Agile_software_development) principles. You first de-risk any feature work by tackling the unknown parts - sometimes that's the end-user experience, at other times it could be technical components. Only after the approach has been validated by implementing the risky parts, you pick up the low risk tasks and focus on code quality, test coverage.
@@ -60,17 +71,6 @@ No Node.js or JDK is required: on macOS/Linux the bootstrap is a small POSIX she
 script (`install-shipsmooth.sh`) that uses only tools present on a stock system
 (`sh`, `curl`, `unzip`), and on Windows it is a `.bat`. The downloaded runtime is a
 jlink image, so there is nothing else to install.
-
-## How to use the workflow
-
-Load the skill as `/shipsmooth:start`. Start discussing the feature with Claude. The workflow will take you along these steps.
-
-1. **Plan** - After discussion, a plan file is created and committed  (.agents/plans/plan-{N}.md). It will have a list of tasks in it.
-2. **Calibrate** - You can override the default risk level (High/Medium/Low) for each task. The riskiest work will be executed first.
-3. **Execute** - Work through tasks in order. High-risk tasks go through a de-risk/harden cycle (prove the approach first, then polish). Low-risk tasks are single-pass.
-4. **Close out** - Tag the plan complete, archive the task state, and squash merge to main.
-
-You can read the full workflow [SKILL.md](https://github.com/bitkentech/shipsmooth/blob/releases/dist/skills/start/SKILL.md).
 
 ## Uninstall
 
