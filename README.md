@@ -43,7 +43,7 @@ gemini extensions install https://github.com/bitkentech/shipsmooth-gemini
 
 First, register the marketplace (one-time setup):
 ```bash
-codex plugin marketplace add bitkentech/shipsmooth-codex
+codex plugin marketplace add bitkentech/codex-plugins
 ```
 
 Then install the plugin and restart Codex:
