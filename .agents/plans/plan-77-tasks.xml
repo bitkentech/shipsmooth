@@ -31,9 +31,9 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Refactor the binary `isGemini()` template branches to host dispatch</name>
-            <commit></commit>
+            <commit>b2139df</commit>
             <created-from>plan-77-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
