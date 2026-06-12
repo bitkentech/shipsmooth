@@ -123,7 +123,7 @@
             <status>pending</status>
             <name>Emit the git-subdir release marketplace.json variant</name>
             <commit></commit>
-            <created-from>plan-77-v1</created-from>
+            <created-from>plan-77-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -135,7 +135,7 @@
             <status>pending</status>
             <name>Publish the codex payload to dist-codex/ on releases</name>
             <commit></commit>
-            <created-from>plan-77-v1</created-from>
+            <created-from>plan-77-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -147,7 +147,7 @@
             <status>pending</status>
             <name>Fix README + seed the codex-plugins pointer repo</name>
             <commit></commit>
-            <created-from>plan-77-v1</created-from>
+            <created-from>plan-77-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
