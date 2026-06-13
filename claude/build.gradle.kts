@@ -106,8 +106,8 @@ val copyWindowsReadme by tasks.registering(Copy::class) {
 // ---------------------------------------------------------------------------
 // claude references :skills:pkg's producer tasks (renderClaudeDev, copyDist), so its
 // build script must be evaluated first — otherwise those tasks aren't registered yet.
-evaluationDependsOn(":plugin-resources")
-val pluginResources = project(":plugin-resources")
+evaluationDependsOn(":targets:shared")
+val pluginResources = project(":targets:shared")
 registerPayloadAssembly(
     assembleTaskName = "assembleClaudeDev",
     description = "Assemble the full claude-dev plugin payload into <build.outputDir> (default build/).",

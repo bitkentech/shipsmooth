@@ -91,8 +91,8 @@ tasks.named("check") { dependsOn(lintInstallScript) }
 // plugin.version mirrors Maven's @project.version@, sourced from a gradle property.
 val pluginVersion = (findProperty("plugin.version") as String?)
     ?: error("plugin.version must be set (gradle.properties) to match the Maven project version")
-// plugin-resources is a top-level module; the repo root is one level up.
-val repoRoot = layout.projectDirectory.dir("..")
+// targets/shared is nested two levels under the repo root (targets/shared/).
+val repoRoot = layout.projectDirectory.dir("../..")
 
 // Dev jlinkDir resolves LAZILY from the cli jlink image for THIS build host.
 val cliProject = project(":cli")

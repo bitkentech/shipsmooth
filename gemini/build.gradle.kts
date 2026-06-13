@@ -95,8 +95,8 @@ val copyGeminiMetaProd = registerGeminiMeta("copyGeminiMetaProd", prodTokens, "g
 // ---------------------------------------------------------------------------
 // gemini references :skills:pkg's producer tasks (renderGeminiDev, copyDist), so its
 // build script must be evaluated first — otherwise those tasks aren't registered yet.
-evaluationDependsOn(":plugin-resources")
-val pluginResources = project(":plugin-resources")
+evaluationDependsOn(":targets:shared")
+val pluginResources = project(":targets:shared")
 registerPayloadAssembly(
     assembleTaskName = "assembleGeminiDev",
     description = "Assemble the full gemini-dev extension payload into <build.outputDir> (default build-gemini-dev/).",
