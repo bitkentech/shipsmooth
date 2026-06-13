@@ -106,15 +106,15 @@ val copyWindowsReadme by tasks.registering(Copy::class) {
 // ---------------------------------------------------------------------------
 // claude references :skills:pkg's producer tasks (renderClaudeDev, copyDist), so its
 // build script must be evaluated first — otherwise those tasks aren't registered yet.
-evaluationDependsOn(":skills:pkg")
-val skillsPkg = project(":skills:pkg")
+evaluationDependsOn(":harness:shared")
+val pluginResources = project(":harness:shared")
 registerPayloadAssembly(
     assembleTaskName = "assembleClaudeDev",
     description = "Assemble the full claude-dev plugin payload into <build.outputDir> (default build/).",
     payloadDir = outputDir,
     producers = listOf(
-        PayloadProducer("renderClaudeDev", skillsPkg.tasks.named("renderClaudeDev"), ownsFilesOnly = false),
-        PayloadProducer("copyDist", skillsPkg.tasks.named("copyDist"), ownsFilesOnly = true),
+        PayloadProducer("renderClaudeDev", pluginResources.tasks.named("renderClaudeDev"), ownsFilesOnly = false),
+        PayloadProducer("copyDist", pluginResources.tasks.named("copyDist"), ownsFilesOnly = true),
         PayloadProducer("copyClaudeMetaDev", copyClaudeMetaDev, ownsFilesOnly = true),
     ),
 )
@@ -133,12 +133,12 @@ registerPayloadAssembly(
 // The host jlink image is built automatically: assembleClaudeDev -> renderClaudeDev,
 // whose dev jlinkDir provider is the :cli:image_<host> task output (plan-74
 // Task 5). No manual dependsOn and no -PjlinkBuild flag — the dependency edge does it.
-// Run: ./gradlew :claude:devBuild  (then point Claude / shipsmooth-dev at build/).
+// Run: ./gradlew :harness:claude:devBuild  (then point Claude / shipsmooth-dev at build/).
 val devBuild by tasks.registering(GradleBuild::class) {
     group = "assemble"
     description = "Assemble the full claude-dev payload into repo-root build/ for local dev/test."
     dir = rootProject.projectDir
-    tasks = listOf(":claude:assembleClaudeDev")
+    tasks = listOf(":harness:claude:assembleClaudeDev")
     startParameter.projectProperties = startParameter.projectProperties +
         mapOf("build.outputDir" to rootProject.layout.projectDirectory.dir("build").asFile.absolutePath)
 }
@@ -154,15 +154,15 @@ val devBuild by tasks.registering(GradleBuild::class) {
 // (plan-71 v11-v15 dual-mode.) Note: the claude-prod payload has NO scripts/tasks
 // tree (the Maven prod baseline emits none) — just skills/, hooks/, dist/, .claude-plugin/.
 // ---------------------------------------------------------------------------
-val claudeProdRenderStage = skillsPkg.layout.buildDirectory.dir("render/claude-prod").get().asFile
-val claudeProdDistStage = skillsPkg.layout.buildDirectory.dir("stage/dist-prod").get().asFile
+val claudeProdRenderStage = pluginResources.layout.buildDirectory.dir("render/claude-prod").get().asFile
+val claudeProdDistStage = pluginResources.layout.buildDirectory.dir("stage/dist-prod").get().asFile
 registerPayloadSync(
     syncTaskName = "assembleClaudeProd",
     description = "Assemble the full claude-prod plugin payload into <build.outputDir> (default build/).",
     payloadDir = outputDir,
     sources = listOf(
-        SyncSource(skillsPkg.tasks.named("renderClaudeProd"), claudeProdRenderStage),
-        SyncSource(skillsPkg.tasks.named("copyDistProd"), claudeProdDistStage),
+        SyncSource(pluginResources.tasks.named("renderClaudeProd"), claudeProdRenderStage),
+        SyncSource(pluginResources.tasks.named("copyDistProd"), claudeProdDistStage),
         SyncSource(copyClaudeMetaProd, claudeProdMetaStage),
     ),
 )
@@ -178,13 +178,13 @@ registerPayloadSync(
 // own private staging dir; assembleWindows Syncs them into <build.outputDir> as the
 // SOLE writer. (plan-71 v11-v15 dual-mode.)
 // ---------------------------------------------------------------------------
-val windowsRenderStage = skillsPkg.layout.buildDirectory.dir("render/windows").get().asFile
+val windowsRenderStage = pluginResources.layout.buildDirectory.dir("render/windows").get().asFile
 registerPayloadSync(
     syncTaskName = "assembleWindows",
     description = "Assemble the full windows plugin payload into <build.outputDir>.",
     payloadDir = outputDir,
     sources = listOf(
-        SyncSource(skillsPkg.tasks.named("renderWindows"), windowsRenderStage),
+        SyncSource(pluginResources.tasks.named("renderWindows"), windowsRenderStage),
         SyncSource(copyClaudeMetaWindows, windowsMetaStage),
         SyncSource(copyWindowsReadme, windowsReadmeStage),
     ),

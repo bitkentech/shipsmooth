@@ -1,14 +1,19 @@
 rootProject.name = "shipsmooth"
 
-// Maven→Gradle migration (plan-71 v2). Modules are included here as each gets
-// its build.gradle.kts; a module is only listed once it has a Gradle build, so
-// the reactor stays buildable at every step. Target end state (Phase 5):
-//   include("core"); include("cli"); include("skills:pkg")
-//   include("claude"); include("gemini"); include("packaging"); include("devtools")
+// Module graph (plan-79). plugin-model is the shared leaf (Os/Platform/Env/
+// PluginModel); skills:pkg renders the SKILL.md files; harness:shared renders the
+// rest (hooks, session-start config, installer, TS hook) and runs Target;
+// harness:{claude,gemini,codex} assemble per-host payloads; packaging zips
+// runtimes/releases. Add a new agent harness as harness:<name>.
+// Dependency direction: plugin-model <- skills:pkg <- harness:shared <-
+// harness:{claude,gemini,codex}; plugin-model <- packaging.
+// See DEVELOPMENT.md for the per-module breakdown.
 include("core")
 include("cli")
-include("claude")
-include("codex")
-include("gemini")
-include("packaging")
+include("plugin-model")
 include("skills:pkg")
+include("harness:shared")
+include("harness:claude")
+include("harness:gemini")
+include("harness:codex")
+include("packaging")
