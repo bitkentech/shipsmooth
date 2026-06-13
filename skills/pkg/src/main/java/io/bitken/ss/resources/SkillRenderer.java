@@ -12,26 +12,31 @@ import java.util.List;
 /**
  * Renders the plugin's SKILL.md files from JTE templates — the base skill plus,
  * when experimental builds are enabled, the experimental variants.
+ *
+ * Public (with a public ctor + render methods) because Target, its only caller,
+ * lives in :plugin-resources — a different module, so package-private access does
+ * not reach across the module boundary even though the package name matches
+ * (plan-79 Task 2).
  */
-class SkillRenderer {
+public class SkillRenderer {
 
     private final TemplateEngine engine;
     private final PluginModel baseModel;
     private final Path outputDir;
     private final String startBase;
 
-    SkillRenderer(PluginModel baseModel, Path outputDir, String startBase) {
+    public SkillRenderer(PluginModel baseModel, Path outputDir, String startBase) {
         this.engine = TemplateEngine.createPrecompiled(ContentType.Plain);
         this.baseModel = baseModel;
         this.outputDir = outputDir;
         this.startBase = startBase;
     }
 
-    void renderBase() throws IOException {
+    public void renderBase() throws IOException {
         renderSkill("start/SKILL.jte", baseModel);
     }
 
-    void renderExperimental() throws IOException {
+    public void renderExperimental() throws IOException {
         for (SkillVariant variant : experimentalVariants()) {
             renderSkill(variant.template(), baseModel.withSkill(variant.skillName(), variant.frontmatter()));
         }
