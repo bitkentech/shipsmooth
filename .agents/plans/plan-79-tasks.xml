@@ -4,7 +4,7 @@
     <plan-version>plan-79-v5</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>complete</status>
+        <status>active</status>
         <created>2026-06-13</created>
     </metadata>
     <tasks>
@@ -105,6 +105,11 @@
         <update>
             <timestamp>2026-06-13T11:10:48.500+05:30</timestamp>
             <message>Plan complete: skills:pkg split into plugin-model + skills:pkg (reduced) + plugin-resources. Full build green; all 4 prod variants byte-identical to baseline.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-13T11:14:52.959+05:30</timestamp>
+            <message>Reopened: clean completion withdrawn pending manual testing.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
