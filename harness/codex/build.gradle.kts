@@ -72,8 +72,8 @@ fun registerCodexMeta(taskName: String, tokens: Map<String, Any>, pluginFolder: 
     }
 
 // codex references :skills:pkg's producer tasks, so evaluate it first.
-evaluationDependsOn(":targets:shared")
-val renderModule = project(":targets:shared")
+evaluationDependsOn(":harness:shared")
+val renderModule = project(":harness:shared")
 
 // Both variants assemble via a Sync from PRIVATE staging dirs (not the flat dev
 // co-deposit the claude/gemini dev path uses). Codex's nested layout — render + dist

@@ -106,8 +106,8 @@ val copyWindowsReadme by tasks.registering(Copy::class) {
 // ---------------------------------------------------------------------------
 // claude references :skills:pkg's producer tasks (renderClaudeDev, copyDist), so its
 // build script must be evaluated first — otherwise those tasks aren't registered yet.
-evaluationDependsOn(":targets:shared")
-val pluginResources = project(":targets:shared")
+evaluationDependsOn(":harness:shared")
+val pluginResources = project(":harness:shared")
 registerPayloadAssembly(
     assembleTaskName = "assembleClaudeDev",
     description = "Assemble the full claude-dev plugin payload into <build.outputDir> (default build/).",
@@ -133,12 +133,12 @@ registerPayloadAssembly(
 // The host jlink image is built automatically: assembleClaudeDev -> renderClaudeDev,
 // whose dev jlinkDir provider is the :cli:image_<host> task output (plan-74
 // Task 5). No manual dependsOn and no -PjlinkBuild flag — the dependency edge does it.
-// Run: ./gradlew :targets:claude:devBuild  (then point Claude / shipsmooth-dev at build/).
+// Run: ./gradlew :harness:claude:devBuild  (then point Claude / shipsmooth-dev at build/).
 val devBuild by tasks.registering(GradleBuild::class) {
     group = "assemble"
     description = "Assemble the full claude-dev payload into repo-root build/ for local dev/test."
     dir = rootProject.projectDir
-    tasks = listOf(":targets:claude:assembleClaudeDev")
+    tasks = listOf(":harness:claude:assembleClaudeDev")
     startParameter.projectProperties = startParameter.projectProperties +
         mapOf("build.outputDir" to rootProject.layout.projectDirectory.dir("build").asFile.absolutePath)
 }

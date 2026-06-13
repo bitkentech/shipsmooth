@@ -1,4 +1,16 @@
-# Plan 79 — Split `skills:pkg` into `plugin-model` + `skills:pkg` (reduced) + `plugin-resources`, then regroup hosts under `targets/`
+# Plan 79 — Split `skills:pkg` into `plugin-model` + `skills:pkg` (reduced) + `plugin-resources`, then regroup hosts under `harness/`
+
+> **v7 (2026-06-13):** the host group was renamed `targets/` -> `harness/`. The
+> folder holds only agent harnesses (claude/gemini/codex; opencode, pi planned),
+> so a precise name wins over a generic one — mirroring how `cli` was extracted as
+> its own concern. Singular `harness/` is kept short. IDE/editor extensions, if
+> added later, get their own top-level folder rather than joining this one (so
+> `harness/` never has to lie about its contents); a `harness -> targets`
+> re-broadening later is cheap if that forecast changes. Mechanical rename only:
+> Gradle paths `:targets:*` -> `:harness:*`, dir `targets/` -> `harness/`; the Java
+> package stays `io.bitken.ss.resources`; golden diff re-verified byte-identical
+> across all 4 prod variants. Task 7/8 bodies below are preserved as written (when
+> the group was `targets/`); read "targets" there as the prior name for "harness".
 
 ## Context
 
@@ -33,33 +45,35 @@ relocate** — it is now legitimately a runtime/release module (`PackageRuntime`
 ## Goal — target module layout
 
 Final layout after Tasks 1–8. The three-module split (Tasks 1–6) extracts a leaf
-types module and reduces `skills:pkg` to skill-rendering; the `targets/` regrouping
-(Tasks 7–8, added v6) clusters the per-host plugin modules and the shared renderer
-they all drive. `plugin-model` and `skills/` stay top-level — `plugin-model` is a
-shared leaf (packaging depends on it too, not host-specific), and `skills/` evolves
-at a different pace/frequency than the host integrations.
+types module and reduces `skills:pkg` to skill-rendering; the `harness/` regrouping
+(Tasks 7–8, added v6 as `targets/`, renamed `harness/` in v7) clusters the per-host
+plugin modules and the shared renderer they all drive. `plugin-model` and `skills/`
+stay top-level — `plugin-model` is a shared leaf (packaging depends on it too, not
+host-specific), and `skills/` evolves at a different pace/frequency than the host
+integrations.
 
-The `targets/` name is the project's own term (plan-68's restructure named the
-intended layout "core/cli/skills/targets") and is generic enough to cover CLI hosts
-(claude/codex), CLI extensions (gemini), and IDE plugins (cursor) — the set is
-growing (opencode, pi planned), which is what makes the grouping pay off now (at 2
-hosts plan-68 flattened them; at 5 a group wins).
+The group holds only agent harnesses (claude/codex, the gemini CLI extension; with
+opencode and pi planned), so `harness/` names exactly what's there — the set is
+growing (at 2 hosts plan-68 flattened them; at 5 a group wins). IDE/editor
+extensions (e.g. cursor), if added later, get their own top-level folder rather than
+joining `harness/`.
 
 ```
 shipsmooth/
 ├── core/  cli/  packaging/
 ├── plugin-model/            <- leaf, tiny. Os, Platform, Env, PluginModel.
 │                               No dependency on any other module. (Tasks 1)
-├── targets/                 <- per-host plugin modules + the shared renderer they
-│   │                           drive (NOT a module itself). (Tasks 7-8, v6)
+├── harness/                 <- per-host plugin modules + the shared renderer they
+│   │                           drive (NOT a module itself). (Tasks 7-8, v6; renamed
+│   │                           from targets/ in v7)
 │   ├── shared/              <- was plugin-resources. Renders "the rest": Target,
 │   │                           HooksRenderer, HookCommandRenderer,
 │   │                           SessionStartConfigRenderer, scripts/ TS hook,
 │   │                           install-shipsmooth.sh, render*/copyDist* tasks.
-│   │                           Deps: plugin-model + skills:pkg.  (:targets:shared)
-│   ├── claude/             <- was claude/.   (:targets:claude)
-│   ├── gemini/             <- was gemini/.   (:targets:gemini)
-│   └── codex/              <- was codex/.    (:targets:codex)
+│   │                           Deps: plugin-model + skills:pkg.  (:harness:shared)
+│   ├── claude/             <- was claude/.   (:harness:claude)
+│   ├── gemini/             <- was gemini/.   (:harness:gemini)
+│   └── codex/              <- was codex/.    (:harness:codex)
 └── skills/                  <- human-editable content home (NOT a module itself)
     ├── start/  experimental/  shared/   <- .jte.md content (UNCHANGED location)
     └── pkg/                <- :skills:pkg (UNCHANGED path). SkillRenderer + JTE
@@ -69,7 +83,7 @@ shipsmooth/
 ```
 
 Dependency direction (unchanged by the regrouping, paths only):
-`plugin-model <- skills:pkg <- targets:shared <- targets:{claude,gemini,codex}`;
+`plugin-model <- skills:pkg <- harness:shared <- harness:{claude,gemini,codex}`;
 `plugin-model <- packaging`.
 
 `packaging` depends on `plugin-model` (not `skills:pkg`) for `Os`.
