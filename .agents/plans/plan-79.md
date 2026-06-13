@@ -1,4 +1,4 @@
-# Plan 79 — Split `skills:pkg` into `plugin-model`, `skills:render`, and `plugin-resources`
+# Plan 79 — Split `skills:pkg` into `plugin-model`, `skills:pkg` (reduced), and `plugin-resources`
 
 ## Context
 
@@ -35,9 +35,10 @@ relocate** — it is now legitimately a runtime/release module (`PackageRuntime`
 Top-level modules: `plugin-model` and `plugin-resources` move OUT of `skills/`.
 The `skills/` folder stays the human-editable home: the `.jte.md` content lives
 directly under it (`start/`, `experimental/`, `shared/`) so a contributor who only
-wants to edit skill text opens `skills/` and sees just content + the one render
-module. `skills/pkg` is **renamed to `skills/render`** (the `:skills:render`
-Gradle module) and shrinks to skill-rendering only.
+wants to edit skill text opens `skills/` and sees just content + the one
+skill-rendering module. `skills/pkg` **keeps its name and path** (`:skills:pkg`) —
+the `pkg` suffix signals "code, not editable content," and keeping it means zero
+churn to the ~17 consumer references. It shrinks to skill-rendering only.
 
 ```
 shipsmooth/
@@ -47,17 +48,17 @@ shipsmooth/
 ├── plugin-resources/        <- NEW, top-level. Renders "the rest": Target,
 │                               HooksRenderer, SessionStartConfigRenderer,
 │                               scripts/ TS hook, install-shipsmooth.sh, and the
-│                               render*/copyDist* tasks. Deps: plugin-model + skills:render.
+│                               render*/copyDist* tasks. Deps: plugin-model + skills:pkg.
 └── skills/                  <- human-editable content home (NOT a module itself)
     ├── start/  experimental/  shared/   <- .jte.md content (UNCHANGED location)
-    └── render/              <- was skills/pkg. The :skills:render module:
+    └── pkg/                <- :skills:pkg (UNCHANGED path). Shrinks to:
                                 SkillRenderer + JTE staging/generation only.
-                                Dep: plugin-model. Stages ../start ../experimental
-                                ../shared (the existing `dir("..")` path still
-                                resolves — render/ sits at the same depth pkg/ did).
+                                Dep: plugin-model. Still stages ../start
+                                ../experimental ../shared via the existing
+                                `dir("..")` path (unchanged).
 ```
 
-`packaging` depends on `plugin-model` (not `skills:pkg`/`skills:render`) for `Os`.
+`packaging` depends on `plugin-model` (not `skills:pkg`) for `Os`.
 
 ### Why three modules and not two
 
@@ -68,25 +69,25 @@ types**: `SkillRenderer` needs `PluginModel`; `PluginModel` needs `Os`/`Env`;
 upstream of everyone.
 
 A two-module split forces a bad trade-off:
-- Put the leaves in `skills:render` (so `plugin-resources -> skills:render`): then
-  `skills:render` renders only the skill ✅ but `packaging` must still depend on
-  `skills:render` to reach `Os` ❌ — the original smell survives.
-- Put the leaves in `plugin-resources` (so `skills:render -> plugin-resources`):
+- Put the leaves in `skills:pkg` (so `plugin-resources -> skills:pkg`): then
+  `skills:pkg` renders only the skill ✅ but `packaging` must still depend on
+  `skills:pkg` to reach `Os` ❌ — the original smell survives.
+- Put the leaves in `plugin-resources` (so `skills:pkg -> plugin-resources`):
   then `packaging` is clean ✅ but `Target` and the leaves live in
-  `plugin-resources` while `skills:render` becomes downstream — and it no longer
+  `plugin-resources` while `skills:pkg` becomes downstream — and it no longer
   cleanly "renders only the skill" relative to the shared infra.
 
 Extracting the four leaf types into a tiny `plugin-model` module satisfies **all**
 goals with **no dependency cycle**, in one strict direction:
 
 ```
-plugin-model  <-  skills:render  <-  plugin-resources
-       ^---------------------------------/   (plugin-resources also deps plugin-model)
+plugin-model  <-  skills:pkg  <-  plugin-resources
+       ^------------------------------/   (plugin-resources also deps plugin-model)
 plugin-model  <-  packaging
 ```
 
-`skills:render` renders only the skill. `plugin-resources` renders the rest and
-*refers to* `skills:render` (its `Target` constructs `SkillRenderer`). `packaging`
+`skills:pkg` renders only the skill. `plugin-resources` renders the rest and
+*refers to* `skills:pkg` (its `Target` constructs `SkillRenderer`). `packaging`
 depends only on the tiny `plugin-model`. Cost: one extra small module — accepted.
 
 ### Class placement
@@ -94,8 +95,8 @@ depends only on the tiny `plugin-model`. Cost: one extra small module — accept
 | Class / asset | Target module |
 |---|---|
 | `Os`, `Platform`, `Env`, `PluginModel` (+ their unit tests) | `plugin-model` |
-| `SkillRenderer` (+ `SkillVariant` if separate), JTE staging/generation | `skills:render` (at `skills/render`) |
-| `.jte.md` content (`start/`, `experimental/`, `shared/`) | stays at `skills/` (staged by `skills:render` via `../`) |
+| `SkillRenderer` (+ `SkillVariant` if separate), JTE staging/generation | `skills:pkg` (unchanged, at `skills/pkg`) |
+| `.jte.md` content (`start/`, `experimental/`, `shared/`) | stays at `skills/` (staged by `skills:pkg` via `../`) |
 | `Target` (+ `TargetTest`, `TargetIntegrationTest`) | `plugin-resources` |
 | `HooksRenderer`, `SessionStartConfigRenderer` | `plugin-resources` |
 | `scripts/` TS hook + npm/tsc/test wiring; `install-shipsmooth.sh` + lint; `PosixBootstrapIntegrationTest` | `plugin-resources` |
@@ -114,16 +115,18 @@ constructor/methods `Target` uses) `public`. Likewise any `HooksRenderer` /
 
 ### Module naming note
 
-`skills/pkg` is **renamed to `skills/render`**; the Gradle path changes
-`:skills:pkg` -> `:skills:render`. All consumer references
+`skills/pkg` **keeps its name and Gradle path** (`:skills:pkg`). Rationale: the
+`pkg` suffix already signals "code, not editable content" (the property we care
+about), and keeping it avoids churning the ~17 consumer references
 (`project(":skills:pkg")`, `evaluationDependsOn(":skills:pkg")`,
-`skillsPkg.tasks.named(...)`) update accordingly. The `.jte.md` content does NOT
-move — it stays at `skills/{start,experimental,shared}`, kept at the top of
-`skills/` for human editors; `skills:render` continues to stage it via
-`projectDirectory.dir("..")`, which still resolves because `render/` sits at the
-same depth `pkg/` did. (The `render*`/`copyDist*` tasks themselves move to
-`plugin-resources` — see Task 4 — so `skills:render` ends up with only the JTE
-staging/generation + `SkillRenderer`.)
+`skillsPkg.tasks.named(...)`). A `render` rename was considered and rejected — the
+genuine packaging code (`Target`, `render*`/`copyDist*` tasks, `scripts/`,
+installer) all leaves for `plugin-resources`, so the rename would buy little
+precision at real churn cost. The `.jte.md` content does NOT move — it stays at
+`skills/{start,experimental,shared}` for human editors; `skills:pkg` keeps staging
+it via the unchanged `projectDirectory.dir("..")` path. (The `render*`/`copyDist*`
+tasks themselves move to `plugin-resources` — see Task 4 — so `skills:pkg` ends up
+with only the JTE staging/generation + `SkillRenderer`.)
 
 ## Integration test strategy
 
@@ -136,7 +139,7 @@ End-to-end proof that the split preserves byte-identical plugin output:
    moved code is byte-parity, not a coverage number.
 2. **Cross-module reachability test** — a `packaging` test that constructs/uses
    `io.bitken.ss.resources.Os` proving `packaging -> plugin-model` resolves
-   without `skills:render`/`plugin-resources` on its classpath.
+   without `skills:pkg`/`plugin-resources` on its classpath.
 
 These are written failing first (the new modules don't exist yet), per Core
 Invariant #6, then made green by the split.
@@ -155,20 +158,18 @@ same package. Make `Platform` public. Register `plugin-model` in
 `settings.gradle.kts`. High: establishes the new leaf boundary + forces
 public-visibility changes; everything depends on it.
 
-### Task 2: Rename `skills/pkg` -> `skills/render`, reduce it to skill-rendering only [High]
+### Task 2: Reduce `skills:pkg` to skill-rendering only [High]
 
 *Depends-on: 1*
 
-Rename the `skills/pkg` module dir to `skills/render` and its Gradle path
-`:skills:pkg` -> `:skills:render` in `settings.gradle.kts`. Reduce it to contain
+`skills/pkg` keeps its name and `:skills:pkg` Gradle path. Reduce it to contain
 **only**: `SkillRenderer.java` (+ `SkillVariant`) and the JTE staging/generation
 Gradle wiring. The `.jte.md` content stays put at
-`skills/{start,experimental,shared}` — confirm the `projectDirectory.dir("..")`
-staging still resolves from `render/`. Add `implementation(project(":plugin-model"))`.
-Make `SkillRenderer` + the constructor/methods `Target` will call `public`. Verify
-the skill renders against the now-cross-module `PluginModel`. High: proves the
-JTE-precompiled `SkillRenderer` compiles and runs across the module boundary, and
-that the content-staging path survives the rename.
+`skills/{start,experimental,shared}`; the existing `projectDirectory.dir("..")`
+staging is unchanged. Add `implementation(project(":plugin-model"))`. Make
+`SkillRenderer` + the constructor/methods `Target` will call `public`. Verify the
+skill renders against the now-cross-module `PluginModel`. High: proves the
+JTE-precompiled `SkillRenderer` compiles and runs across the module boundary.
 
 ### Task 3: Create `plugin-resources`; move Target + non-skill renderers + scripts + installer [High]
 
@@ -176,11 +177,11 @@ that the content-staging path survives the rename.
 
 Create top-level `plugin-resources/` with `build.gradle.kts` (java-conventions,
 jackson, node-gradle). Add deps `implementation(project(":plugin-model"))` and
-`implementation(project(":skills:render"))`. Move `Target.java` (+ `TargetTest`,
+`implementation(project(":skills:pkg"))`. Move `Target.java` (+ `TargetTest`,
 `TargetIntegrationTest`), `HooksRenderer.java`, `SessionStartConfigRenderer.java`,
 the `scripts/` TS/npm pipeline (+ its node-gradle wiring + `compileTs`/`testTs`),
 and `install-shipsmooth.sh` (+ `lintInstallScript`, `PosixBootstrapIntegrationTest`).
-`Target` here constructs `SkillRenderer` (from `:skills:render`) + the local
+`Target` here constructs `SkillRenderer` (from `:skills:pkg`) + the local
 Hooks/Config renderers. High: the orchestrator + the fragile TS/installer wiring
 land here and must compile against two upstream modules.
 
@@ -218,6 +219,6 @@ documentation, no behavior change.
 ## Out of scope
 
 - Moving the `.jte.md` content out of `skills/` (it deliberately stays at the top
-  of `skills/` for human editors; only the renderer lives in `skills/render`).
+  of `skills/` for human editors; only the renderer lives in `skills/pkg`).
 - Any change to `PackageRuntime`/`ValidateRelease`/`PublishRelease` logic.
 - Cutting a release (`publishRelease` is never run by this plan).
