@@ -4,7 +4,7 @@
     <plan-version>plan-79-v5</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-13</created>
     </metadata>
     <tasks>
@@ -27,9 +27,9 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Reduce `skills:pkg` to skill-rendering only</name>
-            <commit></commit>
+            <commit>e4e5908</commit>
             <created-from>plan-79-v5</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -45,9 +45,9 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Create `plugin-resources`; move Target + non-skill renderers + scripts + installer</name>
-            <commit></commit>
+            <commit>e4e5908</commit>
             <created-from>plan-79-v5</created-from>
             <closed-at-version></closed-at-version>
             <comments>
@@ -62,9 +62,9 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Move render*/copyDist* tasks to `plugin-resources`; repoint consumers</name>
-            <commit></commit>
+            <commit>e4e5908</commit>
             <created-from>plan-79-v5</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -86,9 +86,9 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Parity verification + docs/settings cleanup</name>
-            <commit></commit>
+            <commit>ba423a084ac0d5335ea35578a4d6adccb4bdb663</commit>
             <created-from>plan-79-v5</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -100,6 +100,11 @@
         <update>
             <timestamp>2026-06-13T09:11:18.470+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-13T11:10:48.500+05:30</timestamp>
+            <message>Plan complete: skills:pkg split into plugin-model + skills:pkg (reduced) + plugin-resources. Full build green; all 4 prod variants byte-identical to baseline.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
