@@ -16,6 +16,9 @@ plugins {
 }
 
 dependencies {
+    // Shared value types (Os, Platform, Env, PluginModel) moved to :plugin-model
+    // (plan-79 Task 1). SkillRenderer/Target/HooksRenderer here consume them.
+    implementation(project(":plugin-model"))
     // jte + jackson are needed both by the generated template classes and by
     // the Target/SkillRenderer code in src/main/java (parity with pom.xml).
     implementation("gg.jte:jte:3.1.15")
