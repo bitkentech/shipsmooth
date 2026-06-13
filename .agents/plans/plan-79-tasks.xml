@@ -11,12 +11,17 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Create `plugin-model` leaf module + move shared types</name>
             <commit></commit>
             <created-from>plan-79-v5</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-13T09:14:46.610+05:30</timestamp>
+                    <message>De-risk draft ready: plugin-model leaf module builds + 13 pure-fact tests green; Os decoupled from classpath I/O (hookCommand/copyResource removed, moving to HookCommandRenderer in Task 3). skills:pkg intentionally red at HooksRenderer:31 until Task 3.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
