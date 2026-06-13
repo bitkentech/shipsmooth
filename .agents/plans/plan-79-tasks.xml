@@ -45,12 +45,17 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Create `plugin-resources`; move Target + non-skill renderers + scripts + installer</name>
             <commit></commit>
             <created-from>plan-79-v5</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-13T09:57:34.972+05:30</timestamp>
+                    <message>De-risk complete: full split compiles, all plugin-resources tests green (incl. HookCommandRenderer + Target/Posix integration), and golden diff shows all 4 prod variants byte-identical to baseline. Commit e4e5908d8faa34a08a1a800d3ecf5501a5deec08. Task 4 consumer-repoint done in same commit (forced by Target move).</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1,2</depends-on>
         </task>
@@ -69,9 +74,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Repoint `packaging` dependency to `plugin-model`</name>
-            <commit></commit>
+            <commit>66724c42c0ec12a926b5137863d08875d2f25e28</commit>
             <created-from>plan-79-v5</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
