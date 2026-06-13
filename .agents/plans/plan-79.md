@@ -1,4 +1,4 @@
-# Plan 79 — Split `skills:pkg` into `plugin-model`, `skills:pkg` (reduced), and `plugin-resources`
+# Plan 79 — Split `skills:pkg` into `plugin-model` + `skills:pkg` (reduced) + `plugin-resources`, then regroup hosts under `targets/`
 
 ## Context
 
@@ -30,33 +30,47 @@ relocate** — it is now legitimately a runtime/release module (`PackageRuntime`
 `ValidateRelease`, `PublishRelease`, `ReleaseGuard`). This plan therefore does
 **not** touch packaging beyond repointing its one dependency.
 
-## Goal — target module layout (Option C: three modules)
+## Goal — target module layout
 
-Top-level modules: `plugin-model` and `plugin-resources` move OUT of `skills/`.
-The `skills/` folder stays the human-editable home: the `.jte.md` content lives
-directly under it (`start/`, `experimental/`, `shared/`) so a contributor who only
-wants to edit skill text opens `skills/` and sees just content + the one
-skill-rendering module. `skills/pkg` **keeps its name and path** (`:skills:pkg`) —
-the `pkg` suffix signals "code, not editable content," and keeping it means zero
-churn to the ~17 consumer references. It shrinks to skill-rendering only.
+Final layout after Tasks 1–8. The three-module split (Tasks 1–6) extracts a leaf
+types module and reduces `skills:pkg` to skill-rendering; the `targets/` regrouping
+(Tasks 7–8, added v6) clusters the per-host plugin modules and the shared renderer
+they all drive. `plugin-model` and `skills/` stay top-level — `plugin-model` is a
+shared leaf (packaging depends on it too, not host-specific), and `skills/` evolves
+at a different pace/frequency than the host integrations.
+
+The `targets/` name is the project's own term (plan-68's restructure named the
+intended layout "core/cli/skills/targets") and is generic enough to cover CLI hosts
+(claude/codex), CLI extensions (gemini), and IDE plugins (cursor) — the set is
+growing (opencode, pi planned), which is what makes the grouping pay off now (at 2
+hosts plan-68 flattened them; at 5 a group wins).
 
 ```
 shipsmooth/
 ├── core/  cli/  packaging/
-├── plugin-model/            <- NEW, top-level (leaf, tiny). Os, Platform, Env,
-│                               PluginModel. No dependency on any other module.
-├── plugin-resources/        <- NEW, top-level. Renders "the rest": Target,
-│                               HooksRenderer, SessionStartConfigRenderer,
-│                               scripts/ TS hook, install-shipsmooth.sh, and the
-│                               render*/copyDist* tasks. Deps: plugin-model + skills:pkg.
+├── plugin-model/            <- leaf, tiny. Os, Platform, Env, PluginModel.
+│                               No dependency on any other module. (Tasks 1)
+├── targets/                 <- per-host plugin modules + the shared renderer they
+│   │                           drive (NOT a module itself). (Tasks 7-8, v6)
+│   ├── shared/              <- was plugin-resources. Renders "the rest": Target,
+│   │                           HooksRenderer, HookCommandRenderer,
+│   │                           SessionStartConfigRenderer, scripts/ TS hook,
+│   │                           install-shipsmooth.sh, render*/copyDist* tasks.
+│   │                           Deps: plugin-model + skills:pkg.  (:targets:shared)
+│   ├── claude/             <- was claude/.   (:targets:claude)
+│   ├── gemini/             <- was gemini/.   (:targets:gemini)
+│   └── codex/              <- was codex/.    (:targets:codex)
 └── skills/                  <- human-editable content home (NOT a module itself)
     ├── start/  experimental/  shared/   <- .jte.md content (UNCHANGED location)
-    └── pkg/                <- :skills:pkg (UNCHANGED path). Shrinks to:
-                                SkillRenderer + JTE staging/generation only.
-                                Dep: plugin-model. Still stages ../start
-                                ../experimental ../shared via the existing
-                                `dir("..")` path (unchanged).
+    └── pkg/                <- :skills:pkg (UNCHANGED path). SkillRenderer + JTE
+                                staging/generation only. Dep: plugin-model. Still
+                                stages ../start ../experimental ../shared via the
+                                existing `dir("..")` path (unchanged).
 ```
+
+Dependency direction (unchanged by the regrouping, paths only):
+`plugin-model <- skills:pkg <- targets:shared <- targets:{claude,gemini,codex}`;
+`plugin-model <- packaging`.
 
 `packaging` depends on `plugin-model` (not `skills:pkg`) for `Os`.
 
@@ -260,6 +274,36 @@ snapshot captured pre-split; confirm every diff is empty (byte-identical). Updat
 the stale Phase-5 target-state comment in `settings.gradle.kts`, and any docs
 (`DEVELOPMENT.md`, build proposals) describing the old module layout. Low:
 verification + documentation, no behavior change.
+
+### Task 7: Move `plugin-resources` -> `targets/shared` [Medium]
+
+*Depends-on: 4*
+
+Added v6 (post-3-module-split regrouping). `git mv plugin-resources targets/shared`;
+Gradle path `:plugin-resources` -> `:targets:shared` in `settings.gradle.kts`. Fix
+the now-deeper relative paths in its build script: `repoRoot` goes from `dir("..")`
+to `dir("../..")` (the windows jlink path and the `repoRoot.dir("build")` payload
+default depend on it). Repoint the claude/gemini/codex consumers'
+`project(":plugin-resources")` / `evaluationDependsOn(":plugin-resources")` to
+`:targets:shared`. The Java package stays `io.bitken.ss.resources` (no rename —
+module name need not match package). Medium: relative-path fixes are the risk; the
+golden diff guards the windows jlink path especially.
+
+### Task 8: Move `claude`/`gemini`/`codex` -> `targets/{claude,gemini,codex}` [Medium]
+
+*Depends-on: 7*
+
+`git mv claude targets/claude` (and gemini, codex); Gradle paths `:claude` ->
+`:targets:claude` etc. in `settings.gradle.kts`. Update: each module's dep on
+`:targets:shared` (relative paths to repo root deepen by one — most use
+`rootProject.layout`, which is safe; audit any `layout.projectDirectory`-relative
+repo-root walks). The claude nested `GradleBuild` hard-codes
+`:claude:assembleClaudeDev` -> `:targets:claude:assembleClaudeDev`. `assemble*` task
+NAMES are unchanged. Re-run the full golden diff (now via `:targets:claude:assembleClaudeProd`
+etc.) — all 4 variants must stay byte-identical. Update DEVELOPMENT.md + settings
+comment to the `targets/` layout. Medium: spread across three modules + the nested
+build; output-dir defaults (`build-codex-dev` etc.) resolve via `rootProject` so
+they survive, but must be verified.
 
 ## Out of scope
 
