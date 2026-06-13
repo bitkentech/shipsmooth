@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Create `plugin-model` leaf module + move shared types</name>
-            <commit></commit>
+            <commit>225934e182116182a2437c45f91ce289aff093b7</commit>
             <created-from>plan-79-v5</created-from>
             <closed-at-version></closed-at-version>
             <comments>
