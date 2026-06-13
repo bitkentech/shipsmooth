@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>79</plan>
-    <plan-version>plan-79-v2</plan-version>
+    <plan-version>plan-79-v3</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -14,7 +14,7 @@
             <status>pending</status>
             <name>Create `plugin-model` leaf module + move shared types</name>
             <commit></commit>
-            <created-from>plan-79-v2</created-from>
+            <created-from>plan-79-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -23,9 +23,9 @@
             <id>2</id>
             <risk>high</risk>
             <status>pending</status>
-            <name>Rename `skills/pkg` -&gt; `skills/render`, reduce it to skill-rendering only</name>
+            <name>Reduce `skills:pkg` to skill-rendering only</name>
             <commit></commit>
-            <created-from>plan-79-v2</created-from>
+            <created-from>plan-79-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -37,7 +37,7 @@
             <status>pending</status>
             <name>Create `plugin-resources`; move Target + non-skill renderers + scripts + installer</name>
             <commit></commit>
-            <created-from>plan-79-v2</created-from>
+            <created-from>plan-79-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -49,7 +49,7 @@
             <status>pending</status>
             <name>Move render*/copyDist* tasks to `plugin-resources`; repoint consumers</name>
             <commit></commit>
-            <created-from>plan-79-v2</created-from>
+            <created-from>plan-79-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -61,7 +61,7 @@
             <status>pending</status>
             <name>Repoint `packaging` dependency to `plugin-model`</name>
             <commit></commit>
-            <created-from>plan-79-v2</created-from>
+            <created-from>plan-79-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -73,7 +73,7 @@
             <status>pending</status>
             <name>Parity verification + docs/settings cleanup</name>
             <commit></commit>
-            <created-from>plan-79-v2</created-from>
+            <created-from>plan-79-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -82,7 +82,7 @@
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-06-13T08:31:56.940+05:30</timestamp>
+            <timestamp>2026-06-13T08:43:30.319+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
