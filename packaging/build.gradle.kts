@@ -3,10 +3,12 @@ plugins {
 }
 
 dependencies {
-    // packaging uses io.bitken.ss.resources.Os from skills:pkg; jackson + commons-
-    // compress for manifest reading and zip assembly. (The pom's claude dep is only
-    // reactor ordering — no code dependency — so it's omitted here.)
-    implementation(project(":skills:pkg"))
+    // packaging uses only io.bitken.ss.resources.Os (PackageRuntime) — now in the
+    // tiny :plugin-model leaf module, not :skills:pkg (plan-79 Task 5). This is the
+    // smell the split removes: packaging no longer pulls in the whole skills-
+    // rendering module for one enum. jackson + commons-compress for manifest
+    // reading and zip assembly.
+    implementation(project(":plugin-model"))
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
     implementation("org.apache.commons:commons-compress:1.27.1")
 }
