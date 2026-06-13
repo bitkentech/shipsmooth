@@ -128,21 +128,32 @@ it via the unchanged `projectDirectory.dir("..")` path. (The `render*`/`copyDist
 tasks themselves move to `plugin-resources` — see Task 4 — so `skills:pkg` ends up
 with only the JTE staging/generation + `SkillRenderer`.)
 
-## Integration test strategy
+## Verification strategy
 
-End-to-end proof that the split preserves byte-identical plugin output:
+This plan is a pure refactor — classes move between modules with **zero intended
+behavior change** — so the primary verification is a **golden before/after output
+diff**, not unit-test coverage (coverage is explicitly out of scope for this plan,
+per human direction). A diff of the real assembled payloads is a stronger and more
+honest check that "nothing rendered changed" than any line-coverage number.
 
-1. **Parity integration test** — build a prod payload (e.g. `assembleClaudeProd`)
-   on this branch and diff the rendered `skills/`, `hooks/`, `dist/`, and
-   `.claude-plugin/` trees against a baseline captured from `main`
-   (pre-split). Per memory [Migration coverage = parity not 95%], the bar for
-   moved code is byte-parity, not a coverage number.
-2. **Cross-module reachability test** — a `packaging` test that constructs/uses
-   `io.bitken.ss.resources.Os` proving `packaging -> plugin-model` resolves
-   without `skills:pkg`/`plugin-resources` on its classpath.
+1. **Golden payload diff (primary).** BEFORE any code moves, build the prod
+   payloads on a clean `main` checkout and snapshot them into
+   `.agents/tmp/baseline/` (per memory [Use .agents/tmp for temp files]). Variants:
+   `assembleClaudeProd`, `assembleGeminiProd`, `assembleCodexProd`,
+   `assembleWindows` — this set exercises every `Os`/`Platform` branch and the
+   installer path. (Dev variants are skipped: they pull the host-specific jlink
+   image and re-exercise the same renderers.) AFTER the refactor (at minimum after
+   Task 4, when wiring settles), rebuild the same variants on the branch and
+   `diff -r` each against its baseline. **Empty diff = behavior preserved.** Any
+   diff is a real regression to investigate before closeout.
+2. **Cross-module reachability test (kept).** A small `packaging` test that
+   constructs/uses `io.bitken.ss.resources.Os`, proving `packaging -> plugin-model`
+   resolves without `skills:pkg`/`plugin-resources` on its classpath. A diff can't
+   catch `packaging` silently regaining a `skills:pkg` dependency; this asserts the
+   structural fact. Written failing first (Task 5), green after the dep repoint.
 
-These are written failing first (the new modules don't exist yet), per Core
-Invariant #6, then made green by the split.
+The integration-test preamble below therefore consists of (a) capturing the golden
+baseline and (b) the reachability test (red first), rather than JUnit parity tests.
 
 ## Risk-calibrated task list
 
@@ -210,11 +221,12 @@ Add the cross-module reachability test. `PackageRuntime` only uses `Os`, now in
 
 *Depends-on: 4,5*
 
-Run the parity integration test against the `main` baseline for claude-prod (and
-at least gemini-prod) payloads; confirm byte-identical. Update the stale Phase-5
-target-state comment in `settings.gradle.kts`, and any docs (`DEVELOPMENT.md`,
-build proposals) describing the old module layout. Low: verification +
-documentation, no behavior change.
+Rebuild `assembleClaudeProd`, `assembleGeminiProd`, `assembleCodexProd`,
+`assembleWindows` on the branch and `diff -r` each against the `.agents/tmp/baseline/`
+snapshot captured pre-split; confirm every diff is empty (byte-identical). Update
+the stale Phase-5 target-state comment in `settings.gradle.kts`, and any docs
+(`DEVELOPMENT.md`, build proposals) describing the old module layout. Low:
+verification + documentation, no behavior change.
 
 ## Out of scope
 
