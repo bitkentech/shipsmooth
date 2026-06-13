@@ -16,9 +16,11 @@ This repo uses a multi-module Gradle layout:
   - one folder per skill directly under `skills/` (`skills/start/`, `skills/experimental/refine/`, …), each with its `SKILL.jte.md`
   - `skills/shared/`: partials shared across skills (`shared/workflow/`) and the target snippets the shared workflow selects (`shared/workflow/claude/`, `shared/workflow/gemini/`)
   - `skills/pkg/`: the `:skills:pkg` module — `SkillRenderer` + JTE staging/generation only (renders the SKILL.md files; rarely touched). Depends on `plugin-model`.
-- `plugin-resources/`: renders everything that is NOT the skill file — `Target` (orchestrator), `HooksRenderer`/`HookCommandRenderer` (hooks.json + the SessionStart command and its `install-shipsmooth.sh`/`install-runtime.bat` companion), `SessionStartConfigRenderer`, the TypeScript hook scripts (`scripts/`), `install-shipsmooth.sh`, and the `render*`/`copyDist*` tasks the plugin builds consume. Depends on `plugin-model` + `skills:pkg`.
-- `claude/` : Claude plugin metadata (`claude-plugin/`, `windows/`)
-- `gemini/` : Gemini extension metadata (`gemini-extension/`)
+- `targets/`: the per-host plugin integrations + the shared renderer they drive. Add a new host (e.g. cursor, opencode, pi) as `targets/<name>/`.
+  - `targets/shared/` (`:targets:shared`): renders everything that is NOT the skill file — `Target` (orchestrator), `HooksRenderer`/`HookCommandRenderer` (hooks.json + the SessionStart command and its `install-shipsmooth.sh`/`install-runtime.bat` companion), `SessionStartConfigRenderer`, the TypeScript hook scripts (`scripts/`), `install-shipsmooth.sh`, and the `render*`/`copyDist*` tasks the host builds consume. Depends on `plugin-model` + `skills:pkg`.
+  - `targets/claude/` (`:targets:claude`): Claude plugin metadata (`claude-plugin/`, `windows/`)
+  - `targets/gemini/` (`:targets:gemini`): Gemini extension metadata (`gemini-extension/`)
+  - `targets/codex/` (`:targets:codex`): Codex plugin metadata (`.codex-plugin/`)
 - `packaging/`: assembles the final `build/` output from the other modules
 - `devtools/` : development-time helper scripts
 - `exp/` : exploratory work with no build wiring (e.g. `exp/model/` TLA+ specs)

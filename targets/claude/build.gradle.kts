@@ -133,12 +133,12 @@ registerPayloadAssembly(
 // The host jlink image is built automatically: assembleClaudeDev -> renderClaudeDev,
 // whose dev jlinkDir provider is the :cli:image_<host> task output (plan-74
 // Task 5). No manual dependsOn and no -PjlinkBuild flag — the dependency edge does it.
-// Run: ./gradlew :claude:devBuild  (then point Claude / shipsmooth-dev at build/).
+// Run: ./gradlew :targets:claude:devBuild  (then point Claude / shipsmooth-dev at build/).
 val devBuild by tasks.registering(GradleBuild::class) {
     group = "assemble"
     description = "Assemble the full claude-dev payload into repo-root build/ for local dev/test."
     dir = rootProject.projectDir
-    tasks = listOf(":claude:assembleClaudeDev")
+    tasks = listOf(":targets:claude:assembleClaudeDev")
     startParameter.projectProperties = startParameter.projectProperties +
         mapOf("build.outputDir" to rootProject.layout.projectDirectory.dir("build").asFile.absolutePath)
 }

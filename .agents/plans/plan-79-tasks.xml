@@ -98,9 +98,9 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Move plugin-resources -&gt; targets/shared</name>
-            <commit></commit>
+            <commit>c3eed74f163c4055cfa06ff8ac2174655900af71</commit>
             <created-from>plan-79-v6</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
