@@ -4,14 +4,14 @@
     <plan-version>plan-79-v7</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-13</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Create `plugin-model` leaf module + move shared types</name>
             <commit>225934e182116182a2437c45f91ce289aff093b7</commit>
             <created-from>plan-79-v5</created-from>
@@ -27,7 +27,7 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Reduce `skills:pkg` to skill-rendering only</name>
             <commit>e4e5908</commit>
             <created-from>plan-79-v5</created-from>
@@ -45,7 +45,7 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Create `plugin-resources`; move Target + non-skill renderers + scripts + installer</name>
             <commit>e4e5908</commit>
             <created-from>plan-79-v5</created-from>
@@ -62,7 +62,7 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Move render*/copyDist* tasks to `plugin-resources`; repoint consumers</name>
             <commit>e4e5908</commit>
             <created-from>plan-79-v5</created-from>
@@ -74,7 +74,7 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Repoint `packaging` dependency to `plugin-model`</name>
             <commit>66724c42c0ec12a926b5137863d08875d2f25e28</commit>
             <created-from>plan-79-v5</created-from>
@@ -86,7 +86,7 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Parity verification + docs/settings cleanup</name>
             <commit>ba423a084ac0d5335ea35578a4d6adccb4bdb663</commit>
             <created-from>plan-79-v5</created-from>
@@ -98,7 +98,7 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Move plugin-resources -&gt; targets/shared</name>
             <commit>c3eed74f163c4055cfa06ff8ac2174655900af71</commit>
             <created-from>plan-79-v6</created-from>
@@ -110,7 +110,7 @@
         <task>
             <id>8</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Move claude/gemini/codex -&gt; targets/{claude,gemini,codex}</name>
             <commit>ce8e7b2f7d2f4ce2019a700fe05ff7c7b56b4a44</commit>
             <created-from>plan-79-v6</created-from>
@@ -134,6 +134,11 @@
         <update>
             <timestamp>2026-06-13T11:14:52.959+05:30</timestamp>
             <message>Reopened: clean completion withdrawn pending manual testing.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-13T18:23:11.353+05:30</timestamp>
+            <message>Plan complete: skills:pkg split into plugin-model + skills:pkg (reduced) + harness:shared; hosts regrouped under harness/. Build green; all 4 prod variants byte-identical to baseline; packaging (jlink zip + validateRelease) green; manual host-install testing passed. Landing READMEs added for core/cli/plugin-model/harness.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
