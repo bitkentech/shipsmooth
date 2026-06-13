@@ -1,10 +1,11 @@
 rootProject.name = "shipsmooth"
 
-// Maven→Gradle migration (plan-71 v2). Modules are included here as each gets
-// its build.gradle.kts; a module is only listed once it has a Gradle build, so
-// the reactor stays buildable at every step. Target end state (Phase 5):
-//   include("core"); include("cli"); include("skills:pkg")
-//   include("claude"); include("gemini"); include("packaging"); include("devtools")
+// Module graph (plan-79). plugin-model is the shared leaf (Os/Platform/Env/
+// PluginModel); skills:pkg renders the SKILL.md files; plugin-resources renders
+// the rest (hooks, session-start config, installer, TS hook) and runs Target;
+// claude/gemini/codex assemble per-host payloads; packaging zips runtimes/releases.
+// Dependency direction: plugin-model <- skills:pkg <- plugin-resources;
+// plugin-model <- packaging. See DEVELOPMENT.md for the per-module breakdown.
 include("core")
 include("cli")
 include("claude")

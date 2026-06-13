@@ -11,10 +11,12 @@
 This repo uses a multi-module Gradle layout:
 - `core/`: pure domain logic (workflow, ledger, git ops, plan service); JPMS module `io.bitken.ss.core`
 - `cli/` : Java CLI (`shipsmooth`, picocli) + jlink image build; JPMS module `io.bitken.ss.cli`
+- `plugin-model/`: tiny leaf module of shared value types (`Os`, `Platform`, `Env`, `PluginModel`); no other module deps. `packaging` depends on it for `Os` alone.
 - `skills/`: the skills product:
   - one folder per skill directly under `skills/` (`skills/start/`, `skills/experimental/refine/`, …), each with its `SKILL.jte.md`
   - `skills/shared/`: partials shared across skills (`shared/workflow/`) and the target snippets the shared workflow selects (`shared/workflow/claude/`, `shared/workflow/gemini/`)
-  - `skills/pkg/`: Java renderers (`Target`, `SkillRenderer`, …) + TypeScript hook scripts (rarely touched)
+  - `skills/pkg/`: the `:skills:pkg` module — `SkillRenderer` + JTE staging/generation only (renders the SKILL.md files; rarely touched). Depends on `plugin-model`.
+- `plugin-resources/`: renders everything that is NOT the skill file — `Target` (orchestrator), `HooksRenderer`/`HookCommandRenderer` (hooks.json + the SessionStart command and its `install-shipsmooth.sh`/`install-runtime.bat` companion), `SessionStartConfigRenderer`, the TypeScript hook scripts (`scripts/`), `install-shipsmooth.sh`, and the `render*`/`copyDist*` tasks the plugin builds consume. Depends on `plugin-model` + `skills:pkg`.
 - `claude/` : Claude plugin metadata (`claude-plugin/`, `windows/`)
 - `gemini/` : Gemini extension metadata (`gemini-extension/`)
 - `packaging/`: assembles the final `build/` output from the other modules
