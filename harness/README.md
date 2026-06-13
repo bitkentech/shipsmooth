@@ -1,4 +1,4 @@
-# harness/
+# harness
 
 This gradle module contains agent harness specific integrations (Claude, Codex, Gemini etc).
 
@@ -26,5 +26,4 @@ plugin-model     <-  skills:pkg     <-  harness:shared     <-  harness:{claude,g
   build = `harness:shared`'s rendered payload **+** that host's metadata, composed
   into the final plugin/extension tree by the host's `assemble*` task.
 
-See [`../DEVELOPMENT.md`](../DEVELOPMENT.md) for per-harness build & local-install
-instructions.
+See [`../DEVELOPMENT.md`](../DEVELOPMENT.md) for harness specific build and install instructions.
