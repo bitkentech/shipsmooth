@@ -27,13 +27,19 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Reduce `skills:pkg` to skill-rendering only</name>
             <commit></commit>
             <created-from>plan-79-v5</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-13T09:20:40.230+05:30</timestamp>
+                    <message>Task 2 reduction split with Task 3: SkillRenderer made public + symbol-resolution verified now; full skills:pkg compile-green only achievable once Task 3 git-mv's Target/Hooks/Config to plugin-resources (reactor intentionally red between Tasks 1-3).</message>
+                </deviation>
+            </deviations>
             <depends-on>1</depends-on>
         </task>
         <task>
