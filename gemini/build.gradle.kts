@@ -95,15 +95,15 @@ val copyGeminiMetaProd = registerGeminiMeta("copyGeminiMetaProd", prodTokens, "g
 // ---------------------------------------------------------------------------
 // gemini references :skills:pkg's producer tasks (renderGeminiDev, copyDist), so its
 // build script must be evaluated first — otherwise those tasks aren't registered yet.
-evaluationDependsOn(":skills:pkg")
-val skillsPkg = project(":skills:pkg")
+evaluationDependsOn(":plugin-resources")
+val pluginResources = project(":plugin-resources")
 registerPayloadAssembly(
     assembleTaskName = "assembleGeminiDev",
     description = "Assemble the full gemini-dev extension payload into <build.outputDir> (default build-gemini-dev/).",
     payloadDir = outputDir,
     producers = listOf(
-        PayloadProducer("renderGeminiDev", skillsPkg.tasks.named("renderGeminiDev"), ownsFilesOnly = false),
-        PayloadProducer("copyDist", skillsPkg.tasks.named("copyDist"), ownsFilesOnly = true),
+        PayloadProducer("renderGeminiDev", pluginResources.tasks.named("renderGeminiDev"), ownsFilesOnly = false),
+        PayloadProducer("copyDist", pluginResources.tasks.named("copyDist"), ownsFilesOnly = true),
         PayloadProducer("copyGeminiMetaDev", copyGeminiMetaDev, ownsFilesOnly = true),
     ),
 )
@@ -119,15 +119,15 @@ registerPayloadAssembly(
 // (plan-71 v11-v15 dual-mode.) Note: the gemini payload carries NO .claude-plugin/
 // (Task 22) and NO scripts/tasks/ tree (Task 23 — no variant emits one).
 // ---------------------------------------------------------------------------
-val geminiProdRenderStage = skillsPkg.layout.buildDirectory.dir("render/gemini-prod").get().asFile
-val geminiProdDistStage = skillsPkg.layout.buildDirectory.dir("stage/dist-prod").get().asFile
+val geminiProdRenderStage = pluginResources.layout.buildDirectory.dir("render/gemini-prod").get().asFile
+val geminiProdDistStage = pluginResources.layout.buildDirectory.dir("stage/dist-prod").get().asFile
 registerPayloadSync(
     syncTaskName = "assembleGeminiProd",
     description = "Assemble the full gemini-prod extension payload into <build.outputDir> (pass -Pbuild.outputDir).",
     payloadDir = outputDir,
     sources = listOf(
-        SyncSource(skillsPkg.tasks.named("renderGeminiProd"), geminiProdRenderStage),
-        SyncSource(skillsPkg.tasks.named("copyDistProd"), geminiProdDistStage),
+        SyncSource(pluginResources.tasks.named("renderGeminiProd"), geminiProdRenderStage),
+        SyncSource(pluginResources.tasks.named("copyDistProd"), geminiProdDistStage),
         SyncSource(copyGeminiMetaProd, geminiProdMetaStage),
     ),
 )

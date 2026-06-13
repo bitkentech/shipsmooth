@@ -9,26 +9,30 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Writes the SessionStart hooks.json. OS-specific hook files (e.g. install-runtime.bat)
- * are written by Os as a side-effect of hookCommand().
+ * Writes the SessionStart hooks.json. The OS-specific hook command and its
+ * companion file (install-shipsmooth.sh / install-runtime.bat) are produced by
+ * HookCommandRenderer (plan-79 v5 — moved off Os to keep Os a pure type).
  */
 class HooksRenderer {
 
     private final ObjectMapper mapper;
     private final PluginModel model;
     private final Path outputDir;
+    private final HookCommandRenderer hookCommandRenderer;
 
     HooksRenderer(ObjectMapper mapper, PluginModel model, Path outputDir) {
         this.mapper = mapper;
         this.model = model;
         this.outputDir = outputDir;
+        this.hookCommandRenderer = new HookCommandRenderer();
     }
 
     void write() throws IOException {
         Path hooksDir = outputDir.resolve("hooks");
         Files.createDirectories(hooksDir);
 
-        String command = model.os().hookCommand(hooksDir, model.repoName(), model.pluginName(), model.pluginVersion());
+        String command = hookCommandRenderer.render(
+            model.os(), hooksDir, model.repoName(), model.pluginName(), model.pluginVersion());
 
         ObjectNode hook = mapper.createObjectNode()
             .put("type", "command")

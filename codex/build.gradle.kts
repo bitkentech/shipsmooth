@@ -72,8 +72,8 @@ fun registerCodexMeta(taskName: String, tokens: Map<String, Any>, pluginFolder: 
     }
 
 // codex references :skills:pkg's producer tasks, so evaluate it first.
-evaluationDependsOn(":skills:pkg")
-val skillsPkg = project(":skills:pkg")
+evaluationDependsOn(":plugin-resources")
+val renderModule = project(":plugin-resources")
 
 // Both variants assemble via a Sync from PRIVATE staging dirs (not the flat dev
 // co-deposit the claude/gemini dev path uses). Codex's nested layout — render + dist
@@ -86,21 +86,21 @@ val skillsPkg = project(":skills:pkg")
 // The compiled JS (session-start.js) is identical across dev/prod (same TS build), so
 // both variants source it from copyDistProd's private staging dir; copyDistProd never
 // touches the payload root, so it is overlap-safe to reuse here.
-val codexDistStage = skillsPkg.layout.buildDirectory.dir("stage/dist-prod").get().asFile
+val codexDistStage = renderModule.layout.buildDirectory.dir("stage/dist-prod").get().asFile
 
 // ---------------------------------------------------------------------------
 // assembleCodexDev → build-codex-dev/. Sync is the sole writer of the payload (prunes
 // stale files, overlap-immune). Mirrors the codex-prod path but with dev tokens and
 // the dev render (which carries the start-dev frontmatter + experimental skills).
 // ---------------------------------------------------------------------------
-val codexDevRenderStage = skillsPkg.layout.buildDirectory.dir("render/codex-dev").get().asFile
+val codexDevRenderStage = renderModule.layout.buildDirectory.dir("render/codex-dev").get().asFile
 val codexDevMetaStage = layout.buildDirectory.dir("stage/codex-dev-meta").get().asFile
 val copyCodexMetaDev = registerCodexMeta("copyCodexMetaDev", devTokens, pluginNameDev, codexDevMetaStage)
 
 tasks.register<Sync>("assembleCodexDev") {
     group = "assemble"
     description = "Assemble the full codex-dev plugin payload into build-codex-dev/."
-    dependsOn(skillsPkg.tasks.named("renderCodexDev"), skillsPkg.tasks.named("copyDistProd"), copyCodexMetaDev)
+    dependsOn(renderModule.tasks.named("renderCodexDev"), renderModule.tasks.named("copyDistProd"), copyCodexMetaDev)
     from(codexDevRenderStage) { into("plugins/$pluginNameDev") }
     from(codexDistStage) { into("plugins/$pluginNameDev") }
     from(codexDevMetaStage) // carries plugins/<name>/.codex-plugin + .agents/plugins layout
@@ -111,14 +111,14 @@ tasks.register<Sync>("assembleCodexDev") {
 // assembleCodexProd → <build.outputDir> (pass -Pbuild.outputDir). Sync is the sole
 // writer (overlap-immune; mirrors assembleClaudeProd's dual-mode prod path).
 // ---------------------------------------------------------------------------
-val codexProdRenderStage = skillsPkg.layout.buildDirectory.dir("render/codex-prod").get().asFile
+val codexProdRenderStage = renderModule.layout.buildDirectory.dir("render/codex-prod").get().asFile
 val codexProdMetaStage = layout.buildDirectory.dir("stage/codex-prod-meta").get().asFile
 val copyCodexMetaProd = registerCodexMeta("copyCodexMetaProd", prodTokens, pluginName, codexProdMetaStage)
 
 tasks.register<Sync>("assembleCodexProd") {
     group = "assemble"
     description = "Assemble the full codex-prod plugin payload into <build.outputDir> (pass -Pbuild.outputDir)."
-    dependsOn(skillsPkg.tasks.named("renderCodexProd"), skillsPkg.tasks.named("copyDistProd"), copyCodexMetaProd)
+    dependsOn(renderModule.tasks.named("renderCodexProd"), renderModule.tasks.named("copyDistProd"), copyCodexMetaProd)
     from(codexProdRenderStage) { into("plugins/$pluginName") }
     from(codexDistStage) { into("plugins/$pluginName") }
     from(codexProdMetaStage) // carries plugins/<name>/.codex-plugin + .agents/plugins layout
