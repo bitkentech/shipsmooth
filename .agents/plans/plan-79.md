@@ -94,24 +94,46 @@ depends only on the tiny `plugin-model`. Cost: one extra small module — accept
 
 | Class / asset | Target module |
 |---|---|
-| `Os`, `Platform`, `Env`, `PluginModel` (+ their unit tests) | `plugin-model` |
+| `Os` (pure facts only — see below), `Platform`, `Env`, `PluginModel` (+ their pure-fact unit tests) | `plugin-model` |
 | `SkillRenderer` (+ `SkillVariant` if separate), JTE staging/generation | `skills:pkg` (unchanged, at `skills/pkg`) |
 | `.jte.md` content (`start/`, `experimental/`, `shared/`) | stays at `skills/` (staged by `skills:pkg` via `../`) |
 | `Target` (+ `TargetTest`, `TargetIntegrationTest`) | `plugin-resources` |
-| `HooksRenderer`, `SessionStartConfigRenderer` | `plugin-resources` |
-| `scripts/` TS hook + npm/tsc/test wiring; `install-shipsmooth.sh` + lint; `PosixBootstrapIntegrationTest` | `plugin-resources` |
+| `HooksRenderer`, `SessionStartConfigRenderer`, **new `HookCommandRenderer`** | `plugin-resources` |
+| **The hook-command + companion-file emission** (was `Os.hookCommand`/`copyResource`); `install-shipsmooth.sh` + lint; `install-runtime.bat` generation; `PosixBootstrapIntegrationTest` + the `hookCommand`/`copyResource` cases of `OsTest` | `plugin-resources` |
+| `scripts/` TS hook + npm/tsc/test wiring | `plugin-resources` |
 | `render*` + `copyDist*` Gradle tasks (run `Target`) | `plugin-resources` |
+
+### `Os` decoupling (discovered building Task 1 — v5)
+
+`Os.Posix.hookCommand` read `install-shipsmooth.sh` off its OWN classpath
+(`Os.class.getResourceAsStream`), and `Os.Windows.hookCommand` wrote
+`install-runtime.bat` inline — i.e. `hookCommand` is a *renderer that emits a
+companion file*, not a pure value-type method. That makes `Os` unable to live in a
+pure-types `plugin-model` while the script lives in `plugin-resources` (the leaf
+can't depend on the script's module). Decision (human): the script is a plugin
+**resource** and belongs in `plugin-resources`; the code that emits it moves there
+too. So:
+- `Os` (in `plugin-model`) keeps only pure facts: `launcherFileName`, `javaExe`,
+  `cliBinPath`, `from`, `fromPackagingTarget`, and the `Posix`/`Windows`
+  discriminants. It loses `hookCommand`, `copyResource`, `INSTALL_SCRIPT_NAME`,
+  and the `.bat` helpers.
+- A new `HookCommandRenderer` in `plugin-resources` owns the hook command string +
+  companion-file emission, branching on `os instanceof Os.Posix/Windows`. It holds
+  `install-shipsmooth.sh` as its resource and generates `install-runtime.bat`.
+  `HooksRenderer` calls it (replacing the old `model.os().hookCommand(...)`).
+- This is the only behavioral-shape change in the plan; the rendered output stays
+  byte-identical (the golden diff is the guard).
 
 ### Visibility consequence
 
-After the split these types cross module boundaries (package stays
-`io.bitken.ss.resources` everywhere, so imports don't churn). `PluginModel`,
-`Env`, `Os` are already `public`; `Platform` is package-private and must become
-`public` (`Target` calls `Platform.from`). `SkillRenderer` must become reachable
-from `Target` in `plugin-resources` — make `SkillRenderer` (and the
-constructor/methods `Target` uses) `public`. Likewise any `HooksRenderer` /
-`SessionStartConfigRenderer` members `Target` invokes stay co-located with
-`Target` in `plugin-resources`, so they can remain package-private.
+All moved types keep package `io.bitken.ss.resources`, so imports don't churn.
+Verified building Task 1: `Os`, `Platform`, `Env`, `PluginModel` are ALL already
+`public` (`Platform`/`Os` are public sealed interfaces) — no visibility changes
+needed there. `SkillRenderer` must become reachable from `Target` in
+`plugin-resources` — make `SkillRenderer` (and the constructor/methods `Target`
+uses) `public`. `HooksRenderer` / `SessionStartConfigRenderer` /
+`HookCommandRenderer` stay co-located with `Target` in `plugin-resources`, so they
+remain package-private.
 
 ### Module naming note
 
@@ -161,13 +183,17 @@ Risk-sorted (High → Low); a Low dependency that blocks a High task precedes it
 
 ### Task 1: Create `plugin-model` leaf module + move shared types [High]
 
-Create `plugin-model/` with `build.gradle.kts` (java-conventions; jackson if any
-type needs it — `PluginModel` is a plain record, likely none). Move `Os.java`,
-`Platform.java`, `Env.java`, `PluginModel.java` (+ `OsTest`, `PlatformTest`,
-`EnvTest`, `PluginModelTest`) from `skills/pkg/...` to top-level `plugin-model/`,
-same package. Make `Platform` public. Register `plugin-model` in
-`settings.gradle.kts`. High: establishes the new leaf boundary + forces
-public-visibility changes; everything depends on it.
+Create top-level `plugin-model/` with `build.gradle.kts` (java-conventions; no
+jackson — the four types reference only `java.*`). Move `Os.java`, `Platform.java`,
+`Env.java`, `PluginModel.java` (+ `OsTest`, `PlatformTest`, `EnvTest`,
+`PluginModelTest`) from `skills/pkg/...` to `plugin-model/`, same package. Register
+`plugin-model` in `settings.gradle.kts`. **Decouple `Os`**: strip `hookCommand`,
+`copyResource`, `INSTALL_SCRIPT_NAME`, and the `.bat` helpers from `Os` (they move
+to `plugin-resources` in Task 3 as `HookCommandRenderer`); `Os` keeps only pure
+facts. Move the `hookCommand`/`copyResource` cases out of `OsTest` (they go to
+Task 3); keep the pure-fact cases. (No visibility changes — all four types are
+already public.) High: establishes the new leaf boundary and the `Os` decoupling;
+everything depends on it.
 
 ### Task 2: Reduce `skills:pkg` to skill-rendering only [High]
 
@@ -192,9 +218,16 @@ jackson, node-gradle). Add deps `implementation(project(":plugin-model"))` and
 `TargetIntegrationTest`), `HooksRenderer.java`, `SessionStartConfigRenderer.java`,
 the `scripts/` TS/npm pipeline (+ its node-gradle wiring + `compileTs`/`testTs`),
 and `install-shipsmooth.sh` (+ `lintInstallScript`, `PosixBootstrapIntegrationTest`).
-`Target` here constructs `SkillRenderer` (from `:skills:pkg`) + the local
-Hooks/Config renderers. High: the orchestrator + the fragile TS/installer wiring
-land here and must compile against two upstream modules.
+**Add `HookCommandRenderer`** (new class): it absorbs the hook-command +
+companion-file logic stripped from `Os` in Task 1 — branches on
+`os instanceof Os.Posix/Windows`, holds `install-shipsmooth.sh` as its resource
+(`getResourceAsStream`), and generates `install-runtime.bat`. Move the
+`hookCommand`/`copyResource` test cases from `OsTest` here (retargeted at
+`HookCommandRenderer`). `HooksRenderer` calls `HookCommandRenderer` instead of
+`model.os().hookCommand(...)`. `Target` constructs `SkillRenderer` (from
+`:skills:pkg`) + the local Hooks/Config/HookCommand renderers. High: the
+orchestrator + the fragile TS/installer wiring + the `Os` decoupling land here and
+must compile against two upstream modules; the golden diff guards byte-parity.
 
 ### Task 4: Move render*/copyDist* tasks to `plugin-resources`; repoint consumers [Medium]
 
