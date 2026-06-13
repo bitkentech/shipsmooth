@@ -23,7 +23,7 @@
             <id>2</id>
             <risk>high</risk>
             <status>pending</status>
-            <name>Create `skills` module rendering ONLY the skill</name>
+            <name>Rename `skills/pkg` -&gt; `skills/render`, reduce it to skill-rendering only</name>
             <commit></commit>
             <created-from>plan-79-v1</created-from>
             <closed-at-version></closed-at-version>
@@ -82,7 +82,7 @@
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-06-13T08:22:09.831+05:30</timestamp>
+            <timestamp>2026-06-13T08:31:56.940+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
