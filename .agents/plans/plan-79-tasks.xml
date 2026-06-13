@@ -110,9 +110,9 @@
         <task>
             <id>8</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Move claude/gemini/codex -&gt; targets/{claude,gemini,codex}</name>
-            <commit></commit>
+            <commit>ce8e7b2f7d2f4ce2019a700fe05ff7c7b56b4a44</commit>
             <created-from>plan-79-v6</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
