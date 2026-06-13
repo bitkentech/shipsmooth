@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>79</plan>
+    <plan-version>plan-79-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>active</status>
+        <created>2026-06-13</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Create `plugin-model` leaf module + move shared types</name>
+            <commit></commit>
+            <created-from>plan-79-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Create `skills` module rendering ONLY the skill</name>
+            <commit></commit>
+            <created-from>plan-79-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Create `plugin-resources`; move Target + non-skill renderers + scripts + installer</name>
+            <commit></commit>
+            <created-from>plan-79-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Move render*/copyDist* tasks to `plugin-resources`; repoint consumers</name>
+            <commit></commit>
+            <created-from>plan-79-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Repoint `packaging` dependency to `plugin-model`</name>
+            <commit></commit>
+            <created-from>plan-79-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Parity verification + docs/settings cleanup</name>
+            <commit></commit>
+            <created-from>plan-79-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4,5</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-13T08:22:09.831+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
