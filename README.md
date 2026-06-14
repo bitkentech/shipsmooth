@@ -1,4 +1,4 @@
-## shipsmooth - Agentic energy, channelled with skill.
+## shipsmooth - a simple, powerful coding workflow.
 
 An AI assistant plugin that enables a plan-driven, risk-prioritised, checkpoint based, agentic coding workflow.
 
