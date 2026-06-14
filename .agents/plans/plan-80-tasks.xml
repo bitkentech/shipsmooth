@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>80</plan>
+    <plan-version>plan-80-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-14</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Baseline measurement of the current jlink image</name>
+            <commit></commit>
+            <created-from>plan-80-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Compute the truly-required module set via jdeps</name>
+            <commit></commit>
+            <created-from>plan-80-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-14T22:30:08.706+05:30</timestamp>
+                    <message>De-risk complete. Root cause found: java.desktop pulled by 'requires java.desktop' in jaxb-runtime + jackson-databind; jlink honors it unconditionally (--limit-modules probe could NOT drop it). shipsmooth uses neither AWT nor java.beans, and its JAXB-bound model has no Image/DataHandler fields, so the desktop-backed branch is unreachable. Lever for Task 3 = patch requires out of those two module-info descriptors (re-jar). Expected ~6-9M saving (desktop+prefs+datatransfer+~5.7M native AWT libs).</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>high</risk>
+            <status>abandoned</status>
+            <name>Prune confirmed-unneeded modules</name>
+            <commit></commit>
+            <created-from>plan-80-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-14T23:01:19.243+05:30</timestamp>
+                    <message>Abandoned: investigation (Tasks 1-2) showed the realistic jlink-only saving on OpenJ9 is ~9-12MB and the 87MB floor is dominated by the OpenJ9 runtime itself, not modules. Decision was to capture findings in docs/observations rather than implement the cut in this plan.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>abandoned</status>
+            <name>Apply safe, no-semantic-risk size flags</name>
+            <commit></commit>
+            <created-from>plan-80-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-14T23:01:19.771+05:30</timestamp>
+                    <message>Abandoned: deferred with Task 3; no implementation undertaken in this plan.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>abandoned</status>
+            <name>Lock in the win with a size regression guard</name>
+            <commit></commit>
+            <created-from>plan-80-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-14T23:01:20.297+05:30</timestamp>
+                    <message>Abandoned: deferred with Task 3; no implementation undertaken in this plan.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>3,4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Find online information about IBM Semeru JDK floor size</name>
+            <commit></commit>
+            <created-from>plan-80-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-14T23:07:38.451+05:30</timestamp>
+                    <message>Done. Findings added to docs/observations/2026-06-14-jlink-image-size-runtime-breakdown.md (section: Public corroboration). OpenJ9 issue #4488 confirms OpenJ9 jlink images carry a ~10-15MB premium over HotSpot (Java 11: Linux 52.6 vs 46.8MB; Windows 50.6 vs 38.0MB), accepted upstream (Deep Backlog). IBM publishes no official jlink floor figure for Semeru; their size guidance is JRE-vs-JDK container images, a different question.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-14T22:14:21.966+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-15T00:22:20.858+05:30</timestamp>
+            <message>Plan complete. Investigation delivered (Tasks 1,2,6 closed): jlink image-size analysis captured in docs/observations/2026-06-14-jlink-image-size-runtime-breakdown.md. Implementation tasks (3,4,5: prune java.desktop, size flags, regression guard) abandoned after findings showed the 87MB floor is dominated by the OpenJ9 runtime, not modules; realistic jlink-only saving ~9-12MB. Reaching ~45MB requires an OpenJ9-&gt;HotSpot switch, out of scope here.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
