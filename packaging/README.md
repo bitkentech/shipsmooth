@@ -1,41 +1,40 @@
 # Releasing a new version
 
-This module (`packaging/`) assembles the final build output and orchestrates releases.
+This `packaging` module assembles the final build output and orchestrates releases.
 For general development setup, the repo structure, and the dev build loop, see
 [`../DEVELOPMENT.md`](../DEVELOPMENT.md).
 
 ## Prerequisites
 
 - `gh` (GitHub CLI) installed and authenticated
-- IBM Semeru JDK at `/opt/installers/jdk-semeru/jdk-25.0.2+10` (override with `-Djdk.semeru.linux-x64=<path>`)
+- IBM Semeru JDK at /opt/installers/jdk-semeru/jdk-25.0.2+10 (override with `-Djdk.semeru.linux-x64=<path>`)
 - Working tree must be clean (no uncommitted changes on tracked files)
 
-## How the `shipsmooth` CLI is distributed
+## How the shipsmooth CLI is distributed
 
-The `shipsmooth` CLI is not shipped as source or a bare jar. The `cli/` module's jlink
-build produces a self-contained **jlink image** (the CLI classes plus a
+The shipsmooth CLI is not shipped as source or a bare jar. The `cli` module's jlink
+build produces a self-contained [jlink image](https://docs.oracle.com/en/java/javase/17/docs/specs/man/jlink.html) (the CLI classes plus a
 trimmed JDK runtime), which is published as an asset on GitHub Releases. When a user
 installs the plugin, the image for their platform is downloaded from the release and
 unpacked locally.
 
-Because the jlink image bundles its own Java runtime, **the user does not need to
-install Java separately** to run `shipsmooth`. The trade-off is size: each platform's
-image is roughly **80–95 MB** unpacked on disk (the bundled runtime dominates),
-downloaded as a compressed archive of around **45–50 MB**, which is why it lives in
-Release assets rather than in the repo.
+Because the jlink image bundles its own Java runtime, the user does not have to
+install Java separately to run shipsmooth. The trade-off is size: each platform's
+image is roughly 80–95 MB unpacked on disk. It is downloaded as a compressed 
+archive of around 45–50 MB, which is why it lives in Release assets rather than in
+the repo.
 
 ## Full release (via PublishRelease)
 
-The single `publishRelease` task assembles all platforms — Claude Code, Gemini CLI, and
-the Windows plugin (including its bundled jlink JRE) — building and publishing each in one
-command. No separate per-platform invocation is needed.
+The single `publishRelease` task assembles all platforms (Claude Code, Gemini CLI, and
+the Windows plugin (including its bundled jlink JRE)). It builds and publishes all of them
+in one command. No separate per-platform invocation is needed.
 
 ```bash
 ./gradlew publishRelease -Pshipsmooth.release.version=<version>
 ```
 
-The per-platform details — what `PublishRelease` does for each target and the resulting
-repo/branch layout — are described in the sections below.
+The per-platform details like what `PublishRelease` does for each target, what is the resulting repo/branch layout, are described in the sections below.
 
 ## Claude Code release
 

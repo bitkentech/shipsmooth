@@ -4,26 +4,23 @@
 - JDK 25 (the build runs on a Java 25 toolchain; bytecode targets Java 21)
 - Node.js 18+
 
-(The build uses the Gradle wrapper, `./gradlew`. No separate Gradle install needed.)
+The build uses the Gradle wrapper, `./gradlew`. No separate Gradle install needed.
 
 ## Repo structure
 
 This repo uses a multi-module Gradle layout:
-- `core/`: pure domain logic (workflow, ledger, git ops, plan service); JPMS module `io.bitken.ss.core`
-- `cli/` : Java CLI (`shipsmooth`, picocli) + jlink image build; JPMS module `io.bitken.ss.cli`
-- `plugin-model/`: tiny leaf module of shared value types (`Os`, `Platform`, `Env`, `PluginModel`); no other module deps. `packaging` depends on it for `Os` alone.
-- `skills/`: the skills product:
+- `core`: pure domain logic (workflow, plans, tasks). JPMS module: `io.bitken.ss.core`
+- `cli` : Java CLI (`shipsmooth`, picocli) + jlink image build. JPMS module: `io.bitken.ss.cli`
+- `plugin-model`: tiny leaf module of shared value types (`Os`, `Platform`, `Env`, `PluginModel`)
+- `skills`: 
   - one folder per skill directly under `skills/` (`skills/start/`, `skills/experimental/refine/`, …), each with its `SKILL.jte.md`
-  - `skills/shared/`: partials shared across skills (`shared/workflow/`) and the target snippets the shared workflow selects (`shared/workflow/claude/`, `shared/workflow/gemini/`)
-  - `skills/pkg/`: the `:skills:pkg` module — `SkillRenderer` + JTE staging/generation only (renders the SKILL.md files; rarely touched). Depends on `plugin-model`.
-- `harness/`: the per-host agent-harness plugin integrations + the shared renderer they drive. Add a new agent harness (e.g. opencode, pi) as `harness/<name>/`. (IDE/editor extensions, if added later, get their own top-level folder rather than living here.)
-  - `harness/shared/` (`:harness:shared`): renders everything that is NOT the skill file — `Target` (orchestrator), `HooksRenderer`/`HookCommandRenderer` (hooks.json + the SessionStart command and its `install-shipsmooth.sh`/`install-runtime.bat` companion), `SessionStartConfigRenderer`, the TypeScript hook scripts (`scripts/`), `install-shipsmooth.sh`, and the `render*`/`copyDist*` tasks the host builds consume. Depends on `plugin-model` + `skills:pkg`.
-  - `harness/claude/` (`:harness:claude`): Claude plugin metadata (`claude-plugin/`, `windows/`)
-  - `harness/gemini/` (`:harness:gemini`): Gemini extension metadata (`gemini-extension/`)
-  - `harness/codex/` (`:harness:codex`): Codex plugin metadata (`.codex-plugin/`)
-- `packaging/`: assembles the final `build/` output from the other modules
-- `devtools/` : development-time helper scripts
-- `exp/` : exploratory work with no build wiring (e.g. `exp/model/` TLA+ specs)
+  - `skills/shared`: partials shared across skills (`shared/workflow/`) and the target snippets the shared workflow selects (`shared/workflow/claude/`, `shared/workflow/gemini/`)
+  - `skills/pkg`: Processes the skill templates and generates the SKILL.md files.
+- `harness`: Plugin code for various coding harnesses (Claude, Gemini etc).
+  - `harness/shared` (`:harness:shared`): renders everything that is NOT the skill file — `Target` (orchestrator), `HooksRenderer`/`HookCommandRenderer` (hooks.json + the SessionStart command and its `install-shipsmooth.sh`/`install-runtime.bat` companion), `SessionStartConfigRenderer`, the TypeScript hook scripts (`scripts/`), `install-shipsmooth.sh`, and the `render*`/`copyDist*` tasks the host builds consume. Depends on `plugin-model` + `skills:pkg`.
+- `packaging`: Code for generating the production build and packaging it
+- `devtools` : development time helper scripts
+- `exp` : totally exploratory work. Not even included in builds.
 
 ## Build the dev version
 
