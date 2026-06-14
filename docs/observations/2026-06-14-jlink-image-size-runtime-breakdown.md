@@ -136,6 +136,39 @@ vs OpenJ9 `lib/default` 33 MB).
 Reaching ~45 MB is not achievable via jlink on OpenJ9; it requires the runtime switch
 above.
 
+## Public corroboration: the OpenJ9 floor is a known, accepted gap
+
+The "OpenJ9 jlink images are bigger than HotSpot" effect is documented upstream, so the
+61 MB OpenJ9 floor measured above is not specific to our build:
+
+- Eclipse OpenJ9 issue [#4488](https://github.com/eclipse-openj9/openj9/issues/4488)
+  ("OpenJ9 JLink produces a bigger JRE than Hotspot") reports minimal `java.base`-style
+  images for Java 11:
+
+  | OS | HotSpot | OpenJ9 |
+  |---|---|---|
+  | Linux | 46.8 MB | 52.6 MB |
+  | Windows | 38.0 MB | 50.6 MB |
+
+  The issue was moved to the Deep Backlog (i.e. accepted as a known difference, not a bug
+  with a fix). Maintainers attribute the Linux delta partly to extra properties/`.dat`
+  files; community comments also note OpenJ9 ships its own `libcrypto` that HotSpot does
+  not. Both match what we see locally (the `j9ddr.dat` data file, bundled
+  `libcrypto-semeru.so`/`libssl-semeru.so`).
+
+- Container data referenced in the same discussion: Java 11 OpenJ9 + jlink ≈ 78 MB
+  compressed vs HotSpot + jlink ≈ 74 MB; and on Windows OpenJ9 11 jlink ≈ 54 MB vs
+  HotSpot ≈ 39 MB — the same ~10-15 MB OpenJ9 premium.
+
+Caveat: those public figures are Java 11. Our measurements are Java 25, where both VMs
+have grown, so the absolute numbers are larger here (HotSpot floor 42 MB, OpenJ9 61 MB),
+but the direction and rough magnitude of the OpenJ9 premium are consistent.
+
+IBM does not publish an official "minimal jlink floor size" figure for Semeru; their
+size guidance is about the JRE-vs-JDK container images (the Red Hat Ecosystem Catalog
+"Semeru Runtime ... UBI 9 Minimal" images), which is a different question from a jlinked
+custom runtime.
+
 ## To reproduce this analysis
 
 ```bash
