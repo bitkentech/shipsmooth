@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Author phase0-intake.jte.md content</name>
-            <commit></commit>
+            <commit>6cdac9e7e1bf83b42b1ee362331ac3828b1bed97</commit>
             <created-from>plan-81-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -22,9 +22,9 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Define the stub plan-file skeleton the thin path writes</name>
-            <commit></commit>
+            <commit>6cdac9e7e1bf83b42b1ee362331ac3828b1bed97</commit>
             <created-from>plan-81-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -34,9 +34,9 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Wire Phase 0 into base-workflow + cross-reference Phase 1</name>
-            <commit></commit>
+            <commit>6cdac9e7e1bf83b42b1ee362331ac3828b1bed97</commit>
             <created-from>plan-81-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
