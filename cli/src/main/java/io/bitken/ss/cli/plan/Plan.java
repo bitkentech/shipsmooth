@@ -2,9 +2,12 @@ package io.bitken.ss.cli.plan;
 
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.conf.ExperimentalMode;
+import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.gw.GitState;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.gw.TaskStore;
+import io.bitken.ss.svc.plan.NewPlan;
+import io.bitken.ss.svc.plan.PlanNumbers;
 import io.bitken.ss.svc.plan.PlanService;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -19,12 +22,13 @@ public class Plan implements Callable<Integer>, HasSpec {
     private final CommandSpec spec;
 
     public Plan(PlanService planService, TaskStore taskStore, GitTags gitTags,
-                GitState gitState, ExperimentalMode mode) {
+                GitState gitState, ShipsmoothDataLocator locator, ExperimentalMode mode) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("plan");
-        this.spec.usageMessage().description("Plan-level commands (init, show, update, preflight, tag, branch, resume).");
+        this.spec.usageMessage().description("Plan-level commands (init, create, show, update, preflight, tag, branch, resume).");
         addLeaves(spec,
             new Init(planService, taskStore, gitTags, mode),
+            new Create(new NewPlan(new PlanNumbers(locator), gitState, locator)),
             new Show(taskStore),
             new ProjectUpdate(planService),
             new Preflight(gitState, gitTags),

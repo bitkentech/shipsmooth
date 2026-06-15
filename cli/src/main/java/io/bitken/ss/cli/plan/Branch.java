@@ -2,6 +2,7 @@ package io.bitken.ss.cli.plan;
 
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.gw.GitState;
+import io.bitken.ss.svc.plan.Slugs;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -43,7 +44,7 @@ public class Branch implements Callable<Integer>, HasSpec {
             return 1;
         }
 
-        String branchName = "t/" + prefix + "-" + slugify(desc);
+        String branchName = Slugs.branchName(prefix, desc);
         if (gitState.branchExists(branchName)) {
             System.out.println("ERROR: branch " + branchName + " already exists");
             return 1;
@@ -63,11 +64,5 @@ public class Branch implements Callable<Integer>, HasSpec {
         if (hasIssue == hasPlan) return null;
         if (hasIssue) return ((String) pr.matchedOption("issue").getValue()).toLowerCase();
         return String.valueOf((Integer) pr.matchedOption("plan").getValue());
-    }
-
-    private static String slugify(String desc) {
-        return desc.toLowerCase()
-                   .replaceAll("[^a-z0-9]+", "-")
-                   .replaceAll("^-|-$", "");
     }
 }

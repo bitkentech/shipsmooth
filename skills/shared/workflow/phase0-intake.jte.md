@@ -36,26 +36,32 @@ If any one of these is absent, context is **rich** — skip to Phase 1.
 
 A short kickoff means the user wants to move fast and iterate. He is signalling
 that he will add detail later or work exploratorily. **Do not slow him down.**
-Do exactly this, in one shot:
+Run **one** command and hand back:
 
-1. Create the branch:
-   ```bash
-   ${model.cliBin()} plan branch --issue {issue-id} --desc "{short-description}"
-   # prints: git push -u origin t/{issue-id}-{slug}  — run that line to push
-   ```
-2. Write a **stub** `.agents/plans/plan-{N}.md` on the branch with this skeleton:
-   - a title line,
-   - a `## Context` placeholder (one line noting the feature in the user's own
-     words; mark unknowns explicitly),
-   - a `## Tasks` section containing only a notional placeholder,
-   - a clear note at the top that this is a stub for the user to flesh out.
-3. Commit the stub to the branch.
-4. Tell the user — in one or two lines — that the branch and a basic plan file
-   now exist on the branch for his use. **Then stop and return control to the
-   chat.**
+```bash
+${model.cliBin()} plan create --desc "{short-description}"
+# derives the next plan number, creates + checks out t/{N}-{slug},
+# writes a stub .agents/plans/plan-{N}.md, and prints the push + init lines.
+# It does NOT commit — that is intentional.
+```
+
+Then relay the command's output to the user in one or two lines — the branch and
+stub plan file now exist on the branch for him to flesh out — and **stop, return
+control to the chat.**
+
+`plan create` owns the whole thin-path scaffold: plan-number derivation, branch
+creation, and writing the stub file. **You do not author the plan file or run
+git yourself.** In particular, **do not commit** what `plan create` wrote — it
+deliberately leaves the stub uncommitted so the user commits on his own terms
+(and so a missing git identity can't strand the fast-start). There is no
+follow-up step after `plan create` on the thin path.
 
 **Do not**, on the thin path:
 
+- hand-author the stub plan file, then `git add`/`git commit` it — `plan create`
+  already wrote it and intentionally left it uncommitted; adding a commit is the
+  exact mistake this path exists to prevent,
+- run `git commit`, `git tag`, `git push`, or configure git identity,
 - investigate the repository or read source files to "understand the feature",
 - ask clarifying questions or present an options questionnaire,
 - estimate per-task risk, run `plan init`, tag, or set up task tracking.
@@ -65,13 +71,16 @@ fleshed out the stub.
 
 ### Worked example (target vs. anti-target)
 
-Kickoff: *"start a new plan-{N}, feature is X"* — no spec, no prior planning.
+Kickoff: *"start a new plan, feature is X"* — no spec, no prior planning.
 
-- ✅ **Target:** create the branch → write the stub `plan-{N}.md` → commit →
-  tell the user both exist on the branch → **stop**.
-- ❌ **Anti-target:** run several rounds of repo investigation, then fire a
+- ✅ **Target:** run `${model.cliBin()} plan create --desc "X"` → relay its
+  output (branch + stub created, uncommitted) → **stop**.
+- ❌ **Anti-target #1:** run several rounds of repo investigation, then fire a
   multi-part questionnaire asking the user to choose the approach, before
-  creating anything. This interrogates the user at the exact moment he wanted
-  to move fast. *Do not do this.*
+  creating anything. This interrogates the user at the moment he wanted to move
+  fast. *Do not do this.*
+- ❌ **Anti-target #2:** after `plan create` (or instead of it), hand-write the
+  stub file and `git commit` it. The commit is unrequested git work that can
+  fail on an unconfigured identity and strand the flow. *Do not do this.*
 
 ---
