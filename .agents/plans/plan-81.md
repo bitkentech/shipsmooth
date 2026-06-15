@@ -176,18 +176,54 @@ Design decisions:
 
 ## Tasks
 
-*(Stub — to be fleshed out and risk-calibrated with the user before Phase 2.
-Notional slices below.)*
+Risk-sorted (High → Med → Low), with the one dependency-ordering exception
+honoured. This is template/prose-only work; verification is the golden-baseline
+render check, not a coverage threshold.
 
-### Task 1: Author phase0-intake template + wire into base-workflow [Medium]
+### Task 1: Author phase0-intake.jte.md content [High]
 
-Create `skills/shared/workflow/phase0-intake.jte.md` defining the intake
-decision and thin-context fast path; add it to `base-workflow.jte.md` before
-phase1. Cross-reference from `phase1-plan.jte.md`.
+The core, novel work and the only genuinely uncertain part — this is where the
+skill either selects the lightweight mode or doesn't (the spiral risk). Create
+`skills/shared/workflow/phase0-intake.jte.md` containing:
 
-### Task 2: Refresh golden baselines and verify cross-host render [Low]
+- The thin-vs-rich tripwire test (design decision 3): *thin* = short kickoff
+  (under ~2 sentences) **and** no spec/PRD/plan body attached **and** no
+  substantial prior planning in-thread; any one absent → rich path.
+- The thin-path action sequence: branch → write stub `plan-N.md` → one/two-line
+  handoff → **stop**.
+- The contrastive ✅/❌ exemplar with this session as the anti-target
+  (decision 2).
+- The re-injected "don't interrogate" instruction at the point of action
+  (decision 4).
+
+Zero new invocation strings; CLI referenced only via `${model.cliBin()}`
+(decisions 5, 7).
+
+### Task 2: Define the stub plan-file skeleton the thin path writes [Medium]
 
 *Depends-on: 1*
 
-Re-render all four hosts, update the golden baseline fixtures, and confirm the
-new phase0 prose appears with no experimental leakage and no broken templating.
+Resolves the open question "should the stub have a fixed skeleton." Pin down
+exactly what sections the stub `plan-N.md` contains (title, Context placeholder,
+notional task list, clearly marked as a stub for the user to flesh out) and bake
+that skeleton into the Phase 0 text so it is reproducible, not improvised
+per-session.
+
+### Task 3: Wire Phase 0 into base-workflow + cross-reference Phase 1 [Low]
+
+*Depends-on: 1*
+
+Mechanical wiring. Add
+`@template.shared.workflow.phase0-intake(model = model)` to
+`skills/shared/base-workflow.jte.md` immediately before the `phase1-plan` line,
+and add the one-line "rich-context path, reached directly or after a Phase 0
+stub" framing to the top of `phase1-plan.jte.md` (decision 6).
+
+### Task 4: Refresh golden baselines and verify cross-host render [Low]
+
+*Depends-on: 1,2,3*
+
+Re-render all four hosts (claude-prod, gemini-prod, codex-prod, windows), update
+the golden baseline fixtures, and confirm: Phase 0 prose appears, no
+experimental leakage in the base skill, no broken JTE templating, and
+`cliBin` renders correctly per host (watch the Windows `.cmd` path bug).

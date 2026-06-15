@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>81</plan>
+    <plan-version>plan-81-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>active</status>
+        <created>2026-06-15</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Author phase0-intake.jte.md content</name>
+            <commit></commit>
+            <created-from>plan-81-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Define the stub plan-file skeleton the thin path writes</name>
+            <commit></commit>
+            <created-from>plan-81-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Wire Phase 0 into base-workflow + cross-reference Phase 1</name>
+            <commit></commit>
+            <created-from>plan-81-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Refresh golden baselines and verify cross-host render</name>
+            <commit></commit>
+            <created-from>plan-81-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2,3</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-15T11:50:49.171+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
