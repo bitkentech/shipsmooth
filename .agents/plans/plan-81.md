@@ -166,6 +166,19 @@ Design decisions:
   (base-skill invariant), and must render cleanly across all four hosts
   (claude-prod, gemini-prod, codex-prod, windows).
 
+## Known gaps / follow-ups
+
+- **Active-plan detection is not deterministic (PB-356).** Phase 0 must avoid
+  starting a new plan on top of one already in flight, but there is no reliable
+  CLI signal for "is any plan active": every plan command requires `--plan {N}`,
+  the `t/` branch prefix is only a convention, and a bare "any non-`complete`
+  XML" scan over-fires on stale plans (e.g. plan-45 `active`, plan-71
+  `in-review`). For now Phase 0 instructs the agent to glance at the latest
+  plan's state and **surface it as a question** — an LLM judgment call. Making
+  this systematic/deterministic (candidate: a `plan list` / `plan active`
+  command) is tracked in Linear as **PB-356**, in *shipsmooth — Backlog &
+  Roadmap*.
+
 ## Open questions (for the rich-context pass; do NOT block the stub)
 
 - Exact wording of the thin-vs-rich heuristic — keep it judgment-based prose, or
