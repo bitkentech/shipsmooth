@@ -81,9 +81,9 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Refresh golden baselines and verify cross-host render</name>
-            <commit></commit>
+            <commit>9efc12bbcf8619dcfa0b4cb860959296f189d474</commit>
             <created-from>plan-81-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
