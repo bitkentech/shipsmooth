@@ -187,9 +187,9 @@ already-written `.md`). So the "now commit the file I just wrote" trajectory is
 inside the agent's own action sequence, where prose can't reliably suppress it.
 
 **The fix — move thin-path plan creation into the CLI.** Add a new
-`plan create` command that, in **one atomic call**, derives the plan number,
+`plan quick` command that, in **one atomic call**, derives the plan number,
 creates the branch, and writes the stub `plan-{N}.md` — and **does not commit**.
-The Phase 0 thin path collapses to: detect thin → invoke `plan create` → relay
+The Phase 0 thin path collapses to: detect thin → invoke `plan quick` → relay
 its output → stop. The agent no longer authors the file or runs git directly, so
 the commit-lure leaves its action trajectory entirely. This also eliminates the
 doubled-slug papercut (below), because the agent stops fabricating an `--issue`
@@ -200,12 +200,12 @@ bump): plan-81 now also ships a small CLI command. The rich path (Phase 1) stays
 LLM-authored — full plans need judgment; only the thin-path stub, which needs
 none, moves into the CLI.
 
-### `plan create` — command spec
+### `plan quick` — command spec
 
 Signature:
 
 ```
-shipsmooth plan create --desc "<short phrase>"
+shipsmooth plan quick --desc "<short phrase>"
 ```
 
 Behavior, in order:
@@ -245,11 +245,11 @@ Slug generation — **accent-folding, zero new dependencies**:
   covers the accented-Latin case for free. (Rejected: `com.github.slugify` —
   dependency weight for a case that will not occur here.)
 
-Wiring follows repo conventions: a new `Create` leaf under
+Wiring follows repo conventions: a new `QuickStart` leaf under
 `cli/.../plan/`, registered in `Plan`'s constructor `addLeaves(...)` like the
 other leaves (per repo memory: group parents build their own leaves; CLI
 commands are not Dagger-managed). The shared slug util is extracted so both
-`Branch` and `Create` reference one copy.
+`Branch` and `QuickStart` reference one copy.
 
 ## Known gaps / follow-ups
 
@@ -279,10 +279,10 @@ honoured. Tasks 1–3 are template/prose work (verification is the golden-baseli
 render check, not a coverage threshold). The v2 pivot adds Tasks 5–6, which are
 CLI code and **do** carry the normal unit-test/coverage bar. Task 4 (render
 verify) now depends on the CLI tasks too, since the thin-path template is
-rewritten to call `plan create`.
+rewritten to call `plan quick`.
 
 > **v2 note:** Tasks 1–3 shipped against the original "branch → LLM writes stub →
-> commit" thin path. The pivot replaces that with a single `plan create` call.
+> commit" thin path. The pivot replaces that with a single `plan quick` call.
 > Task 1's thin-path action sequence is superseded by Task 7's rewrite; the
 > contrastive exemplar and "don't interrogate" conditioning from Task 1 stay.
 
@@ -327,7 +327,7 @@ stub" framing to the top of `phase1-plan.jte.md` (decision 6).
 
 ### Task 5: Extract shared slug util with Normalizer accent-folding [Medium]
 
-The reusable core for `plan create`. Extract `Branch`'s inline `slugify` into a
+The reusable core for `plan quick`. Extract `Branch`'s inline `slugify` into a
 shared util (e.g. `io.bitken.ss.cli.plan.Slugs` or a `gw`/`svc` home consistent
 with the codebase) and add a `java.text.Normalizer` NFD + `\p{M}+`-strip pass
 *before* the existing lowercase/`[^a-z0-9]+`→`-`/trim transform. Point `Branch`
@@ -335,12 +335,12 @@ at the extracted util so there is one copy. Unit-test: plain phrase, accented
 Latin (`"Café déjà"` → `cafe-deja`), all-punctuation (→ empty), mixed case,
 internal punctuation runs. No new dependencies.
 
-### Task 6: Implement `plan create` CLI command [High]
+### Task 6: Implement `plan quick` CLI command [High]
 
 *Depends-on: 5*
 
 The genuinely uncertain part of the pivot — does moving plan-file authoring into
-the CLI actually remove the commit-lure. Add a `Create` leaf under
+the CLI actually remove the commit-lure. Add a `QuickStart` leaf under
 `cli/.../plan/` per the spec in the v2 Update section: derive `N` (highest
 `plan-*.md` + 1, else 1), build `t/{N}-{slug(desc)}`, create + check out the
 branch (`GitState`), write the stub `plan-{N}.md` (Task 2 skeleton), **no
@@ -349,17 +349,17 @@ commit/tag/push**, print branch + push line + handoff. Register it in `Plan`'s
 (none / gaps / max), branch-name construction, stub contents, and the
 no-commit / left-uncommitted guarantee. Meet the agreed coverage bar.
 
-### Task 7: Rewrite Phase 0 thin path to call `plan create`; drop the commit step [Low]
+### Task 7: Rewrite Phase 0 thin path to call `plan quick`; drop the commit step [Low]
 
 *Depends-on: 6*
 
 Replace the thin-path action sequence in `phase0-intake.jte.md` so it is a
 single CLI invocation, not an LLM-authored branch+file+commit sequence: detect
-thin → run `${model.cliBin()} plan create --desc "<phrase>"` → relay its output
+thin → run `${model.cliBin()} plan quick --desc "<phrase>"` → relay its output
 → **stop**. Remove the "write the stub yourself" and any commit/tag/push prose
 (the CLI now owns file creation and deliberately does not commit). Keep the
 contrastive ✅/❌ exemplar and the "don't interrogate" conditioning. The ✅
-target becomes "run `plan create` → relay output → stop"; the ❌ anti-target
+target becomes "run `plan quick` → relay output → stop"; the ❌ anti-target
 keeps this-session-as-anti-pattern and adds "don't hand-author the stub then
 commit it."
 
@@ -369,6 +369,6 @@ commit it."
 
 Re-render all four hosts (claude-prod, gemini-prod, codex-prod, windows), update
 the golden baseline fixtures, and confirm: Phase 0 prose appears (now invoking
-`plan create`), no experimental leakage in the base skill, no broken JTE
+`plan quick`), no experimental leakage in the base skill, no broken JTE
 templating, and `cliBin` renders correctly per host (watch the Windows `.cmd`
-path bug). Also confirm `plan create` appears in the `plan` group `--help`.
+path bug). Also confirm `plan quick` appears in the `plan` group `--help`.

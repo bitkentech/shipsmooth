@@ -11,23 +11,24 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
- * {@code plan create --desc S} — thin-context fast-start.
+ * {@code plan quick --desc S} — thin-context fast-start (quickstart).
  *
  * <p>Picocli adapter over {@link NewPlan}: parses {@code --desc}, asks the
  * domain to scaffold a new plan (branch + stub, no commit), and renders the
  * handoff lines. All scaffolding logic — and the deliberate absence of any
  * commit — lives in {@link NewPlan}, not here.
  */
-public class Create implements Callable<Integer>, HasSpec {
+public class QuickStart implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
     private final NewPlan newPlan;
 
-    public Create(NewPlan newPlan) {
+    public QuickStart(NewPlan newPlan) {
         this.newPlan = newPlan;
         spec = CommandSpec.wrapWithoutInspection(this);
-        spec.name("create");
-        spec.usageMessage().description("Thin-context fast-start: derive plan number, create branch, write stub plan file (no commit).");
+        spec.name("quick");
+        spec.usageMessage().description("Quick start mode: Derive plan number, create a branch, write a stub plan file. " +
+            "No git commit.");
         spec.addOption(OptionSpec.builder("--desc").required(true).type(String.class).build());
     }
 

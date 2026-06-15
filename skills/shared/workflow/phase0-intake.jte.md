@@ -39,7 +39,7 @@ that he will add detail later or work exploratorily. **Do not slow him down.**
 Run **one** command and hand back:
 
 ```bash
-${model.cliBin()} plan create --desc "{short-description}"
+${model.cliBin()} plan quick --desc "{short-description}"
 # derives the next plan number, creates + checks out t/{N}-{slug},
 # writes a stub .agents/plans/plan-{N}.md, and prints the push + init lines.
 # It does NOT commit — that is intentional.
@@ -49,16 +49,16 @@ Then relay the command's output to the user in one or two lines — the branch a
 stub plan file now exist on the branch for him to flesh out — and **stop, return
 control to the chat.**
 
-`plan create` owns the whole thin-path scaffold: plan-number derivation, branch
+`plan quick` owns the whole thin-path scaffold: plan-number derivation, branch
 creation, and writing the stub file. **You do not author the plan file or run
-git yourself.** In particular, **do not commit** what `plan create` wrote — it
+git yourself.** In particular, **do not commit** what `plan quick` wrote — it
 deliberately leaves the stub uncommitted so the user commits on his own terms
 (and so a missing git identity can't strand the fast-start). There is no
-follow-up step after `plan create` on the thin path.
+follow-up step after `plan quick` on the thin path.
 
 **Do not**, on the thin path:
 
-- hand-author the stub plan file, then `git add`/`git commit` it — `plan create`
+- hand-author the stub plan file, then `git add`/`git commit` it — `plan quick`
   already wrote it and intentionally left it uncommitted; adding a commit is the
   exact mistake this path exists to prevent,
 - run `git commit`, `git tag`, `git push`, or configure git identity,
@@ -73,13 +73,13 @@ fleshed out the stub.
 
 Kickoff: *"start a new plan, feature is X"* — no spec, no prior planning.
 
-- ✅ **Target:** run `${model.cliBin()} plan create --desc "X"` → relay its
+- ✅ **Target:** run `${model.cliBin()} plan quick --desc "X"` → relay its
   output (branch + stub created, uncommitted) → **stop**.
 - ❌ **Anti-target #1:** run several rounds of repo investigation, then fire a
   multi-part questionnaire asking the user to choose the approach, before
   creating anything. This interrogates the user at the moment he wanted to move
   fast. *Do not do this.*
-- ❌ **Anti-target #2:** after `plan create` (or instead of it), hand-write the
+- ❌ **Anti-target #2:** after `plan quick` (or instead of it), hand-write the
   stub file and `git commit` it. The commit is unrequested git work that can
   fail on an unconfigured identity and strand the flow. *Do not do this.*
 

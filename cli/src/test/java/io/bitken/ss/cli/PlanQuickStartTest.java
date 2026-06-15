@@ -1,6 +1,6 @@
 package io.bitken.ss.cli;
 
-import io.bitken.ss.cli.plan.Create;
+import io.bitken.ss.cli.plan.QuickStart;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.gw.GitState;
 import io.bitken.ss.svc.plan.NewPlan;
@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class PlanCreateTest {
+public class PlanQuickStartTest {
 
     @TempDir
     Path repoRoot;
@@ -40,7 +40,7 @@ public class PlanCreateTest {
     private int run(GitState gitState, String... args) {
         ShipsmoothDataLocator locator = new ShipsmoothDataLocator(repoRoot);
         NewPlan newPlan = new NewPlan(new PlanNumbers(locator), gitState, locator);
-        Create cmd = new Create(newPlan);
+        QuickStart cmd = new QuickStart(newPlan);
         return new CommandLine(cmd.getSpec()).execute(args);
     }
 
