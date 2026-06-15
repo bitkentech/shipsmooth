@@ -2,6 +2,7 @@ package io.bitken.ss.svc.plan;
 import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 
+import io.bitken.ss.gw.GitState;
 import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.ledger.EventType;
@@ -20,9 +21,11 @@ public class PlanServiceTest {
     Path tempDir;
 
     private PlanService planService() {
-        TaskStore xml = new TaskStore(new ShipsmoothDataLocator(tempDir));
+        ShipsmoothDataLocator locator = new ShipsmoothDataLocator(tempDir);
+        TaskStore xml = new TaskStore(locator);
         EventLedger ledger = new EventLedger(tempDir);
-        return new PlanService(xml, ledger, new ExperimentalMode(true));
+        NewPlan newPlan = new NewPlan(new PlanNumbers(locator), new GitState(tempDir), locator);
+        return new PlanService(xml, ledger, new ExperimentalMode(true), newPlan);
     }
 
     @Test
@@ -84,9 +87,11 @@ public class PlanServiceTest {
 
     @Test
     public void mutationRecordsNoLedgerEventWhenExperimentalDisabled() throws Exception {
-        TaskStore xml = new TaskStore(new ShipsmoothDataLocator(tempDir));
+        ShipsmoothDataLocator locator = new ShipsmoothDataLocator(tempDir);
+        TaskStore xml = new TaskStore(locator);
         EventLedger ledger = new EventLedger(tempDir);
-        PlanService svc = new PlanService(xml, ledger, new ExperimentalMode(false));
+        NewPlan newPlan = new NewPlan(new PlanNumbers(locator), new GitState(tempDir), locator);
+        PlanService svc = new PlanService(xml, ledger, new ExperimentalMode(false), newPlan);
 
         svc.initPlan(1, "plan-1-v1", List.of(new TaskStore.Task(1, "a task", "low")));
         svc.updateTaskStatus(1, 1, "agent-coded");
@@ -104,13 +109,15 @@ public class PlanServiceTest {
     @Test
     public void ledgerFailureDoesNotRollBackXmlMutation() throws Exception {
         // Simulate ledger failure by pointing EventLedger at a read-only path
-        TaskStore xml = new TaskStore(new ShipsmoothDataLocator(tempDir));
+        ShipsmoothDataLocator locator = new ShipsmoothDataLocator(tempDir);
+        TaskStore xml = new TaskStore(locator);
         Path readOnlyDir = tempDir.resolve("ro");
         readOnlyDir.toFile().mkdirs();
         readOnlyDir.toFile().setReadOnly();
 
         EventLedger brokenLedger = new EventLedger(readOnlyDir);
-        PlanService svc = new PlanService(xml, brokenLedger, new ExperimentalMode(true));
+        NewPlan newPlan = new NewPlan(new PlanNumbers(locator), new GitState(tempDir), locator);
+        PlanService svc = new PlanService(xml, brokenLedger, new ExperimentalMode(true), newPlan);
 
         // initPlan uses a valid xml location — override xml file path via System property isn't available,
         // so just verify no exception is thrown and the call degrades gracefully

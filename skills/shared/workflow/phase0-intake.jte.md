@@ -41,7 +41,7 @@ Run **one** command and hand back:
 ```bash
 ${model.cliBin()} plan quick --desc "{short-description}"
 # derives the next plan number, creates + checks out t/{N}-{slug},
-# writes a stub .agents/plans/plan-{N}.md, and prints the push + init lines.
+# and writes a stub .agents/plans/plan-{N}.md.
 # It does NOT commit — that is intentional.
 ```
 

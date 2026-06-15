@@ -3,8 +3,12 @@ package io.bitken.ss.cli;
 import io.bitken.ss.cli.plan.QuickStart;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.gw.GitState;
+import io.bitken.ss.conf.ExperimentalMode;
+import io.bitken.ss.gw.TaskStore;
+import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.svc.plan.NewPlan;
 import io.bitken.ss.svc.plan.PlanNumbers;
+import io.bitken.ss.svc.plan.PlanService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +44,9 @@ public class PlanQuickStartTest {
     private int run(GitState gitState, String... args) {
         ShipsmoothDataLocator locator = new ShipsmoothDataLocator(repoRoot);
         NewPlan newPlan = new NewPlan(new PlanNumbers(locator), gitState, locator);
-        QuickStart cmd = new QuickStart(newPlan);
+        PlanService planService = new PlanService(
+            new TaskStore(locator), new EventLedger(repoRoot), new ExperimentalMode(false), newPlan);
+        QuickStart cmd = new QuickStart(planService);
         return new CommandLine(cmd.getSpec()).execute(args);
     }
 
@@ -52,8 +58,6 @@ public class PlanQuickStartTest {
         String output = out.toString();
         assertTrue(output.contains("Created branch: t/1-desktop-ui"), output);
         assertTrue(output.contains("Wrote stub:"), output);
-        assertTrue(output.contains("git push -u origin t/1-desktop-ui"), output);
-        assertTrue(output.contains("plan init --plan 1"), output);
     }
 
     @Test

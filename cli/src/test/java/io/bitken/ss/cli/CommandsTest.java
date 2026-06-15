@@ -11,7 +11,10 @@ import io.bitken.ss.conf.ShipsmoothDataLocator;
 
 import io.bitken.ss.jaxb.PlanTasks;
 import io.bitken.ss.ledger.EventLedger;
+import io.bitken.ss.svc.plan.NewPlan;
+import io.bitken.ss.svc.plan.PlanNumbers;
 import io.bitken.ss.svc.plan.PlanService;
+import io.bitken.ss.gw.GitState;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.gw.TaskStore;
 
@@ -42,7 +45,9 @@ public class CommandsTest {
     @BeforeEach
     public void setUp() throws Exception {
         ledgerService = new EventLedger(Paths.get("."));
-        planService = new PlanService(xmlService, ledgerService, new ExperimentalMode(false));
+        ShipsmoothDataLocator locator = new ShipsmoothDataLocator(Paths.get("."));
+        NewPlan newPlan = new NewPlan(new PlanNumbers(locator), new GitState(Paths.get(".")), locator);
+        planService = new PlanService(xmlService, ledgerService, new ExperimentalMode(false), newPlan);
         planDir.mkdirs();
         Files.writeString(mdFile.toPath(), "### Task 1: Test task [High]\n");
 

@@ -47,8 +47,7 @@ class CommandTree {
     }
 
     private static Callable<?>[] buildCommands(AppComponents app, Integrate integrate) {
-        Plan plan = new Plan(app.planService(), app.taskStore(), app.gitTags(), app.gitState(),
-            app.dataLocator(), app.experimentalMode());
+        Plan plan = new Plan(app.planService(), app.taskStore(), app.gitTags(), app.gitState(), app.experimentalMode());
         Task task = new Task(app.planService(), app.gitTags());
         Worker worker = new Worker(app.planService(), app.taskStore(), app.workflowService(),
             app.workflowServiceImpl(), app.worktreeService(), app.eventLedger());

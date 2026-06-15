@@ -17,11 +17,22 @@ public class PlanService {
     private final TaskStore taskStore;
     private final EventLedger ledger;
     private final ExperimentalMode mode;
+    private final NewPlan newPlan;
 
-    public PlanService(TaskStore taskStore, EventLedger ledger, ExperimentalMode mode) {
+    public PlanService(TaskStore taskStore, EventLedger ledger, ExperimentalMode mode, NewPlan newPlan) {
         this.taskStore = taskStore;
         this.ledger = ledger;
         this.mode = mode;
+        this.newPlan = newPlan;
+    }
+
+    /**
+     * Thin-context quickstart: derive the next plan id, create the branch, and
+     * write the stub plan file — no commit. Delegates to {@link NewPlan}; see
+     * there for why no git-write collaborator is reachable.
+     */
+    public ScaffoldResult quickStart(String desc) throws ScaffoldException, IOException {
+        return newPlan.scaffold(desc);
     }
 
     public void initPlan(int planId, String planVersion, List<TaskStore.Task> tasks) throws Exception {
