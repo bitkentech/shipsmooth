@@ -68,6 +68,86 @@ unchanged — draft, risk-calibrate, init, tag, review.
 The two paths share one mechanism that degrades gracefully: a cheap
 context-richness check at intake decides which path to take.
 
+## Background research & design decisions
+
+These decisions are grounded in `docs/references/code-quality-1.md` (the
+LLM-behaviour reference). The framing matters: the skill's failure this session
+was **not** a missing rule — it was a **mode-selection** failure.
+
+Per the latent-variable view of in-context behaviour (code-quality-1.md
+§"The Latent-Variable View"), a skill file is *evidence* that sharpens the
+posterior over latent modes the model already has; it selects a mode, it does
+not teach one. The current `## When to apply` text and the immediate jump into
+`## Phase 1 — Plan, Calibrate, & Commit` condition the model onto a single mode:
+**heavyweight ceremony**. A one-line kickoff and a spec-backed kickoff both land
+in the same basin, because nothing in the skill selects a *lightweight* mode.
+The fix is therefore not "add a rule telling the model to slow down less" — a
+rule only reshapes density and cannot truncate the dominant mode's support
+(§"Limitations": `P(bad output)` is never zero). The fix is to **author a second,
+clearly-demarcated mode and a cheap branch point that selects between them.**
+
+Design decisions:
+
+1. **Add a Phase 0 intake branch point — the highest-leverage edit.** Insert a
+   `## Phase 0 — Intake` *before* `## Phase 1`, doing the thin-vs-rich decision
+   and, on thin, executing branch + stub + handoff + **stop**.
+   *Grounded in autoregressive path dependence:* the first structural commitment
+   after kickoff is sticky. Today the first thing the model sees post-kickoff is
+   "Draft Plan / Risk Analysis," so it elaborates ceremony. Putting the branch
+   point first makes the cheap path the default token trajectory for a thin
+   prompt.
+
+2. **Use a contrastive exemplar, not prose rules — and make this session the
+   anti-target.** Embed a tiny before/after in Phase 0:
+   - **Thin kickoff** — *"start plan-81, feature is X"* (no spec, no prior
+     planning in-thread).
+   - ✅ Create the branch → write a stub `plan-N.md` → tell the user both exist
+     on the branch → **stop**.
+   - ❌ Don't investigate the repo, don't fire a risk questionnaire, don't run
+     `plan init` or tagging. *(This is the anti-pattern that motivated plan-81.)*
+
+   *Grounded in §7 (contrastive exemplars):* an anti-target paired with a target
+   sharpens the decision boundary further than the target alone, and conditions
+   the model in output space (the transcript shape) — stronger per token than
+   prose like "be lightweight when context is thin."
+
+3. **Give the thin/rich test 2–3 concrete tripwires, not a vibe.** The model
+   cannot reliably self-certify a fuzzy judgment (§"Limitations": such answers
+   are guesses, not computations). Make the gate near-mechanical: *thin* =
+   (a) kickoff message under ~2 sentences **and** (b) no spec/PRD/plan body
+   attached **and** (c) no substantial planning earlier in the thread. Any one
+   absent → rich path.
+
+4. **Re-inject the "don't interrogate" conditioning at the Phase 0 boundary.**
+   *Grounded in influence decay (§"Influence Decay", §6):* conditioning placed
+   only in the `When to apply` preamble erodes by the time the model reaches
+   action. The stop-and-handoff instruction must live *inside* Phase 0 at the
+   point of action, restated — not merely implied up top.
+
+5. **Keep Phase 0 free of mechanical restatement; hand off to existing
+   machinery.** *Grounded in §1 (separate skill governance from tool
+   governance) and the attention budget:* don't re-describe `plan branch` /
+   `plan init` semantics inside Phase 0 — the CLI is the source of truth. Phase 0
+   states *which mode we're in and when to stop*, then defers. The edit adds the
+   missing signal (the mode), not duplicated procedure.
+
+6. **Frame Phase 1's opening as the rich-context path explicitly.** One line at
+   the top of `## Phase 1`: "Reached either directly when kickoff context is
+   already rich, or after the user has fleshed out a Phase 0 stub." This stops
+   the model treating Phase 1 as the unconditional next step after kickoff.
+
+7. **Authoring hygiene — volatile version string stays single-sourced.**
+   *Grounded in §10 (no volatile high-frequency tokens):* the new Phase 0 text
+   references the CLI abstractly via `${model.cliBin()}` only; it must not
+   hard-code another copy of the version/path. Ideally Phase 0 introduces *zero*
+   new invocation strings (see decision 5), sidestepping staleness entirely.
+
+**Explicitly rejected:**
+- Adding a rule like "don't over-investigate on short prompts" — a probabilistic
+  nudge competing against the dominant ceremony mode; the structural branch point
+  + contrastive exemplar is what actually shifts the trajectory.
+- Making Phase 0 a questionnaire — the bug *was* a questionnaire.
+
 ## Design
 
 - **New template:** `skills/shared/workflow/phase0-intake.jte.md`. It defines
