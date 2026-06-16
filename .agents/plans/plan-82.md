@@ -1,194 +1,181 @@
-# Plan 82 — Relocating shipsmooth state outside the project repo (design exploration)
+# Plan 82 — Zero-trace mode: shipsmooth state in a separate git repository
 
-**Status:** Phase 1 — design exploration only. No code changes in this plan's
-scope. The deliverable is a validated decision: *should* shipsmooth offer an
-"out-of-repo state" option, and if so, *which* state, *where*, and *how the user
-turns it on*. Implementation, if approved, becomes a follow-on plan.
+## The approach (committed)
+
+shipsmooth will support a usage mode in which it leaves **no trace in the user's
+main repository** and instead keeps **all of its state in a separate git
+repository**.
+
+- The user's project repo is untouched: no `.agents/` directory, no marker or
+  pointer files, nothing added to its working tree or its history.
+- Everything shipsmooth produces — plan markdown, task XML, the ledger, the
+  object store, learnings, and the worktree/integration bookkeeping — lives in a
+  **separate git repo** dedicated to shipsmooth state.
+- That state repo carries its own permanent `plan-N-vK` plan-revision tags, so
+  the audit trail (the `git diff` between two plan tags) is **fully
+  self-contained in the state repo**. The project repo plays no part in the
+  audit story.
+- The one explicit, opt-in exception is that shipsmooth *may* write
+  plan-revision tags into the user's main repo. Tags leave no working-tree trace
+  (only `git tag -l` reveals them) and are permanent (they reference commit
+  objects, so they survive squash-merge and branch deletion). This is the only
+  thing shipsmooth is ever allowed to add to the main repo in this mode, and only
+  if the user turns it on.
+
+This document describes only this approach. It does not weigh alternatives.
 
 ## Context
 
 ### Backlog feature this serves
-`<backlog-issue>` Feature: **"Let the end user keep shipsmooth's working state
-out of their project git repo."** No existing backlog issue tracks this; this
-plan *defines* it. The motivation: a user adopting shipsmooth on their own
-project does not necessarily want `.agents/` — plan files, a JSONL ledger, an
-object store, and git worktrees — committed into, or littering, *their* repo's
-working tree and history.
+`<backlog-issue>` Feature: **"A zero-trace shipsmooth mode that keeps all state
+in a separate git repository."** No existing backlog issue tracks this; this
+plan defines it. Motivation: a user adopting shipsmooth on their own project does
+not want `.agents/` — plan files, a JSONL ledger, an object store, and git
+worktrees — committed into, or even sitting untracked inside, *their* repo's
+working tree.
 
-### What "shipsmooth state" actually is today
-From `core/.../conf/ShipsmoothDataLocator.java` (the single source of truth for
-path construction; its Javadoc already anticipates "a future option to relocate
-the data tree outside the repo") and `.gitignore`, the state divides into two
-categories that behave very differently:
+### Why a separate git repo (not just an external directory)
+The versioned plan contract needs a permanent audit anchor. Today that anchor is
+a git tag (`plan-N-vK`) in the project repo; the audit trail is `git diff`
+between two such tags. If the contract leaves the project repo, the permanence
+has to leave with it — and the natural home that preserves the *exact same*
+`git diff`-between-tags audit model is another git repo. So the state repo is a
+real git repo with real `plan-N-vK` tags, not a loose directory.
 
-| State | Path | Git status today | Nature |
+### What "shipsmooth state" is today (and where it must move to)
+From `core/.../conf/ShipsmoothDataLocator.java` — the single source of truth for
+path construction; its Javadoc already says it was "Named 'Locator' to
+anticipate a future option to relocate the data tree outside the repo" — and
+`.gitignore`:
+
+| State | Path today | Git status today | In zero-trace mode |
 |---|---|---|---|
-| Plan markdown | `.agents/plans/plan-{N}.md` | **tracked** | Versioned contract; tagged; diffed between plan versions |
-| Task XML | `.agents/plans/plan-{N}-tasks.xml` | **tracked** | Task-state audit trail; `git diff` between tags is the audit |
-| Learnings | `.agents/learnings/` | **tracked** | Durable notes |
-| Ledger | `.agents/ledger.jsonl` | ignored | Append-only runtime event log |
-| Object store | `.agents/objects/` | ignored | Content-addressed blobs referenced by the ledger |
-| Task worktrees | `.agents/tasks/{taskId}` | ignored | **git worktrees** (branch `agent-work/{taskId}`) |
-| Integration worktrees | `.agents/integration/plan-{N}` | ignored | **git worktrees** (branch `integration/plan-{N}`) |
-| Scratch | `.agents/tmp/` | ignored | Throwaway |
+| Plan markdown | `.agents/plans/plan-{N}.md` | tracked in project repo | tracked in **state repo** |
+| Task XML | `.agents/plans/plan-{N}-tasks.xml` | tracked in project repo | tracked in **state repo** |
+| Learnings | `.agents/learnings/` | tracked in project repo | tracked in **state repo** |
+| Ledger | `.agents/ledger.jsonl` | ignored | in **state repo** |
+| Object store | `.agents/objects/` | ignored | in **state repo** |
+| Task worktrees | `.agents/tasks/{taskId}` | ignored git worktrees | git worktrees of the **project** repo, located outside it |
+| Integration worktrees | `.agents/integration/plan-{N}` | ignored git worktrees | git worktrees of the **project** repo, located outside it |
+| Scratch | `.agents/tmp/` | ignored | in the state-repo area |
 
-This table is the reason the feature is not a single switch. "Move state out of
-the repo" means *at least three* different operations with different blast
-radius.
+Note the worktree rows: `tasks/` and `integration/` are **git worktrees of the
+project repo**, not files we can simply move into the state repo. They stay bound
+to the project repo's `.git` (a worktree cannot belong to a different repo), but
+their *physical location* moves outside the project working tree so nothing
+appears inside it. This is the one part of the state that is "project-repo
+worktree, parked elsewhere" rather than "owned by the state repo."
 
-### Path-resolution seam (informational, not in scope to change here)
+### Path-resolution seam
 - `ShipsmoothDataLocator(repoRoot)` resolves tracked + ledger/object paths via
-  `repoRoot.resolve(...)`.
+  `repoRoot.resolve(...)`. This is the single seam where the data tree's root is
+  decided — the natural place to introduce "state root ≠ project root."
 - `worktreeRel(taskId)` / `integrationRel(planId)` return **repo-relative
-  strings**, consumed as `repoRoot.resolve(rel)` in `WorkflowServiceImpl`. Git
-  worktrees can physically live anywhere, but each stays bound to the repo's
-  `.git`. This is the load-bearing constraint for any "outside the repo" idea.
+  strings**, consumed as `repoRoot.resolve(rel)` in `WorkflowServiceImpl`. These
+  must change to place worktrees at an external path while keeping them attached
+  to the project repo's git.
 - `repoRoot` comes from `git rev-parse --show-toplevel` (`cli/.../RepoRoot.java`),
-  injected through `ServicesModule`. Two CLI call-sites (`plan/Init`,
+  injected via `ServicesModule`. Two CLI call-sites (`plan/Init`,
   `worker/WorkerCleanup`) still construct the locator with `Paths.get(".")`.
-- Non-code surfaces also hardcode `.agents/...`: the `start` SKILL.md prose, and
+- Non-code surfaces also hardcode `.agents/...`: the `start` SKILL.md prose and
   the POSIX bootstrap. The skill *writes plan `.md` files directly*, not through
-  the locator — so any relocation has a documentation/skill surface, not just a
-  Java surface.
+  the locator, so the zero-trace mode has a documentation/skill surface too.
 
-## The central question: are the two options mutually consistent?
+## Audit trail in zero-trace mode
 
-We must decide whether offering **both** "state in repo" (today's default) and
-"state outside repo" is coherent, or whether it creates contradictions a user
-will trip over. The answer hinges on the three categories above. Work each as a
-use case.
+- Plan revisions are tagged `plan-N-vK` **in the state repo**; `git diff
+  plan-82-v1 plan-82-v2` (run in the state repo) is the audit, identical in shape
+  to today's model.
+- Tier "tags only": the same tag name *may* also be written to the project repo,
+  giving a permanent tag-name ↔ tag-name correlation across the two repos, both
+  ends surviving squash-merge and branch deletion.
+- Any reference *from* the state repo *to* a specific project-repo commit (e.g.
+  "this plan version was developed around project commit abc123 / PR #N") is
+  **best-effort and non-load-bearing**: squash-merge or rebase in the project
+  repo can make that SHA unreachable, so it is recorded only as a human-readable
+  hint and no flow may gate on it.
+- A consequence the flow-walk must respect: the state repo and (in the tags-only
+  tier) the project repo carry plan tags of the **same name** pointing at commits
+  in **different** repos. The existing tagging commands (`plan tag --kind
+  version`, the printed `git push origin plan-N-vK` lines) assume a single repo
+  and must be made repo-explicit.
 
-### Use case A — Tracked plan/task files (`plans/`, `learnings/`)
-**Core Invariant #4 says git is the source of truth for plan content, and the
-audit trail *is* `git diff` between plan tags.** This is the hard case, and
-**full relocation is in scope: the plan must design a coherent answer here, or
-prove one is impossible.** If plan files move out of the user's repo, today's
-model breaks in specific ways that must each be re-answered:
-- Plan tags (`plan-{N}-v{K}`) live in the user's repo history but point at files
-  no longer in that repo → today's audit trail (`git diff` between tags) breaks.
-- The tag-based GitHub permalink convention assumes the plan file is in the
-  repo being tagged.
-- **Re-answer required (Task 2a):** where does versioning/tagging live when plan
-  files are external? Candidate models to evaluate:
-  - **(i) Separate git repo for state** — the external state dir is itself a git
-    repo; tags live there; the user's project repo is untouched. Audit trail
-    moves wholesale, stays a `git diff`, but now there are *two* histories to
-    correlate (a state-repo commit ↔ a project-repo commit).
-  - **(ii) Cross-reference commit** — plan version recorded as a pointer in the
-    user repo (e.g. a lightweight marker file or note) that names the external
-    state revision. Keeps one canonical project history; audit becomes a join.
-  - **(iii) Non-git versioning of the external contract** — the locator/CLI
-    snapshots plan versions itself (content-addressed, like the object store)
-    instead of relying on the host repo's git. Most self-contained; furthest
-    from the current convention; biggest surface to design.
-  - The deliverable for A is a chosen model with its audit story spelled out end
-    to end, not a recommendation to avoid the problem.
+## User flows to walk through
 
-### Use case B — Ignored runtime state (`ledger.jsonl`, `objects/`, `tmp/`)
-These are already git-ignored — moving them out of the repo changes *nothing*
-about the user's history. It only changes where bytes physically sit. Candidate
-homes: an XDG location (`$XDG_STATE_HOME/shipsmooth/<repo-id>/`) keyed by repo
-identity, or a user-chosen path. Low inconsistency risk; this is the "clean win"
-slice. Main design work: keying state to the right repo so two checkouts of the
-same project don't collide (or *do* share, if that's desired).
-
-### Use case C — Worktrees (`tasks/`, `integration/`)
-Git worktrees can be created at an external path (`git worktree add /elsewhere`),
-but they remain tied to this repo's `.git`. Moving them out:
-- removes them from the user's working tree (nice — no stray `.agents/tasks/`
-  dirs), but
-- a worktree outside the repo still shows in `git worktree list`, still holds a
-  branch, and cleanup/`worker cleanup` logic currently assumes `repoRoot.resolve`.
-- Medium inconsistency risk: behavior is *mostly* the same, but recovery flows
-  (e.g. the integrate-died-mid-resolver recovery) and humans eyeballing the tree
-  now have to look elsewhere.
-
-### Consistency question (to resolve, not pre-judge)
-Full relocation — including the versioned contract (A) — is in scope. The
-question the plan must answer is: **can offering both "state in repo" (today's
-default) and "all state outside repo" be made internally consistent, given the
-audit invariants?** B is the easy win, C is medium, and **A is the crux**: a
-"both options" story is only honest if the external-plan-files model has a real
-audit trail and a real tagging/permalink answer (one of A's models i/ii/iii).
-The plan drives A to a designed answer, and only concludes "scope down to
-runtime-only" if A is shown to be genuinely irreconcilable — not by default.
-
-## User flows to walk through (the actual deliverable)
-
-For each, narrate the end-to-end feel and surface every place the user or the
-agent would notice the difference.
-
-1. **Opt-in at first use.** New user runs the workflow on their repo. Where/how
-   do they choose "keep state outside my repo"? (CLAUDE.md override? a `shipsmooth
-   config` command? an env var like `SHIPSMOOTH_STATE_HOME`? a prompt on first
-   `plan init`?) Walk the first-run flow for each candidate and pick the one with
-   the least ceremony.
-2. **Default (in-repo) user, unchanged.** Confirm the default path is bit-for-bit
-   today's behavior — the option must be invisible to anyone who doesn't want it.
-3. **Switching mid-project.** A user with existing in-repo state turns the option
-   on. What happens to the existing ledger/objects/worktrees? Migrate, or
-   start-fresh-and-orphan? Walk the flow and the failure modes.
-4. **Two clones / CI.** Same project checked out twice, or on a CI box. Does
-   out-of-repo state collide, share, or isolate? What's least surprising?
-5. **Teammate without the option.** User A keeps state outside the repo; teammate
-   B clones and runs shipsmooth with defaults. Do they get a coherent picture, or
-   does B see a repo whose plan tags reference state B can't find? (This is where
-   A-vs-B-vs-C scoping pays off.)
-6. **Resume / recovery.** Session-resume pre-flight and the integrate-recovery
-   flow both look for worktrees and ledger by repo-relative path today. Walk how
-   each reads under the out-of-repo option.
+1. **Opt-in at first use.** New user wants zero-trace mode on their repo.
+   Where/how do they turn it on, and where does shipsmooth create/locate the
+   state repo? Walk the first-run flow end to end, including the tags-only
+   sub-choice.
+2. **Default user, unchanged.** Confirm the default (in-repo) path is bit-for-bit
+   today's behavior — zero-trace mode must be invisible to anyone not using it.
+3. **Switching mid-project.** A user with existing in-repo state turns zero-trace
+   mode on. What happens to the existing `.agents/` content — migrate into the
+   state repo, or start fresh? Walk the flow and its failure modes.
+4. **Two clones / CI.** Same project checked out twice, or on CI. Does the state
+   repo collide, share, or isolate? How is the state repo keyed to a project?
+5. **Teammate without the mode.** User A uses zero-trace mode; teammate B clones
+   the project and runs shipsmooth with defaults. B's project repo has no trace
+   (correct) — confirm B gets a coherent picture and doesn't see dangling tags
+   (relevant only in the tags-only tier) or expect state that isn't there.
+6. **Resume / recovery.** Session-resume pre-flight and integrate-recovery look
+   for worktrees and the ledger by repo-relative path today. Walk how each reads
+   when state and worktrees live outside the project repo.
 
 ## Tasks
 
-### Task 1: Inventory and categorize all state + their invariants [Low]
-Produce a definitive table (extending the Context table) of every `.agents/`
-artifact, its git status, which Core Invariant or workflow step depends on its
-location, and whether relocating it is Safe / Conditional / Breaks-invariant.
-Output: a section appended to this plan. No code.
+### Task 1: Inventory state + invariants, and name the seam for zero-trace mode [Low]
+Produce a definitive table of every `.agents/` artifact: its git status today,
+which Core Invariant or workflow step depends on its location, and exactly where
+it lands in zero-trace mode (state repo vs. external project-repo worktree).
+Confirm `ShipsmoothDataLocator` is the single code seam and list every non-code
+surface (SKILL.md prose, POSIX bootstrap, `.gitignore` handling) that the mode
+touches. Output: a section appended to this plan. No code.
 
-### Task 2: Design the full-relocation consistency answer (incl. the audit/tagging model for A) [Medium]
+### Task 2: Decide the opt-in mechanism and the state-repo layout/keying [Medium]
 *Depends-on: 1*
-Full relocation is in scope, so this task must produce a *designed* answer for
-the hard case, not a scope-down. Two parts:
-- **2a — Audit/tagging model for external plan files.** Evaluate models (i)
-  separate state-repo, (ii) cross-reference commit, (iii) non-git snapshotting
-  from §Use case A. Pick one; write its end-to-end audit story (how a human
-  reconstructs "what changed between plan-N-v1 and v2" when files are external).
-- **2b — Both-options coherence.** Confirm the chosen A-model coexists with the
-  unchanged in-repo default without contradiction, or document the precise
-  conditions under which it can't (which would then justify a runtime-only
-  fallback). Record the decision. Gate: human sign-off before flows are detailed.
+Resolve flow 1 and flow 4: how the user turns zero-trace mode on (and the
+tags-only sub-choice), how the state repo is located/created, and how it is keyed
+to a project so two clones/CI don't collide. Specify the external worktree
+location for `tasks/`/`integration/`. Justify the opt-in knob against existing
+config conventions and define precedence rules. Output: a decision section.
+Gate: human sign-off before any code.
 
-### Task 3: Walk all six user flows under the chosen scope [Medium]
+### Task 3: Walk all six user flows under zero-trace mode [Medium]
 *Depends-on: 2*
-For each of the six flows above, write the narrated end-to-end experience,
-listing every surface (CLI output, SKILL.md prose, git visibility, recovery)
-that changes. Flag any flow that still feels inconsistent under the chosen scope;
-if one does, loop back to Task 2.
+For each flow, write the narrated end-to-end experience, listing every surface
+(CLI output, SKILL.md prose, git visibility in both repos, recovery) that
+changes. Pin down, per tier, which repo each tagging command targets. Flag any
+flow that still feels inconsistent; if one does, loop back to Task 2.
 
-### Task 4: Decide the opt-in mechanism [Medium]
-*Depends-on: 3*
-From flow 1's candidates (CLAUDE.md override / `shipsmooth config` / env var /
-first-run prompt), pick one, justify it against the existing config conventions
-in the repo, and specify the precedence rules (what wins if two are set).
-Output: a decision entry + the exact knob name and default.
+### Task 4: Choose a name for this mode of operation [Low]
+*Depends-on: 1*
+Propose and select a good, user-facing name for the zero-trace / separate-state-
+repo mode (e.g. candidates to be generated and weighed for clarity, brevity, and
+fit with existing shipsmooth vocabulary). The chosen name becomes the term used
+in the config knob, CLI output, and SKILL.md. Output: the chosen name + a short
+rationale and the rejected alternatives.
 
-### Task 5: Specify the relocation target layout [Low]
-*Depends-on: 4*
-Define the external directory layout (e.g. XDG path keyed by repo identity), how
-repo identity is computed (avoiding the two-clones collision from flow 4), and
-the migration story for flow 3. Output: a layout spec section.
+### Task 5: Prepare the existing codebase for the feature [High]
+*Depends-on: 3, 4*
+Refactoring only — no behavior change, default mode stays bit-for-bit identical.
+Make the codebase ready to support a state root distinct from the project root:
+route every `.agents/` path and the two `Paths.get(".")` call-sites through
+`ShipsmoothDataLocator`, introduce the "state root" concept the locator resolves
+against (defaulting to project root so nothing changes yet), and make the
+worktree/integration path construction capable of an external location. Tests
+must prove the default path is unchanged.
 
-### Task 6: Write the go/no-go recommendation + follow-on implementation sketch [Medium]
+### Task 6: Implement zero-trace mode [High]
 *Depends-on: 5*
-Synthesize into a one-page recommendation: ship it or not, with what scope; and
-if yes, a thin-vertical-slice sketch of the *implementation* plan (which would be
-plan-83), naming `ShipsmoothDataLocator` as the single seam and listing the
-non-code surfaces (SKILL.md, bootstrap) that must move in lockstep.
+Make the necessary changes to actually support the separate-state-repo mode
+end to end: the opt-in knob from Task 2, state-repo creation/location/keying,
+relocating tracked state + ledger + objects into the state repo, parking the
+project-repo worktrees externally, the dual-repo plan tagging (incl. the
+tags-only tier), and the matching SKILL.md / bootstrap / `.gitignore` updates.
+Cover the six flows, especially mid-project switching (flow 3) and
+resume/recovery (flow 6).
 
 ## Out of scope
-- Any code change. This plan produces decisions and specs only.
-- Multi-repo / shared-team state servers. Local filesystem only.
-
-Note: relocating the versioned plan contract out of the repo is explicitly
-**in** scope (Task 2a designs its audit/tagging model).
+- Multi-repo / shared-team state *servers*. Local filesystem only; the state repo
+  is a local git repo.
+- Changing the default in-repo behavior in any observable way.
