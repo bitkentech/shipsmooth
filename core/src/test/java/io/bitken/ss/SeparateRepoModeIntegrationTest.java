@@ -1,6 +1,13 @@
 package io.bitken.ss;
 
+import io.bitken.ss.conf.AppComponents;
+import io.bitken.ss.conf.DaggerAppComponents;
+import io.bitken.ss.conf.ExperimentalMode;
+import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
+import io.bitken.ss.ledger.Event;
+import io.bitken.ss.ledger.EventLedger;
+import io.bitken.ss.ledger.EventType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -74,5 +81,38 @@ public class SeparateRepoModeIntegrationTest {
                 "task worktree must be parked outside the project tree");
         assertFalse(integrationWorktree.toAbsolutePath().startsWith(projectRoot.toAbsolutePath()),
                 "integration worktree must be parked outside the project tree");
+    }
+
+    /**
+     * The separate state root must flow through the wired Dagger container, not
+     * just a hand-built locator: a component built with distinct roots must yield
+     * a locator — and a locator-consuming service (EventLedger) — that reads and
+     * writes under the state root, leaving the project tree untouched. This is
+     * the integration test for the @RepoRoot/@StateRoot DI wiring; it would catch
+     * a mis-qualified binding that fed repoRoot to both params.
+     */
+    @Test
+    public void separateStateRootFlowsThroughDiToConsumingServices() throws Exception {
+        AppComponents app = DaggerAppComponents.builder()
+                .servicesModule(new ServicesModule(projectRoot, stateRoot, new ExperimentalMode(false)))
+                .build();
+
+        // The locator the container hands out must honor the distinct state root.
+        ShipsmoothDataLocator locator = app.dataLocator();
+        assertTrue(locator.ledgerPath().startsWith(stateRoot),
+                "wired locator must place the ledger under the state root");
+        assertFalse(locator.ledgerPath().startsWith(projectRoot),
+                "wired locator must not place the ledger under the project root");
+
+        // A real consuming service resolved from the same graph must physically
+        // write under the state root, with zero trace left in the project tree.
+        EventLedger ledger = app.eventLedger();
+        ledger.ensureLedgerFile();
+        ledger.record(Event.forTask(EventType.STATUS_UPDATED, "1", null, "status=de-risked", null));
+
+        assertTrue(Files.exists(stateRoot.resolve(".agents/ledger.jsonl")),
+                "ledger file must be written under the state root");
+        assertFalse(Files.exists(projectRoot.resolve(".agents")),
+                "project working tree must remain free of any .agents trace");
     }
 }
