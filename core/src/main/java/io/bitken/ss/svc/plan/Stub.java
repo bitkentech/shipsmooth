@@ -14,7 +14,7 @@ final class Stub {
         return """
             # plan-%d — %s
 
-            > **Stub** — fast-started from a thin-context kickoff. Flesh this out
+            > **Stub** — quickstarted from a thin-context kickoff. Flesh this out
             > before running `plan init`. Replace the placeholders below.
 
             ## Context
