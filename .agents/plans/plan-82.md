@@ -131,17 +131,18 @@ Confirm `ShipsmoothDataLocator` is the single code seam and list every non-code
 surface (SKILL.md prose, POSIX bootstrap, `.gitignore` handling) that the mode
 touches. Output: a section appended to this plan. No code.
 
-### Task 2: Decide the opt-in mechanism and the state-repo layout/keying [Medium]
+### Task 2: ~~Decide the opt-in mechanism and the state-repo layout/keying~~ [ABANDONED — superseded]
 *Depends-on: 1*
-Resolve flow 1 and flow 4: how the user turns zero-trace mode on (and the
-tags-only sub-choice), how the state repo is located/created, and how it is keyed
-to a project so two clones/CI don't collide. Specify the external worktree
-location for `tasks/`/`integration/`. Justify the opt-in knob against existing
-config conventions and define precedence rules. Output: a decision section.
-Gate: human sign-off before any code.
+**Abandoned at v3.** Superseded by the per-host opt-in tasks (7 Claude, 8 Codex,
+9 Gemini) plus the shared keying decision folded into Task 7. The opt-in
+mechanism turned out to be materially host-specific — Claude plugins, Codex, and
+Gemini each configure differently — so a single "decide the opt-in mechanism"
+task was the wrong granularity. The host-agnostic state-repo layout/keying
+(location, repo identity, external worktree location) is now decided once in
+Task 7 and reused by Tasks 8 and 9.
 
 ### Task 3: Walk all six user flows under zero-trace mode [Medium]
-*Depends-on: 2*
+*Depends-on: 7*
 For each flow, write the narrated end-to-end experience, listing every surface
 (CLI output, SKILL.md prose, git visibility in both repos, recovery) that
 changes. Pin down, per tier, which repo each tagging command targets. Flag any
@@ -166,14 +167,36 @@ worktree/integration path construction capable of an external location. Tests
 must prove the default path is unchanged.
 
 ### Task 6: Implement zero-trace mode [High]
-*Depends-on: 5*
+*Depends-on: 5, 7, 8, 9*
 Make the necessary changes to actually support the separate-state-repo mode
-end to end: the opt-in knob from Task 2, state-repo creation/location/keying,
-relocating tracked state + ledger + objects into the state repo, parking the
-project-repo worktrees externally, the dual-repo plan tagging (incl. the
+end to end: the opt-in mechanisms from Tasks 7–9, state-repo creation/location/
+keying, relocating tracked state + ledger + objects into the state repo, parking
+the project-repo worktrees externally, the dual-repo plan tagging (incl. the
 tags-only tier), and the matching SKILL.md / bootstrap / `.gitignore` updates.
 Cover the six flows, especially mid-project switching (flow 3) and
 resume/recovery (flow 6).
+
+### Task 7: Opt-in mechanism for Claude (+ shared state-repo layout/keying) [Medium]
+*Depends-on: 1*
+Design how a **Claude** user turns separate-repo mode on, using Claude plugin
+customization mechanisms (plugin config / settings / env, TBD by research). Also
+make the **host-agnostic** decisions here, reused by Tasks 8–9: where the state
+repo lives, how repo identity is computed (so two clones/CI don't collide), the
+external worktree location, and the tags-only sub-choice. Justify against
+existing config conventions; define precedence rules. Output: a decision section.
+Gate: human sign-off before any code.
+
+### Task 8: Opt-in mechanism for Codex [Medium]
+*Depends-on: 7*
+Design how a **Codex** user turns separate-repo mode on, reusing Task 7's shared
+keying/layout. Codex has no SessionStart hook (see plan-77) and uses a one-time
+installer model — account for that in how the knob is read and persisted. Output:
+a decision section.
+
+### Task 9: Opt-in mechanism for Gemini [Medium]
+*Depends-on: 7*
+Design how a **Gemini** user turns separate-repo mode on, reusing Task 7's shared
+keying/layout, via the Gemini extension mechanism. Output: a decision section.
 
 ## Out of scope
 - Multi-repo / shared-team state *servers*. Local filesystem only; the state repo
