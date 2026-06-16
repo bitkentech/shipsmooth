@@ -32,7 +32,7 @@ follows — choose it deliberately.
 
 If any one of these is absent, context is **rich** — skip to Phase 1.
 
-### Thin context → fast-start, then hand back
+### Thin context → quickstart, then hand back
 
 A short kickoff means the user wants to move fast and iterate. He is signalling
 that he will add detail later or work exploratorily. **Do not slow him down.**
@@ -53,7 +53,7 @@ control to the chat.**
 creation, and writing the stub file. **You do not author the plan file or run
 git yourself.** In particular, **do not commit** what `plan quick` wrote — it
 deliberately leaves the stub uncommitted so the user commits on his own terms
-(and so a missing git identity can't strand the fast-start). There is no
+(and so a missing git identity can't strand the quickstart). There is no
 follow-up step after `plan quick` on the thin path.
 
 **Do not**, on the thin path:
