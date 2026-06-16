@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>82</plan>
-    <plan-version>plan-82-v1</plan-version>
+    <plan-version>plan-82-v2</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -12,9 +12,9 @@
             <id>1</id>
             <risk>low</risk>
             <status>pending</status>
-            <name>Inventory and categorize all state + their invariants</name>
+            <name>Inventory state + invariants, and name the seam for zero-trace mode</name>
             <commit></commit>
-            <created-from>plan-82-v1</created-from>
+            <created-from>plan-82-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -23,9 +23,9 @@
             <id>2</id>
             <risk>medium</risk>
             <status>pending</status>
-            <name>Design the full-relocation consistency answer (incl. the audit/tagging model for A)</name>
+            <name>Decide the opt-in mechanism and the state-repo layout/keying</name>
             <commit></commit>
-            <created-from>plan-82-v1</created-from>
+            <created-from>plan-82-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -35,9 +35,9 @@
             <id>3</id>
             <risk>medium</risk>
             <status>pending</status>
-            <name>Walk all six user flows under the chosen scope</name>
+            <name>Walk all six user flows under zero-trace mode</name>
             <commit></commit>
-            <created-from>plan-82-v1</created-from>
+            <created-from>plan-82-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -45,35 +45,35 @@
         </task>
         <task>
             <id>4</id>
-            <risk>medium</risk>
+            <risk>low</risk>
             <status>pending</status>
-            <name>Decide the opt-in mechanism</name>
+            <name>Choose a name for this mode of operation</name>
             <commit></commit>
-            <created-from>plan-82-v1</created-from>
+            <created-from>plan-82-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>3</depends-on>
+            <depends-on>1</depends-on>
         </task>
         <task>
             <id>5</id>
-            <risk>low</risk>
+            <risk>high</risk>
             <status>pending</status>
-            <name>Specify the relocation target layout</name>
+            <name>Prepare the existing codebase for the feature</name>
             <commit></commit>
-            <created-from>plan-82-v1</created-from>
+            <created-from>plan-82-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>4</depends-on>
+            <depends-on>3,4</depends-on>
         </task>
         <task>
             <id>6</id>
-            <risk>medium</risk>
+            <risk>high</risk>
             <status>pending</status>
-            <name>Write the go/no-go recommendation + follow-on implementation sketch</name>
+            <name>Implement zero-trace mode</name>
             <commit></commit>
-            <created-from>plan-82-v1</created-from>
+            <created-from>plan-82-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -82,7 +82,7 @@
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-06-16T11:58:14.208+05:30</timestamp>
+            <timestamp>2026-06-16T16:40:05.317+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
