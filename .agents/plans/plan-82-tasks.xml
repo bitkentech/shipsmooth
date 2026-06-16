@@ -98,12 +98,17 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>in-progress</status>
             <name>Opt-in mechanism for Claude (+ shared state-repo layout/keying)</name>
             <commit></commit>
             <created-from>plan-82-v3</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-16T18:54:35.789+05:30</timestamp>
+                    <message>Research done: Claude plugins expose userConfig (type directory/string/bool, prompted at enable time). Value reaches code via CLAUDE_PLUGIN_OPTION_&lt;KEY&gt; env + ${user_config.KEY} substitution; persisted in settings.json pluginConfigs[id].options (per-user). Plan: declare state_repo_dir userConfig, pass to ServicesModule stateRoot. See plan-82.md Research log.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>

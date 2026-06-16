@@ -198,6 +198,54 @@ a decision section.
 Design how a **Gemini** user turns separate-repo mode on, reusing Task 7's shared
 keying/layout, via the Gemini extension mechanism. Output: a decision section.
 
+## Research log
+
+### Task 7 research — Claude plugin customization (2026-06-16)
+Source: code.claude.com/docs/en/plugins-reference (User configuration; Environment
+variables; Version management).
+
+**Finding: Claude plugins have a first-class `userConfig` mechanism — the right
+lever for the separate-repo opt-in.** Declared in `plugin.json`:
+
+```json
+"userConfig": {
+  "state_repo_dir": {
+    "type": "directory",
+    "title": "Separate state repository",
+    "description": "Keep all shipsmooth state in this directory instead of the project repo. Leave empty for in-repo (default) mode.",
+    "required": false
+  }
+}
+```
+
+How it surfaces, all authoritative:
+- Per-option `type` ∈ {string, number, boolean, **directory**, file}; `directory`
+  fits a state-repo path. Other fields: `title`, `description` (both required),
+  `default`, `required`, `sensitive`, `multiple`, `min`/`max`.
+- Claude Code **prompts the user at enable time** — no hand-editing settings.
+- Values reach our code three ways: `${user_config.KEY}` substitution in hook /
+  MCP / LSP / monitor commands; **exported to plugin subprocesses as
+  `CLAUDE_PLUGIN_OPTION_<KEY>`** env vars; and substituted into skill/agent
+  content (non-sensitive only).
+- Non-sensitive values persist in `settings.json` under
+  `pluginConfigs[<plugin-id>].options`. (Per-user; not per-project — note for
+  flow 4 keying.)
+- Path vars available to hooks/subprocesses: **`${CLAUDE_PLUGIN_ROOT}`** (install
+  dir, ephemeral — don't store state), **`${CLAUDE_PLUGIN_DATA}`** (persistent
+  across updates — viable *default* state home), **`${CLAUDE_PROJECT_DIR}`** /
+  `CLAUDE_PROJECT_DIR` env (project root — the repoRoot we already derive).
+
+**Mechanism decision for Claude (Task 7):** declare a `userConfig` option (e.g.
+`state_repo_dir`, type `directory`); the SessionStart hook / CLI reads
+`CLAUDE_PLUGIN_OPTION_STATE_REPO_DIR` and passes it as the `stateRoot` to
+`ServicesModule(repoRoot, stateRoot, …)` (the seam built in Task 5). Empty/unset
+⇒ in-repo default. `${CLAUDE_PROJECT_DIR}` gives repoRoot for keying.
+
+Open sub-questions for Task 7 proper: per-user storage means the same option
+value applies across projects unless we key the state location by project
+identity (flow 4); and the tags-only sub-choice needs its own boolean
+`userConfig` option.
+
 ## Out of scope
 - Multi-repo / shared-team state *servers*. Local filesystem only; the state repo
   is a local git repo.
