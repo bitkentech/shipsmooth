@@ -58,13 +58,24 @@
         <task>
             <id>5</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Prepare the existing codebase for the feature</name>
             <commit></commit>
             <created-from>plan-82-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-16T17:05:45.380+05:30</timestamp>
+                    <message>De-risk draft ready for review: two-root locator seam, preamble test green, default behavior unchanged.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-16T16:59:35.777+05:30</timestamp>
+                    <message>Starting locator de-risk (two-root seam) ahead of deps 3,4 at user request; flows/name don't block the structural refactor.</message>
+                </deviation>
+            </deviations>
             <depends-on>3,4</depends-on>
         </task>
         <task>
