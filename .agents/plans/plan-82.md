@@ -246,6 +246,44 @@ value applies across projects unless we key the state location by project
 identity (flow 4); and the tags-only sub-choice needs its own boolean
 `userConfig` option.
 
+### Task 7 DECISION — two-layer config: plugin default + per-repo override
+
+The state-repo location is configured in **two layers**, resolved by our
+SessionStart hook / CLI. This mirrors Claude's own documented precedence
+(**Local project settings override User settings**), so it is the native layering
+rather than a custom scheme, and both layers are zero-trace.
+
+**Layer 1 — plugin-level default (global, prompted at enable time).** A
+`userConfig` option in `plugin.json`, persisted per-user in
+`~/.claude/settings.json` (`pluginConfigs[<id>].options`), surfaced to our code as
+`CLAUDE_PLUGIN_OPTION_*`. This is the user's *default* preference across all
+projects ("by default I want separate-repo mode, state under X").
+
+**Layer 2 — per-repo override (optional, project-local, gitignored).** Keys in
+`.claude/settings.local.json` (gitignored by default → no trace in the project's
+committed history). When present, this is a **full override** for that repo: it
+can change the state-repo **path** *and* flip the mode **on/off**, regardless of
+the plugin-level default. Because this file is not a plugin-native channel, our
+hook/CLI **reads and parses it ourselves**; `userConfig` does not auto-plumb it.
+
+**Resolution order our code implements** (highest wins):
+1. `.claude/settings.local.json` override for this repo
+2. `CLAUDE_PLUGIN_OPTION_STATE_REPO_DIR` (plugin-level default)
+3. unset ⇒ in-repo default mode
+
+**Opt-out requirement:** to let a repo force in-repo mode even when the global
+default is separate-repo, the override must distinguish "off" from "unset" — so
+the override carries an explicit enable flag plus a path, e.g.
+`{ "shipsmooth": { "stateRepo": { "enabled": false } } }` forces in-repo, while
+`{ "shipsmooth": { "stateRepo": { "enabled": true, "dir": "/path" } } }` forces
+separate-repo at that path. Absent the key entirely ⇒ fall through to Layer 1.
+(Exact key names/shape to finalize when wiring Task 6; the resolved value feeds
+`ServicesModule(repoRoot, stateRoot, …)` from Task 5.)
+
+**Reused by Tasks 8–9:** the *resolution model* (default layer + per-repo
+override, local-wins) is host-agnostic. Codex (Task 8) and Gemini (Task 9) keep
+the same two-layer semantics; only the Layer-1 channel differs per host.
+
 ## Out of scope
 - Multi-repo / shared-team state *servers*. Local filesystem only; the state repo
   is a local git repo.
