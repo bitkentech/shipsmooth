@@ -49,4 +49,11 @@ public class ShipsmoothDataLocatorValidationTest {
         assertThrows(InaccessibleRootException.class,
                 () -> new ShipsmoothDataLocator(good, file));
     }
+
+    @Test
+    public void rejectsNullRoot() {
+        // The project root is validated first, so a null repoRoot is the null path.
+        assertThrows(InaccessibleRootException.class,
+                () -> new ShipsmoothDataLocator(null, good));
+    }
 }
