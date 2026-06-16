@@ -38,8 +38,23 @@ public final class ShipsmoothDataLocator {
      * identical to the legacy single-root mode.
      */
     public ShipsmoothDataLocator(Path repoRoot, Path stateRoot) {
+        validateRoot("project", repoRoot);
+        validateRoot("state", stateRoot);
         this.repoRoot = repoRoot;
         this.stateRoot = stateRoot;
+    }
+
+    /** Fail fast if a root does not point at an existing directory. */
+    private static void validateRoot(String role, Path root) {
+        if (root == null) {
+            throw new InaccessibleRootException(role, root, "path is null");
+        }
+        if (!Files.exists(root)) {
+            throw new InaccessibleRootException(role, root, "does not exist");
+        }
+        if (!Files.isDirectory(root)) {
+            throw new InaccessibleRootException(role, root, "is not a directory");
+        }
     }
 
     private boolean separateState() {
