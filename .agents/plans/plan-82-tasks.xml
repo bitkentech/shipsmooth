@@ -58,9 +58,9 @@
         <task>
             <id>5</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Prepare the existing codebase for the feature</name>
-            <commit></commit>
+            <commit>dc2f71c89d8582f5f9e9aa11a39994bab696e422</commit>
             <created-from>plan-82-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments>
