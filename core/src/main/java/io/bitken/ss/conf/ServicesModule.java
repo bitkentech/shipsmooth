@@ -6,6 +6,8 @@ import io.bitken.ss.gw.GitState;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.ledger.EventLedger;
+import io.bitken.ss.svc.plan.NewPlan;
+import io.bitken.ss.svc.plan.PlanNumbers;
 import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.workflow.DefaultProcessRunner;
@@ -106,8 +108,20 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    PlanService providePlanService(TaskStore taskStore, EventLedger ledger, ExperimentalMode mode) {
-        return new PlanService(taskStore, ledger, mode);
+    PlanNumbers providePlanNumbers(ShipsmoothDataLocator locator) {
+        return new PlanNumbers(locator);
+    }
+
+    @Provides
+    @Singleton
+    NewPlan provideNewPlan(PlanNumbers planNumbers, GitState gitState, ShipsmoothDataLocator locator) {
+        return new NewPlan(planNumbers, gitState, locator);
+    }
+
+    @Provides
+    @Singleton
+    PlanService providePlanService(TaskStore taskStore, EventLedger ledger, ExperimentalMode mode, NewPlan newPlan) {
+        return new PlanService(taskStore, ledger, mode, newPlan);
     }
 
     @Provides

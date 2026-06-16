@@ -6,7 +6,10 @@ import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.ledger.Event;
 import io.bitken.ss.ledger.EventType;
 import io.bitken.ss.ledger.EventLedger;
+import io.bitken.ss.svc.plan.NewPlan;
+import io.bitken.ss.svc.plan.PlanNumbers;
 import io.bitken.ss.svc.plan.PlanService;
+import io.bitken.ss.gw.GitState;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.gw.TaskStore;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +37,9 @@ public class InitLedgerTest {
     @BeforeEach
     public void setUp() throws Exception {
         ledgerService = new EventLedger(Paths.get("."));
-        planService = new PlanService(xmlService, ledgerService, new ExperimentalMode(true));
+        ShipsmoothDataLocator locator = new ShipsmoothDataLocator(Paths.get("."));
+        NewPlan newPlan = new NewPlan(new PlanNumbers(locator), new GitState(Paths.get(".")), locator);
+        planService = new PlanService(xmlService, ledgerService, new ExperimentalMode(true), newPlan);
         planDir.mkdirs();
         Files.writeString(mdFile.toPath(),
                 "### Task 1: Alpha task [High]\n### Task 2: Beta task [Low]\n");

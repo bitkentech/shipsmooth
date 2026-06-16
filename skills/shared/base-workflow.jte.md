@@ -9,6 +9,7 @@
 @template.shared.workflow.what-lives-where(model = model)
 @template.shared.workflow.git-tagging(model = model)
 @template.shared.workflow.linear-structure(model = model)
+@template.shared.workflow.phase0-intake(model = model)
 @template.shared.workflow.phase1-plan(model = model)
 @template.shared.workflow.phase2-execute(model = model)
 @template.shared.workflow.plan-closeout(model = model)

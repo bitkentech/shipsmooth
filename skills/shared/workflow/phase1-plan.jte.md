@@ -2,6 +2,9 @@
 @param PluginModel model
 ## Phase 1 — Plan, Calibrate, & Commit
 
+This is the **rich-context** path, reached either directly when kickoff context
+is already rich, or after the user has fleshed out a Phase 0 stub.
+
 **You do not write or run any implementation code during this phase.**
 
 1. **Draft Plan:** Write or update the plan file at `.agents/plans/plan-{N}.md`.

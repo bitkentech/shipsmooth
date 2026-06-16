@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>81</plan>
+    <plan-version>plan-81-v2</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-15</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Author phase0-intake.jte.md content</name>
+            <commit>6cdac9e7e1bf83b42b1ee362331ac3828b1bed97</commit>
+            <created-from>plan-81-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Define the stub plan-file skeleton the thin path writes</name>
+            <commit>6cdac9e7e1bf83b42b1ee362331ac3828b1bed97</commit>
+            <created-from>plan-81-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Wire Phase 0 into base-workflow + cross-reference Phase 1</name>
+            <commit>6cdac9e7e1bf83b42b1ee362331ac3828b1bed97</commit>
+            <created-from>plan-81-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Extract shared slug util with Normalizer accent-folding</name>
+            <commit>6276663</commit>
+            <created-from>plan-81-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Implement `plan create` CLI command</name>
+            <commit>6276663</commit>
+            <created-from>plan-81-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rewrite Phase 0 thin path to call `plan create`; drop the commit step</name>
+            <commit>6276663</commit>
+            <created-from>plan-81-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>6</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Refresh golden baselines and verify cross-host render</name>
+            <commit>9efc12bbcf8619dcfa0b4cb860959296f189d474</commit>
+            <created-from>plan-81-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2,3,7</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-15T22:20:46.637+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-16T09:47:19.008+05:30</timestamp>
+            <message>Plan complete.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
