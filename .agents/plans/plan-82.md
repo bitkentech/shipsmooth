@@ -284,6 +284,47 @@ separate-repo at that path. Absent the key entirely ⇒ fall through to Layer 1.
 override, local-wins) is host-agnostic. Codex (Task 8) and Gemini (Task 9) keep
 the same two-layer semantics; only the Layer-1 channel differs per host.
 
+### Task 7 — follow-up research (2026-06-16): the above decision is REOPENED
+
+Further research cast doubt on using Claude's `userConfig` for Layer 1. Findings,
+captured so they aren't lost; **the mechanism is not yet decided.**
+
+**Finding A — `CLAUDE_PLUGIN_OPTION_*` is not guaranteed in the Bash-tool env.**
+(claude-code-guide agent, citing plugins-reference.) The docs export those env
+vars to **hook / MCP / LSP** subprocesses only. Our CLI runs via the **Bash
+tool** (the SKILL shells out to `~/.cache/shipsmooth/<ver>/bin/shipsmooth`), which
+is *not* a documented recipient. So `System.getenv` cannot be relied on for
+Layer 1. `CLAUDE_PROJECT_DIR` is likewise not guaranteed in the Bash-tool env
+(we already derive repoRoot from `git rev-parse`, so no dependency there).
+
+**Finding B — userConfig is reportedly not reliably prompted at enable.**
+([anthropics/claude-code#39455](https://github.com/anthropics/claude-code/issues/39455))
+The user often must manually pick "Configure options" afterwards — weakening the
+"prompted at enable time" UX that made userConfig attractive.
+
+**Finding C — none of Anthropic's 38 official plugins use `userConfig`.**
+(`grep` over `/opt/workspace/claude-plugins-official`.) Zero manifests declare
+`userConfig`; none read `CLAUDE_PLUGIN_OPTION` / `settings.json` for runtime
+config. Manifests are kept minimal (name/description/author). The one explicitly
+*configurable* official plugin, **`hookify`**, reads its **own project-local
+`.local.*` files** ("User-configurable hooks from .local.md files") rather than
+using the plugin config system. This is the de-facto idiomatic pattern, and it
+matches how shipsmooth already works (it reads its own `.agents/` tree).
+
+**Implication / candidate not-yet-chosen direction.** The proven, robust,
+host-portable alternative is **shipsmooth reads its own config file(s)** at
+CLI-invocation time (Jackson, already a dependency) — dropping `userConfig`,
+`CLAUDE_PLUGIN_OPTION`, and any settings.json scraping (which also needs an
+install-scope-dependent, hyphen-sanitized `<plugin-id>` key we cannot cleanly
+derive). Open sub-choices for that direction:
+- whether to keep two layers (per-repo override + global default) or per-repo only;
+- per-repo file = reuse Claude's `.claude/settings.local.json` (Claude-specific;
+  Codex/Gemini need a different file) **vs** a shipsmooth-owned gitignored file
+  (e.g. `.agents/config.json`) that works identically across all three hosts and
+  doesn't couple us to any host's settings schema.
+
+**Status: undecided — awaiting human direction before wiring.**
+
 ## Out of scope
 - Multi-repo / shared-team state *servers*. Local filesystem only; the state repo
   is a local git repo.

@@ -98,7 +98,7 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>in-progress</status>
             <name>Opt-in mechanism for Claude (+ shared state-repo layout/keying)</name>
             <commit></commit>
             <created-from>plan-82-v3</created-from>
@@ -111,6 +111,10 @@
                 <comment>
                     <timestamp>2026-06-16T20:20:03.566+05:30</timestamp>
                     <message>DECISION: two-layer config. Layer1 plugin userConfig (global default, CLAUDE_PLUGIN_OPTION_*). Layer2 per-repo override in .claude/settings.local.json (gitignored, full override of path + on/off, enabled flag distinguishes off from unset). Resolution: local override &gt; plugin default &gt; in-repo. Mirrors Claude Local&gt;User precedence; our hook reads the local file. Model reused host-agnostically by tasks 8/9. See plan-82.md Task 7 DECISION.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-16T21:06:29.897+05:30</timestamp>
+                    <message>Task 7 decision REOPENED. Findings: (A) CLAUDE_PLUGIN_OPTION_* not guaranteed in Bash-tool env (only hook/MCP/LSP); (B) userConfig not reliably prompted (issue #39455); (C) 0/38 official Anthropic plugins use userConfig — hookify reads its own .local files instead. Candidate direction: shipsmooth reads its own config file(s), no userConfig. Sub-choices open (2-layer vs per-repo-only; own file vs .claude/settings.local.json). Undecided — see plan-82.md Task 7 follow-up research.</message>
                 </comment>
             </comments>
             <deviations/>
