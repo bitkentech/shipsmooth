@@ -24,9 +24,26 @@ public final class ShipsmoothDataLocator {
     );
 
     private final Path repoRoot;
+    private final Path stateRoot;
 
+    /** Single-root (default / in-repo) mode: data lives under the project repo. */
     public ShipsmoothDataLocator(Path repoRoot) {
+        this(repoRoot, repoRoot);
+    }
+
+    /**
+     * Two-root ("separate repo") mode: {@code repoRoot} is the project repo
+     * (git ops / worktree attachment); {@code stateRoot} owns the data tree
+     * (plan files, ledger, objects). When the two are equal, behavior is
+     * identical to the legacy single-root mode.
+     */
+    public ShipsmoothDataLocator(Path repoRoot, Path stateRoot) {
         this.repoRoot = repoRoot;
+        this.stateRoot = stateRoot;
+    }
+
+    private boolean separateState() {
+        return !stateRoot.equals(repoRoot);
     }
 
     // ── plan files ─────────────────────────────────────────────────────────────
@@ -36,9 +53,9 @@ public final class ShipsmoothDataLocator {
     private static final String MARKDOWN_SUFFIX = ".md";
     private static final String TASKS_SUFFIX = "-tasks.xml";
 
-    /** {@code .agents/plans/} — the directory holding all plan files. */
+    /** {@code .agents/plans/} — the directory holding all plan files (under the state root). */
     public Path plansDir() {
-        return repoRoot.resolve(PLANS_DIR);
+        return stateRoot.resolve(PLANS_DIR);
     }
 
     /** {@code .agents/plans/plan-{planId}-tasks.xml} */
@@ -63,6 +80,19 @@ public final class ShipsmoothDataLocator {
         return ".agents/tasks/" + taskId;
     }
 
+    /**
+     * Absolute filesystem location of the task worktree. In default mode this is
+     * {@code <repoRoot>/.agents/tasks/{taskId}} (inside the project tree, as
+     * today). In separate-repo mode the worktree is parked under the state root
+     * so nothing appears inside the project tree — though it remains a worktree
+     * of the project repo's git regardless.
+     */
+    public Path worktreeBase(String taskId) {
+        return separateState()
+                ? stateRoot.resolve("worktrees/tasks").resolve(taskId)
+                : repoRoot.resolve(worktreeRel(taskId));
+    }
+
     /** Branch name: {@code agent-work/{taskId}} */
     public String agentBranch(String taskId) {
         return "agent-work/" + taskId;
@@ -80,16 +110,28 @@ public final class ShipsmoothDataLocator {
         return ".agents/integration/plan-" + planId;
     }
 
-    // ── ledger / object store ──────────────────────────────────────────────────
-
-    /** {@code .agents/ledger.jsonl} */
-    public Path ledgerPath() {
-        return repoRoot.resolve(".agents/ledger.jsonl");
+    /**
+     * Absolute filesystem location of the integration worktree. Default mode:
+     * {@code <repoRoot>/.agents/integration/plan-{planId}} (inside the project
+     * tree). Separate-repo mode: parked under the state root, still a worktree
+     * of the project repo's git.
+     */
+    public Path integrationBase(int planId) {
+        return separateState()
+                ? stateRoot.resolve("worktrees/integration").resolve("plan-" + planId)
+                : repoRoot.resolve(integrationRel(planId));
     }
 
-    /** {@code .agents/objects/} */
+    // ── ledger / object store ──────────────────────────────────────────────────
+
+    /** {@code .agents/ledger.jsonl} (under the state root). */
+    public Path ledgerPath() {
+        return stateRoot.resolve(".agents/ledger.jsonl");
+    }
+
+    /** {@code .agents/objects/} (under the state root). */
     public Path objectStorePath() {
-        return repoRoot.resolve(".agents/objects");
+        return stateRoot.resolve(".agents/objects");
     }
 
     // ── bootstrap ─────────────────────────────────────────────────────────────
