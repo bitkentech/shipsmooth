@@ -22,12 +22,17 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>abandoned</status>
             <name>Decide the opt-in mechanism and the state-repo layout/keying</name>
             <commit></commit>
             <created-from>plan-82-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-16T18:47:03.462+05:30</timestamp>
+                    <message>Abandoned at v3: superseded by per-host opt-in tasks 7 (Claude) / 8 (Codex) / 9 (Gemini); shared state-repo keying folded into task 7.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
@@ -41,7 +46,7 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>2</depends-on>
+            <depends-on>7</depends-on>
         </task>
         <task>
             <id>4</id>
@@ -88,7 +93,43 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>5</depends-on>
+            <depends-on>5,7,8,9</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Opt-in mechanism for Claude (+ shared state-repo layout/keying)</name>
+            <commit></commit>
+            <created-from>plan-82-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Opt-in mechanism for Codex</name>
+            <commit></commit>
+            <created-from>plan-82-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>7</depends-on>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Opt-in mechanism for Gemini</name>
+            <commit></commit>
+            <created-from>plan-82-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>7</depends-on>
         </task>
     </tasks>
     <project-updates>
