@@ -146,6 +146,27 @@ public class GroupedCommandTreeTest {
     }
 
     /**
+     * Group descriptions should summarise the group's purpose, not restate the
+     * verb list that picocli already renders in the {@code Commands:} block
+     * (which is redundant and drifts as verbs are added/removed).
+     */
+    @Test
+    void groupDescriptionsDoNotRestateVerbList() {
+        CommandLine root = new CommandTree(app).commandLine();
+        String planDesc = String.join(" ",
+                root.getSubcommands().get("plan").getCommandSpec().usageMessage().description());
+        String taskDesc = String.join(" ",
+                root.getSubcommands().get("task").getCommandSpec().usageMessage().description());
+
+        assertFalse(planDesc.contains("init") || planDesc.contains("preflight"),
+                "plan group description should not list its verbs: " + planDesc);
+        assertFalse(taskDesc.contains("set-commit") || taskDesc.contains("deviation"),
+                "task group description should not list its verbs: " + taskDesc);
+        assertFalse(planDesc.isBlank(), "plan group should still have a description");
+        assertFalse(taskDesc.isBlank(), "task group should still have a description");
+    }
+
+    /**
      * Every leaf under both noun groups must carry the standard help mixin so
      * {@code <group> <leaf> --help} prints usage instead of failing required-option
      * validation. Asserts at the spec level (the {@code addLeaves} seam) so a
