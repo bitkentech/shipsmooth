@@ -10,6 +10,7 @@ import io.bitken.ss.jaxb.PlanTasks;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import picocli.CommandLine;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -123,6 +124,24 @@ public class GroupedCommandTreeTest {
             assertTrue(usage.contains("set-commit"), "expected verb list in usage: " + usage);
         } finally {
             System.setErr(originalErr);
+        }
+    }
+
+    /**
+     * Every leaf under both noun groups must carry the standard help mixin so
+     * {@code <group> <leaf> --help} prints usage instead of failing required-option
+     * validation. Asserts at the spec level (the {@code addLeaves} seam) so a
+     * regression is caught structurally, not only end-to-end.
+     */
+    @Test
+    void everyLeafHasHelpOption() {
+        CommandLine root = new CommandTree(app).commandLine();
+        for (CommandLine group : root.getSubcommands().values()) {
+            for (var entry : group.getSubcommands().entrySet()) {
+                String leaf = group.getCommandName() + " " + entry.getKey();
+                assertNotNull(entry.getValue().getCommandSpec().findOption("--help"),
+                        "leaf `" + leaf + "` should have a --help option");
+            }
         }
     }
 
