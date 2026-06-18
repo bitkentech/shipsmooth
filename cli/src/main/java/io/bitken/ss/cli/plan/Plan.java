@@ -46,6 +46,7 @@ public class Plan implements Callable<Integer>, HasSpec {
 
     private static void addLeaves(CommandSpec parent, HasSpec... leaves) {
         for (HasSpec leaf : leaves) {
+            leaf.getSpec().mixinStandardHelpOptions(true);
             parent.addSubcommand(leaf.getSpec().name(), leaf.getSpec());
         }
     }
