@@ -40,8 +40,10 @@ public class UpdateStatus implements Callable<Integer>, HasSpec {
         try {
             io.bitken.ss.jaxb.TaskStatusType.fromValue(status);
         } catch (IllegalArgumentException e) {
-            System.err.println("Error: invalid status \"" + status + "\". Allowed values: "
-                    + java.util.Arrays.toString(io.bitken.ss.jaxb.TaskStatusType.values()));
+            String allowed = java.util.Arrays.stream(io.bitken.ss.jaxb.TaskStatusType.values())
+                    .map(io.bitken.ss.jaxb.TaskStatusType::value)
+                    .collect(java.util.stream.Collectors.joining(", "));
+            System.err.println("Error: invalid status \"" + status + "\". Allowed values: " + allowed);
             return 2;
         }
 
