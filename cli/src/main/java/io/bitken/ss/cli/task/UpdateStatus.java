@@ -21,7 +21,8 @@ public class UpdateStatus implements Callable<Integer>, HasSpec {
         this.spec.addOption(OptionSpec.builder("--task").required(true).type(int.class)
             .paramLabel("TASK_ID").description("Task ID (integer)").build());
         this.spec.addOption(OptionSpec.builder("--status").required(true).type(String.class)
-            .paramLabel("STATUS").description("New task status").build());
+            .paramLabel("STATUS").description("New task status: pending, in-progress, de-risked, "
+                + "agent-coded, closed, needs-triage, abandoned").build());
         this.planService = planService;
     }
 

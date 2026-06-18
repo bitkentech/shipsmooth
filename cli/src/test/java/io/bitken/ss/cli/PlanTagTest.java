@@ -95,4 +95,14 @@ public class PlanTagTest {
         int exit = run(new GitTags(java.nio.file.Paths.get(".")), "--plan", "7", "--kind", "bogus");
         assertEquals(1, exit);
     }
+
+    @Test
+    void createTagFailureReportsError() {
+        GitTags tags = new GitTags(java.nio.file.Paths.get(".")) {
+            @Override public boolean createTag(String t) { return false; }
+        };
+        int exit = run(tags, "--plan", "7", "--kind", "complete");
+        assertEquals(1, exit);
+        assertTrue(out.toString().contains("failed to create tag"));
+    }
 }
