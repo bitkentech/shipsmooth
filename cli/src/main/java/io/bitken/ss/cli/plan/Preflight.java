@@ -29,7 +29,7 @@ public class Preflight implements Callable<Integer>, HasSpec {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("preflight");
         spec.usageMessage().description("Verify plan preconditions before Phase 2.");
-        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
     }
 
     @Override

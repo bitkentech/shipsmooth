@@ -65,4 +65,17 @@ public class PlanResumeTest {
         String output = out.toString();
         assertTrue(output.contains("Some task"), "should include plan summary: " + output);
     }
+
+    @Test
+    void reportsErrorOnMalformedXml() throws Exception {
+        Path plansDir = repoRoot.resolve(".agents/plans");
+        Files.createDirectories(plansDir);
+        ShipsmoothDataLocator locator = new ShipsmoothDataLocator(repoRoot);
+        TaskStore store = new TaskStore(locator);
+        Files.writeString(locator.planTasksFile(99).toPath(), "not valid xml <<<");
+
+        int exit = run(store, "--plan", "99");
+        assertEquals(1, exit);
+        assertTrue(out.toString().contains("ERROR reading plan XML"), out.toString());
+    }
 }
