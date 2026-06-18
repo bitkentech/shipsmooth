@@ -21,7 +21,7 @@ public class Plan implements Callable<Integer>, HasSpec {
                 GitState gitState) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("plan");
-        this.spec.usageMessage().description("Plan-level commands (init, quick, show, update, preflight, tag, branch, resume).");
+        this.spec.usageMessage().description("Manage plans: create, inspect, tag, and track their lifecycle.");
         addLeaves(spec,
             new Init(planService, taskStore, gitTags),
             new QuickStart(planService),

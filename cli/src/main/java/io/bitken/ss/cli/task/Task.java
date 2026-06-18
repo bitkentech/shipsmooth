@@ -20,7 +20,7 @@ public class Task implements Callable<Integer>, HasSpec {
     public Task(PlanService planService, GitTags gitTags) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("task");
-        this.spec.usageMessage().description("Per-task commands (add, comment, deviation, status, set-commit).");
+        this.spec.usageMessage().description("Manage individual tasks within a plan and record their progress.");
         addLeaves(spec,
             new AddTask(planService, gitTags),
             new AddComment(planService),
