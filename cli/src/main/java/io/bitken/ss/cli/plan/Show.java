@@ -17,7 +17,8 @@ public class Show implements Callable<Integer>, HasSpec {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("show");
         this.spec.usageMessage().description("Show plan tasks.");
-        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class)
+            .paramLabel("PLAN_NUMBER").description("Plan number").build());
         this.xmlService = xmlService;
     }
 

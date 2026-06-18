@@ -29,7 +29,8 @@ public class QuickStart implements Callable<Integer>, HasSpec {
         spec.name("quick");
         spec.usageMessage().description("Quick start mode: Derive plan number, create a branch, write a stub plan file. " +
             "No git commit.");
-        spec.addOption(OptionSpec.builder("--desc").required(true).type(String.class).build());
+        spec.addOption(OptionSpec.builder("--desc").required(true).type(String.class)
+            .paramLabel("TEXT").description("Short plan description (used for the branch slug)").build());
     }
 
     @Override

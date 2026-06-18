@@ -16,9 +16,12 @@ public class UpdateStatus implements Callable<Integer>, HasSpec {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("status");
         this.spec.usageMessage().description("Update the status of a task.");
-        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
-        this.spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
-        this.spec.addOption(OptionSpec.builder("--status").required(true).type(String.class).build());
+        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class)
+            .paramLabel("PLAN_NUMBER").description("Plan number").build());
+        this.spec.addOption(OptionSpec.builder("--task").required(true).type(int.class)
+            .paramLabel("TASK_ID").description("Task ID (integer)").build());
+        this.spec.addOption(OptionSpec.builder("--status").required(true).type(String.class)
+            .paramLabel("STATUS").description("New task status").build());
         this.planService = planService;
     }
 

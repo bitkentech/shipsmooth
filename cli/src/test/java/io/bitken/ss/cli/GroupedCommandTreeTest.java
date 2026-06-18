@@ -91,6 +91,24 @@ public class GroupedCommandTreeTest {
         assertEquals("in-progress", planTasks.getTasks().getTask().get(0).getStatus().value());
     }
 
+    /** An unrecognised {@code --status} value is rejected with exit 2 and the allowed list. */
+    @Test
+    void taskStatusRejectsInvalidStatus() {
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        PrintStream originalErr = System.err;
+        System.setErr(new PrintStream(err));
+        try {
+            int exit = run("task", "status", "--plan", String.valueOf(PLAN_NUM),
+                    "--task", "1", "--status", "bogus");
+            assertEquals(2, exit);
+            String msg = err.toString();
+            assertTrue(msg.contains("invalid status"), "expected error in: " + msg);
+            assertTrue(msg.contains("Allowed values"), "expected allowed values in: " + msg);
+        } finally {
+            System.setErr(originalErr);
+        }
+    }
+
     /** Bare {@code shipsmooth plan} (no subcommand) prints group usage listing its verbs. */
     @Test
     void barePlanGroupPrintsUsage() {
