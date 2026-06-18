@@ -1,10 +1,7 @@
 package io.bitken.ss.conf;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -15,13 +12,6 @@ import java.util.regex.Pattern;
  * option to relocate the data tree outside the repo.
  */
 public final class ShipsmoothDataLocator {
-
-    public static final List<String> GITIGNORE_ENTRIES = List.of(
-        ".agents/tasks/*",
-        ".agents/integration/*",
-        ".agents/objects/",
-        ".agents/ledger.jsonl"
-    );
 
     private final Path repoRoot;
 
@@ -54,52 +44,5 @@ public final class ShipsmoothDataLocator {
     /** Regex matching a plan markdown filename, capturing the plan id. */
     public Pattern planMarkdownPattern() {
         return Pattern.compile(Pattern.quote(PLAN_PREFIX) + "(\\d+)" + Pattern.quote(MARKDOWN_SUFFIX));
-    }
-
-    // ── worktree paths ─────────────────────────────────────────────────────────
-
-    /** Relative path: {@code .agents/tasks/{taskId}} */
-    public String worktreeRel(String taskId) {
-        return ".agents/tasks/" + taskId;
-    }
-
-    /** Branch name: {@code agent-work/{taskId}} */
-    public String agentBranch(String taskId) {
-        return "agent-work/" + taskId;
-    }
-
-    // ── integration paths ──────────────────────────────────────────────────────
-
-    /** Branch name: {@code integration/plan-{planId}} */
-    public String integrationBranch(int planId) {
-        return "integration/plan-" + planId;
-    }
-
-    /** Relative path: {@code .agents/integration/plan-{planId}} */
-    public String integrationRel(int planId) {
-        return ".agents/integration/plan-" + planId;
-    }
-
-    // ── ledger / object store ──────────────────────────────────────────────────
-
-    /** {@code .agents/ledger.jsonl} */
-    public Path ledgerPath() {
-        return repoRoot.resolve(".agents/ledger.jsonl");
-    }
-
-    /** {@code .agents/objects/} */
-    public Path objectStorePath() {
-        return repoRoot.resolve(".agents/objects");
-    }
-
-    // ── bootstrap ─────────────────────────────────────────────────────────────
-
-    /** Create {@code .agents/objects/} and {@code .agents/ledger.jsonl} if absent. */
-    public void bootstrap() throws IOException {
-        Files.createDirectories(objectStorePath());
-        Path ledger = ledgerPath();
-        if (!Files.exists(ledger)) {
-            Files.createFile(ledger);
-        }
     }
 }

@@ -6,11 +6,9 @@ import io.bitken.ss.cli.task.AddComment;
 import io.bitken.ss.cli.task.AddDeviation;
 import io.bitken.ss.cli.task.SetCommit;
 import io.bitken.ss.cli.task.UpdateStatus;
-import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 
 import io.bitken.ss.jaxb.PlanTasks;
-import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.svc.plan.NewPlan;
 import io.bitken.ss.svc.plan.PlanNumbers;
 import io.bitken.ss.svc.plan.PlanService;
@@ -39,15 +37,13 @@ public class CommandsTest {
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
     private final TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
-    private EventLedger ledgerService;
     private PlanService planService;
 
     @BeforeEach
     public void setUp() throws Exception {
-        ledgerService = new EventLedger(Paths.get("."));
         ShipsmoothDataLocator locator = new ShipsmoothDataLocator(Paths.get("."));
         NewPlan newPlan = new NewPlan(new PlanNumbers(locator), new GitState(Paths.get(".")), locator);
-        planService = new PlanService(xmlService, ledgerService, new ExperimentalMode(false), newPlan);
+        planService = new PlanService(xmlService, newPlan);
         planDir.mkdirs();
         Files.writeString(mdFile.toPath(), "### Task 1: Test task [High]\n");
 
@@ -65,14 +61,14 @@ public class CommandsTest {
     @Test
     public void testInitCommand() {
         xmlFile.delete();
-        int exitCode = new CommandLine(new Init(planService, xmlService, new GitTags(java.nio.file.Paths.get(".")), new ExperimentalMode(false)).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
+        int exitCode = new CommandLine(new Init(planService, xmlService, new GitTags(java.nio.file.Paths.get("."))).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", mdFile.getPath());
         assertEquals(0, exitCode);
         assertTrue(xmlFile.exists());
     }
 
     @Test
     public void testInitCommandFileNotFound() {
-        int exitCode = new CommandLine(new Init(planService, xmlService, new GitTags(java.nio.file.Paths.get(".")), new ExperimentalMode(false)).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", "non-existent.md");
+        int exitCode = new CommandLine(new Init(planService, xmlService, new GitTags(java.nio.file.Paths.get("."))).getSpec()).execute("--plan", String.valueOf(PLAN_NUM), "--tasks-from", "non-existent.md");
         assertEquals(1, exitCode);
     }
 

@@ -13,10 +13,6 @@ target/
 **/target/
 *.so
 plugin-tasks-java/target/
-.agents/tasks/*
-.agents/integration/*
-.agents/objects/
-.agents/ledger.jsonl
 **/.vscode/settings.json
 model/*.tlc
 model/*.out

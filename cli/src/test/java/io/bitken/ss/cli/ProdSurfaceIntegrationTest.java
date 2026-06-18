@@ -16,28 +16,19 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Plan-75 end-to-end guard: when experimental mode is OFF, the CLI must not
- * offer any experimental subcommand in its {@code --help} listing.
+ * End-to-end guard: when experimental mode is OFF, the CLI must not offer any of
+ * the removed parallel-execution subcommands in its {@code --help} listing.
  *
- * <p>This drives the full command tree the way {@code main()} does, but pins
- * {@link ExperimentalMode} to {@code false} explicitly so the assertion is
- * independent of the ambient {@code Build.EXPERIMENTAL_BUILD} of the test JVM.
- * The existing {@link ShipsmoothTest#experimentalFlagVisibilityMatchesBuild}
- * branches on that build constant and therefore only ever exercises the dev arm
- * in a dev build — the exact blind spot that let the 0.3.17 prod leak ship.
- *
- * <p>Crucially the experimental-name set here includes {@code ledger}, which
- * today is registered unconditionally (it does not implement {@code FeatureFlags}).
- * This test is therefore RED until plan-75 Task 3 gates the ledger group.
+ * <p>This drives the full command tree the way {@code main()} does, pinning
+ * {@link ExperimentalMode} to {@code false} explicitly. Plan-82 deleted the
+ * {@code claim} / {@code worker} / {@code integrate} / {@code ledger} subsystem
+ * entirely; this test stays as a regression guard ensuring none of those names
+ * ever reappears in the prod surface (listing or description prose).
  */
 public class ProdSurfaceIntegrationTest {
 
-    /**
-     * Every top-level command that a prod (non-experimental) CLI must hide.
-     * {@code ledger} is included deliberately: plan-75 makes the whole group
-     * experimental.
-     */
-    private static final List<String> EXPERIMENTAL_NAMES = List.of(
+    /** Removed subcommands that must never surface in prod --help (plan-82). */
+    private static final List<String> REMOVED_NAMES = List.of(
         "claim", "worker", "integrate", "ledger"
     );
 
@@ -69,7 +60,7 @@ public class ProdSurfaceIntegrationTest {
         int exit = runProd("--help");
         assertEquals(0, exit);
         String stdout = outBuf.toString();
-        for (String name : EXPERIMENTAL_NAMES) {
+        for (String name : REMOVED_NAMES) {
             assertFalse(containsSubcommandLine(stdout, name),
                 "prod (--enable-experimental OFF) --help must not list experimental "
                     + "subcommand '" + name + "'; got:\n" + stdout);
@@ -86,7 +77,7 @@ public class ProdSurfaceIntegrationTest {
         int exit = runProd("--help");
         assertEquals(0, exit);
         String description = firstDescriptionLine(outBuf.toString());
-        for (String name : EXPERIMENTAL_NAMES) {
+        for (String name : REMOVED_NAMES) {
             assertFalse(description.toLowerCase().contains(name),
                 "prod --help description must not name experimental command '" + name
                     + "'; got: " + description);

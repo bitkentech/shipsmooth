@@ -28,11 +28,6 @@ public class Shipsmooth {
         return cmd.execute(args);
     }
 
-    /** Test seam for the integration command. */
-    public Integrate integrateCommand() {
-        return commandTree.integrate();
-    }
-
     public static void main(String[] args) {
         AppComponents app = DaggerAppComponents.builder()
             .servicesModule(new ServicesModule(

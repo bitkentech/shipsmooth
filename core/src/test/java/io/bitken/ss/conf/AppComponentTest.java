@@ -15,11 +15,10 @@ public class AppComponentTest {
                 .build();
 
         assertNotNull(app.taskStore());
-        assertNotNull(app.eventLedger());
         assertNotNull(app.experimentalMode());
-        assertNotNull(app.worktreeService());
-        assertNotNull(app.workflowService());
-        assertNotNull(app.workflowServiceImpl());
+        assertNotNull(app.gitState());
+        assertNotNull(app.gitTags());
+        assertNotNull(app.planService());
     }
 
     @Test
@@ -29,18 +28,7 @@ public class AppComponentTest {
                 .build();
 
         assertSame(app.taskStore(), app.taskStore());
-        assertSame(app.eventLedger(), app.eventLedger());
-        assertSame(app.worktreeService(), app.worktreeService());
-        assertSame(app.workflowService(), app.workflowService());
-        assertSame(app.workflowServiceImpl(), app.workflowServiceImpl());
-    }
-
-    @Test
-    public void workflowServiceIsSameInstanceAsWorkflowServiceImpl() {
-        AppComponents app = DaggerAppComponents.builder()
-                .servicesModule(new ServicesModule(Paths.get(".")))
-                .build();
-
-        assertSame(app.workflowServiceImpl(), app.workflowService());
+        assertSame(app.gitState(), app.gitState());
+        assertSame(app.planService(), app.planService());
     }
 }

@@ -23,13 +23,11 @@ public class SkillRenderer {
     private final TemplateEngine engine;
     private final PluginModel baseModel;
     private final Path outputDir;
-    private final String startBase;
 
-    public SkillRenderer(PluginModel baseModel, Path outputDir, String startBase) {
+    public SkillRenderer(PluginModel baseModel, Path outputDir) {
         this.engine = TemplateEngine.createPrecompiled(ContentType.Plain);
         this.baseModel = baseModel;
         this.outputDir = outputDir;
-        this.startBase = startBase;
     }
 
     public void renderBase() throws IOException {
@@ -44,10 +42,6 @@ public class SkillRenderer {
 
     private List<SkillVariant> experimentalVariants() {
         return List.of(
-            skillVariant("experimental/start-tla/SKILL.jte", "experimental-" + startBase + "-tla",
-                "Use when starting any task — applies the shipsmooth agent coding workflow with a TLA-checked content-addressed ledger."),
-            skillVariant("experimental/start-parallel/SKILL.jte", "experimental-" + startBase + "-parallel",
-                "Use when starting any task — applies the shipsmooth agent coding workflow with parallel subagent execution and ledger-coordinated integration."),
             skillVariant("experimental/refine/SKILL.jte", "experimental-refine",
                 "Improves the quality of code generation, or of already generated code")
         );

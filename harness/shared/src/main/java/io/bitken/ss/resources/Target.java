@@ -35,7 +35,7 @@ public class Target {
         );
         Path outDir             = Path.of(outputDir);
         ObjectMapper mapper     = new ObjectMapper();
-        this.skillRenderer              = new SkillRenderer(baseModel, outDir, startBase);
+        this.skillRenderer              = new SkillRenderer(baseModel, outDir);
         this.hooksRenderer              = new HooksRenderer(mapper, baseModel, outDir);
         this.sessionStartConfigRenderer = new SessionStartConfigRenderer(mapper, baseModel, outDir);
         this.experimentalEnabled        = experimentalEnabled;

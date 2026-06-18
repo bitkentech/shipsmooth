@@ -1,11 +1,8 @@
 package io.bitken.ss.cli;
 
 import io.bitken.ss.Build;
-import io.bitken.ss.cli.ledger.Ledger;
 import io.bitken.ss.cli.plan.Plan;
 import io.bitken.ss.cli.task.Task;
-import io.bitken.ss.cli.worker.Claim;
-import io.bitken.ss.cli.worker.Worker;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.FeatureFlags;
@@ -21,15 +18,13 @@ import java.util.concurrent.Callable;
  */
 class CommandTree {
 
-    private final Integrate integrate;
     private final CommandLine commandLine;
 
     CommandTree(AppComponents app) {
         ExperimentalMode experimentalMode = app.experimentalMode();
-        integrate = new Integrate(app.workflowService());
 
         CommandSpec rootSpec = buildRootSpec();
-        for (Callable<?> command : buildCommands(app, integrate)) {
+        for (Callable<?> command : buildCommands(app)) {
             if (!isExperimental(command) || experimentalMode.enabled()) {
                 register(rootSpec, command);
             }
@@ -41,32 +36,21 @@ class CommandTree {
         return commandLine;
     }
 
-    /** Test seam for the integration command. */
-    Integrate integrate() {
-        return integrate;
-    }
-
-    private static Callable<?>[] buildCommands(AppComponents app, Integrate integrate) {
-        Plan plan = new Plan(app.planService(), app.taskStore(), app.gitTags(), app.gitState(), app.experimentalMode());
+    private static Callable<?>[] buildCommands(AppComponents app) {
+        Plan plan = new Plan(app.planService(), app.taskStore(), app.gitTags(), app.gitState());
         Task task = new Task(app.planService(), app.gitTags());
-        Worker worker = new Worker(app.planService(), app.taskStore(), app.workflowService(),
-            app.workflowServiceImpl(), app.worktreeService(), app.eventLedger());
         return new Callable<?>[] {
             plan,
             task,
-            worker,
-            new Claim(app.taskStore(), app.worktreeService(), app.eventLedger()),
-            integrate,
-            new Ledger(app.eventLedger()),
         };
     }
 
     private static CommandSpec buildRootSpec() {
         CommandSpec spec = CommandSpec.create();
         spec.name("shipsmooth");
-        // Description must not name experimental surface (e.g. the ledger group) — it
-        // shows in prod --help where those commands are hidden (plan-75 no-leakage rule).
-        spec.usageMessage().description("CLI to manage tasks and subagents for shipsmooth");
+        // Description must not name any experimental surface — it shows in prod
+        // --help where experimental commands are hidden (plan-75 no-leakage rule).
+        spec.usageMessage().description("CLI to manage plans and tasks for shipsmooth");
         spec.version(Build.VERSION);
         spec.mixinStandardHelpOptions(true);
         // Build is generated at compile time from

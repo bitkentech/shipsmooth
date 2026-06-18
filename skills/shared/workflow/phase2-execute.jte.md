@@ -6,7 +6,7 @@
 
 ```bash
 ${model.cliBin()} plan resume --plan {N}
-# Prints: XML file present check, task state summary, any integration worktrees for this plan.
+# Prints: XML file present check and task state summary.
 ```
 
 Only proceed once you know which tasks are done and which are next.
@@ -23,10 +23,6 @@ ${model.cliBin()} plan branch --issue {issue-id} --desc "{short-description}"
 All task commits go on this branch. The `t/` prefix stands for "task". Usernames are omitted — the task identity is what matters long-term.
 
 **Before writing any code**, confirm the test coverage threshold with the human (default: 95%). Record the agreed value before proceeding.
-@if(model.experimentalEnabled())
-
-`[Local]` All `${model.cliBin()}` mutations also append one event to `.agents/ledger.jsonl` (content-addressed blobs in `.agents/objects/`). The XML remains the human-readable source of truth; the ledger is the machine-readable execution trace and the foundation for future parallel execution. Inspect with `${model.cliBin()} ledger list` or `${model.cliBin()} ledger verify`.
-@endif
 
 ### Preamble: integration tests (once, before any task)
 

@@ -10,7 +10,7 @@ import java.util.concurrent.Callable;
 /**
  * {@code task} noun group: bundles the per-task subcommands ({@code add},
  * {@code comment}, {@code deviation}, {@code status}, {@code set-commit}) under
- * one parent, mirroring {@code ledger}. Builds its own leaves in the constructor
+ * one parent. Builds its own leaves in the constructor
  * from the gateways they need.
  */
 public class Task implements Callable<Integer>, HasSpec {

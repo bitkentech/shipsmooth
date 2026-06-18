@@ -188,80 +188,9 @@ class TargetIntegrationTest {
         String content = Files.readString(baseSkill);
         assertFalse(content.contains("## Parallel Execution Protocol"),
             "base start-dev skill must not contain the Parallel Execution Protocol section "
-                + "(it should live only in experimental-start-parallel-dev)");
+                + "(the parallel-execution subsystem was removed in plan-82)");
         assertFalse(content.contains("Worker Instruction Block"),
             "base start-dev skill must not contain the Worker Instruction Block");
-    }
-
-    @Test
-    void experimentalParallelSkillIsRendered() throws Exception {
-        setDevProps();
-        Target.main(new String[]{});
-
-        Path parallelSkill = tempDir.resolve("skills/experimental-start-parallel-dev/SKILL.md");
-        assertTrue(Files.exists(parallelSkill),
-            "experimental-start-parallel-dev/SKILL.md should be rendered");
-
-        String content = Files.readString(parallelSkill);
-        assertTrue(content.contains("## Core Invariants"),
-            "experimental parallel skill should include the base workflow content");
-        assertTrue(content.contains("## Parallel Execution Protocol"),
-            "experimental parallel skill should include the parallel section");
-        assertTrue(content.contains("--enable-experimental"),
-            "experimental parallel skill should call the CLI with --enable-experimental");
-    }
-
-    // plan-77 Task 8 parity gate: the 3-way host dispatch must keep each host's
-    // parallel-execution fragments isolated — Codex's sequential-only content must not
-    // leak into claude/gemini, and gemini's invoke_agent vocabulary must not leak into
-    // codex (which is sequential-only this cut).
-    private void setDevPropsForPlatform(String platform, String frontmatter) {
-        setDevProps();
-        System.setProperty("build.platform", platform);
-        System.setProperty("skill.frontmatter", frontmatter);
-        System.setProperty("shipsmooth.jlink.dir", ""); // non-claude variants omit jlinkDir
-    }
-
-    // The parallel-execution fragments render into the experimental-start-parallel skill.
-    private static final String PARALLEL_SKILL = "skills/experimental-start-parallel-dev/SKILL.md";
-
-    @Test
-    void codexParallelSkillIsSequentialOnly_noGeminiOrClaudeVocab() throws Exception {
-        setDevPropsForPlatform("codex", "---\nname: start-dev\ndescription: d\n---\n\n");
-        Target.main(new String[]{});
-
-        String content = Files.readString(tempDir.resolve(PARALLEL_SKILL));
-        assertTrue(content.contains("parallel subagent dispatch is not yet supported"),
-            "Codex parallel skill must state parallel dispatch is unsupported");
-        assertFalse(content.contains("invoke_agent"), "Codex must not use Gemini's invoke_agent");
-        assertFalse(content.contains("run_shell_command"), "Codex must not use Gemini's run_shell_command");
-        assertFalse(content.contains(".claude/settings.json"), "Codex must not patch Claude's settings.json");
-    }
-
-    @Test
-    void geminiParallelSkillUnaffectedByCodex_noCodexVocab() throws Exception {
-        setDevPropsForPlatform("gemini", "---\nname: start-dev\ndescription: d\n---\n\n");
-        Target.main(new String[]{});
-
-        String content = Files.readString(tempDir.resolve(PARALLEL_SKILL));
-        assertTrue(content.contains("invoke_agent"),
-            "Gemini parallel skill must still use its invoke_agent dispatch");
-        assertFalse(content.contains("parallel subagent dispatch is not yet supported"),
-            "Codex's sequential-only content must not leak into the Gemini render");
-        assertFalse(content.contains("PLUGIN_ROOT"),
-            "Codex's plugin-root placeholder must not leak into the Gemini render");
-    }
-
-    @Test
-    void claudeParallelSkillUnaffectedByCodex_noCodexVocab() throws Exception {
-        setDevProps(); // claude
-        Target.main(new String[]{});
-
-        String content = Files.readString(tempDir.resolve("skills/experimental-start-parallel-dev/SKILL.md"));
-        assertFalse(content.contains("parallel subagent dispatch is not yet supported"),
-            "Codex's sequential-only content must not leak into the Claude render");
-        assertFalse(content.contains("invoke_agent"),
-            "Gemini's invoke_agent must not leak into the Claude render");
     }
 
     @Test
@@ -333,10 +262,10 @@ class TargetIntegrationTest {
     }
 
     /**
-     * Plan-75 Task 4 guard: the prod base {@code start} skill payload must contain
-     * zero references to the {@code ledger} subcommand (made experimental in Task 3).
-     * The ledger/objects paragraph is conditioned on {@code experimentalEnabled} in
-     * the JTE, so prod drops it. Drives the real render pipeline ({@code Target.main}).
+     * Plan-82 guard: the base {@code start} skill payload must contain zero
+     * references to the {@code ledger} subcommand. The whole ledger subsystem was
+     * removed in plan-82, so neither prod nor dev may mention it. Drives the real
+     * render pipeline ({@code Target.main}).
      */
     @Test
     void prodBaseSkillHasNoLedgerReference() throws Exception {
@@ -360,17 +289,17 @@ class TargetIntegrationTest {
         assertProdBaseSkillHasNoLedger(tempDir.resolve("skills/start/SKILL.md"));
     }
 
-    /** The dev counterpart: {@code start-dev} keeps the ledger paragraph (the
-     *  experimental-conditioned fragment renders when experimental is enabled). */
+    /** The dev counterpart must ALSO have no ledger reference: plan-82 removed the
+     *  ledger subsystem entirely, so the dev {@code start-dev} skill is ledger-free too. */
     @Test
-    void devBaseSkillKeepsLedgerReference() throws Exception {
+    void devBaseSkillHasNoLedgerReference() throws Exception {
         setDevProps();
         Target.main(new String[]{});
 
         Path devSkill = tempDir.resolve("skills/start-dev/SKILL.md");
         assertTrue(Files.exists(devSkill), "dev base SKILL.md should be written");
-        assertTrue(Files.readString(devSkill).contains("ledger"),
-            "dev 'start-dev' skill must keep the ledger/objects paragraph");
+        assertFalse(Files.readString(devSkill).contains("ledger"),
+            "dev 'start-dev' skill must not reference the removed ledger subsystem");
     }
 
     private void assertProdBaseSkillHasNoLedger(Path baseSkill) throws Exception {

@@ -12,19 +12,10 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.file.Paths;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ShipsmoothTest {
-
-    // Top-level experimental commands. After the noun-group regrouping the
-    // worker-* leaves live under the experimental `worker` group and the
-    // ledger record-*/watch leaves under the (non-experimental) `ledger` group,
-    // so only these names are experimental *at the top level*.
-    private static final List<String> EXPERIMENTAL_NAMES = List.of(
-        "claim", "worker", "integrate"
-    );
 
     private ByteArrayOutputStream outBuf;
     private ByteArrayOutputStream errBuf;
@@ -59,46 +50,6 @@ public class ShipsmoothTest {
     }
 
     @Test
-    public void integrateRefusedWithoutFlag() {
-        int exit = run("integrate", "--plan", "1");
-        assertEquals(2, exit, "integrate must be refused without --enable-experimental");
-        // The contract is that 'integrate' is not a registered subcommand. picocli
-        // may echo the unmatched token in its error, but it must not present
-        // 'integrate' as an available command in the Commands: usage listing.
-        assertFalse(containsSubcommandLine(err(), "integrate"),
-            "'integrate' must not be offered as a valid subcommand when gate is off; got: " + err());
-    }
-
-    @Test
-    public void integrateRunsWithFlag() {
-        int exit = run("--enable-experimental", "integrate", "--help");
-        assertEquals(0, exit, "integrate --help with flag should exit 0");
-        assertTrue(out().contains("integrate"), "stdout should contain integrate's usage; got: " + out());
-    }
-
-    @Test
-    public void helpWithoutFlagHidesExperimentalSubcommands() {
-        int exit = run("--help");
-        assertEquals(0, exit);
-        String stdout = out();
-        for (String name : EXPERIMENTAL_NAMES) {
-            assertFalse(containsSubcommandLine(stdout, name),
-                "default --help should not list experimental subcommand '" + name + "'");
-        }
-    }
-
-    @Test
-    public void helpWithFlagListsExperimentalSubcommands() {
-        int exit = run("--enable-experimental", "--help");
-        assertEquals(0, exit);
-        String stdout = out();
-        for (String name : EXPERIMENTAL_NAMES) {
-            assertTrue(containsSubcommandLine(stdout, name),
-                "--enable-experimental --help should list '" + name + "'; got:\n" + stdout);
-        }
-    }
-
-    @Test
     public void nonExperimentalCommandRecognizedWithoutFlag() {
         // 'plan show' is non-experimental: it must be parsed as a group
         // subcommand even without --enable-experimental. The command may
@@ -110,14 +61,6 @@ public class ShipsmoothTest {
         // would have shown "Missing required subcommand" at top level.
         assertFalse(stderr.contains("Missing required subcommand"),
             "non-experimental 'plan show' should be parsed as a subcommand; got: " + stderr);
-    }
-
-    @Test
-    public void flagAfterSubcommandIsRejected() {
-        // Top-level flag must precede subcommand; placed after, the subcommand
-        // itself is unmatched without the flag taking effect.
-        int exit = run("integrate", "--enable-experimental");
-        assertEquals(2, exit, "flag after subcommand should be rejected (subcommand still unknown)");
     }
 
     @Test
@@ -140,12 +83,5 @@ public class ShipsmoothTest {
         assertEquals(0, exit);
         assertTrue(out().contains(Build.VERSION),
             "--version should print Build.VERSION (" + Build.VERSION + "); got: " + out());
-    }
-
-    private static boolean containsSubcommandLine(String helpOutput, String subcommand) {
-        for (String line : helpOutput.split("\\R")) {
-            if (line.trim().startsWith(subcommand + " ") || line.trim().equals(subcommand)) return true;
-        }
-        return false;
     }
 }

@@ -7,8 +7,8 @@ domain layer. It has no command line or plugin rendering bits.
   configuration (`ExperimentalMode`), and so on. Mostly immutable records and enums.
 - The services are actual behaviour, grouped by area. Some examples below:
   - `PlanService`: plan and task lifecycle (init, state transitions, deviations)
-  - `WorkflowService`: the end-to-end agent-coding workflow
   - `TaskStore` : reads/writes the task state file
+  - `GitTags` / `GitState`: read-only git queries used by the plan commands
 
 The services are wired together with [Dagger](https://dagger.dev/). Two pieces, both
 in the `io.bitken.ss.conf` package:
@@ -17,7 +17,7 @@ in the `io.bitken.ss.conf` package:
   declaring how it's constructed and what it depends on.
 - **`AppComponents`** (`@Component(modules = ServicesModule.class)`): the
   `@Singleton` component interface that exposes the services to consumers
-  (`planService()`, `workflowService()`, `taskStore()`, …).
+  (`planService()`, `taskStore()`, `gitState()`, …).
 
 ## See also
 

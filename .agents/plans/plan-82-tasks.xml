@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>82</plan>
+    <plan-version>plan-82-v4</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-18</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Strip ledger from PlanService and prove plan/task flows still pass</name>
+            <commit>f72d6e2c743512cf510559d3285da3e2f8349e8a</commit>
+            <created-from>plan-82-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-18T16:02:06.607+05:30</timestamp>
+                    <message>De-risk draft ready for review (commit f72d6e2): PlanService is ledger-free, :core:test green.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Remove DI wiring and module exports for the subsystem</name>
+            <commit>aae9e3fdf497ea6ed84170937606ad4abdaf2181</commit>
+            <created-from>plan-82-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-18T16:14:26.884+05:30</timestamp>
+                    <message>De-risk draft ready (commit pending push): DI graph subsystem-free, :core:test green, cli errors localised to Task-3 deletions.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Delete the CLI subsystem (worker, ledger, Integrate) and rewire CommandTree</name>
+            <commit>0da0b547da5db27bb85de36836b6d6e2b36a65f2</commit>
+            <created-from>plan-82-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-18T17:34:57.100+05:30</timestamp>
+                    <message>De-risk draft ready: cli subsystem deleted, :cli:test green, --help shows only plan+task.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Delete the core subsystem packages (ledger, workflow engine, git worktree)</name>
+            <commit>1cbe77215d39ec6a0a1fa53ceba3240a51381118</commit>
+            <created-from>plan-82-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-18T17:39:21.248+05:30</timestamp>
+                    <message>De-risk draft ready: core ledger/workflow/git packages deleted, :core:test + :cli:test green.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Remove ledger/parallel-execution skill templates and refresh generated surface</name>
+            <commit>b390c2f59571bce3702374d3246a704fc3f54103</commit>
+            <created-from>plan-82-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-18T21:43:04.115+05:30</timestamp>
+                    <message>De-risk draft ready: parallel skills + partials removed, surface tests green, SKILL.md ledger/parallel-free.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>3,4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Full build + on-disk cleanup + dead-reference sweep</name>
+            <commit>f5ab01a6f8f7818de4d41aa2945a78048208c7a5</commit>
+            <created-from>plan-82-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-18T15:35:21.712+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-18T22:22:13.876+05:30</timestamp>
+            <message>Plan complete — ledger/integrate/worktree subsystem removed; clean build green.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

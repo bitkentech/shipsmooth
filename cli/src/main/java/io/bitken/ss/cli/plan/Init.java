@@ -1,7 +1,6 @@
 package io.bitken.ss.cli.plan;
 
 import io.bitken.ss.cli.HasSpec;
-import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.svc.plan.PlanService;
@@ -20,14 +19,12 @@ public class Init implements Callable<Integer>, HasSpec {
     private final PlanService planService;
     private final TaskStore taskStore;
     private final GitTags gitTagService;
-    private final ExperimentalMode mode;
 
-    public Init(PlanService planService, TaskStore taskStore, GitTags gitTagService, ExperimentalMode mode) {
+    public Init(PlanService planService, TaskStore taskStore, GitTags gitTagService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.planService = planService;
         this.taskStore = taskStore;
         this.gitTagService = gitTagService;
-        this.mode = mode;
 
         spec.name("init");
         spec.usageMessage().description("Initialize task tracking XML for a plan");
@@ -67,27 +64,6 @@ public class Init implements Callable<Integer>, HasSpec {
         ShipsmoothDataLocator locator = new ShipsmoothDataLocator(Paths.get("."));
         System.out.println("Written " + tasks.size() + " tasks to " + locator.planTasksFile(plan).getPath());
 
-        if (mode.enabled()) {
-            locator.bootstrap();
-            ensureGitignore(Paths.get("."));
-        }
         return 0;
-    }
-
-    private void ensureGitignore(Path repoRoot) throws Exception {
-        var gi = repoRoot.resolve(".gitignore");
-        var content = Files.exists(gi) ? Files.readString(gi) : "";
-        var updated = new StringBuilder(content);
-        if (!content.isEmpty() && !content.endsWith("\n")) updated.append('\n');
-        var changed = false;
-        for (var entry : ShipsmoothDataLocator.GITIGNORE_ENTRIES) {
-            if (content.lines().noneMatch(l -> l.trim().equals(entry))) {
-                updated.append(entry).append('\n');
-                changed = true;
-            }
-        }
-        if (changed) {
-            Files.writeString(gi, updated.toString());
-        }
     }
 }

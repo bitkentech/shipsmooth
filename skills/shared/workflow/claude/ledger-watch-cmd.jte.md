@@ -1,6 +1,0 @@
-@param io.bitken.ss.resources.PluginModel model
-
-Use the Monitor tool with this command:
-```bash
-${model.cliBin()} --enable-experimental ledger watch --plan {N} --repo $(git rev-parse --show-toplevel) --after $LEDGER_SEQ
-```

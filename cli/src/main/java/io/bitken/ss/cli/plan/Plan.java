@@ -1,7 +1,6 @@
 package io.bitken.ss.cli.plan;
 
 import io.bitken.ss.cli.HasSpec;
-import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.gw.GitState;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.gw.TaskStore;
@@ -11,27 +10,27 @@ import picocli.CommandLine.Model.CommandSpec;
 import java.util.concurrent.Callable;
 
 /**
- * {@code plan} noun group: bundles the plan-level subcommands under one parent,
- * mirroring {@code ledger}. Builds its own leaves in the constructor.
+ * {@code plan} noun group: bundles the plan-level subcommands under one parent.
+ * Builds its own leaves in the constructor.
  */
 public class Plan implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
     public Plan(PlanService planService, TaskStore taskStore, GitTags gitTags,
-                GitState gitState, ExperimentalMode mode) {
+                GitState gitState) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("plan");
         this.spec.usageMessage().description("Plan-level commands (init, quick, show, update, preflight, tag, branch, resume).");
         addLeaves(spec,
-            new Init(planService, taskStore, gitTags, mode),
+            new Init(planService, taskStore, gitTags),
             new QuickStart(planService),
             new Show(taskStore),
             new ProjectUpdate(planService),
             new Preflight(gitState, gitTags),
             new Tag(gitTags),
             new Branch(gitState),
-            new Resume(taskStore, gitState));
+            new Resume(taskStore));
     }
 
     @Override

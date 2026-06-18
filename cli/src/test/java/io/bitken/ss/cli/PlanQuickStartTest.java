@@ -3,9 +3,7 @@ package io.bitken.ss.cli;
 import io.bitken.ss.cli.plan.QuickStart;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.gw.GitState;
-import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.gw.TaskStore;
-import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.svc.plan.NewPlan;
 import io.bitken.ss.svc.plan.PlanNumbers;
 import io.bitken.ss.svc.plan.PlanService;
@@ -44,8 +42,7 @@ public class PlanQuickStartTest {
     private int run(GitState gitState, String... args) {
         ShipsmoothDataLocator locator = new ShipsmoothDataLocator(repoRoot);
         NewPlan newPlan = new NewPlan(new PlanNumbers(locator), gitState, locator);
-        PlanService planService = new PlanService(
-            new TaskStore(locator), new EventLedger(repoRoot), new ExperimentalMode(false), newPlan);
+        PlanService planService = new PlanService(new TaskStore(locator), newPlan);
         QuickStart cmd = new QuickStart(planService);
         return new CommandLine(cmd.getSpec()).execute(args);
     }

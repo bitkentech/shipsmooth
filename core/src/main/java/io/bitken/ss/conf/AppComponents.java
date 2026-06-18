@@ -1,14 +1,10 @@
 package io.bitken.ss.conf;
 
 import dagger.Component;
-import io.bitken.ss.git.WorktreeService;
 import io.bitken.ss.gw.GitState;
 import io.bitken.ss.gw.GitTags;
-import io.bitken.ss.ledger.EventLedger;
 import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.gw.TaskStore;
-import io.bitken.ss.workflow.WorkflowService;
-import io.bitken.ss.workflow.WorkflowServiceImpl;
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -19,9 +15,5 @@ public interface AppComponents {
     TaskStore taskStore();
     GitState gitState();
     GitTags gitTags();
-    EventLedger eventLedger();
     PlanService planService();
-    WorktreeService worktreeService();
-    WorkflowService workflowService();
-    WorkflowServiceImpl workflowServiceImpl();
 }
