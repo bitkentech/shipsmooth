@@ -4,14 +4,14 @@
     <plan-version>plan-83-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-18</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Fix leaf --help mixin bug</name>
             <commit>f2b52e0637cf8d11be00bcb0841e0c7c38daebcd</commit>
             <created-from>plan-83-v1</created-from>
@@ -27,7 +27,7 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Add option descriptions and param labels</name>
             <commit>d20b2c1d49361937c9d7dd5563601a1cf5c286aa</commit>
             <created-from>plan-83-v1</created-from>
@@ -39,12 +39,17 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Enumerate valid values for constrained options</name>
-            <commit>d7307955f2c773b963880744cfb9fc667367daf3</commit>
+            <commit>84cba9efee5235c796eb7a1380a6efab98e3cb93</commit>
             <created-from>plan-83-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-18T23:48:15.777+05:30</timestamp>
+                    <message>Follow-up fix committed: task status invalid-value error now lists CLI tokens (agent-coded) via TaskStatusType.value(), not enum constant names (AGENT_CODED). Matches the --help docs from this task.</message>
+                </comment>
+            </comments>
             <deviations>
                 <deviation>
                     <type>minor</type>
@@ -57,7 +62,7 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Fix self-duplicating group descriptions</name>
             <commit>31a6a5788a59e163e315b5fe7d7a8e22299607f4</commit>
             <created-from>plan-83-v1</created-from>
@@ -69,9 +74,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Document remaining bare-PARAM options</name>
-            <commit></commit>
+            <commit>817b35269ac93807d530428889492a59d1fac6b1</commit>
             <created-from>plan-83-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -83,6 +88,11 @@
         <update>
             <timestamp>2026-06-18T22:40:47.248+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-18T23:49:47.738+05:30</timestamp>
+            <message>Plan complete — CLI --help correct/complete/consistent across the tree; leaf --help bug fixed; all options documented; valid values enumerated; group descriptions de-duplicated; invalid-status error lists CLI tokens.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
