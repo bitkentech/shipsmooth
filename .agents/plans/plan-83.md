@@ -39,8 +39,10 @@ Captured by running `--help` across the whole tree on
    `.description(...)`, so picocli renders a bare placeholder with empty help
    text: `plan show --plan=PARAM`, `plan update` (`--blocked/--message/--plan/
    --status`), `task status` (`--plan/--status/--task`), `task set-commit`
-   (`--branch/--commit/--plan/--task`), and `plan quick --desc=PARAM`. Contrast
-   `task add`, which documents every option.
+   (`--branch/--commit/--plan/--task`), `plan quick --desc=PARAM`, and — found
+   after the first pass, see Task 5 — `plan preflight` (`--plan`), `plan branch`
+   (`--issue/--plan/--desc`), and `plan resume` (`--plan`). Contrast `task add`,
+   which documents every option.
 
 3. **Inconsistent placeholder labels.** A mix of descriptive labels
    (`PLAN_NUMBER`, `TASK_ID`, `TEXT`) and the meaningless default `PARAM`. The
@@ -117,3 +119,15 @@ list against the code that consumes the value before writing it.
 Replace the `plan` and `task` group descriptions that re-list their own verbs
 (redundant with picocli's auto-rendered `Commands:` block, and drift-prone) with
 a stable one-line summary of the group's purpose.
+
+### Task 5: Document remaining bare-PARAM options [Low]
+
+*Depends-on: 1*
+
+Added in v2 after end-to-end review of the v1 fixes surfaced three leaves whose
+options were not in the Task-2 enumeration and still render the meaningless
+`PARAM` placeholder with no description: `plan preflight` (`--plan`), `plan
+branch` (`--issue/--plan/--desc`), and `plan resume` (`--plan`). Give each a
+`.description(...)` and a meaningful `paramLabel` (`PLAN_NUMBER`, `ISSUE_ID`,
+`TEXT`), matching the conventions established in Task 2. Same pattern, no
+behaviour change.
