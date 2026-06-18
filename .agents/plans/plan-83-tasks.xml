@@ -11,20 +11,25 @@
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Fix leaf --help mixin bug</name>
-            <commit></commit>
+            <commit>f2b52e0637cf8d11be00bcb0841e0c7c38daebcd</commit>
             <created-from>plan-83-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-18T22:48:28.676+05:30</timestamp>
+                    <message>De-risk draft ready for review</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add option descriptions and param labels</name>
-            <commit></commit>
+            <commit>d20b2c1d49361937c9d7dd5563601a1cf5c286aa</commit>
             <created-from>plan-83-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -34,9 +39,27 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Enumerate valid values for constrained options</name>
-            <commit></commit>
+            <commit>d7307955f2c773b963880744cfb9fc667367daf3</commit>
+            <created-from>plan-83-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-18T23:21:02.997+05:30</timestamp>
+                    <message>Also documented tag --plan and added a create-failure test (closed a pre-existing untested branch in Tag). Noted: invalid-status/-kind error messages print enum constant names (AGENT_CODED) not CLI values (agent-coded) — candidate for a follow-up.</message>
+                </deviation>
+            </deviations>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Fix self-duplicating group descriptions</name>
+            <commit>31a6a5788a59e163e315b5fe7d7a8e22299607f4</commit>
             <created-from>plan-83-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -44,12 +67,12 @@
             <depends-on>1</depends-on>
         </task>
         <task>
-            <id>4</id>
+            <id>5</id>
             <risk>low</risk>
             <status>pending</status>
-            <name>Fix self-duplicating group descriptions</name>
+            <name>Document remaining bare-PARAM options</name>
             <commit></commit>
-            <created-from>plan-83-v1</created-from>
+            <created-from>plan-83-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
