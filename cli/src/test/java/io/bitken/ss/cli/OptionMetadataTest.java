@@ -111,4 +111,21 @@ public class OptionMetadataTest {
         assertDocumented("task", "set-commit", "--commit", "HASH");
         assertDocumented("task", "set-commit", "--branch", "BRANCH");
     }
+
+    @Test
+    void planPreflightOptionsDocumented() {
+        assertDocumented("plan", "preflight", "--plan", "PLAN_NUMBER");
+    }
+
+    @Test
+    void planBranchOptionsDocumented() {
+        assertDocumented("plan", "branch", "--issue", "ISSUE_ID");
+        assertDocumented("plan", "branch", "--plan", "PLAN_NUMBER");
+        assertDocumented("plan", "branch", "--desc", "TEXT");
+    }
+
+    @Test
+    void planResumeOptionsDocumented() {
+        assertDocumented("plan", "resume", "--plan", "PLAN_NUMBER");
+    }
 }
