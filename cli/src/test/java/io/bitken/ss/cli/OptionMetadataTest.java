@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Task 2 (plan-83): every documented option must carry a non-empty description
@@ -69,6 +70,38 @@ public class OptionMetadataTest {
         assertDocumented("task", "status", "--plan", "PLAN_NUMBER");
         assertDocumented("task", "status", "--task", "TASK_ID");
         assertDocumented("task", "status", "--status", "STATUS");
+    }
+
+    private void assertDescriptionContains(String group, String leaf, String name, String... needles) {
+        String desc = String.join(" ", option(group, leaf, name).description());
+        for (String needle : needles) {
+            assertTrue(desc.contains(needle),
+                    "`" + group + " " + leaf + " " + name + "` description should list \""
+                            + needle + "\"; was: " + desc);
+        }
+    }
+
+    @Test
+    void planTagKindEnumeratesValues() {
+        assertDescriptionContains("plan", "tag", "--kind", "version", "complete", "abandoned");
+    }
+
+    @Test
+    void planUpdateStatusEnumeratesValues() {
+        assertDescriptionContains("plan", "update", "--status",
+                "active", "complete", "abandoned", "in-review");
+    }
+
+    @Test
+    void taskStatusEnumeratesValues() {
+        assertDescriptionContains("task", "status", "--status",
+                "pending", "in-progress", "de-risked", "agent-coded", "closed",
+                "needs-triage", "abandoned");
+    }
+
+    @Test
+    void taskDeviationTypeEnumeratesValues() {
+        assertDescriptionContains("task", "deviation", "--type", "minor", "major");
     }
 
     @Test
