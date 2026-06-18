@@ -26,6 +26,10 @@ The [workflow spec](https://github.com/bitkentech/shipsmooth/blob/releases/dist/
 - **Pause and resume.** Plan files and task state live in git, so you can stop your development session and restart from exactly where you left off.
 - **Local task tracking.** Task management is via text files checked in alongside the plan (`.agents/plans/plan-{N}-tasks.xml`). No external services required (but [Linear](https://linear.app) integration is currently available).
 
+## Current Limitations
+- Support for concurrent "plans" doesn't exist. Each new plan relies on generating an incrementing serial number right now. That can be an issue if you choose to create multiple plans at one time.
+- There are no team-specific features. Usage assumes it's a solo developer working on one feature at a time.
+
 ## Installation
 
 ### Claude Code (Linux / macOS)
