@@ -101,6 +101,104 @@ acceptance is "`./gradlew build` green, no dangling references." Where a
 surviving class changes behaviour (PlanService losing ledger recording), update
 its existing unit test to assert the new, ledger-free behaviour first.
 
+## Test-impact baseline (verification harness)
+
+Captured **before execution** (plan-82-v5) from the existing suite. This is the
+acceptance oracle for the deletion: after the plan runs, the surviving suite
+must be green, every "will-fail" test must be either deleted (bound 1:1 to a
+removed class) or edited to the ledger-free behaviour, and no "should-not-fail"
+test may regress. Re-run `./gradlew build` and diff the result against this
+table at Task 6.
+
+Three buckets, by *why* a test reacts to the deletion:
+
+### A. Should NOT fail — must stay green untouched
+
+No real dependency on the subsystem; if one of these goes red, the cut bled
+into shared code and the change is wrong.
+
+- **core:** `gw/GitStateTest` (`worktreeList()` here is git's own worktree
+  listing on `GitState`, not the deleted `WorktreeService`),
+  `gw/GitTagsIntegrationTest`, `gw/TaskStoreTest`,
+  `ShipsmoothDataLocatorIntegrationTest`, `svc/plan/NewPlanTest`,
+  `svc/plan/PlanNumbersTest`, `svc/plan/SlugsTest`
+- **cli:** `AddTaskIntegrationTest`, `PlanBranchTest`, `PlanPreflightTest`,
+  `PlanTagTest`, `PlanCommandsIntegrationTest`, `RepoRootTest`
+- **harness:** `TargetTest`, `HookCommandRendererTest`
+- **plugin-model:** `EnvTest`, `OsTest`, `PlatformTest`, `PluginModelTest`
+- **packaging:** `PackageRuntimeTest`, `PluginModelReachabilityTest`,
+  `PublishReleaseTest`, `ValidateReleaseTest`, `ReleaseGuardTest` — the
+  "workflow" / "ledger" strings in these are the plugin **description** text and
+  a synthetic leak-detection fixture (`ReleaseGuardTest.launcherGuardFailsWhen...`
+  feeds the guard a literal `"ledger   Inspect..."` help line); neither depends
+  on any removed class, so both must keep passing.
+
+### B. WILL fail — bound 1:1 to deleted classes → delete the test
+
+These exist only to exercise removed code; they cannot survive the deletion and
+are removed with their subject (Tasks 3–4).
+
+- **core (Task 4):** `ledger/EventLedgerTest`, `LedgerIntegrationTest`,
+  `git/WorktreeServiceTest`, `workflow/integration/PromptBuilderTest`,
+  `workflow/TransactionTest`, `workflow/WorkflowServiceFinalizeWorkerTest`,
+  `workflow/WorkflowServiceInitializeWorkerTest`,
+  `workflow/WorkflowServiceRunIntegrationTest`, `workflow/WorkflowSkeletonTest`,
+  and `conf/AppComponentTest` (asserts the removed `eventLedger()` /
+  `worktreeService()` / `workflowService()` accessors — remove those assertions;
+  if nothing else remains, delete the test)
+- **cli (Task 3):** `InitLedgerTest`, `IntegrateTest`,
+  `LedgerRecordPatchIntegratedTest`, `LedgerTest`, `LedgerWatchTest`,
+  `WorkerDependencyIntegrationTest`, `WorkerLifecycleIntegrationTest`,
+  `WorkerWorktreeLifecycleIntegrationTest`
+
+### C. WILL fail — surviving tests that touch a removed symbol → edit them
+
+Kept tests on the critical path that currently construct/reference a removed
+symbol. They must be **rewritten to the ledger-free behaviour**, not deleted.
+(Compilation fails for the whole module until each is fixed, so these gate the
+build directly.)
+
+- **core (Task 1):** `svc/plan/PlanServiceTest` — drops the `EventLedger`
+  imports and ctor arg; the four ledger-recording assertions
+  (`updateTaskStatus...RecordsLedgerEvent`, `addComment...RecordsLedgerEvent`,
+  `...WithoutLedgerEvent`, `mutationRecordsNoLedgerEvent...`,
+  `ledgerFailureDoesNotRollBackXmlMutation`) become "mutation persists to XML"
+  with no ledger side-channel. This is the Invariant-#6 "update the existing
+  test first" step.
+- **cli (Tasks 1–3):** `CommandsTest` and `PlanQuickStartTest` (construct a
+  `PlanService` with an `EventLedger` arg — drop the arg to match Task 1's new
+  ctor); `ShipsmoothIntegrationTest` (imports `Event`/`EventType`/`EventLedger`,
+  asserts CLI mutations record ledger entries, plus `ledger`/`integrate` gating
+  — strip ledger assertions, drop the removed-command gating cases);
+  `ShipsmoothTest` (`integrate`/`worker`/`claim` gating cases — remove the cases
+  for deleted commands); `GroupedCommandTreeTest` (`worker`/`ledger` group
+  dispatch cases — remove); `PlanResumeTest` (`printsSummaryAndWorktreeInfo`,
+  `filtersWorktreesToPlanNumber`, the `stubWorktrees` helper — `printWorktrees`
+  is removed from `Resume`, so drop these worktree cases and keep the plain
+  summary case); `ProdSurfaceIntegrationTest` (its experimental-name set lists
+  `claim`/`worker`/`integrate`/`ledger` — drop the now-deleted names; the prod
+  surface must simply not list them at all).
+
+### D. MIGHT fail — golden/surface tests gated on template content (Task 5)
+
+These assert the *generated SKILL.md surface*. Outcome depends on getting the
+template edits right; they are the signal that Task 5 landed correctly.
+
+- **harness `TargetIntegrationTest`:** the three
+  `prod*BaseSkillHasNoLedgerReference` cases should stay green (prod already
+  hides ledger). The **`devBaseSkillKeepsLedgerReference`** case *will fail* once
+  Task 5 strips ledger from the dev templates — it currently asserts the dev
+  skill still contains `"ledger"`. Update or delete it: post-removal there is no
+  ledger paragraph in either build. Also re-check `mustNotContainWorkerBlock`
+  / parallel-skill assertions after the partials are deleted.
+- **harness `PosixBootstrapIntegrationTest`:** golden bootstrap surface; verify
+  it still matches after template edits (the JTE golden baseline at
+  `.agents/tmp/baseline` may need refreshing alongside it).
+
+> **One-line oracle for Task 6:** `git build` green ⇒ bucket A all pass,
+> bucket B files no longer exist, bucket C compiles+passes ledger-free, bucket D
+> reflects the new (ledger-absent) surface in both prod *and* dev.
+
 ## Tasks
 
 _Risk levels are first-draft estimates for human calibration (Phase 1, step 3)._
@@ -113,6 +211,9 @@ payloads — and update `PlanServiceTest` to assert the ledger-free behaviour.
 This is the riskiest cut because `PlanService` is a kept class on the critical
 plan/task path; getting its seam right de-risks every later deletion. End state:
 `PlanService` compiles and its unit tests pass with no ledger references.
+
+_Verify (bucket C): `PlanServiceTest` rewritten to ledger-free behaviour;
+`CommandsTest`, `PlanQuickStartTest` ctor args dropped. See Test-impact baseline._
 
 ### Task 2: Remove DI wiring and module exports for the subsystem [High]
 
@@ -135,6 +236,11 @@ integrate/worker registration from `Shipsmooth.java`, and `printWorktrees` from
 `plan/Resume.java`. Delete the matching CLI tests. End state: `cli` compiles and
 its surviving tests pass; `shipsmooth --help` lists no removed commands.
 
+_Verify: delete bucket-B cli tests (`InitLedgerTest`, `IntegrateTest`,
+`Ledger*Test`, `Worker*IntegrationTest`); edit bucket-C cli tests
+(`ShipsmoothTest`, `ShipsmoothIntegrationTest`, `GroupedCommandTreeTest`,
+`PlanResumeTest`, `ProdSurfaceIntegrationTest`). See Test-impact baseline._
+
 ### Task 4: Delete the core subsystem packages (ledger, workflow engine, git worktree) [Medium]
 
 *Depends-on: 2*
@@ -145,6 +251,11 @@ and `core/.../git/WorktreeService.java` + `MergeResult.java`. Verify each
 shared-looking helper (`Transaction`, `ProcessRunner`, progress reporters) for
 remaining users before deleting; keep any still referenced. Delete the matching
 core tests. End state: `core` compiles and tests pass.
+
+_Verify: delete bucket-B core tests (`EventLedgerTest`, `LedgerIntegrationTest`,
+`WorktreeServiceTest`, `PromptBuilderTest`, `TransactionTest`,
+`WorkflowService*Test`, `WorkflowSkeletonTest`); strip removed-accessor
+assertions from `AppComponentTest`. See Test-impact baseline._
 
 ### Task 5: Remove ledger/parallel-execution skill templates and refresh generated surface [Medium]
 
@@ -158,6 +269,12 @@ surface integration tests so the generated SKILL.md no longer names removed
 commands. End state: skills build green, golden baselines updated, surface tests
 pass.
 
+_Verify (bucket D): `TargetIntegrationTest.devBaseSkillKeepsLedgerReference`
+will fail — update/delete it (no ledger paragraph in either build now); keep the
+`prod*HasNoLedgerReference` cases green; re-check worker-block / parallel-skill
+assertions; refresh `PosixBootstrapIntegrationTest` golden. See Test-impact
+baseline._
+
 ### Task 6: Full build + on-disk cleanup + dead-reference sweep [Low]
 
 *Depends-on: 5*
@@ -167,3 +284,7 @@ de-special-case them in `.gitignore`, and grep the whole repo (source + docs)
 for surviving `ledger` / `Integrate` / `Worktree` / `worker` references to
 confirm nothing dangles. End state: clean full build, no stray references
 outside this plan file and historical plan docs.
+
+_Verify: run the Test-impact baseline oracle — every bucket-A test green,
+bucket-B test files gone, bucket-C/D tests green ledger-free. This is the final
+gate for the whole plan._
