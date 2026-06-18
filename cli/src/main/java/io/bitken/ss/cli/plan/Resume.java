@@ -24,7 +24,7 @@ public class Resume implements Callable<Integer>, HasSpec {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("resume");
         spec.usageMessage().description("Session-resume pre-flight: task state check.");
-        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
+        spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
     }
 
     @Override

@@ -19,7 +19,7 @@ public class AddDeviation implements Callable<Integer>, HasSpec {
         this.spec.usageMessage().description("Add a deviation to a task.");
         this.spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
         this.spec.addOption(OptionSpec.builder("--task").paramLabel("TASK_ID").required(true).description("Task ID (integer)").type(int.class).build());
-        this.spec.addOption(OptionSpec.builder("--type").paramLabel("TYPE").required(true).description("Type of deviation").type(String.class).build());
+        this.spec.addOption(OptionSpec.builder("--type").paramLabel("TYPE").required(true).description("Type of deviation: minor, major").type(String.class).build());
         this.spec.addOption(OptionSpec.builder("--message").paramLabel("MESSAGE").required(true).description("The deviation message").type(String.class).build());
     }
 

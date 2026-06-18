@@ -20,7 +20,7 @@ public class Task implements Callable<Integer>, HasSpec {
     public Task(PlanService planService, GitTags gitTags) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("task");
-        this.spec.usageMessage().description("Per-task commands (add, comment, deviation, status, set-commit).");
+        this.spec.usageMessage().description("Manage individual tasks within a plan and record their progress.");
         addLeaves(spec,
             new AddTask(planService, gitTags),
             new AddComment(planService),
@@ -41,6 +41,7 @@ public class Task implements Callable<Integer>, HasSpec {
 
     private static void addLeaves(CommandSpec parent, HasSpec... leaves) {
         for (HasSpec leaf : leaves) {
+            leaf.getSpec().mixinStandardHelpOptions(true);
             parent.addSubcommand(leaf.getSpec().name(), leaf.getSpec());
         }
     }

@@ -17,10 +17,14 @@ public class ProjectUpdate implements Callable<Integer>, HasSpec {
         this.planService = planService;
         this.spec.name("update");
         this.spec.usageMessage().description("Add a project update.");
-        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
-        this.spec.addOption(OptionSpec.builder("--status").type(String.class).build());
-        this.spec.addOption(OptionSpec.builder("--blocked").type(Boolean.class).build());
-        this.spec.addOption(OptionSpec.builder("--message").type(String.class).build());
+        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class)
+            .paramLabel("PLAN_NUMBER").description("Plan number").build());
+        this.spec.addOption(OptionSpec.builder("--status").type(String.class)
+            .paramLabel("STATUS").description("New plan status: active, complete, abandoned, in-review").build());
+        this.spec.addOption(OptionSpec.builder("--blocked").type(Boolean.class)
+            .description("Mark the plan blocked (major deviation)").build());
+        this.spec.addOption(OptionSpec.builder("--message").type(String.class)
+            .paramLabel("TEXT").description("Update message").build());
     }
 
     public CommandSpec getSpec() {

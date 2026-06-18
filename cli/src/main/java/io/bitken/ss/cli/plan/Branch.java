@@ -25,9 +25,9 @@ public class Branch implements Callable<Integer>, HasSpec {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("branch");
         spec.usageMessage().description("Create a task branch locally and print the push line.");
-        spec.addOption(OptionSpec.builder("--issue").required(false).type(String.class).build());
-        spec.addOption(OptionSpec.builder("--plan").required(false).type(Integer.class).build());
-        spec.addOption(OptionSpec.builder("--desc").required(true).type(String.class).build());
+        spec.addOption(OptionSpec.builder("--issue").paramLabel("ISSUE_ID").required(false).description("Issue ID for the branch (used in the slug; defaults to the plan number)").type(String.class).build());
+        spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(false).description("Plan number (used for the slug when --issue is absent)").type(Integer.class).build());
+        spec.addOption(OptionSpec.builder("--desc").paramLabel("TEXT").required(true).description("Short branch description").type(String.class).build());
     }
 
     @Override

@@ -17,10 +17,14 @@ public class SetCommit implements Callable<Integer>, HasSpec {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("set-commit");
         spec.usageMessage().description("Set the commit hash for a task.");
-        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
-        spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
-        spec.addOption(OptionSpec.builder("--commit").required(true).type(String.class).build());
-        spec.addOption(OptionSpec.builder("--branch").type(String.class).build());
+        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class)
+            .paramLabel("PLAN_NUMBER").description("Plan number").build());
+        spec.addOption(OptionSpec.builder("--task").required(true).type(int.class)
+            .paramLabel("TASK_ID").description("Task ID (integer)").build());
+        spec.addOption(OptionSpec.builder("--commit").required(true).type(String.class)
+            .paramLabel("HASH").description("Commit hash to record for the task").build());
+        spec.addOption(OptionSpec.builder("--branch").type(String.class)
+            .paramLabel("BRANCH").description("Branch the commit lives on").build());
     }
 
     public CommandSpec getSpec() {

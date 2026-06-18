@@ -16,9 +16,13 @@ public class UpdateStatus implements Callable<Integer>, HasSpec {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("status");
         this.spec.usageMessage().description("Update the status of a task.");
-        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
-        this.spec.addOption(OptionSpec.builder("--task").required(true).type(int.class).build());
-        this.spec.addOption(OptionSpec.builder("--status").required(true).type(String.class).build());
+        this.spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class)
+            .paramLabel("PLAN_NUMBER").description("Plan number").build());
+        this.spec.addOption(OptionSpec.builder("--task").required(true).type(int.class)
+            .paramLabel("TASK_ID").description("Task ID (integer)").build());
+        this.spec.addOption(OptionSpec.builder("--status").required(true).type(String.class)
+            .paramLabel("STATUS").description("New task status: pending, in-progress, de-risked, "
+                + "agent-coded, closed, needs-triage, abandoned").build());
         this.planService = planService;
     }
 
@@ -36,8 +40,10 @@ public class UpdateStatus implements Callable<Integer>, HasSpec {
         try {
             io.bitken.ss.jaxb.TaskStatusType.fromValue(status);
         } catch (IllegalArgumentException e) {
-            System.err.println("Error: invalid status \"" + status + "\". Allowed values: "
-                    + java.util.Arrays.toString(io.bitken.ss.jaxb.TaskStatusType.values()));
+            String allowed = java.util.Arrays.stream(io.bitken.ss.jaxb.TaskStatusType.values())
+                    .map(io.bitken.ss.jaxb.TaskStatusType::value)
+                    .collect(java.util.stream.Collectors.joining(", "));
+            System.err.println("Error: invalid status \"" + status + "\". Allowed values: " + allowed);
             return 2;
         }
 

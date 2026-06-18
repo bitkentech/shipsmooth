@@ -29,8 +29,8 @@ public class Tag implements Callable<Integer>, HasSpec {
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("tag");
         spec.usageMessage().description("Create a plan version/complete/abandoned tag.");
-        spec.addOption(OptionSpec.builder("--plan").required(true).type(int.class).build());
-        spec.addOption(OptionSpec.builder("--kind").required(true).type(String.class).build());
+        spec.addOption(OptionSpec.builder("--plan").paramLabel("PLAN_NUMBER").required(true).description("Plan number").type(int.class).build());
+        spec.addOption(OptionSpec.builder("--kind").paramLabel("KIND").required(true).description("Tag kind: version, complete, abandoned").type(String.class).build());
     }
 
     @Override
