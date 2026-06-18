@@ -103,7 +103,10 @@ public class GroupedCommandTreeTest {
             assertEquals(2, exit);
             String msg = err.toString();
             assertTrue(msg.contains("invalid status"), "expected error in: " + msg);
-            assertTrue(msg.contains("Allowed values"), "expected allowed values in: " + msg);
+            // Allowed values must be the accepted CLI tokens (e.g. "agent-coded"),
+            // not the JAXB enum constant names (e.g. "AGENT_CODED").
+            assertTrue(msg.contains("agent-coded"), "expected CLI value form in: " + msg);
+            assertFalse(msg.contains("AGENT_CODED"), "should not print enum constant names: " + msg);
         } finally {
             System.setErr(originalErr);
         }
