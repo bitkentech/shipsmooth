@@ -8,9 +8,8 @@ repository**.
 
 - The user's project repo is untouched: no `.agents/` directory, no marker or
   pointer files, nothing added to its working tree or its history.
-- Everything shipsmooth produces — plan markdown, task XML, the ledger, the
-  object store, learnings, and the worktree/integration bookkeeping — lives in a
-  **separate git repo** dedicated to shipsmooth state.
+- Everything shipsmooth produces — plan markdown, task XML, learnings, and the
+  object store — lives in a **separate git repo** dedicated to shipsmooth state.
 - That state repo carries its own permanent `plan-N-vK` plan-revision tags, so
   the audit trail (the `git diff` between two plan tags) is **fully
   self-contained in the state repo**. The project repo plays no part in the
@@ -55,25 +54,15 @@ anticipate a future option to relocate the data tree outside the repo" — and
 | Learnings | `.agents/learnings/` | tracked in project repo | tracked in **state repo** |
 | Ledger | `.agents/ledger.jsonl` | ignored | in **state repo** |
 | Object store | `.agents/objects/` | ignored | in **state repo** |
-| Task worktrees | `.agents/tasks/{taskId}` | ignored git worktrees | git worktrees of the **project** repo, located outside it |
-| Integration worktrees | `.agents/integration/plan-{N}` | ignored git worktrees | git worktrees of the **project** repo, located outside it |
 | Scratch | `.agents/tmp/` | ignored | in the state-repo area |
 
-Note the worktree rows: `tasks/` and `integration/` are **git worktrees of the
-project repo**, not files we can simply move into the state repo. They stay bound
-to the project repo's `.git` (a worktree cannot belong to a different repo), but
-their *physical location* moves outside the project working tree so nothing
-appears inside it. This is the one part of the state that is "project-repo
-worktree, parked elsewhere" rather than "owned by the state repo."
+> **Note (plan-84 update):** Task worktrees and integration worktrees were removed
+> in plan-82 (`bd16a5a`). The two rows that appeared here are no longer applicable.
 
 ### Path-resolution seam
 - `ShipsmoothDataLocator(repoRoot)` resolves tracked + ledger/object paths via
   `repoRoot.resolve(...)`. This is the single seam where the data tree's root is
   decided — the natural place to introduce "state root ≠ project root."
-- `worktreeRel(taskId)` / `integrationRel(planId)` return **repo-relative
-  strings**, consumed as `repoRoot.resolve(rel)` in `WorkflowServiceImpl`. These
-  must change to place worktrees at an external path while keeping them attached
-  to the project repo's git.
 - `repoRoot` comes from `git rev-parse --show-toplevel` (`cli/.../RepoRoot.java`),
   injected via `ServicesModule`. Two CLI call-sites (`plan/Init`,
   `worker/WorkerCleanup`) still construct the locator with `Paths.get(".")`.
@@ -117,9 +106,11 @@ worktree, parked elsewhere" rather than "owned by the state repo."
    the project and runs shipsmooth with defaults. B's project repo has no trace
    (correct) — confirm B gets a coherent picture and doesn't see dangling tags
    (relevant only in the tags-only tier) or expect state that isn't there.
-6. **Resume / recovery.** Session-resume pre-flight and integrate-recovery look
-   for worktrees and the ledger by repo-relative path today. Walk how each reads
-   when state and worktrees live outside the project repo.
+6. **Resume / recovery.** Session-resume pre-flight looks for the task XML file.
+   In zero-trace mode the XML lives in the state repo; as long as `stateRoot` is
+   resolved correctly at startup, `ShipsmoothDataLocator` finds it transparently.
+   Worktrees and the ledger were removed in plan-82 — no additional recovery
+   surface to walk.
 
 ## Tasks
 
