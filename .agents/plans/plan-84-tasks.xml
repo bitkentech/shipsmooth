@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>84</plan>
-    <plan-version>plan-84-v2</plan-version>
+    <plan-version>plan-84-v4</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -115,6 +115,10 @@
                 <comment>
                     <timestamp>2026-06-16T21:06:29.897+05:30</timestamp>
                     <message>Task 7 decision REOPENED. Findings: (A) CLAUDE_PLUGIN_OPTION_* not guaranteed in Bash-tool env (only hook/MCP/LSP); (B) userConfig not reliably prompted (issue #39455); (C) 0/38 official Anthropic plugins use userConfig — hookify reads its own .local files instead. Candidate direction: shipsmooth reads its own config file(s), no userConfig. Sub-choices open (2-layer vs per-repo-only; own file vs .claude/settings.local.json). Undecided — see plan-84.md Task 7 follow-up research.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-19T13:15:15.556+05:30</timestamp>
+                    <message>DECISION RESOLVED (supersedes the REOPENED state): files-only mechanism. shipsmooth reads its OWN config files at CLI-invocation time (Jackson); NO userConfig / CLAUDE_PLUGIN_OPTION_* / settings.json scraping (finding A: env not guaranteed in Bash-tool CLI; C: matches hookify idiom). Two layers: L1 per-repo gitignored .agents/config.json (override, flips on/off + path) &gt; L2 global ~/.config/shipsmooth/config.json default &gt; unset=in-repo. Resolved value feeds ServicesModule stateRoot (Task 5 seam). Host-portable: Tasks 8/9 reuse identical files+resolution. Enable via file edit or future 'shipsmooth config set' (CLI surface finalized in Task 6).</message>
                 </comment>
             </comments>
             <deviations/>

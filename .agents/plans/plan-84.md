@@ -178,13 +178,14 @@ resume/recovery (flow 6).
 
 ### Task 7: Opt-in mechanism for Claude (+ shared state-repo layout/keying) [Medium]
 *Depends-on: 1*
-Design how a **Claude** user turns separate-repo mode on, using Claude plugin
-customization mechanisms (plugin config / settings / env, TBD by research). Also
-make the **host-agnostic** decisions here, reused by Tasks 8–9: where the state
-repo lives, how repo identity is computed (so two clones/CI don't collide), the
-external worktree location, and the tags-only sub-choice. Justify against
-existing config conventions; define precedence rules. Output: a decision section.
-Gate: human sign-off before any code.
+Design how a **Claude** user turns separate-repo mode on. **Resolved (v4):** a
+**files-only** mechanism — shipsmooth reads its own config (`.agents/config.json`
+per-repo override over `~/.config/shipsmooth/config.json` global default), with no
+`userConfig`/`CLAUDE_PLUGIN_OPTION_*` dependency (Finding A). Also make the
+**host-agnostic** decisions here, reused by Tasks 8–9: where the state repo lives,
+how repo identity is computed (so two clones/CI don't collide), the external
+worktree location, and the tags-only sub-choice. Define precedence rules. Output:
+the decision section in the Research log. Gate: human sign-off before any code.
 
 ### Task 8: Opt-in mechanism for Codex [Medium]
 *Depends-on: 7*
@@ -247,6 +248,11 @@ identity (flow 4); and the tags-only sub-choice needs its own boolean
 `userConfig` option.
 
 ### Task 7 DECISION — two-layer config: plugin default + per-repo override
+
+> **SUPERSEDED (plan-84-v4).** This `userConfig`-based decision was reopened (see
+> the follow-up research below) and ultimately replaced by the **files-only**
+> decision at the end of this log. Kept here as audit trail only — do not wire
+> this version.
 
 The state-repo location is configured in **two layers**, resolved by our
 SessionStart hook / CLI. This mirrors Claude's own documented precedence
@@ -324,6 +330,50 @@ derive). Open sub-choices for that direction:
   doesn't couple us to any host's settings schema.
 
 **Status: undecided — awaiting human direction before wiring.**
+
+### Task 7 DECISION (RESOLVED, plan-84-v4) — files-only config, two shipsmooth-owned layers
+
+The reopened question is resolved: **shipsmooth reads its own config files** at
+CLI-invocation time. We drop `userConfig`, `CLAUDE_PLUGIN_OPTION_*`, and any
+`settings.json` scraping entirely. Finding A (the env var is not guaranteed in
+the Bash-tool process that actually runs our CLI) is decisive — there is no
+reliable channel to deliver a plugin-config value into the CLI — and Finding C
+(`hookify` reads its own `.local.*` files; shipsmooth already reads its own
+`.agents/` tree) makes the file-based approach the idiomatic one.
+
+**The state-repo location resolves from two shipsmooth-owned layers** (highest
+wins), both read by the CLI via Jackson (already a dependency):
+
+1. **Per-repo override** — a gitignored, shipsmooth-owned file, `.agents/config.json`.
+   Highest precedence. A **full override** for this repo: it can flip the mode
+   **on/off** and set the state-repo **path**. To distinguish "off" from "unset"
+   it carries an explicit enable flag plus a path, e.g.
+   `{ "stateRepo": { "enabled": false } }` forces in-repo, while
+   `{ "stateRepo": { "enabled": true, "dir": "/path" } }` forces separate-repo at
+   that path. Absent the key ⇒ fall through to Layer 2.
+2. **Global default** — a user-level shipsmooth file, `~/.config/shipsmooth/config.json`
+   (XDG; honours `$XDG_CONFIG_HOME`). The user's default preference across all
+   projects.
+3. **Unset** ⇒ in-repo default mode (today's bit-for-bit behavior).
+
+The resolved value feeds `ServicesModule(repoRoot, stateRoot, …)` — the Task 5
+seam. `repoRoot` continues to come from `git rev-parse`, so we depend on **no**
+host-provided env var.
+
+**Host-portable by construction.** Because the mechanism is shipsmooth's own
+files (not a Claude-native channel), Tasks 8 (Codex) and 9 (Gemini) reuse the
+**identical files and resolution** — there is no longer a per-host config
+channel to design. Each host's task reduces to its install/enable UX, not a
+distinct config plumbing.
+
+**Enable UX.** The user enables the mode by writing the per-repo file — either by
+hand or via a future `shipsmooth config set …` command. The exact CLI surface
+(and the precise JSON key names/shape) is finalized when wiring Task 6; nothing
+downstream gates on it.
+
+**Tags-only sub-choice** stays a boolean in the same file
+(e.g. `{ "stateRepo": { "tagsInProjectRepo": true } }`), resolved by the same
+two-layer precedence.
 
 ## Out of scope
 - Multi-repo / shared-team state *servers*. Local filesystem only; the state repo
