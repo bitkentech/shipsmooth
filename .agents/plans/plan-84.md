@@ -525,3 +525,21 @@ The following are **not handled by this design** and are deferred for a future p
   added later as a `"default"` entry or a separate `defaultStateDir` field.
 - **`tagsInProjectRepo` sub-option.** Dropped from the current design; can be
   added as an optional field in the project entry when needed.
+
+---
+
+### Task 4 DECISION — user-facing name: **standalone**
+
+The mode is called **standalone** throughout: config keys, CLI output, SKILL.md prose.
+
+- `mode = standalone` (vs `in-repo`)
+- Natural prose: "standalone mode", "standalone state repo"
+- Replaces all earlier uses of "zero-trace" and "separate-repo" in user-facing surfaces (internal code may use either)
+
+**Rejected alternatives:**
+- *zero-trace* — accurate technically but not self-explanatory to a newcomer
+- *detached* — precise for git users but sounds broken/negative ("detached HEAD" association)
+- *isolated* — implies the state is isolated rather than the repo being clean
+- *external* — correct but bland
+- *offline* — misleading; implies no network connectivity
+- *sidecar* — evocative but implies tight coupling

@@ -57,12 +57,17 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Choose a name for this mode of operation</name>
             <commit></commit>
             <created-from>plan-84-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-19T14:31:13.366Z</timestamp>
+                    <message>Chosen name: standalone. Rejected: zero-trace, detached, isolated, external, offline, sidecar.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
