@@ -97,9 +97,9 @@
         <task>
             <id>6</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Implement zero-trace mode</name>
-            <commit></commit>
+            <commit>cdb393f4385e171c0688b712e9ed322eed97003d</commit>
             <created-from>plan-84-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
