@@ -2,6 +2,7 @@ package io.bitken.ss.cli;
 
 import io.bitken.ss.cli.conf.ExperimentalModeParser;
 import io.bitken.ss.cli.conf.RemoteUrl;
+import io.bitken.ss.cli.conf.ResolvedMode;
 import io.bitken.ss.cli.conf.StandaloneConfigException;
 import io.bitken.ss.cli.conf.StandaloneConfigResolver;
 import io.bitken.ss.conf.AppComponents;
@@ -46,14 +47,15 @@ public class Shipsmooth {
 
         Path stateRoot;
         try {
-            Optional<Path> resolved = new StandaloneConfigResolver().resolve(repoRoot, remoteUrl);
-            if (resolved.isPresent()) {
-                stateRoot = resolved.get();
-                guardAgainstExistingInRepoState(repoRoot);
-                initStateRepoIfAbsent(stateRoot);
-            } else {
-                stateRoot = repoRoot;
-            }
+            ResolvedMode mode = new StandaloneConfigResolver().resolve(repoRoot, remoteUrl);
+            stateRoot = switch (mode) {
+                case ResolvedMode.InRepo() -> repoRoot;
+                case ResolvedMode.Standalone(Path stateDir) -> {
+                    guardAgainstExistingInRepoState(repoRoot);
+                    initStateRepoIfAbsent(stateDir);
+                    yield stateDir;
+                }
+            };
         } catch (StandaloneConfigException e) {
             System.err.println("shipsmooth: config error: " + e.getMessage());
             System.exit(1);

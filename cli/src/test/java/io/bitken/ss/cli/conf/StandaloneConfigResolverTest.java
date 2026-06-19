@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 class StandaloneConfigResolverTest {
 
@@ -16,10 +17,11 @@ class StandaloneConfigResolverTest {
 
     // Inv-1: no config file → in-repo default
     @Test
-    void noConfigFile_returnsEmpty() {
+    void noConfigFile_returnsInRepo() {
         Path absent = tmp.resolve("ss-config.toml");
         var resolver = new StandaloneConfigResolver(absent);
-        assertTrue(resolver.resolve(tmp, Optional.of("https://github.com/org/repo.git")).isEmpty());
+        assertInstanceOf(ResolvedMode.InRepo.class,
+                resolver.resolve(tmp, Optional.of("https://github.com/org/repo.git")));
     }
 
     // Match by both localPath and remoteUrl
@@ -34,14 +36,15 @@ class StandaloneConfigResolverTest {
                 """.formatted(tmp, stateDir));
 
         var resolver = new StandaloneConfigResolver(config);
-        Optional<Path> result = resolver.resolve(tmp, Optional.of("https://github.com/org/repo.git"));
-        assertTrue(result.isPresent());
-        assertEquals(stateDir.toAbsolutePath().normalize(), result.get());
+        var result = resolver.resolve(tmp, Optional.of("https://github.com/org/repo.git"));
+        assertInstanceOf(ResolvedMode.Standalone.class, result);
+        assertEquals(stateDir.toAbsolutePath().normalize(),
+                ((ResolvedMode.Standalone) result).stateDir());
     }
 
     // No entry for this project → in-repo default
     @Test
-    void noMatchingEntry_returnsEmpty() throws IOException {
+    void noMatchingEntry_returnsInRepo() throws IOException {
         Path config = writeConfig(tmp, """
                 [[projects]]
                 remoteUrl = "https://github.com/org/other.git"
@@ -50,12 +53,13 @@ class StandaloneConfigResolverTest {
                 """);
 
         var resolver = new StandaloneConfigResolver(config);
-        assertTrue(resolver.resolve(tmp, Optional.of("https://github.com/org/repo.git")).isEmpty());
+        assertInstanceOf(ResolvedMode.InRepo.class,
+                resolver.resolve(tmp, Optional.of("https://github.com/org/repo.git")));
     }
 
     // remoteUrl mismatch on same localPath → no match
     @Test
-    void remoteUrlMismatch_returnsEmpty() throws IOException {
+    void remoteUrlMismatch_returnsInRepo() throws IOException {
         Path config = writeConfig(tmp, """
                 [[projects]]
                 remoteUrl = "https://github.com/org/repo.git"
@@ -64,7 +68,8 @@ class StandaloneConfigResolverTest {
                 """.formatted(tmp));
 
         var resolver = new StandaloneConfigResolver(config);
-        assertTrue(resolver.resolve(tmp, Optional.of("https://github.com/org/OTHER.git")).isEmpty());
+        assertInstanceOf(ResolvedMode.InRepo.class,
+                resolver.resolve(tmp, Optional.of("https://github.com/org/OTHER.git")));
     }
 
     // No remote → match on localPath alone
@@ -78,9 +83,10 @@ class StandaloneConfigResolverTest {
                 """.formatted(tmp, stateDir));
 
         var resolver = new StandaloneConfigResolver(config);
-        Optional<Path> result = resolver.resolve(tmp, Optional.empty());
-        assertTrue(result.isPresent());
-        assertEquals(stateDir.toAbsolutePath().normalize(), result.get());
+        var result = resolver.resolve(tmp, Optional.empty());
+        assertInstanceOf(ResolvedMode.Standalone.class, result);
+        assertEquals(stateDir.toAbsolutePath().normalize(),
+                ((ResolvedMode.Standalone) result).stateDir());
     }
 
     // Inv-2: stateDir missing → hard error
@@ -115,9 +121,10 @@ class StandaloneConfigResolverTest {
                 """.formatted(tmp, state1, tmp, state2));
 
         var resolver = new StandaloneConfigResolver(config);
-        Optional<Path> result = resolver.resolve(tmp, Optional.of("https://github.com/org/repo.git"));
-        assertTrue(result.isPresent());
-        assertEquals(state1.toAbsolutePath().normalize(), result.get());
+        var result = resolver.resolve(tmp, Optional.of("https://github.com/org/repo.git"));
+        assertInstanceOf(ResolvedMode.Standalone.class, result);
+        assertEquals(state1.toAbsolutePath().normalize(),
+                ((ResolvedMode.Standalone) result).stateDir());
     }
 
     private static Path writeConfig(Path dir, String toml) throws IOException {

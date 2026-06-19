@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
+
+
 /**
  * Resolves the standalone state-repo root from
  * {@code ~/.config/shipsmooth/ss-config.toml}.
@@ -32,11 +34,12 @@ public final class StandaloneConfigResolver {
     /**
      * @param localPath  canonical repo root ({@code git rev-parse --show-toplevel})
      * @param remoteUrl  origin URL if present
-     * @return the {@code stateDir} path from the matching entry, or empty for in-repo mode
+     * @return {@link ResolvedMode.Standalone} with the matched {@code stateDir}, or
+     *         {@link ResolvedMode.InRepo} when no entry matches (in-repo default)
      */
-    public Optional<Path> resolve(Path localPath, Optional<String> remoteUrl) {
+    public ResolvedMode resolve(Path localPath, Optional<String> remoteUrl) {
         if (!Files.exists(configFile)) {
-            return Optional.empty();
+            return new ResolvedMode.InRepo();
         }
 
         StandaloneConfig config;
@@ -52,20 +55,19 @@ public final class StandaloneConfigResolver {
             if (!localPathStr.equals(normalisePath(entry.getLocalPath()))) {
                 continue;
             }
-            // localPath matches — check remoteUrl if both sides have one
             if (remoteUrl.isPresent() && entry.getRemoteUrl() != null
                     && !remoteUrl.get().equals(entry.getRemoteUrl())) {
                 continue;
             }
-            // match found
             if (entry.getStateDir() == null || entry.getStateDir().isBlank()) {
                 throw new StandaloneConfigException(
                         "Entry for localPath=" + localPathStr + " has no stateDir in " + configFile);
             }
-            return Optional.of(Path.of(entry.getStateDir()).toAbsolutePath().normalize());
+            return new ResolvedMode.Standalone(
+                    Path.of(entry.getStateDir()).toAbsolutePath().normalize());
         }
 
-        return Optional.empty();
+        return new ResolvedMode.InRepo();
     }
 
     private static String normalisePath(String raw) {
