@@ -182,17 +182,28 @@ location, and the tags-only sub-choice. See the Research log for the source
 table, precedence, and resolver invariants. Output: the decision section in the
 Research log. Gate: human sign-off before any code.
 
-### Task 8: Opt-in mechanism for Codex [Medium]
+### Task 8: Standalone-mode enablement UX for Codex [Medium]
 *Depends-on: 7*
-Design how a **Codex** user turns separate-repo mode on, reusing Task 7's shared
-keying/layout. Codex has no SessionStart hook (see plan-77) and uses a one-time
-installer model — account for that in how the knob is read and persisted. Output:
-a decision section.
+**Reframed (plan-84-v6).** Task 7's resolved design makes the config mechanism
+**host-agnostic**: enabling standalone mode is *only* "add a matching entry to
+`~/.config/shipsmooth/ss-config.toml`" — there is no per-host config channel left
+to design (`StandaloneConfigResolver` reads that one file, keyed by
+`(localPath, remoteUrl)`, with no env var or plugin-config dependency). So this
+task is **not** about config plumbing; it covers only the **Codex-specific
+install/enable UX**: how a Codex user gets the shipsmooth CLI runtime present
+(Codex has no SessionStart hook — it uses the one-time installer model, see
+plan-77), and how that user discovers and writes the TOML entry (by hand or via a
+future `shipsmooth config` command). Output: a decision section describing the
+Codex enable walkthrough end to end.
 
-### Task 9: Opt-in mechanism for Gemini [Medium]
+### Task 9: Standalone-mode enablement UX for Gemini [Medium]
 *Depends-on: 7*
-Design how a **Gemini** user turns separate-repo mode on, reusing Task 7's shared
-keying/layout, via the Gemini extension mechanism. Output: a decision section.
+**Reframed (plan-84-v6).** Same reframing as Task 8: the config mechanism is the
+shared host-agnostic TOML file from Task 7, so there is no per-host config channel
+to design. This task covers only the **Gemini-specific install/enable UX** via the
+Gemini extension mechanism: how the shipsmooth CLI runtime becomes available to a
+Gemini user, and how that user discovers and writes the `ss-config.toml` entry.
+Output: a decision section describing the Gemini enable walkthrough end to end.
 
 ## Research log
 
