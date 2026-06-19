@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
-    <plan>82</plan>
-    <plan-version>plan-82-v2</plan-version>
+    <plan>84</plan>
+    <plan-version>plan-84-v2</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -14,7 +14,7 @@
             <status>pending</status>
             <name>Inventory state + invariants, and name the seam for zero-trace mode</name>
             <commit></commit>
-            <created-from>plan-82-v2</created-from>
+            <created-from>plan-84-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -25,7 +25,7 @@
             <status>abandoned</status>
             <name>Decide the opt-in mechanism and the state-repo layout/keying</name>
             <commit></commit>
-            <created-from>plan-82-v2</created-from>
+            <created-from>plan-84-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
@@ -42,7 +42,7 @@
             <status>pending</status>
             <name>Walk all six user flows under zero-trace mode</name>
             <commit></commit>
-            <created-from>plan-82-v2</created-from>
+            <created-from>plan-84-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -54,7 +54,7 @@
             <status>pending</status>
             <name>Choose a name for this mode of operation</name>
             <commit></commit>
-            <created-from>plan-82-v2</created-from>
+            <created-from>plan-84-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -66,7 +66,7 @@
             <status>agent-coded</status>
             <name>Prepare the existing codebase for the feature</name>
             <commit>dc2f71c89d8582f5f9e9aa11a39994bab696e422</commit>
-            <created-from>plan-82-v2</created-from>
+            <created-from>plan-84-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
@@ -89,7 +89,7 @@
             <status>pending</status>
             <name>Implement zero-trace mode</name>
             <commit></commit>
-            <created-from>plan-82-v2</created-from>
+            <created-from>plan-84-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -101,20 +101,20 @@
             <status>in-progress</status>
             <name>Opt-in mechanism for Claude (+ shared state-repo layout/keying)</name>
             <commit></commit>
-            <created-from>plan-82-v3</created-from>
+            <created-from>plan-84-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
                     <timestamp>2026-06-16T18:54:35.789+05:30</timestamp>
-                    <message>Research done: Claude plugins expose userConfig (type directory/string/bool, prompted at enable time). Value reaches code via CLAUDE_PLUGIN_OPTION_&lt;KEY&gt; env + ${user_config.KEY} substitution; persisted in settings.json pluginConfigs[id].options (per-user). Plan: declare state_repo_dir userConfig, pass to ServicesModule stateRoot. See plan-82.md Research log.</message>
+                    <message>Research done: Claude plugins expose userConfig (type directory/string/bool, prompted at enable time). Value reaches code via CLAUDE_PLUGIN_OPTION_&lt;KEY&gt; env + ${user_config.KEY} substitution; persisted in settings.json pluginConfigs[id].options (per-user). Plan: declare state_repo_dir userConfig, pass to ServicesModule stateRoot. See plan-84.md Research log.</message>
                 </comment>
                 <comment>
                     <timestamp>2026-06-16T20:20:03.566+05:30</timestamp>
-                    <message>DECISION: two-layer config. Layer1 plugin userConfig (global default, CLAUDE_PLUGIN_OPTION_*). Layer2 per-repo override in .claude/settings.local.json (gitignored, full override of path + on/off, enabled flag distinguishes off from unset). Resolution: local override &gt; plugin default &gt; in-repo. Mirrors Claude Local&gt;User precedence; our hook reads the local file. Model reused host-agnostically by tasks 8/9. See plan-82.md Task 7 DECISION.</message>
+                    <message>DECISION: two-layer config. Layer1 plugin userConfig (global default, CLAUDE_PLUGIN_OPTION_*). Layer2 per-repo override in .claude/settings.local.json (gitignored, full override of path + on/off, enabled flag distinguishes off from unset). Resolution: local override &gt; plugin default &gt; in-repo. Mirrors Claude Local&gt;User precedence; our hook reads the local file. Model reused host-agnostically by tasks 8/9. See plan-84.md Task 7 DECISION.</message>
                 </comment>
                 <comment>
                     <timestamp>2026-06-16T21:06:29.897+05:30</timestamp>
-                    <message>Task 7 decision REOPENED. Findings: (A) CLAUDE_PLUGIN_OPTION_* not guaranteed in Bash-tool env (only hook/MCP/LSP); (B) userConfig not reliably prompted (issue #39455); (C) 0/38 official Anthropic plugins use userConfig — hookify reads its own .local files instead. Candidate direction: shipsmooth reads its own config file(s), no userConfig. Sub-choices open (2-layer vs per-repo-only; own file vs .claude/settings.local.json). Undecided — see plan-82.md Task 7 follow-up research.</message>
+                    <message>Task 7 decision REOPENED. Findings: (A) CLAUDE_PLUGIN_OPTION_* not guaranteed in Bash-tool env (only hook/MCP/LSP); (B) userConfig not reliably prompted (issue #39455); (C) 0/38 official Anthropic plugins use userConfig — hookify reads its own .local files instead. Candidate direction: shipsmooth reads its own config file(s), no userConfig. Sub-choices open (2-layer vs per-repo-only; own file vs .claude/settings.local.json). Undecided — see plan-84.md Task 7 follow-up research.</message>
                 </comment>
             </comments>
             <deviations/>
@@ -126,7 +126,7 @@
             <status>pending</status>
             <name>Opt-in mechanism for Codex</name>
             <commit></commit>
-            <created-from>plan-82-v3</created-from>
+            <created-from>plan-84-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -138,7 +138,7 @@
             <status>pending</status>
             <name>Opt-in mechanism for Gemini</name>
             <commit></commit>
-            <created-from>plan-82-v3</created-from>
+            <created-from>plan-84-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>

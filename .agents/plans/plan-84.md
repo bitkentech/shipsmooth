@@ -1,4 +1,4 @@
-# Plan 82 — Zero-trace mode: shipsmooth state in a separate git repository
+# Plan 84 — Zero-trace mode: shipsmooth state in a separate git repository
 
 ## The approach (committed)
 
@@ -84,7 +84,7 @@ worktree, parked elsewhere" rather than "owned by the state repo."
 ## Audit trail in zero-trace mode
 
 - Plan revisions are tagged `plan-N-vK` **in the state repo**; `git diff
-  plan-82-v1 plan-82-v2` (run in the state repo) is the audit, identical in shape
+  plan-84-v1 plan-84-v2` (run in the state repo) is the audit, identical in shape
   to today's model.
 - Tier "tags only": the same tag name *may* also be written to the project repo,
   giving a permanent tag-name ↔ tag-name correlation across the two repos, both
