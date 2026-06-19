@@ -39,13 +39,19 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Walk all six user flows under zero-trace mode</name>
             <commit></commit>
             <created-from>plan-84-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-19T14:24:08.205Z</timestamp>
+                    <message>Flows walked informally in conversation rather than as a written plan section. Flows 1, 2, 6 resolved cleanly. Flow 3 (mid-project switch) deferred ��� hard error if .agents/ exists in zero-trace mode. Flows 4, 5 (team scenarios) deferred to a future plan. Sufficient to proceed to implementation.</message>
+                </deviation>
+            </deviations>
             <depends-on>7</depends-on>
         </task>
         <task>
@@ -98,7 +104,7 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>in-progress</status>
+            <status>agent-coded</status>
             <name>Opt-in mechanism for Claude (+ shared state-repo layout/keying)</name>
             <commit></commit>
             <created-from>plan-84-v3</created-from>
@@ -119,6 +125,10 @@
                 <comment>
                     <timestamp>2026-06-19T13:15:15.556+05:30</timestamp>
                     <message>DECISION RESOLVED (supersedes the REOPENED state): files-only mechanism. shipsmooth reads its OWN config files at CLI-invocation time (Jackson); NO userConfig / CLAUDE_PLUGIN_OPTION_* / settings.json scraping (finding A: env not guaranteed in Bash-tool CLI; C: matches hookify idiom). Two layers: L1 per-repo gitignored .agents/config.json (override, flips on/off + path) &gt; L2 global ~/.config/shipsmooth/config.json default &gt; unset=in-repo. Resolved value feeds ServicesModule stateRoot (Task 5 seam). Host-portable: Tasks 8/9 reuse identical files+resolution. Enable via file edit or future 'shipsmooth config set' (CLI surface finalized in Task 6).</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-19T14:24:02.269Z</timestamp>
+                    <message>Design complete: single-user TOML config at ~/.config/shipsmooth/ss-config.toml, (remoteUrl,localPath) composite key, no enabled flag, hard error on missing stateDir, auto-create state repo on first use. Human sign-off received.</message>
                 </comment>
             </comments>
             <deviations/>
