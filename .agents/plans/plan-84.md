@@ -456,29 +456,32 @@ user on a single machine. Nothing in it precludes extending to team use later.
 One file, per-user, outside every project repo:
 
 ```
-~/.config/shipsmooth/ss-config.json   (honours $XDG_CONFIG_HOME)
+~/.config/shipsmooth/ss-config.toml   (honours $XDG_CONFIG_HOME)
 ```
+
+Format: **TOML** (`jackson-dataformat-toml:2.17.2`). Chosen over JSON (no comments) and
+YAML (pulls in SnakeYAML ~350 KB; TOML dataformat adds only ~70 KB to the jlink image).
 
 No config file inside the project repo. No gitignored per-repo file. No global
 defaults separate from the per-project entries. Zero trace in the code repo.
 
 #### Config shape
 
-```json
-{
-  "projects": [
-    {
-      "remoteUrl": "https://github.com/org/repo.git",
-      "localPath": "/home/user/work/repo",
-      "stateDir": "/home/user/shipsmooth-state/repo"
-    },
-    {
-      "remoteUrl": "https://github.com/org/repo.git",
-      "localPath": "/home/user/work/repo-clone2",
-      "stateDir": "/home/user/shipsmooth-state/repo-clone2"
-    }
-  ]
-}
+```toml
+# ~/.config/shipsmooth/ss-config.toml
+
+[[projects]]
+# my main checkout
+remoteUrl = "https://github.com/org/repo.git"
+localPath  = "/home/user/work/repo"
+stateDir   = "/home/user/shipsmooth-state/repo"
+
+[[projects]]
+# separate clone — distinct state
+remoteUrl = "https://github.com/org/repo.git"
+localPath  = "/home/user/work/repo-clone2"
+stateDir   = "/home/user/shipsmooth-state/repo-clone2"
+```
 ```
 
 Each entry is keyed by the **pair `(remoteUrl, localPath)`**. Two clones of the
