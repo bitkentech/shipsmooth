@@ -437,3 +437,97 @@ Task 6; nothing downstream gates on it.
 - Multi-repo / shared-team state *servers*. Local filesystem only; the state repo
   is a local git repo.
 - Changing the default in-repo behavior in any observable way.
+
+---
+
+### Task 7 DECISION (CURRENT — 2026-06-19) — single-user, project-keyed config file
+
+> Supersedes all earlier Task 7 decisions. The multi-source, team-aware design is
+> set aside for now (see "Deferred scenarios" below).
+
+#### Scope: single user, single machine
+
+Team scenarios (teammate pulls the repo, two users sharing a state repo, CI) are
+**explicitly deferred**. The design below is correct and sufficient for a single
+user on a single machine. Nothing in it precludes extending to team use later.
+
+#### Config file
+
+One file, per-user, outside every project repo:
+
+```
+~/.config/shipsmooth/ss-config.json   (honours $XDG_CONFIG_HOME)
+```
+
+No config file inside the project repo. No gitignored per-repo file. No global
+defaults separate from the per-project entries. Zero trace in the code repo.
+
+#### Config shape
+
+```json
+{
+  "projects": [
+    {
+      "remoteUrl": "https://github.com/org/repo.git",
+      "localPath": "/home/user/work/repo",
+      "stateDir": "/home/user/shipsmooth-state/repo"
+    },
+    {
+      "remoteUrl": "https://github.com/org/repo.git",
+      "localPath": "/home/user/work/repo-clone2",
+      "stateDir": "/home/user/shipsmooth-state/repo-clone2"
+    }
+  ]
+}
+```
+
+Each entry is keyed by the **pair `(remoteUrl, localPath)`**. Two clones of the
+same remote that should share state point to the same `stateDir`; two that should
+be independent get separate entries with different `stateDir` values. There is no
+`enabled` flag — presence of a matching entry means zero-trace mode is on;
+absence means in-repo default.
+
+#### Key lookup (per CLI invocation)
+
+Derive at startup:
+- `localPath` = `git rev-parse --show-toplevel`
+- `remoteUrl` = `git remote get-url origin` (absent for local-only repos → match
+  on `localPath` alone)
+
+Find the entry where both fields match. No entry found → in-repo default.
+
+#### Scenario table
+
+| Scenario | Match | Resolved mode | `stateRoot` |
+|---|---|---|---|
+| Config file absent | none | in-repo | `repoRoot` |
+| No entry for this `(remoteUrl, localPath)` | none | in-repo | `repoRoot` |
+| Entry found, `stateDir` set | both | zero-trace | entry's `stateDir` |
+| Entry found, `stateDir` missing | both | **hard error** | — |
+| No remote; path entry found | path only | zero-trace | entry's `stateDir` |
+| No remote; no path entry | none | in-repo | `repoRoot` |
+
+#### Resolver invariants (testable)
+
+- **Inv-1 (clean default).** Config file absent or no matching entry ⇒
+  `mode = in-repo`, `stateRoot = repoRoot`. Bit-for-bit current behavior.
+- **Inv-2 (entry ⇒ resolvable stateDir, else hard error).** A matched entry with
+  no `stateDir` is a hard config error — never a silent in-repo fallback.
+- **Inv-3 (pure).** Resolution is a pure function of the config file contents,
+  `localPath`, and `remoteUrl`. No env vars, no clock, no network.
+
+#### Deferred scenarios
+
+The following are **not handled by this design** and are deferred for a future plan:
+
+- **Team use.** Teammate clones the project; they have no entry for it and get
+  in-repo default — correct, but they see no state. Sharing state across users
+  requires a separate design (e.g., a state repo URL in the project repo, or
+  explicit per-user config entries).
+- **CI.** CI machines have no `~/.config/shipsmooth/ss-config.json`; they get
+  in-repo default. Fine for now.
+- **Global default across projects.** "Enable zero-trace for all my projects"
+  is not supported — the user must add an explicit entry per project. Can be
+  added later as a `"default"` entry or a separate `defaultStateDir` field.
+- **`tagsInProjectRepo` sub-option.** Dropped from the current design; can be
+  added as an optional field in the project entry when needed.
