@@ -179,13 +179,17 @@ resume/recovery (flow 6).
 ### Task 7: Opt-in mechanism for Claude (+ shared state-repo layout/keying) [Medium]
 *Depends-on: 1*
 Design how a **Claude** user turns separate-repo mode on. **Resolved (v4):** a
-**files-only** mechanism — shipsmooth reads its own config (`.agents/config.json`
-per-repo override over `~/.config/shipsmooth/config.json` global default), with no
-`userConfig`/`CLAUDE_PLUGIN_OPTION_*` dependency (Finding A). Also make the
-**host-agnostic** decisions here, reused by Tasks 8–9: where the state repo lives,
-how repo identity is computed (so two clones/CI don't collide), the external
-worktree location, and the tags-only sub-choice. Define precedence rules. Output:
-the decision section in the Research log. Gate: human sign-off before any code.
+**files-only** mechanism — shipsmooth reads its own config from three sources
+(`.agents/ss-config.local.json` gitignored override > `~/.config/shipsmooth/ss-config.json`
+global default > `.agents/ss-config.json` tracked team policy), with no
+`userConfig`/`CLAUDE_PLUGIN_OPTION_*` dependency (Finding A). Machine-specific
+keys (`enabled`/`dir`) are banned from the tracked file so committing it can
+never flip teammates' mode or ship a local path. Also make the **host-agnostic**
+decisions here, reused by Tasks 8–9: where the state repo lives, how repo
+identity is computed (so two clones/CI don't collide), the external worktree
+location, and the tags-only sub-choice. See the Research log for the source
+table, precedence, and resolver invariants. Output: the decision section in the
+Research log. Gate: human sign-off before any code.
 
 ### Task 8: Opt-in mechanism for Codex [Medium]
 *Depends-on: 7*
@@ -331,7 +335,7 @@ derive). Open sub-choices for that direction:
 
 **Status: undecided — awaiting human direction before wiring.**
 
-### Task 7 DECISION (RESOLVED, plan-84-v4) — files-only config, two shipsmooth-owned layers
+### Task 7 DECISION (RESOLVED, plan-84-v4; sources/precedence/invariants added plan-84-v5) — files-only config, three shipsmooth-owned sources
 
 The reopened question is resolved: **shipsmooth reads its own config files** at
 CLI-invocation time. We drop `userConfig`, `CLAUDE_PLUGIN_OPTION_*`, and any
@@ -340,21 +344,6 @@ the Bash-tool process that actually runs our CLI) is decisive — there is no
 reliable channel to deliver a plugin-config value into the CLI — and Finding C
 (`hookify` reads its own `.local.*` files; shipsmooth already reads its own
 `.agents/` tree) makes the file-based approach the idiomatic one.
-
-**The state-repo location resolves from two shipsmooth-owned layers** (highest
-wins), both read by the CLI via Jackson (already a dependency):
-
-1. **Per-repo override** — a gitignored, shipsmooth-owned file, `.agents/config.json`.
-   Highest precedence. A **full override** for this repo: it can flip the mode
-   **on/off** and set the state-repo **path**. To distinguish "off" from "unset"
-   it carries an explicit enable flag plus a path, e.g.
-   `{ "stateRepo": { "enabled": false } }` forces in-repo, while
-   `{ "stateRepo": { "enabled": true, "dir": "/path" } }` forces separate-repo at
-   that path. Absent the key ⇒ fall through to Layer 2.
-2. **Global default** — a user-level shipsmooth file, `~/.config/shipsmooth/config.json`
-   (XDG; honours `$XDG_CONFIG_HOME`). The user's default preference across all
-   projects.
-3. **Unset** ⇒ in-repo default mode (today's bit-for-bit behavior).
 
 The resolved value feeds `ServicesModule(repoRoot, stateRoot, …)` — the Task 5
 seam. `repoRoot` continues to come from `git rev-parse`, so we depend on **no**
@@ -366,14 +355,83 @@ files (not a Claude-native channel), Tasks 8 (Codex) and 9 (Gemini) reuse the
 channel to design. Each host's task reduces to its install/enable UX, not a
 distinct config plumbing.
 
-**Enable UX.** The user enables the mode by writing the per-repo file — either by
-hand or via a future `shipsmooth config set …` command. The exact CLI surface
-(and the precise JSON key names/shape) is finalized when wiring Task 6; nothing
-downstream gates on it.
+#### Config sources (three, typed by ownership and git fate)
 
-**Tags-only sub-choice** stays a boolean in the same file
-(e.g. `{ "stateRepo": { "tagsInProjectRepo": true } }`), resolved by the same
-two-layer precedence.
+The state-repo location resolves from **three shipsmooth-owned JSON sources**,
+all read by the CLI via Jackson. The split exists to keep **machine-specific**
+settings (a state-repo path that only exists on *my* disk) out of any file that
+gets shared with teammates — the sharp edge of a tracked config file.
+
+| Source | Path | Git fate | May set |
+|---|---|---|---|
+| **global** | `~/.config/shipsmooth/ss-config.json` (XDG; honours `$XDG_CONFIG_HOME`) | per-user, never in any repo | `enabled`, `dir`, `tagsInProjectRepo` |
+| **repo** | `.agents/ss-config.json` | shares `.agents/`'s fate — **tracked** in default mode (lives in project repo), in the **state repo** in zero-trace mode; never a project-repo trace in zero-trace mode | **machine-independent keys only**: `tagsInProjectRepo` (team policy). **Not** `enabled`/`dir`. |
+| **repo-local** | `.agents/ss-config.local.json` | **gitignored** (one `.gitignore` line) — per-machine, never shared | `enabled`, `dir`, `tagsInProjectRepo` |
+
+**Why `dir`/`enabled` are banned from the tracked `repo` file:** if they were
+allowed there, committing the file would flip *every* teammate into zero-trace
+mode and ship *your* local absolute path to machines where it doesn't exist. By
+construction, the only place a machine-specific path can live is `global`
+(per-user) or `repo-local` (gitignored) — so that whole class of bug cannot
+occur. The tracked `repo` file carries only **shareable team policy** (today:
+just `tagsInProjectRepo`).
+
+#### Resolution (precedence, highest wins)
+
+Per field, independently:
+
+1. `repo-local` (`.agents/ss-config.local.json`) — my per-machine override
+2. `global` (`~/.config/shipsmooth/ss-config.json`) — my cross-project default
+3. `repo` (`.agents/ss-config.json`) — team policy (machine-independent keys only)
+4. field unset everywhere ⇒ built-in default
+
+Built-in defaults: `enabled=false` (⇒ in-repo, today's bit-for-bit behavior),
+`tagsInProjectRepo=false`. `dir` is required when `enabled=true`; an
+`enabled=true` with no resolvable `dir` is a **hard config error** (fail loud,
+never silently fall back to in-repo — see Inv-5).
+
+> **Open precedence call (flag for review):** the order above puts `repo-local`
+> *above* `global`, so a per-machine repo override beats my own cross-project
+> default — "in *this* repo, do something different." The alternative (global
+> above repo-local) would make my global preference win unless the team file says
+> otherwise. Recommended: `repo-local > global > repo` as listed (most-specific
+> location wins, mirroring Claude's Local > User precedence). Override on review
+> if you want global to dominate.
+
+#### Resolver invariants (testable — the oracle for Task 5/6)
+
+These are the properties a property-based test should assert over random
+`(global, repo, repo-local)` source triples. They are the verification oracle
+referenced by the test-impact baseline.
+
+- **Inv-1 (clean default).** All three sources absent ⇒ `mode = in-repo`,
+  `stateRoot = repoRoot`. Bit-for-bit identical to pre-feature behavior.
+- **Inv-2 (no machine path leaks via tracked file).** No value read from the
+  `repo` source can ever set `dir` or `enabled`. Equivalently: a teammate who
+  pulls the repo and has empty `global` + `repo-local` always resolves to
+  `mode = in-repo`, regardless of `repo` file contents. (This is the property
+  that makes the tracked file safe.)
+- **Inv-3 (precedence is per-field and total).** For every field, the resolved
+  value is the highest-precedence source that sets it; precedence order is total
+  and deterministic (no combination yields an ambiguous result).
+- **Inv-4 (explicit off beats lower-priority on).** `repo-local` (or `global`)
+  setting `enabled=false` forces `mode = in-repo` even if a lower-priority source
+  sets `enabled=true`. "Off" is distinguishable from "unset."
+- **Inv-5 (enabled ⇒ resolvable dir, else hard error).** `mode = zero-trace`
+  resolves **iff** `enabled=true` *and* a `dir` is resolvable. `enabled=true`
+  with no `dir` is a hard error — never a silent in-repo fallback.
+- **Inv-6 (idempotent / pure).** Resolution is a pure function of the three
+  source contents (+ `repoRoot`); no env vars, no clock, no network. Same inputs
+  ⇒ same `(mode, stateRoot)`.
+
+#### Enable UX
+
+The user enables the mode by writing `enabled=true` + `dir` into **`global`**
+(default for all my projects) or **`repo-local`** (just this repo, this machine)
+— by hand or via a future `shipsmooth config set …` command. The tracked `repo`
+file is only for team-shared policy and is never required to turn the mode on.
+The exact CLI surface (and precise JSON key names) is finalized when wiring
+Task 6; nothing downstream gates on it.
 
 ## Out of scope
 - Multi-repo / shared-team state *servers*. Local filesystem only; the state repo
