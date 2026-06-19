@@ -1,0 +1,4 @@
+{
+  "pluginMarketplaces": ["bitkentech/claude-plugins"],
+  "enabledPlugins": ["shipsmooth@bitkentech"]
+}
