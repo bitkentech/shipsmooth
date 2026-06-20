@@ -160,7 +160,50 @@ without the marker is not treated as settled shipsmooth state). Decide the marke
 contents (at minimum a format/version stamp) and wire its creation into the
 consented-creation paths and its detection into `resolve()`.
 
+### Task 7: Point the agent at the external state path for plan context [Medium]
+*Depends-on: 4*
+External-by-default moves plan narratives (`plan-N.md`) out of the project repo's git
+tree. They are **not lost** — the standalone state dir is itself a git repo and the files
+are Readable on the same filesystem — but a coding agent won't *think to look there*
+unless told. Close that discoverability gap: when the CLI resolves an **external** state
+root, it reports that path back to the skill (it already knows it — it's the brain), and
+the skill explicitly directs the agent to read plan context from `<stateRoot>/plans/`.
+Goal: an agent picking up work in external mode reliably loads the plan narrative for
+context, the same as it would for in-repo plans. Skill-prose + CLI-output concern; no new
+detection logic (rides the needs-decision/resolution contract from Task 4).
+
+### Task 8: Strip plan/task fingerprints from project-repo commits in standalone mode [Medium]
+*Depends-on: 4*
+In standalone (zero-trace) mode the user's **project repo** must stay free of shipsmooth
+fingerprints — not just the files, but the git history. Code commits the agent makes in
+the project repo (today `task(N): ...` and `draft(N): de-risk ...`) must use plain,
+feature-oriented messages with **no `plan(N)`/`task(N)` prefixes** and no plan references.
+Task↔commit traceability is preserved where it belongs — the **state repo's** task XML,
+which already records the commit hash via `set-commit` — and state-repo commits (plan
+files, task XML) keep full plan/task info since that history is shipsmooth's own and
+invisible to the user. Note the `plan(N): ...` commit is naturally a state-repo commit in
+standalone mode (the plan file lives there), so only the code commits need de-fingerprint-
+ing. Primarily a SKILL-prose change: the skill writes commit messages conditioned on the
+mode the CLI resolved. In-repo mode keeps the existing prefixed convention unchanged.
+
+### Task 9: Decide + implement storing task commit SHAs in the state repo [High]
+*Depends-on: 4*
+In standalone mode the project-repo commits are de-fingerprinted (Task 8), so the **only**
+durable link between a task and the code commit that delivered it is whatever the state
+repo records. Decide whether — and how — task-related commit SHAs should be stored in the
+state repo for future reference, then implement it. The task XML already has a
+`set-commit`/`<commit>` field per task; settle whether that is sufficient as the canonical
+task↔SHA index, or whether more is needed (e.g. capturing draft/de-risk commit SHAs too,
+or a separate ledger), so that a human or agent can later reconstruct "which commit(s)
+delivered task N" purely from the state repo — even after the project-repo log has been
+de-fingerprinted. This is the traceability backbone that Task 8 leans on; get the
+durability and the exact stored shape right.
+
 ## Notes
+- External mode does **not** mean the agent loses plan context: the state dir is a git
+  repo on the same filesystem, Readable via the CLI-resolved path. The only real loss vs.
+  in-repo is *same-repo co-evolution / travels-with-clone*; Task 7 closes the
+  discoverability gap so the agent reliably reads plan narratives wherever they live.
 - Per-assistant native opt-out (Claude/Codex/Gemini) is **explicitly out of scope** —
   with external-as-default, the only cross-host mechanism needed is the agent-agnostic
   config entry + the skill handshake, which work identically everywhere. The deferred/
