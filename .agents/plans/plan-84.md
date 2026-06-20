@@ -1,0 +1,556 @@
+# Plan 84 — Zero-trace mode: shipsmooth state in a separate git repository
+
+## The approach (committed)
+
+shipsmooth will support a usage mode in which it leaves **no trace in the user's
+main repository** and instead keeps **all of its state in a separate git
+repository**.
+
+- The user's project repo is untouched: no `.agents/` directory, no marker or
+  pointer files, nothing added to its working tree or its history.
+- Everything shipsmooth produces — plan markdown, task XML, learnings, and the
+  object store — lives in a **separate git repo** dedicated to shipsmooth state.
+- That state repo carries its own permanent `plan-N-vK` plan-revision tags, so
+  the audit trail (the `git diff` between two plan tags) is **fully
+  self-contained in the state repo**. The project repo plays no part in the
+  audit story.
+- The one explicit, opt-in exception is that shipsmooth *may* write
+  plan-revision tags into the user's main repo. Tags leave no working-tree trace
+  (only `git tag -l` reveals them) and are permanent (they reference commit
+  objects, so they survive squash-merge and branch deletion). This is the only
+  thing shipsmooth is ever allowed to add to the main repo in this mode, and only
+  if the user turns it on.
+
+This document describes only this approach. It does not weigh alternatives.
+
+## Context
+
+### Backlog feature this serves
+`<backlog-issue>` Feature: **"A zero-trace shipsmooth mode that keeps all state
+in a separate git repository."** No existing backlog issue tracks this; this
+plan defines it. Motivation: a user adopting shipsmooth on their own project does
+not want `.agents/` — plan files, a JSONL ledger, an object store, and git
+worktrees — committed into, or even sitting untracked inside, *their* repo's
+working tree.
+
+### Why a separate git repo (not just an external directory)
+The versioned plan contract needs a permanent audit anchor. Today that anchor is
+a git tag (`plan-N-vK`) in the project repo; the audit trail is `git diff`
+between two such tags. If the contract leaves the project repo, the permanence
+has to leave with it — and the natural home that preserves the *exact same*
+`git diff`-between-tags audit model is another git repo. So the state repo is a
+real git repo with real `plan-N-vK` tags, not a loose directory.
+
+### What "shipsmooth state" is today (and where it must move to)
+From `core/.../conf/ShipsmoothDataLocator.java` — the single source of truth for
+path construction; its Javadoc already says it was "Named 'Locator' to
+anticipate a future option to relocate the data tree outside the repo" — and
+`.gitignore`:
+
+| State | Path today | Git status today | In zero-trace mode |
+|---|---|---|---|
+| Plan markdown | `.agents/plans/plan-{N}.md` | tracked in project repo | tracked in **state repo** |
+| Task XML | `.agents/plans/plan-{N}-tasks.xml` | tracked in project repo | tracked in **state repo** |
+| Learnings | `.agents/learnings/` | tracked in project repo | tracked in **state repo** |
+| Ledger | `.agents/ledger.jsonl` | ignored | in **state repo** |
+| Object store | `.agents/objects/` | ignored | in **state repo** |
+| Scratch | `.agents/tmp/` | ignored | in the state-repo area |
+
+> **Note (plan-84 update):** Task worktrees and integration worktrees were removed
+> in plan-82 (`bd16a5a`). The two rows that appeared here are no longer applicable.
+
+### Path-resolution seam
+- `ShipsmoothDataLocator(repoRoot)` resolves tracked + ledger/object paths via
+  `repoRoot.resolve(...)`. This is the single seam where the data tree's root is
+  decided — the natural place to introduce "state root ≠ project root."
+- `repoRoot` comes from `git rev-parse --show-toplevel` (`cli/.../RepoRoot.java`),
+  injected via `ServicesModule`. Two CLI call-sites (`plan/Init`,
+  `worker/WorkerCleanup`) still construct the locator with `Paths.get(".")`.
+- Non-code surfaces also hardcode `.agents/...`: the `start` SKILL.md prose and
+  the POSIX bootstrap. The skill *writes plan `.md` files directly*, not through
+  the locator, so the zero-trace mode has a documentation/skill surface too.
+
+## Audit trail in zero-trace mode
+
+- Plan revisions are tagged `plan-N-vK` **in the state repo**; `git diff
+  plan-84-v1 plan-84-v2` (run in the state repo) is the audit, identical in shape
+  to today's model.
+- Tier "tags only": the same tag name *may* also be written to the project repo,
+  giving a permanent tag-name ↔ tag-name correlation across the two repos, both
+  ends surviving squash-merge and branch deletion.
+- Any reference *from* the state repo *to* a specific project-repo commit (e.g.
+  "this plan version was developed around project commit abc123 / PR #N") is
+  **best-effort and non-load-bearing**: squash-merge or rebase in the project
+  repo can make that SHA unreachable, so it is recorded only as a human-readable
+  hint and no flow may gate on it.
+- A consequence the flow-walk must respect: the state repo and (in the tags-only
+  tier) the project repo carry plan tags of the **same name** pointing at commits
+  in **different** repos. The existing tagging commands (`plan tag --kind
+  version`, the printed `git push origin plan-N-vK` lines) assume a single repo
+  and must be made repo-explicit.
+
+## User flows to walk through
+
+1. **Opt-in at first use.** New user wants zero-trace mode on their repo.
+   Where/how do they turn it on, and where does shipsmooth create/locate the
+   state repo? Walk the first-run flow end to end, including the tags-only
+   sub-choice.
+2. **Default user, unchanged.** Confirm the default (in-repo) path is bit-for-bit
+   today's behavior — zero-trace mode must be invisible to anyone not using it.
+3. **Switching mid-project.** A user with existing in-repo state turns zero-trace
+   mode on. What happens to the existing `.agents/` content — migrate into the
+   state repo, or start fresh? Walk the flow and its failure modes.
+4. **Two clones / CI.** Same project checked out twice, or on CI. Does the state
+   repo collide, share, or isolate? How is the state repo keyed to a project?
+5. **Teammate without the mode.** User A uses zero-trace mode; teammate B clones
+   the project and runs shipsmooth with defaults. B's project repo has no trace
+   (correct) — confirm B gets a coherent picture and doesn't see dangling tags
+   (relevant only in the tags-only tier) or expect state that isn't there.
+6. **Resume / recovery.** Session-resume pre-flight looks for the task XML file.
+   In zero-trace mode the XML lives in the state repo; as long as `stateRoot` is
+   resolved correctly at startup, `ShipsmoothDataLocator` finds it transparently.
+   Worktrees and the ledger were removed in plan-82 — no additional recovery
+   surface to walk.
+
+## Tasks
+
+### Task 1: Inventory state + invariants, and name the seam for zero-trace mode [Low]
+Produce a definitive table of every `.agents/` artifact: its git status today,
+which Core Invariant or workflow step depends on its location, and exactly where
+it lands in zero-trace mode (state repo vs. external project-repo worktree).
+Confirm `ShipsmoothDataLocator` is the single code seam and list every non-code
+surface (SKILL.md prose, POSIX bootstrap, `.gitignore` handling) that the mode
+touches. Output: a section appended to this plan. No code.
+
+### Task 2: ~~Decide the opt-in mechanism and the state-repo layout/keying~~ [ABANDONED — superseded]
+*Depends-on: 1*
+**Abandoned at v3.** Superseded by the per-host opt-in tasks (7 Claude, 8 Codex,
+9 Gemini) plus the shared keying decision folded into Task 7. The opt-in
+mechanism turned out to be materially host-specific — Claude plugins, Codex, and
+Gemini each configure differently — so a single "decide the opt-in mechanism"
+task was the wrong granularity. The host-agnostic state-repo layout/keying
+(location, repo identity, external worktree location) is now decided once in
+Task 7 and reused by Tasks 8 and 9.
+
+### Task 3: Walk all six user flows under zero-trace mode [Medium]
+*Depends-on: 7*
+For each flow, write the narrated end-to-end experience, listing every surface
+(CLI output, SKILL.md prose, git visibility in both repos, recovery) that
+changes. Pin down, per tier, which repo each tagging command targets. Flag any
+flow that still feels inconsistent; if one does, loop back to Task 2.
+
+### Task 4: Choose a name for this mode of operation [Low]
+*Depends-on: 1*
+Propose and select a good, user-facing name for the zero-trace / separate-state-
+repo mode (e.g. candidates to be generated and weighed for clarity, brevity, and
+fit with existing shipsmooth vocabulary). The chosen name becomes the term used
+in the config knob, CLI output, and SKILL.md. Output: the chosen name + a short
+rationale and the rejected alternatives.
+
+### Task 5: Prepare the existing codebase for the feature [High]
+*Depends-on: 3, 4*
+Refactoring only — no behavior change, default mode stays bit-for-bit identical.
+Make the codebase ready to support a state root distinct from the project root:
+route every `.agents/` path and the two `Paths.get(".")` call-sites through
+`ShipsmoothDataLocator`, introduce the "state root" concept the locator resolves
+against (defaulting to project root so nothing changes yet), and make the
+worktree/integration path construction capable of an external location. Tests
+must prove the default path is unchanged.
+
+### Task 6: Implement zero-trace mode [High]
+*Depends-on: 5, 7, 8, 9*
+Make the necessary changes to actually support the separate-state-repo mode
+end to end: the opt-in mechanisms from Tasks 7–9, state-repo creation/location/
+keying, relocating tracked state + ledger + objects into the state repo, parking
+the project-repo worktrees externally, the dual-repo plan tagging (incl. the
+tags-only tier), and the matching SKILL.md / bootstrap / `.gitignore` updates.
+Cover the six flows, especially mid-project switching (flow 3) and
+resume/recovery (flow 6).
+
+### Task 7: Opt-in mechanism for Claude (+ shared state-repo layout/keying) [Medium]
+*Depends-on: 1*
+Design how a **Claude** user turns separate-repo mode on. **Resolved (v4):** a
+**files-only** mechanism — shipsmooth reads its own config from three sources
+(`.agents/ss-config.local.json` gitignored override > `~/.config/shipsmooth/ss-config.json`
+global default > `.agents/ss-config.json` tracked team policy), with no
+`userConfig`/`CLAUDE_PLUGIN_OPTION_*` dependency (Finding A). Machine-specific
+keys (`enabled`/`dir`) are banned from the tracked file so committing it can
+never flip teammates' mode or ship a local path. Also make the **host-agnostic**
+decisions here, reused by Tasks 8–9: where the state repo lives, how repo
+identity is computed (so two clones/CI don't collide), the external worktree
+location, and the tags-only sub-choice. See the Research log for the source
+table, precedence, and resolver invariants. Output: the decision section in the
+Research log. Gate: human sign-off before any code.
+
+### Task 8: Standalone-mode enablement UX for Codex [Medium]
+*Depends-on: 7*
+**Reframed (plan-84-v6).** Task 7's resolved design makes the config mechanism
+**host-agnostic**: enabling standalone mode is *only* "add a matching entry to
+`~/.config/shipsmooth/ss-config.toml`" — there is no per-host config channel left
+to design (`StandaloneConfigResolver` reads that one file, keyed by
+`(localPath, remoteUrl)`, with no env var or plugin-config dependency). So this
+task is **not** about config plumbing; it covers only the **Codex-specific
+install/enable UX**: how a Codex user gets the shipsmooth CLI runtime present
+(Codex has no SessionStart hook — it uses the one-time installer model, see
+plan-77), and how that user discovers and writes the TOML entry (by hand or via a
+future `shipsmooth config` command). Output: a decision section describing the
+Codex enable walkthrough end to end.
+
+### Task 9: Standalone-mode enablement UX for Gemini [Medium]
+*Depends-on: 7*
+**Reframed (plan-84-v6).** Same reframing as Task 8: the config mechanism is the
+shared host-agnostic TOML file from Task 7, so there is no per-host config channel
+to design. This task covers only the **Gemini-specific install/enable UX** via the
+Gemini extension mechanism: how the shipsmooth CLI runtime becomes available to a
+Gemini user, and how that user discovers and writes the `ss-config.toml` entry.
+Output: a decision section describing the Gemini enable walkthrough end to end.
+
+## Research log
+
+### Task 7 research — Claude plugin customization (2026-06-16)
+Source: code.claude.com/docs/en/plugins-reference (User configuration; Environment
+variables; Version management).
+
+**Finding: Claude plugins have a first-class `userConfig` mechanism — the right
+lever for the separate-repo opt-in.** Declared in `plugin.json`:
+
+```json
+"userConfig": {
+  "state_repo_dir": {
+    "type": "directory",
+    "title": "Separate state repository",
+    "description": "Keep all shipsmooth state in this directory instead of the project repo. Leave empty for in-repo (default) mode.",
+    "required": false
+  }
+}
+```
+
+How it surfaces, all authoritative:
+- Per-option `type` ∈ {string, number, boolean, **directory**, file}; `directory`
+  fits a state-repo path. Other fields: `title`, `description` (both required),
+  `default`, `required`, `sensitive`, `multiple`, `min`/`max`.
+- Claude Code **prompts the user at enable time** — no hand-editing settings.
+- Values reach our code three ways: `${user_config.KEY}` substitution in hook /
+  MCP / LSP / monitor commands; **exported to plugin subprocesses as
+  `CLAUDE_PLUGIN_OPTION_<KEY>`** env vars; and substituted into skill/agent
+  content (non-sensitive only).
+- Non-sensitive values persist in `settings.json` under
+  `pluginConfigs[<plugin-id>].options`. (Per-user; not per-project — note for
+  flow 4 keying.)
+- Path vars available to hooks/subprocesses: **`${CLAUDE_PLUGIN_ROOT}`** (install
+  dir, ephemeral — don't store state), **`${CLAUDE_PLUGIN_DATA}`** (persistent
+  across updates — viable *default* state home), **`${CLAUDE_PROJECT_DIR}`** /
+  `CLAUDE_PROJECT_DIR` env (project root — the repoRoot we already derive).
+
+**Mechanism decision for Claude (Task 7):** declare a `userConfig` option (e.g.
+`state_repo_dir`, type `directory`); the SessionStart hook / CLI reads
+`CLAUDE_PLUGIN_OPTION_STATE_REPO_DIR` and passes it as the `stateRoot` to
+`ServicesModule(repoRoot, stateRoot, …)` (the seam built in Task 5). Empty/unset
+⇒ in-repo default. `${CLAUDE_PROJECT_DIR}` gives repoRoot for keying.
+
+Open sub-questions for Task 7 proper: per-user storage means the same option
+value applies across projects unless we key the state location by project
+identity (flow 4); and the tags-only sub-choice needs its own boolean
+`userConfig` option.
+
+### Task 7 DECISION — two-layer config: plugin default + per-repo override
+
+> **SUPERSEDED (plan-84-v4).** This `userConfig`-based decision was reopened (see
+> the follow-up research below) and ultimately replaced by the **files-only**
+> decision at the end of this log. Kept here as audit trail only — do not wire
+> this version.
+
+The state-repo location is configured in **two layers**, resolved by our
+SessionStart hook / CLI. This mirrors Claude's own documented precedence
+(**Local project settings override User settings**), so it is the native layering
+rather than a custom scheme, and both layers are zero-trace.
+
+**Layer 1 — plugin-level default (global, prompted at enable time).** A
+`userConfig` option in `plugin.json`, persisted per-user in
+`~/.claude/settings.json` (`pluginConfigs[<id>].options`), surfaced to our code as
+`CLAUDE_PLUGIN_OPTION_*`. This is the user's *default* preference across all
+projects ("by default I want separate-repo mode, state under X").
+
+**Layer 2 — per-repo override (optional, project-local, gitignored).** Keys in
+`.claude/settings.local.json` (gitignored by default → no trace in the project's
+committed history). When present, this is a **full override** for that repo: it
+can change the state-repo **path** *and* flip the mode **on/off**, regardless of
+the plugin-level default. Because this file is not a plugin-native channel, our
+hook/CLI **reads and parses it ourselves**; `userConfig` does not auto-plumb it.
+
+**Resolution order our code implements** (highest wins):
+1. `.claude/settings.local.json` override for this repo
+2. `CLAUDE_PLUGIN_OPTION_STATE_REPO_DIR` (plugin-level default)
+3. unset ⇒ in-repo default mode
+
+**Opt-out requirement:** to let a repo force in-repo mode even when the global
+default is separate-repo, the override must distinguish "off" from "unset" — so
+the override carries an explicit enable flag plus a path, e.g.
+`{ "shipsmooth": { "stateRepo": { "enabled": false } } }` forces in-repo, while
+`{ "shipsmooth": { "stateRepo": { "enabled": true, "dir": "/path" } } }` forces
+separate-repo at that path. Absent the key entirely ⇒ fall through to Layer 1.
+(Exact key names/shape to finalize when wiring Task 6; the resolved value feeds
+`ServicesModule(repoRoot, stateRoot, …)` from Task 5.)
+
+**Reused by Tasks 8–9:** the *resolution model* (default layer + per-repo
+override, local-wins) is host-agnostic. Codex (Task 8) and Gemini (Task 9) keep
+the same two-layer semantics; only the Layer-1 channel differs per host.
+
+### Task 7 — follow-up research (2026-06-16): the above decision is REOPENED
+
+Further research cast doubt on using Claude's `userConfig` for Layer 1. Findings,
+captured so they aren't lost; **the mechanism is not yet decided.**
+
+**Finding A — `CLAUDE_PLUGIN_OPTION_*` is not guaranteed in the Bash-tool env.**
+(claude-code-guide agent, citing plugins-reference.) The docs export those env
+vars to **hook / MCP / LSP** subprocesses only. Our CLI runs via the **Bash
+tool** (the SKILL shells out to `~/.cache/shipsmooth/<ver>/bin/shipsmooth`), which
+is *not* a documented recipient. So `System.getenv` cannot be relied on for
+Layer 1. `CLAUDE_PROJECT_DIR` is likewise not guaranteed in the Bash-tool env
+(we already derive repoRoot from `git rev-parse`, so no dependency there).
+
+**Finding B — userConfig is reportedly not reliably prompted at enable.**
+([anthropics/claude-code#39455](https://github.com/anthropics/claude-code/issues/39455))
+The user often must manually pick "Configure options" afterwards — weakening the
+"prompted at enable time" UX that made userConfig attractive.
+
+**Finding C — none of Anthropic's 38 official plugins use `userConfig`.**
+(`grep` over `/opt/workspace/claude-plugins-official`.) Zero manifests declare
+`userConfig`; none read `CLAUDE_PLUGIN_OPTION` / `settings.json` for runtime
+config. Manifests are kept minimal (name/description/author). The one explicitly
+*configurable* official plugin, **`hookify`**, reads its **own project-local
+`.local.*` files** ("User-configurable hooks from .local.md files") rather than
+using the plugin config system. This is the de-facto idiomatic pattern, and it
+matches how shipsmooth already works (it reads its own `.agents/` tree).
+
+**Implication / candidate not-yet-chosen direction.** The proven, robust,
+host-portable alternative is **shipsmooth reads its own config file(s)** at
+CLI-invocation time (Jackson, already a dependency) — dropping `userConfig`,
+`CLAUDE_PLUGIN_OPTION`, and any settings.json scraping (which also needs an
+install-scope-dependent, hyphen-sanitized `<plugin-id>` key we cannot cleanly
+derive). Open sub-choices for that direction:
+- whether to keep two layers (per-repo override + global default) or per-repo only;
+- per-repo file = reuse Claude's `.claude/settings.local.json` (Claude-specific;
+  Codex/Gemini need a different file) **vs** a shipsmooth-owned gitignored file
+  (e.g. `.agents/config.json`) that works identically across all three hosts and
+  doesn't couple us to any host's settings schema.
+
+**Status: undecided — awaiting human direction before wiring.**
+
+### Task 7 DECISION (RESOLVED, plan-84-v4; sources/precedence/invariants added plan-84-v5) — files-only config, three shipsmooth-owned sources
+
+The reopened question is resolved: **shipsmooth reads its own config files** at
+CLI-invocation time. We drop `userConfig`, `CLAUDE_PLUGIN_OPTION_*`, and any
+`settings.json` scraping entirely. Finding A (the env var is not guaranteed in
+the Bash-tool process that actually runs our CLI) is decisive — there is no
+reliable channel to deliver a plugin-config value into the CLI — and Finding C
+(`hookify` reads its own `.local.*` files; shipsmooth already reads its own
+`.agents/` tree) makes the file-based approach the idiomatic one.
+
+The resolved value feeds `ServicesModule(repoRoot, stateRoot, …)` — the Task 5
+seam. `repoRoot` continues to come from `git rev-parse`, so we depend on **no**
+host-provided env var.
+
+**Host-portable by construction.** Because the mechanism is shipsmooth's own
+files (not a Claude-native channel), Tasks 8 (Codex) and 9 (Gemini) reuse the
+**identical files and resolution** — there is no longer a per-host config
+channel to design. Each host's task reduces to its install/enable UX, not a
+distinct config plumbing.
+
+#### Config sources (three, typed by ownership and git fate)
+
+The state-repo location resolves from **three shipsmooth-owned JSON sources**,
+all read by the CLI via Jackson. The split exists to keep **machine-specific**
+settings (a state-repo path that only exists on *my* disk) out of any file that
+gets shared with teammates — the sharp edge of a tracked config file.
+
+| Source | Path | Git fate | May set |
+|---|---|---|---|
+| **global** | `~/.config/shipsmooth/ss-config.json` (XDG; honours `$XDG_CONFIG_HOME`) | per-user, never in any repo | `enabled`, `dir`, `tagsInProjectRepo` |
+| **repo** | `.agents/ss-config.json` | shares `.agents/`'s fate — **tracked** in default mode (lives in project repo), in the **state repo** in zero-trace mode; never a project-repo trace in zero-trace mode | **machine-independent keys only**: `tagsInProjectRepo` (team policy). **Not** `enabled`/`dir`. |
+| **repo-local** | `.agents/ss-config.local.json` | **gitignored** (one `.gitignore` line) — per-machine, never shared | `enabled`, `dir`, `tagsInProjectRepo` |
+
+**Why `dir`/`enabled` are banned from the tracked `repo` file:** if they were
+allowed there, committing the file would flip *every* teammate into zero-trace
+mode and ship *your* local absolute path to machines where it doesn't exist. By
+construction, the only place a machine-specific path can live is `global`
+(per-user) or `repo-local` (gitignored) — so that whole class of bug cannot
+occur. The tracked `repo` file carries only **shareable team policy** (today:
+just `tagsInProjectRepo`).
+
+#### Resolution (precedence, highest wins)
+
+Per field, independently:
+
+1. `repo-local` (`.agents/ss-config.local.json`) — my per-machine override
+2. `global` (`~/.config/shipsmooth/ss-config.json`) — my cross-project default
+3. `repo` (`.agents/ss-config.json`) — team policy (machine-independent keys only)
+4. field unset everywhere ⇒ built-in default
+
+Built-in defaults: `enabled=false` (⇒ in-repo, today's bit-for-bit behavior),
+`tagsInProjectRepo=false`. `dir` is required when `enabled=true`; an
+`enabled=true` with no resolvable `dir` is a **hard config error** (fail loud,
+never silently fall back to in-repo — see Inv-5).
+
+> **Open precedence call (flag for review):** the order above puts `repo-local`
+> *above* `global`, so a per-machine repo override beats my own cross-project
+> default — "in *this* repo, do something different." The alternative (global
+> above repo-local) would make my global preference win unless the team file says
+> otherwise. Recommended: `repo-local > global > repo` as listed (most-specific
+> location wins, mirroring Claude's Local > User precedence). Override on review
+> if you want global to dominate.
+
+#### Resolver invariants (testable — the oracle for Task 5/6)
+
+These are the properties a property-based test should assert over random
+`(global, repo, repo-local)` source triples. They are the verification oracle
+referenced by the test-impact baseline.
+
+- **Inv-1 (clean default).** All three sources absent ⇒ `mode = in-repo`,
+  `stateRoot = repoRoot`. Bit-for-bit identical to pre-feature behavior.
+- **Inv-2 (no machine path leaks via tracked file).** No value read from the
+  `repo` source can ever set `dir` or `enabled`. Equivalently: a teammate who
+  pulls the repo and has empty `global` + `repo-local` always resolves to
+  `mode = in-repo`, regardless of `repo` file contents. (This is the property
+  that makes the tracked file safe.)
+- **Inv-3 (precedence is per-field and total).** For every field, the resolved
+  value is the highest-precedence source that sets it; precedence order is total
+  and deterministic (no combination yields an ambiguous result).
+- **Inv-4 (explicit off beats lower-priority on).** `repo-local` (or `global`)
+  setting `enabled=false` forces `mode = in-repo` even if a lower-priority source
+  sets `enabled=true`. "Off" is distinguishable from "unset."
+- **Inv-5 (enabled ⇒ resolvable dir, else hard error).** `mode = zero-trace`
+  resolves **iff** `enabled=true` *and* a `dir` is resolvable. `enabled=true`
+  with no `dir` is a hard error — never a silent in-repo fallback.
+- **Inv-6 (idempotent / pure).** Resolution is a pure function of the three
+  source contents (+ `repoRoot`); no env vars, no clock, no network. Same inputs
+  ⇒ same `(mode, stateRoot)`.
+
+#### Enable UX
+
+The user enables the mode by writing `enabled=true` + `dir` into **`global`**
+(default for all my projects) or **`repo-local`** (just this repo, this machine)
+— by hand or via a future `shipsmooth config set …` command. The tracked `repo`
+file is only for team-shared policy and is never required to turn the mode on.
+The exact CLI surface (and precise JSON key names) is finalized when wiring
+Task 6; nothing downstream gates on it.
+
+## Out of scope
+- Multi-repo / shared-team state *servers*. Local filesystem only; the state repo
+  is a local git repo.
+- Changing the default in-repo behavior in any observable way.
+
+---
+
+### Task 7 DECISION (CURRENT — 2026-06-19) — single-user, project-keyed config file
+
+> Supersedes all earlier Task 7 decisions. The multi-source, team-aware design is
+> set aside for now (see "Deferred scenarios" below).
+
+#### Scope: single user, single machine
+
+Team scenarios (teammate pulls the repo, two users sharing a state repo, CI) are
+**explicitly deferred**. The design below is correct and sufficient for a single
+user on a single machine. Nothing in it precludes extending to team use later.
+
+#### Config file
+
+One file, per-user, outside every project repo:
+
+```
+~/.config/shipsmooth/ss-config.toml   (honours $XDG_CONFIG_HOME)
+```
+
+Format: **TOML** (`jackson-dataformat-toml:2.17.2`). Chosen over JSON (no comments) and
+YAML (pulls in SnakeYAML ~350 KB; TOML dataformat adds only ~70 KB to the jlink image).
+
+No config file inside the project repo. No gitignored per-repo file. No global
+defaults separate from the per-project entries. Zero trace in the code repo.
+
+#### Config shape
+
+```toml
+# ~/.config/shipsmooth/ss-config.toml
+
+[[projects]]
+# my main checkout
+remoteUrl = "https://github.com/org/repo.git"
+localPath  = "/home/user/work/repo"
+stateDir   = "/home/user/shipsmooth-state/repo"
+
+[[projects]]
+# separate clone — distinct state
+remoteUrl = "https://github.com/org/repo.git"
+localPath  = "/home/user/work/repo-clone2"
+stateDir   = "/home/user/shipsmooth-state/repo-clone2"
+```
+```
+
+Each entry is keyed by the **pair `(remoteUrl, localPath)`**. Two clones of the
+same remote that should share state point to the same `stateDir`; two that should
+be independent get separate entries with different `stateDir` values. There is no
+`enabled` flag — presence of a matching entry means zero-trace mode is on;
+absence means in-repo default.
+
+#### Key lookup (per CLI invocation)
+
+Derive at startup:
+- `localPath` = `git rev-parse --show-toplevel`
+- `remoteUrl` = `git remote get-url origin` (absent for local-only repos → match
+  on `localPath` alone)
+
+Find the entry where both fields match. No entry found → in-repo default.
+
+#### Scenario table
+
+| Scenario | Match | Resolved mode | `stateRoot` |
+|---|---|---|---|
+| Config file absent | none | in-repo | `repoRoot` |
+| No entry for this `(remoteUrl, localPath)` | none | in-repo | `repoRoot` |
+| Entry found, `stateDir` set | both | zero-trace | entry's `stateDir` |
+| Entry found, `stateDir` missing | both | **hard error** | — |
+| No remote; path entry found | path only | zero-trace | entry's `stateDir` |
+| No remote; no path entry | none | in-repo | `repoRoot` |
+
+#### Resolver invariants (testable)
+
+- **Inv-1 (clean default).** Config file absent or no matching entry ⇒
+  `mode = in-repo`, `stateRoot = repoRoot`. Bit-for-bit current behavior.
+- **Inv-2 (entry ⇒ resolvable stateDir, else hard error).** A matched entry with
+  no `stateDir` is a hard config error — never a silent in-repo fallback.
+- **Inv-3 (pure).** Resolution is a pure function of the config file contents,
+  `localPath`, and `remoteUrl`. No env vars, no clock, no network.
+
+#### Deferred scenarios
+
+The following are **not handled by this design** and are deferred for a future plan:
+
+- **Team use.** Teammate clones the project; they have no entry for it and get
+  in-repo default — correct, but they see no state. Sharing state across users
+  requires a separate design (e.g., a state repo URL in the project repo, or
+  explicit per-user config entries).
+- **CI.** CI machines have no `~/.config/shipsmooth/ss-config.json`; they get
+  in-repo default. Fine for now.
+- **Global default across projects.** "Enable zero-trace for all my projects"
+  is not supported — the user must add an explicit entry per project. Can be
+  added later as a `"default"` entry or a separate `defaultStateDir` field.
+- **`tagsInProjectRepo` sub-option.** Dropped from the current design; can be
+  added as an optional field in the project entry when needed.
+
+---
+
+### Task 4 DECISION — user-facing name: **standalone**
+
+The mode is called **standalone** throughout: config keys, CLI output, SKILL.md prose.
+
+- `mode = standalone` (vs `in-repo`)
+- Natural prose: "standalone mode", "standalone state repo"
+- Replaces all earlier uses of "zero-trace" and "separate-repo" in user-facing surfaces (internal code may use either)
+
+**Rejected alternatives:**
+- *zero-trace* — accurate technically but not self-explanatory to a newcomer
+- *detached* — precise for git users but sounds broken/negative ("detached HEAD" association)
+- *isolated* — implies the state is isolated rather than the repo being clean
+- *external* — correct but bland
+- *offline* — misleading; implies no network connectivity
+- *sidecar* — evocative but implies tight coupling

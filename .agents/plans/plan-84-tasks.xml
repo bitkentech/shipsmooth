@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>84</plan>
+    <plan-version>plan-84-v5</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-16</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>abandoned</status>
+            <name>Inventory state + invariants, and name the seam for zero-trace mode</name>
+            <commit></commit>
+            <created-from>plan-84-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>abandoned</status>
+            <name>Decide the opt-in mechanism and the state-repo layout/keying</name>
+            <commit></commit>
+            <created-from>plan-84-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-16T18:47:03.462+05:30</timestamp>
+                    <message>Abandoned at v3: superseded by per-host opt-in tasks 7 (Claude) / 8 (Codex) / 9 (Gemini); shared state-repo keying folded into task 7.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Walk all six user flows under zero-trace mode</name>
+            <commit></commit>
+            <created-from>plan-84-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-19T14:24:08.205Z</timestamp>
+                    <message>Flows walked informally in conversation rather than as a written plan section. Flows 1, 2, 6 resolved cleanly. Flow 3 (mid-project switch) deferred ��� hard error if .agents/ exists in zero-trace mode. Flows 4, 5 (team scenarios) deferred to a future plan. Sufficient to proceed to implementation.</message>
+                </deviation>
+            </deviations>
+            <depends-on>7</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Choose a name for this mode of operation</name>
+            <commit></commit>
+            <created-from>plan-84-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-19T14:31:13.366Z</timestamp>
+                    <message>Chosen name: standalone. Rejected: zero-trace, detached, isolated, external, offline, sidecar.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Prepare the existing codebase for the feature</name>
+            <commit>dc2f71c89d8582f5f9e9aa11a39994bab696e422</commit>
+            <created-from>plan-84-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-16T17:05:45.380+05:30</timestamp>
+                    <message>De-risk draft ready for review: two-root locator seam, preamble test green, default behavior unchanged.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-16T16:59:35.777+05:30</timestamp>
+                    <message>Starting locator de-risk (two-root seam) ahead of deps 3,4 at user request; flows/name don't block the structural refactor.</message>
+                </deviation>
+            </deviations>
+            <depends-on>3,4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Implement zero-trace mode</name>
+            <commit>cdb393f4385e171c0688b712e9ed322eed97003d</commit>
+            <created-from>plan-84-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5,7,8,9</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Opt-in mechanism for Claude (+ shared state-repo layout/keying)</name>
+            <commit></commit>
+            <created-from>plan-84-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-16T18:54:35.789+05:30</timestamp>
+                    <message>Research done: Claude plugins expose userConfig (type directory/string/bool, prompted at enable time). Value reaches code via CLAUDE_PLUGIN_OPTION_&lt;KEY&gt; env + ${user_config.KEY} substitution; persisted in settings.json pluginConfigs[id].options (per-user). Plan: declare state_repo_dir userConfig, pass to ServicesModule stateRoot. See plan-84.md Research log.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-16T20:20:03.566+05:30</timestamp>
+                    <message>DECISION: two-layer config. Layer1 plugin userConfig (global default, CLAUDE_PLUGIN_OPTION_*). Layer2 per-repo override in .claude/settings.local.json (gitignored, full override of path + on/off, enabled flag distinguishes off from unset). Resolution: local override &gt; plugin default &gt; in-repo. Mirrors Claude Local&gt;User precedence; our hook reads the local file. Model reused host-agnostically by tasks 8/9. See plan-84.md Task 7 DECISION.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-16T21:06:29.897+05:30</timestamp>
+                    <message>Task 7 decision REOPENED. Findings: (A) CLAUDE_PLUGIN_OPTION_* not guaranteed in Bash-tool env (only hook/MCP/LSP); (B) userConfig not reliably prompted (issue #39455); (C) 0/38 official Anthropic plugins use userConfig — hookify reads its own .local files instead. Candidate direction: shipsmooth reads its own config file(s), no userConfig. Sub-choices open (2-layer vs per-repo-only; own file vs .claude/settings.local.json). Undecided — see plan-84.md Task 7 follow-up research.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-19T13:15:15.556+05:30</timestamp>
+                    <message>DECISION RESOLVED (supersedes the REOPENED state): files-only mechanism. shipsmooth reads its OWN config files at CLI-invocation time (Jackson); NO userConfig / CLAUDE_PLUGIN_OPTION_* / settings.json scraping (finding A: env not guaranteed in Bash-tool CLI; C: matches hookify idiom). Two layers: L1 per-repo gitignored .agents/config.json (override, flips on/off + path) &gt; L2 global ~/.config/shipsmooth/config.json default &gt; unset=in-repo. Resolved value feeds ServicesModule stateRoot (Task 5 seam). Host-portable: Tasks 8/9 reuse identical files+resolution. Enable via file edit or future 'shipsmooth config set' (CLI surface finalized in Task 6).</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-19T14:24:02.269Z</timestamp>
+                    <message>Design complete: single-user TOML config at ~/.config/shipsmooth/ss-config.toml, (remoteUrl,localPath) composite key, no enabled flag, hard error on missing stateDir, auto-create state repo on first use. Human sign-off received.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>medium</risk>
+            <status>abandoned</status>
+            <name>Opt-in mechanism for Codex</name>
+            <commit></commit>
+            <created-from>plan-84-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>7</depends-on>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>medium</risk>
+            <status>abandoned</status>
+            <name>Opt-in mechanism for Gemini</name>
+            <commit></commit>
+            <created-from>plan-84-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>7</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-16T16:40:05.317+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-20T12:59:47.760+05:30</timestamp>
+            <message>Core zero-trace mode shipped (tasks 3-7). Remaining tasks 1, 8, 9 abandoned; to be followed up in future plans.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-20T13:23:52.335+05:30</timestamp>
+            <message>Plan complete. Core zero-trace mode shipped; tasks 1/8/9 abandoned for future plans. Branch merged main's subsystem removal.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

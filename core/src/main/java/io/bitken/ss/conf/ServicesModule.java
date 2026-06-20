@@ -16,21 +16,40 @@ import java.nio.file.Path;
 public class ServicesModule {
 
     private final Path repoRoot;
+    private final Path stateRoot;
     private final ExperimentalMode experimentalMode;
 
     public ServicesModule(Path repoRoot) {
-        this(repoRoot, new ExperimentalMode(false));
+        this(repoRoot, repoRoot, new ExperimentalMode(false));
     }
 
     public ServicesModule(Path repoRoot, ExperimentalMode experimentalMode) {
+        this(repoRoot, repoRoot, experimentalMode);
+    }
+
+    /**
+     * Full constructor. {@code stateRoot} defaults to {@code repoRoot} in the
+     * other constructors (in-repo mode); pass a distinct path for "separate
+     * repo" mode.
+     */
+    public ServicesModule(Path repoRoot, Path stateRoot, ExperimentalMode experimentalMode) {
         this.repoRoot = repoRoot;
+        this.stateRoot = stateRoot;
         this.experimentalMode = experimentalMode;
     }
 
     @Provides
     @Singleton
+    @RepoRoot
     Path provideRepoRoot() {
         return repoRoot;
+    }
+
+    @Provides
+    @Singleton
+    @StateRoot
+    Path provideStateRoot() {
+        return stateRoot;
     }
 
     @Provides
@@ -41,8 +60,8 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    ShipsmoothDataLocator provideDataLocator(Path repoRoot) {
-        return new ShipsmoothDataLocator(repoRoot);
+    ShipsmoothDataLocator provideDataLocator(@RepoRoot Path repoRoot, @StateRoot Path stateRoot) {
+        return new ShipsmoothDataLocator(repoRoot, stateRoot);
     }
 
     @Provides
@@ -53,13 +72,13 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    GitTags provideGitTags(Path repoRoot) {
+    GitTags provideGitTags(@RepoRoot Path repoRoot) {
         return new GitTags(repoRoot);
     }
 
     @Provides
     @Singleton
-    GitState provideGitState(Path repoRoot) {
+    GitState provideGitState(@RepoRoot Path repoRoot) {
         return new GitState(repoRoot);
     }
 
