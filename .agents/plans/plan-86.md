@@ -307,31 +307,77 @@ the installer script is copied as a side effect of writing `hooks.json` — so t
 must be decoupled: ship the script without the JSON. (Task 1 confirms whether an
 absent `hooks.json` is in fact benign for OpenCode.)
 
-Decide between:
-- **Branch in `Target.build()` on platform** — smallest diff; a `if (!isOpencode)`
+Options considered:
+- **Branch in `Target.build()` on platform** — smallest diff; an `if (!isOpencode)`
   around `hooksRenderer.write()` plus an extracted "copy installer only" path.
-- **Capability on `Platform`** (recommended) — e.g. `boolean emitsHooksJson()`;
-  `Target` reads the capability instead of naming the platform. Keeps host-specific
-  facts on `Platform` alongside `id()`/`skillFragmentDir()`; no special-casing to
-  revisit for the next host.
+- **Capability on `Platform`** — e.g. `boolean emitsHooksJson()`; `Target` reads the
+  capability instead of naming the platform.
 - **Split `HooksRenderer`** into `InstallerScriptRenderer` (always) +
   `HooksJsonRenderer` (hook hosts only) — cleanest separation, largest refactor.
 
-Either way, the shared sub-task is extracting "copy `install-shipsmooth.sh`" so it
-runs independently of "write `hooks.json`". Record the chosen option and why.
+**Decision: capability on `Platform` + extract installer-copy from hooks-json.**
+Concretely:
+
+1. Add `boolean emitsHooksJson()` to the `Platform` sealed interface (default
+   `true`; `Opencode` returns `false`). This sits naturally beside the existing
+   per-host facts (`id()`, `skillFragmentDir()`) and means **no `if (isOpencode)`
+   special-casing in `Target`** — the next host that skips hooks.json just returns
+   `false`, nothing else changes.
+2. Decouple the two things `HooksRenderer.write()` does today (write `hooks.json`
+   *and*, as a side effect via `HookCommandRenderer`, copy `install-shipsmooth.sh`).
+   Extract "copy the installer script" into its own always-runnable path so it can
+   ship the script **without** the JSON.
+3. `Target.build()` becomes: always emit the installer script (every POSIX host
+   needs it — OpenCode invokes it from the plugin; the others from their hook
+   command); emit `hooks.json` only when `platform.emitsHooksJson()`.
+
+Why capability over the `Target` branch: the de-risk confirmed an absent
+`hooks.json` is **completely benign** for OpenCode (no warning, never read), so this
+is purely an emit/skip switch — exactly what a boolean capability models, and it
+keeps `Target` declarative. The installer script still ships in the payload (under
+`hooks/`, parity with the other hosts) because the plugin shells out to it; only the
+JSON manifest is dropped for OpenCode.
+
+Note: `Os.Posix` already encodes the installer-script command/path; the OpenCode
+plugin will reference `<plugin-root>/hooks/install-shipsmooth.sh`, so the script's
+location in the payload is unchanged — this task only governs whether `hooks.json`
+is written alongside it.
 
 ### Task 3: Decide the entry point — plugin command vs native skill [Medium]
 
 *Depends-on: 1*
 
 OpenCode exposes the workflow two ways: a plugin-registered slash command
-(`shipsmooth:start`, via the `config` hook — explicit, discoverable) and/or the
-native `SKILL.md` skill (on-demand via the `skill` tool). Task 1 shows live which
-of these actually surface. Both can coexist, but the workflow text must be
-single-sourced (the JTE-rendered SKILL.md), not duplicated into a command template.
-Decide the canonical entry point and how the command — if registered — points at
-the skill rather than inlining its text. This shapes what the TS plugin's `config`
-hook does and whether the command template is a thin pointer or empty.
+(via the `config` hook — explicit, discoverable) and/or the native `SKILL.md` skill
+(on-demand via the `skill` tool). Task 1 proved **both surface and fire** on 1.17.9.
+So this is a free design choice, constrained only by single-sourcing the workflow
+text (the JTE-rendered `SKILL.md`), never duplicating it into a command template.
+
+**Decision: the native `SKILL.md` skill is canonical; the registered command is a
+thin launcher that points at it.**
+
+- **Skill = source of truth.** Ship the JTE-rendered workflow as
+  `skills/start/SKILL.md` (folder name == frontmatter `name`, per OpenCode's rule).
+  The agent loads it on-demand via the `skill` tool — same content, same render
+  pipeline, as every other host. This is where the ~600 lines of workflow live; it
+  is loaded only when needed (no always-on context cost).
+- **Command = thin launcher.** Register a `shipsmooth:start` (dev:
+  `shipsmooth-dev:start`) command via the plugin's `config` hook whose `template` is
+  a short pointer — e.g. "Invoke the `start` skill and follow it for this task" —
+  **not** a copy of the workflow text. This gives users a discoverable `/`-menu entry
+  that matches the `/shipsmooth:start` muscle memory from the Claude host, while the
+  text stays single-sourced in the skill.
+- **Why both, not one:** the skill alone isn't discoverable in the `/` menu (agent
+  must choose to load it); the command alone would either duplicate the text or
+  carry no content. A discoverable command that *delegates* to the canonical skill
+  gets both properties with zero duplication.
+
+Implementation consequences: the TS plugin's `config` hook sets
+`cfg.command["shipsmooth:start"] = { description, template: "<pointer to start
+skill>" }` — a small static string, no rendered workflow inlined. The command
+template is the **only** OpenCode-specific prose; it can be a constant in the plugin
+(or a tiny generated snippet), and it must name the skill by its rendered name
+(`start` / `start-dev`). Feeds the TS-plugin implementation task.
 
 ### Task 4: Decide the TypeScript toolchain [Medium]
 
