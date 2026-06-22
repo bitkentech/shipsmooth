@@ -152,12 +152,17 @@
         <task>
             <id>10</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>The TypeScript plugin module</name>
-            <commit></commit>
+            <commit>91b4bc84bd08a61dde2cd8adac747c87aebe798d</commit>
             <created-from>plan-86-v9</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T17:40:13.833+05:30</timestamp>
+                    <message>De-risk draft ready. Typed TS plugin (harness/opencode/src/main/ts): session.created bootstrap via $, start command thin-pointer to skill, config-driven version. npm run build typechecks vs real @opencode-ai/plugin 1.17.9 + emits valid ESM importing only node:*. Caught a real client.app.log signature mismatch. Pending hardening: unit tests + Gradle node-build wiring.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>9</depends-on>
         </task>
