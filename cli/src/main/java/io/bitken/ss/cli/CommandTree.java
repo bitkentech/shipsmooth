@@ -2,6 +2,7 @@ package io.bitken.ss.cli;
 
 import io.bitken.ss.Build;
 import io.bitken.ss.cli.plan.Plan;
+import io.bitken.ss.cli.store.Store;
 import io.bitken.ss.cli.task.Task;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.ExperimentalMode;
@@ -21,10 +22,20 @@ class CommandTree {
     private final CommandLine commandLine;
 
     CommandTree(AppComponents app) {
+        this(app, true);
+    }
+
+    /**
+     * @param settled when {@code false} (store not set up yet), only commands that
+     *        {@link RunsWithoutSettledStore run without a settled store} are built. The
+     *        state-dependent commands are not even instantiated, so their gateways — which
+     *        would resolve a state root that does not exist yet — are never pulled.
+     */
+    CommandTree(AppComponents app, boolean settled) {
         ExperimentalMode experimentalMode = app.experimentalMode();
 
         CommandSpec rootSpec = buildRootSpec();
-        for (Callable<?> command : buildCommands(app)) {
+        for (Callable<?> command : buildCommands(app, settled)) {
             if (!isExperimental(command) || experimentalMode.enabled()) {
                 register(rootSpec, command);
             }
@@ -36,12 +47,19 @@ class CommandTree {
         return commandLine;
     }
 
-    private static Callable<?>[] buildCommands(AppComponents app) {
+    private static Callable<?>[] buildCommands(AppComponents app, boolean settled) {
+        Store store = new Store();
+        if (!settled) {
+            // Unsettled: build only the no-settle commands; do NOT construct plan/task,
+            // whose gateways would resolve a not-yet-existing state root.
+            return new Callable<?>[] { store };
+        }
         Plan plan = new Plan(app.planService(), app.taskStore(), app.gitTags(), app.gitState());
         Task task = new Task(app.planService(), app.gitTags());
         return new Callable<?>[] {
             plan,
             task,
+            store,
         };
     }
 

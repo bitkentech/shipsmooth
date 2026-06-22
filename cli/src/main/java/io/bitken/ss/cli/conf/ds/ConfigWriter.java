@@ -28,8 +28,8 @@ public final class ConfigWriter {
         this(new DefaultConfigFileLocator());
     }
 
-    /** Test seam — supply a locator that points at a fixed config file path. */
-    ConfigWriter(ConfigFileLocator configFileLocator) {
+    /** Inject a specific config-file locator (used by {@code store init} wiring and tests). */
+    public ConfigWriter(ConfigFileLocator configFileLocator) {
         this.configFileLocator = configFileLocator;
         toml = new TomlMapper();
     }

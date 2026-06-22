@@ -33,8 +33,8 @@ public final class ProjectDataStoreResolver {
         this(new DefaultConfigFileLocator());
     }
 
-    /** Test seam — supply a locator that points at a fixed config file path. */
-    ProjectDataStoreResolver(ConfigFileLocator configFileLocator) {
+    /** Inject a specific config-file locator (used by {@code store init} wiring and tests). */
+    public ProjectDataStoreResolver(ConfigFileLocator configFileLocator) {
         this.configFileLocator = configFileLocator;
         toml = new TomlMapper();
     }

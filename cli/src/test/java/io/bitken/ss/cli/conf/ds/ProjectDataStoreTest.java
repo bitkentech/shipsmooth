@@ -71,25 +71,18 @@ class ProjectDataStoreTest {
                 "second init() should take the fast path and not re-init the repo");
     }
 
-    // Standalone: existing .shipsmooth/ in-repo state is a hard error (no mid-project switch)
+    // Config wins: Standalone.init() provisions the external store even when in-repo state
+    // exists. The resolver is the single decision point now, so init() no longer guards
+    // against in-repo state (mid-project switch is resolved upstream, not re-litigated here).
     @Test
-    void standalone_existingInRepoState_throws() throws IOException {
+    void standalone_initSucceedsEvenWithInRepoStatePresent() throws IOException {
         Path repoRoot = tmp.resolve("project");
         Files.createDirectories(repoRoot.resolve(".shipsmooth").resolve("plans"));
         Path stateDir = tmp.resolve("state");
 
         var store = new ProjectDataStore.Standalone(repoRoot, stateDir);
-        assertThrows(StandaloneConfigException.class, store::init);
-    }
-
-    // A bare .shipsmooth/ without the plans/ subtree must NOT trip the in-repo-state guard.
-    @Test
-    void standalone_bareShipsmoothDirWithoutPlans_doesNotThrow() throws IOException {
-        Path repoRoot = tmp.resolve("project");
-        Files.createDirectories(repoRoot.resolve(".shipsmooth"));
-        Path stateDir = tmp.resolve("state");
-
-        var store = new ProjectDataStore.Standalone(repoRoot, stateDir);
         assertDoesNotThrow(store::init);
+        assertTrue(Files.isDirectory(stateDir.resolve(".git")),
+                "init must provision the external state repo");
     }
 }
