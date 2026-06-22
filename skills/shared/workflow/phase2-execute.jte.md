@@ -112,6 +112,6 @@ quality conforms to its instructions):
   - `[Local]` Run `${model.cliBin()} plan update --plan {N} --blocked --message "..."`.
   - Wait for the human to revise the plan file, commit, push, and give a new go-ahead.
 
-Never autonomously modify the `.agents/plans/` file during execution. If a plan change is needed, surface it and wait.
+Never autonomously modify the `.shipsmooth/plans/` file during execution. If a plan change is needed, surface it and wait.
 
 ---

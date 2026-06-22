@@ -71,14 +71,25 @@ class ProjectDataStoreTest {
                 "second init() should take the fast path and not re-init the repo");
     }
 
-    // Standalone: existing .agents/ in the project repo is a hard error (no mid-project switch)
+    // Standalone: existing .shipsmooth/ in-repo state is a hard error (no mid-project switch)
     @Test
     void standalone_existingInRepoState_throws() throws IOException {
         Path repoRoot = tmp.resolve("project");
-        Files.createDirectories(repoRoot.resolve(".agents"));
+        Files.createDirectories(repoRoot.resolve(".shipsmooth").resolve("plans"));
         Path stateDir = tmp.resolve("state");
 
         var store = new ProjectDataStore.Standalone(repoRoot, stateDir);
         assertThrows(StandaloneConfigException.class, store::init);
+    }
+
+    // A bare .shipsmooth/ without the plans/ subtree must NOT trip the in-repo-state guard.
+    @Test
+    void standalone_bareShipsmoothDirWithoutPlans_doesNotThrow() throws IOException {
+        Path repoRoot = tmp.resolve("project");
+        Files.createDirectories(repoRoot.resolve(".shipsmooth"));
+        Path stateDir = tmp.resolve("state");
+
+        var store = new ProjectDataStore.Standalone(repoRoot, stateDir);
+        assertDoesNotThrow(store::init);
     }
 }

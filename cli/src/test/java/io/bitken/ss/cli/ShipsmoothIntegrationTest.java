@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ShipsmoothIntegrationTest {
 
     private static final int PLAN_NUM = 994;
-    private final File planDir = new File(".agents/plans");
+    private final File planDir = new File(".shipsmooth/plans");
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
 

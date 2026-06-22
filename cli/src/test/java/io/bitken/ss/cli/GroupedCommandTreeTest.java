@@ -40,7 +40,7 @@ public class GroupedCommandTreeTest {
             .build();
 
     private final TaskStore xmlService = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
-    private final File planDir = new File(".agents/plans");
+    private final File planDir = new File(".shipsmooth/plans");
     private final File xmlFile = new File(planDir, "plan-" + PLAN_NUM + "-tasks.xml");
     private final File mdFile = new File(planDir, "plan-" + PLAN_NUM + ".md");
 

@@ -63,13 +63,13 @@ public interface ProjectDataStore {
         }
 
         private void guardAgainstExistingInRepoState() {
-            // TODO: .agents is hardcoded here. Also what if .agents
-            // folder has been created independently of shipsmooth?
-            if (Files.exists(repoRoot.resolve(".agents"))) {
+            // Keys on the shipsmooth-specific .shipsmooth/plans/ subtree (not a bare
+            // .shipsmooth/ dir) so an unrelated folder of the same name does not trip this.
+            if (Files.isDirectory(repoRoot.resolve(".shipsmooth").resolve("plans"))) {
                 throw new StandaloneConfigException("""
-                        standalone mode is configured but .agents/ exists in the project repo.
+                        standalone mode is configured but .shipsmooth/ in-repo state exists in the project repo.
                         Mid-project switching is not supported. Either:
-                          - remove .agents/ from the project repo, or
+                          - remove .shipsmooth/ from the project repo, or
                           - remove the entry from ~/.config/shipsmooth/shipsmooth.toml to continue in in-repo mode.""");
             }
         }

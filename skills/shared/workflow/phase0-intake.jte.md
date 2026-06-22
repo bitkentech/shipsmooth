@@ -7,7 +7,7 @@ Before treating any message as a fresh kickoff, look for a plan that is already
 in flight. Glance at the plans on disk and their state — especially the **latest**
 one:
 
-- list `.agents/plans/plan-*-tasks.xml` (the highest plan number is the most
+- list `.shipsmooth/plans/plan-*-tasks.xml` (the highest plan number is the most
   likely candidate), and
 - check that plan's state with
   `${model.cliBin()} plan resume --plan {N}` — a plan-level status of `active` /
@@ -41,7 +41,7 @@ Run **one** command and hand back:
 ```bash
 ${model.cliBin()} plan quick --desc "{short-description}"
 # derives the next plan number, creates + checks out t/{N}-{slug},
-# and writes a stub .agents/plans/plan-{N}.md.
+# and writes a stub .shipsmooth/plans/plan-{N}.md.
 # It does NOT commit — that is intentional.
 ```
 
