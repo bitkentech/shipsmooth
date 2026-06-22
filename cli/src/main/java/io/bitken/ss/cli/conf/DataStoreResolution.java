@@ -24,18 +24,18 @@ import java.util.Optional;
  * and the pre/post-resolution policy (startup gating, acting on the user's answer), are
  * deliberately out of scope for now.
  */
-public sealed interface Resolution
-        permits Resolution.Settled, Resolution.NeedsDecision, Resolution.Unresolvable {
+public sealed interface DataStoreResolution
+        permits DataStoreResolution.Settled, DataStoreResolution.NeedsDecision, DataStoreResolution.Unresolvable {
 
     /** Steady state: the location is known — proceed with this store, no skill round-trip. */
-    record Settled(ProjectDataStore store) implements Resolution {
+    record Settled(ProjectDataStore store) implements DataStoreResolution {
     }
 
     /**
      * Unsettled: the user must choose. Carries why a decision is needed and the concrete
      * options to offer; exactly one option is marked {@code recommended}.
      */
-    record NeedsDecision(UndecidableSituation situation, List<Option> options) implements Resolution {
+    record NeedsDecision(UndecidableSituation situation, List<Option> options) implements DataStoreResolution {
 
         /** The single option to present as the default/recommended choice. */
         public Option recommended() {
@@ -54,7 +54,7 @@ public sealed interface Resolution
      * anticipated reasons carry no cause.
      */
     record Unresolvable(UnresolvableReason reason, Optional<Throwable> cause)
-            implements Resolution {
+            implements DataStoreResolution {
 
         /** An anticipated failure described entirely by its reason; no underlying throwable. */
         public static Unresolvable of(UnresolvableReason reason) {
