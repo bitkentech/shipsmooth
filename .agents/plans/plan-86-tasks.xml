@@ -169,12 +169,17 @@
         <task>
             <id>11</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>TS build + assembleOpencode{Dev,Prod} + harness:opencode module</name>
             <commit></commit>
             <created-from>plan-86-v9</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T18:32:33.678+05:30</timestamp>
+                    <message>De-risk draft ready. harness:opencode module + assembleOpencodeDev produce the correct config-dir payload; proven to LOAD via OPENCODE_CONFIG_DIR (marker). Findings: plugin resolves config/installer relative to plugin/ (render co-located there); OpenCode installs into any config dir with a package.json (node_modules collides with Sync) -&gt; build-opencode-dev gitignored. Pending: prod assembly + devBuild + regression.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>10</depends-on>
         </task>
