@@ -241,6 +241,45 @@ per repo convention) plus a short findings note appended to this plan, with each
 bullet above answered. This is exploration — quality/rendering rules don't apply;
 hardcoded values are expected.
 
+#### Task 1 — Findings (de-risk run, OpenCode 1.17.9)
+
+Hand-built hello-world plugin (`.agents/tmp/opencode-derisk/.opencode/plugin/helloworld.js`,
+also installed globally at `~/.config/opencode/plugin/helloworld.js`). It logs to a
+`/tmp` marker file on factory load and on every `event`. Confirmed:
+
+- **Plain `.js` global plugin loads with no manifest, no build, no deps.** A named
+  export (`HelloWorld`) under `~/.config/opencode/plugin/` was discovered and its
+  async factory invoked. No `package.json`/bundling required for load. Dropping the
+  file into the global `plugin/` dir needs **no edit to `opencode.jsonc`** — the
+  config `plugin` array is only for npm packages (the env already had `"micode"`
+  there; it loaded alongside, no conflict).
+- **The context object is real and populated.** `directory`/`worktree` resolved to
+  the launch cwd; the SDK `client.app.log` call succeeded.
+- **Bun's `$` IS available as a live function** (`hasShell=function`) *even though
+  Bun is not on PATH*. The plugin runtime is Bun-hosted regardless. So the bootstrap
+  can shell out via `$`. (We'll still keep a `node:child_process` fallback for
+  robustness, but `$` is the primary path — answers part of Task 4.)
+- **Lifecycle delivery is via the single generic `event` hook**, keyed on
+  `input.event.type` — there are NO named `server.connected`/`session.created`
+  hooks (matches the installed `@opencode-ai/plugin` 1.17.9 type defs). The plan's
+  earlier narrative assuming named lifecycle hooks is **corrected**: design against
+  the generic `event` dispatcher.
+- **SessionStart-equivalent event = `session.created`.** At startup only
+  `plugin.added`/`catalog.updated`/`integration.updated`/`reference.updated` fire;
+  **`server.connected` never appeared.** On the first user prompt, `session.created`
+  fired, followed by `message.updated`/`session.status`/`session.diff`/etc. So the
+  runtime bootstrap should trigger on the **first `session.created`** (idempotent
+  installer ⇒ safe to also opportunistically run at factory load).
+
+Still **unproven** (next steps within Task 1):
+- End-to-end runtime bootstrap: `$` running `install-shipsmooth.sh shipsmooth <ver>`
+  actually fetching+unpacking the jlink runtime, and a subsequent `shipsmooth` CLI
+  call succeeding (the Local-mode proof).
+- Whether a `config`-registered command AND a native `SKILL.md` skill both surface
+  to the agent (feeds Task 3).
+- Whether emitting no `hooks.json` produces any warning (so far: nothing observed
+  reading hooks; consistent with Task 2's premise that OpenCode ignores hooks.json).
+
 ### Task 2: Decide the render contract for the no-`hooks.json` host [Medium]
 
 *Depends-on: 1*
