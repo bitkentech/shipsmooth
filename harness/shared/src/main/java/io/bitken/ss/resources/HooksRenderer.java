@@ -27,12 +27,39 @@ class HooksRenderer {
         this.hookCommandRenderer = new HookCommandRenderer();
     }
 
+    /**
+     * Full SessionStart render: copy the installer script AND write hooks.json.
+     * Retained for hook-based hosts (Claude/Codex/Gemini/Windows) where Target
+     * still wants both. OpenCode calls only {@link #writeInstallerScript()}
+     * (plan-86 Task 8).
+     */
     void write() throws IOException {
+        String command = writeInstallerScript();
+        writeHooksJson(command);
+    }
+
+    /**
+     * Emits the OS-specific installer companion file (install-shipsmooth.sh /
+     * install-runtime.bat) next to the hooks dir and returns the hook command
+     * string. Runs for EVERY host — OpenCode needs the script even though it
+     * writes no hooks.json. The script copy is a side effect of
+     * HookCommandRenderer.render (the POSIX branch copies install-shipsmooth.sh
+     * when the command references it).
+     */
+    String writeInstallerScript() throws IOException {
         Path hooksDir = outputDir.resolve("hooks");
         Files.createDirectories(hooksDir);
-
-        String command = hookCommandRenderer.render(
+        return hookCommandRenderer.render(
             model.os(), hooksDir, model.repoName(), model.pluginName(), model.pluginVersion());
+    }
+
+    /**
+     * Writes hooks/hooks.json wrapping {@code command} as a SessionStart command
+     * hook. Only hook-based hosts call this; OpenCode skips it.
+     */
+    void writeHooksJson(String command) throws IOException {
+        Path hooksDir = outputDir.resolve("hooks");
+        Files.createDirectories(hooksDir);
 
         ObjectNode hook = mapper.createObjectNode()
             .put("type", "command")
