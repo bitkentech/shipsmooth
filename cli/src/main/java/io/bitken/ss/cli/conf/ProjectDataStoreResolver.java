@@ -38,6 +38,7 @@ public final class ProjectDataStoreResolver {
     public ProjectDataStore resolve(Path localPath, Optional<String> remoteUrl) {
         Path configFile = configFileLocator.locate();
         if (!Files.exists(configFile)) {
+            LegacyDataTreeGuard.check(localPath);
             return new ProjectDataStore.InRepo(localPath);
         }
         return matchEntry(parseConfig(configFile), configFile, localPath, remoteUrl);
@@ -71,6 +72,7 @@ public final class ProjectDataStoreResolver {
                     Path.of(entry.getStateDir()).toAbsolutePath().normalize());
         }
 
+        LegacyDataTreeGuard.check(localPath);
         return new ProjectDataStore.InRepo(localPath);
     }
 
