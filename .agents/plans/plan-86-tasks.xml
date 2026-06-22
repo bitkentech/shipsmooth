@@ -67,12 +67,17 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Decide dev-loop ergonomics + target dir</name>
-            <commit></commit>
+            <commit>b17c99b9d9a5fbfa46db67379299a05dcb7d7b4b</commit>
             <created-from>plan-86-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T16:18:16.985+05:30</timestamp>
+                    <message>Resolved. OPENCODE_CONFIG_DIR=&lt;dir&gt; loads plugin+skills from &lt;dir&gt;/plugin and &lt;dir&gt;/skills (verified on 1.17.9; no --plugin-dir flag, plugin array is npm-only). Decision: dev payload -&gt; build-opencode-dev/; run OPENCODE_CONFIG_DIR=$(pwd)/build-opencode-dev opencode. Replaces global config dir, so self-contained. Plan B: copy/symlink into ~/.config/opencode.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
