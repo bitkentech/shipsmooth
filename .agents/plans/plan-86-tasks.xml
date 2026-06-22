@@ -31,24 +31,34 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Decide the render contract for the no-`hooks.json` host</name>
-            <commit></commit>
+            <commit>6348443487bb78304a96b7baa7804c57ecb82b28</commit>
             <created-from>plan-86-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T16:28:23.732+05:30</timestamp>
+                    <message>Resolved: add boolean Platform.emitsHooksJson() (default true; Opencode=false); extract installer-copy from hooks.json so the script ships without the JSON. Target.build() always emits installer, emits hooks.json only when capability true. Absent hooks.json proven benign for OpenCode.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Decide the entry point — plugin command vs native skill</name>
-            <commit></commit>
+            <commit>6348443487bb78304a96b7baa7804c57ecb82b28</commit>
             <created-from>plan-86-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T16:28:25.373+05:30</timestamp>
+                    <message>Resolved: native SKILL.md canonical (single-sourced workflow, on-demand via skill tool); config-hook command shipsmooth:start is a thin launcher whose template points at the start skill (discoverable, zero duplication). Both surfaces proven in Task 1.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
