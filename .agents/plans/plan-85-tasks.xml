@@ -72,17 +72,27 @@
         <task>
             <id>5</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>First-run handshake in the skill + config-writing path</name>
-            <commit></commit>
+            <commit>a24685a43513b52d6033b67e3f2be8ff1a35b1d0</commit>
             <created-from>plan-85-v4</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T18:22:53.864+05:30</timestamp>
+                    <message>De-risk CLI side (d9fa2b1): store init guarded act-on-answer + ConfigWriter + main resolve-gate (JSON exit 10/11) + unsettled-only command tree + Standalone guard removed. New logic ~100% covered; main() glue untested as before. Skill prose still deferred.</message>
+                </comment>
+            </comments>
             <deviations>
                 <deviation>
                     <type>minor</type>
                     <timestamp>2026-06-22T16:59:06.846+05:30</timestamp>
                     <message>Execution reorder: do Task 10 (config expresses in-repo) BEFORE Task 5, so the handshake persists both external+in-repo choices uniformly via config. Both depend only on Task 4 (done); no plan-body change. Task 5 surface decided: dedicated act-on-answer subcommand; JSON needs-decision emission; reconcile Standalone in-repo guard within Task 5.</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-22T17:11:25.165+05:30</timestamp>
+                    <message>Scope split: Task 5 delivers the CLI side (store init subcommand + ConfigWriter + main gate emitting JSON exit10/11 + remove Standalone in-repo guard). Skill handshake PROSE deferred to a follow-up pass (like Task 3's SKILL updates). store init is STRICT: re-resolves and validates choice against the live NeedsDecision before mutating.</message>
                 </deviation>
             </deviations>
             <depends-on>4</depends-on>
