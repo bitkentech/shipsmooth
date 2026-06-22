@@ -27,9 +27,9 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Rename config file `ss-config.toml` → `shipsmooth.toml`</name>
-            <commit></commit>
+            <commit>07f93b8662fd768764f086a7f959684b27aee542</commit>
             <created-from>plan-85-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
