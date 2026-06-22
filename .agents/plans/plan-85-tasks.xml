@@ -78,7 +78,13 @@
             <created-from>plan-85-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-22T16:59:06.846+05:30</timestamp>
+                    <message>Execution reorder: do Task 10 (config expresses in-repo) BEFORE Task 5, so the handshake persists both external+in-repo choices uniformly via config. Both depend only on Task 4 (done); no plan-body change. Task 5 surface decided: dedicated act-on-answer subcommand; JSON needs-decision emission; reconcile Standalone in-repo guard within Task 5.</message>
+                </deviation>
+            </deviations>
             <depends-on>4</depends-on>
         </task>
         <task>
@@ -132,12 +138,17 @@
         <task>
             <id>10</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Let `shipsmooth.toml` express in-repo mode explicitly</name>
-            <commit></commit>
+            <commit>736580bf1911acd6a32268bdd1473a2d250c87a1</commit>
             <created-from>plan-85-v4</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T17:04:45.380+05:30</timestamp>
+                    <message>De-risk (736580b): mode field + resolver classification; in-repo entry settled only if folder exists else NeedsDecision(IN_REPO_NOT_SET_UP). Per-row tests; resolver 95%. Ran before Task 5 per reorder decision.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>4</depends-on>
         </task>
