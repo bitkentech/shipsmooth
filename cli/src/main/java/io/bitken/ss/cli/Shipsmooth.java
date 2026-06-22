@@ -1,6 +1,7 @@
 package io.bitken.ss.cli;
 
 import io.bitken.ss.cli.conf.ExperimentalModeParser;
+import io.bitken.ss.cli.conf.ds.DataStoreResolution;
 import io.bitken.ss.cli.conf.ds.RemoteUrl;
 import io.bitken.ss.cli.conf.ds.ProjectDataStore;
 import io.bitken.ss.cli.conf.ds.ProjectDataStoreResolver;
@@ -39,9 +40,29 @@ public class Shipsmooth {
         Path repoRoot = new RepoRoot(Paths.get(".")).path();
         Optional<String> remoteUrl = new RemoteUrl(repoRoot).get();
 
+        DataStoreResolution resolution = new ProjectDataStoreResolver().resolve(repoRoot, remoteUrl);
+
+        // TODO(plan-85 Task 5): handle NeedsDecision via the skill handshake (present options,
+        // act on the answer). For now only the settled steady state proceeds; the unsettled
+        // and unresolvable cases fail loudly rather than guessing a location.
+        ProjectDataStore dataStore;
+        switch (resolution) {
+            case DataStoreResolution.Settled settled -> dataStore = settled.store();
+            case DataStoreResolution.NeedsDecision needs -> {
+                System.err.println("shipsmooth: " + needs.situation().message()
+                        + " (interactive setup is not wired yet)");
+                System.exit(1);
+                return;
+            }
+            case DataStoreResolution.Unresolvable bad -> {
+                System.err.println("shipsmooth: " + bad.message());
+                System.exit(1);
+                return;
+            }
+        }
+
         Path stateRoot;
         try {
-            ProjectDataStore dataStore = new ProjectDataStoreResolver().resolve(repoRoot, remoteUrl);
             dataStore.init();
             stateRoot = dataStore.stateRoot();
         } catch (StandaloneConfigException e) {

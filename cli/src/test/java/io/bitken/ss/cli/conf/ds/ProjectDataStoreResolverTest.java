@@ -10,120 +10,193 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Branch-table coverage for {@link ProjectDataStoreResolver#resolve} — one test per row of
+ * the plan-85 branch table, asserting the returned {@link DataStoreResolution} variant.
+ */
 class ProjectDataStoreResolverTest {
 
-    @TempDir Path tmp;
+    @TempDir Path repo;
 
-    // Inv-1: no config file → in-repo default
-    @Test
-    void noConfigFile_returnsInRepo() {
-        Path absent = tmp.resolve("shipsmooth.toml");
-        var result = new ProjectDataStoreResolver(() -> absent)
-                .resolve(tmp, Optional.of("https://github.com/org/repo.git"));
-        assertInstanceOf(ProjectDataStore.InRepo.class, result);
-    }
+    // ── Settled: matched external config entry whose dir exists ──────────────────
 
-    // Match by both localPath and remoteUrl
     @Test
-    void matchesByLocalPathAndRemoteUrl() throws IOException {
-        Path stateDir = tmp.resolve("state");
-        Path config = writeConfig(tmp, """
+    void configExternalDirExists_settledStandalone() throws IOException {
+        Path stateDir = Files.createDirectories(repo.resolve("state"));
+        Path config = writeConfig("""
                 [[projects]]
                 remoteUrl = "https://github.com/org/repo.git"
                 localPath  = "%s"
                 stateDir   = "%s"
-                """.formatted(tmp, stateDir));
+                """.formatted(repo, stateDir));
 
-        var result = new ProjectDataStoreResolver(() -> config)
-                .resolve(tmp, Optional.of("https://github.com/org/repo.git"));
-        assertInstanceOf(ProjectDataStore.Standalone.class, result);
-        assertEquals(stateDir.toAbsolutePath().normalize(), result.stateRoot());
+        var r = resolve(config, Optional.of("https://github.com/org/repo.git"));
+        var settled = assertInstanceOf(DataStoreResolution.Settled.class, r);
+        var store = assertInstanceOf(ProjectDataStore.Standalone.class, settled.store());
+        assertEquals(stateDir.toAbsolutePath().normalize(), store.stateRoot());
     }
 
-    // No entry for this project → in-repo default
     @Test
-    void noMatchingEntry_returnsInRepo() throws IOException {
-        Path config = writeConfig(tmp, """
-                [[projects]]
-                remoteUrl = "https://github.com/org/other.git"
-                localPath  = "/some/other/path"
-                stateDir   = "/state"
-                """);
-
-        var result = new ProjectDataStoreResolver(() -> config)
-                .resolve(tmp, Optional.of("https://github.com/org/repo.git"));
-        assertInstanceOf(ProjectDataStore.InRepo.class, result);
-    }
-
-    // remoteUrl mismatch on same localPath → no match
-    @Test
-    void remoteUrlMismatch_returnsInRepo() throws IOException {
-        Path config = writeConfig(tmp, """
-                [[projects]]
-                remoteUrl = "https://github.com/org/repo.git"
-                localPath  = "%s"
-                stateDir   = "/state"
-                """.formatted(tmp));
-
-        var result = new ProjectDataStoreResolver(() -> config)
-                .resolve(tmp, Optional.of("https://github.com/org/OTHER.git"));
-        assertInstanceOf(ProjectDataStore.InRepo.class, result);
-    }
-
-    // No remote → match on localPath alone
-    @Test
-    void noRemote_matchesOnLocalPathOnly() throws IOException {
-        Path stateDir = tmp.resolve("state");
-        Path config = writeConfig(tmp, """
+    void noRemote_matchesOnLocalPathAlone() throws IOException {
+        Path stateDir = Files.createDirectories(repo.resolve("state"));
+        Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
                 stateDir  = "%s"
-                """.formatted(tmp, stateDir));
+                """.formatted(repo, stateDir));
 
-        var result = new ProjectDataStoreResolver(() -> config).resolve(tmp, Optional.empty());
-        assertInstanceOf(ProjectDataStore.Standalone.class, result);
-        assertEquals(stateDir.toAbsolutePath().normalize(), result.stateRoot());
+        var r = resolve(config, Optional.empty());
+        assertInstanceOf(DataStoreResolution.Settled.class, r);
     }
 
-    // Inv-2: stateDir missing → hard error
     @Test
-    void missingStateDir_throwsConfigException() throws IOException {
-        Path config = writeConfig(tmp, """
+    void firstMatchingEntryWins() throws IOException {
+        Path state1 = Files.createDirectories(repo.resolve("state1"));
+        Path state2 = Files.createDirectories(repo.resolve("state2"));
+        Path config = writeConfig("""
                 [[projects]]
-                remoteUrl = "https://github.com/org/repo.git"
-                localPath  = "%s"
-                """.formatted(tmp));
+                localPath = "%s"
+                stateDir  = "%s"
 
-        var resolver = new ProjectDataStoreResolver(() -> config);
-        assertThrows(StandaloneConfigException.class,
-                () -> resolver.resolve(tmp, Optional.of("https://github.com/org/repo.git")));
+                [[projects]]
+                localPath = "%s"
+                stateDir  = "%s"
+                """.formatted(repo, state1, repo, state2));
+
+        var r = resolve(config, Optional.empty());
+        var settled = assertInstanceOf(DataStoreResolution.Settled.class, r);
+        assertEquals(state1.toAbsolutePath().normalize(),
+                ((ProjectDataStore.Standalone) settled.store()).stateRoot());
     }
 
-    // First matching entry wins when multiple entries share localPath
+    // ── Settled: in-repo .shipsmooth/plans present, no matching config ───────────
+
     @Test
-    void firstMatchWins() throws IOException {
-        Path state1 = tmp.resolve("state1");
-        Path state2 = tmp.resolve("state2");
-        Path config = writeConfig(tmp, """
-                [[projects]]
-                remoteUrl = "https://github.com/org/repo.git"
-                localPath  = "%s"
-                stateDir   = "%s"
+    void inRepoShipsmoothPresent_noConfig_settledInRepo() throws IOException {
+        Files.createDirectories(repo.resolve(".shipsmooth").resolve("plans"));
+        Path absent = repo.resolve("shipsmooth.toml");
 
-                [[projects]]
-                remoteUrl = "https://github.com/org/repo.git"
-                localPath  = "%s"
-                stateDir   = "%s"
-                """.formatted(tmp, state1, tmp, state2));
-
-        var result = new ProjectDataStoreResolver(() -> config)
-                .resolve(tmp, Optional.of("https://github.com/org/repo.git"));
-        assertInstanceOf(ProjectDataStore.Standalone.class, result);
-        assertEquals(state1.toAbsolutePath().normalize(), result.stateRoot());
+        var r = resolve(absent, Optional.empty());
+        var settled = assertInstanceOf(DataStoreResolution.Settled.class, r);
+        assertInstanceOf(ProjectDataStore.InRepo.class, settled.store());
     }
 
-    private static Path writeConfig(Path dir, String toml) throws IOException {
-        Path f = dir.resolve("shipsmooth.toml");
+    @Test
+    void bothInRepoAndConfiguredExternal_configWins() throws IOException {
+        Files.createDirectories(repo.resolve(".shipsmooth").resolve("plans"));
+        Path stateDir = Files.createDirectories(repo.resolve("state"));
+        Path config = writeConfig("""
+                [[projects]]
+                localPath = "%s"
+                stateDir  = "%s"
+                """.formatted(repo, stateDir));
+
+        var r = resolve(config, Optional.empty());
+        var settled = assertInstanceOf(DataStoreResolution.Settled.class, r);
+        assertInstanceOf(ProjectDataStore.Standalone.class, settled.store());
+    }
+
+    // ── NeedsDecision ────────────────────────────────────────────────────────────
+
+    @Test
+    void cleanFirstRun_needsDecisionExternalRecommended() {
+        Path absent = repo.resolve("shipsmooth.toml");
+
+        var r = resolve(absent, Optional.empty());
+        var needs = assertInstanceOf(DataStoreResolution.NeedsDecision.class, r);
+        assertEquals(DataStoreResolution.UndecidableSituation.CLEAN_FIRST_RUN, needs.situation());
+        assertEquals(DataStoreResolution.Choice.EXTERNAL, needs.recommended().choice());
+        // in-repo is offered too, but not recommended
+        assertTrue(needs.options().stream()
+                .anyMatch(o -> o.choice() == DataStoreResolution.Choice.IN_REPO && !o.recommended()));
+    }
+
+    @Test
+    void noMatchingEntry_cleanRepo_needsDecision() throws IOException {
+        Path config = writeConfig("""
+                [[projects]]
+                localPath = "/some/other/path"
+                stateDir  = "/state"
+                """);
+
+        var r = resolve(config, Optional.empty());
+        assertInstanceOf(DataStoreResolution.NeedsDecision.class, r);
+    }
+
+    @Test
+    void remoteUrlMismatch_treatedAsNoMatch() throws IOException {
+        Path config = writeConfig("""
+                [[projects]]
+                remoteUrl = "https://github.com/org/repo.git"
+                localPath  = "%s"
+                stateDir   = "/state"
+                """.formatted(repo));
+
+        var r = resolve(config, Optional.of("https://github.com/org/OTHER.git"));
+        assertInstanceOf(DataStoreResolution.NeedsDecision.class, r);
+    }
+
+    @Test
+    void configExternalDirMissing_needsDecisionRecreate() throws IOException {
+        Path stateDir = repo.resolve("gone"); // never created
+        Path config = writeConfig("""
+                [[projects]]
+                localPath = "%s"
+                stateDir  = "%s"
+                """.formatted(repo, stateDir));
+
+        var r = resolve(config, Optional.empty());
+        var needs = assertInstanceOf(DataStoreResolution.NeedsDecision.class, r);
+        assertEquals(DataStoreResolution.UndecidableSituation.CONFIG_DIR_MISSING, needs.situation());
+        assertEquals(DataStoreResolution.Choice.RECREATE_MISSING_DIR, needs.recommended().choice());
+        assertEquals(stateDir.toAbsolutePath().normalize(), needs.recommended().proposedPath());
+    }
+
+    // ── Unresolvable ──────────────────────────────────────────────────────────────
+
+    @Test
+    void legacyAgentsTree_unresolvable() throws IOException {
+        Files.createDirectories(repo.resolve(".agents").resolve("plans"));
+        Path absent = repo.resolve("shipsmooth.toml");
+
+        var r = resolve(absent, Optional.empty());
+        var bad = assertInstanceOf(DataStoreResolution.Unresolvable.class, r);
+        assertEquals(DataStoreResolution.UnresolvableReason.LEGACY_AGENTS_TREE, bad.reason());
+        // message (sourced from the reason) names both folders so the user can rename by hand
+        assertTrue(bad.message().contains(".agents") && bad.message().contains(".shipsmooth"));
+        assertTrue(bad.cause().isEmpty(), "an anticipated reason carries no throwable cause");
+    }
+
+    @Test
+    void matchedEntryWithoutStateDir_unresolvableMalformed() throws IOException {
+        Path config = writeConfig("""
+                [[projects]]
+                localPath = "%s"
+                """.formatted(repo));
+
+        var r = resolve(config, Optional.empty());
+        var bad = assertInstanceOf(DataStoreResolution.Unresolvable.class, r);
+        assertEquals(DataStoreResolution.UnresolvableReason.MALFORMED_CONFIG_ENTRY, bad.reason());
+    }
+
+    @Test
+    void unparseableConfig_unresolvableUnknownWithCause() throws IOException {
+        Path config = writeConfig("this is = = not valid toml [[[");
+
+        var r = resolve(config, Optional.empty());
+        var bad = assertInstanceOf(DataStoreResolution.Unresolvable.class, r);
+        assertEquals(DataStoreResolution.UnresolvableReason.UNKNOWN, bad.reason());
+        assertTrue(bad.cause().isPresent(), "UNKNOWN must retain the underlying cause");
+    }
+
+    // ── helpers ──────────────────────────────────────────────────────────────────
+
+    private DataStoreResolution resolve(Path configFile, Optional<String> remoteUrl) {
+        return new ProjectDataStoreResolver(() -> configFile).resolve(repo, remoteUrl);
+    }
+
+    private Path writeConfig(String toml) throws IOException {
+        Path f = repo.resolve("shipsmooth.toml");
         Files.writeString(f, toml);
         return f;
     }
