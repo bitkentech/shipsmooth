@@ -531,14 +531,118 @@ Recommended default: **support WSL, defer native Windows** unless there's a
 concrete need — it keeps us on the proven POSIX path and avoids lifting the
 Claude-only Windows guard before native OpenCode/Bun support matures.
 
-## Implementation tasks (Phase 1 — after decisions above)
+## Implementation tasks
 
-_To be risk-calibrated and ordered in Phase 1 once Tasks 1–6 are resolved.
-Anticipated thin vertical slices, each depending on the relevant decision:_
+The decision tasks (1–6) are resolved (6 deferred). These are the build slices,
+ordered as thin vertical slices respecting dependencies. Risk reflects post-de-risk
+reality: the architectural unknowns are gone, so risk here is mostly integration
+complexity, not spiral risk.
 
-- `Platform.Opencode` + `isOpencode()` + render spec wiring [Med] — *needs Task 2*
-- Skill render parity for opencode [Low]
-- The TS plugin module — runtime bootstrap + entry-point registration [High] —
-  *needs Tasks 3, 4*
-- TS build + `assembleOpencode{Dev,Prod}` [High] — *needs Tasks 4, 5*
-- Release/distribution wiring for the plugin payload [Med]
+### Task 7: Add `Platform.Opencode` + `emitsHooksJson()` capability [Medium]
+
+*Depends-on: 2*
+
+Introduce the new host at the type layer, implementing the Task 2 decision.
+- Add an `Opencode` record to the `Platform` sealed interface: `id()` → `"opencode"`,
+  `skillFragmentDir()` → `"start/opencode"`; add `Platform.OPENCODE` and the
+  `"opencode"` case to `Platform.from`.
+- Add `boolean emitsHooksJson()` to `Platform` (default `true`; `Opencode` → `false`).
+- Add `isOpencode()` to `PluginModel` (parallel to `isCodex()`/`isGemini()`).
+- Confirm `Target.guard` still rejects opencode+windows (it already rejects all
+  non-Claude on Windows — no change expected, just a test).
+
+Acceptance: unit tests for `Platform.from("opencode")`, `emitsHooksJson()` across all
+four records, and `PluginModel.isOpencode()`. No rendering yet.
+
+### Task 8: Decouple installer-copy from hooks.json; gate json in `Target.build()` [High]
+
+*Depends-on: 7*
+
+Implement the `Target.build()` change from Task 2. Split `HooksRenderer.write()` into
+`writeInstallerScript()` (always) and `writeHooksJson()` (gated), teasing the
+`install-shipsmooth.sh` copy out of `HookCommandRenderer`'s command-string side
+effect so it runs standalone. `Target.build()` always calls the installer copy and
+calls the json writer only when `platform.emitsHooksJson()`.
+
+Acceptance (the de-risk's contract, now as tests):
+- For a `opencode` render: `hooks/install-shipsmooth.sh` is present, `hooks/hooks.json`
+  is **absent**.
+- For `claude`/`codex`/`gemini` renders: **byte-identical** output to today (both
+  files present) — a regression guard, since this touches shared render code.
+High risk: it edits the shared hook path that all four hosts depend on.
+
+### Task 9: Render parity — opencode skill variant [Low]
+
+*Depends-on: 7, 8*
+
+Add `opencodeProdSpec`/`opencodeDevSpec` `RenderSpec`s in `harness:shared` (copied
+from the codex specs): `buildPlatform="opencode"`, gemini-style `name`/`description`
+frontmatter (`start`/`start-dev`), POSIX-only, no `pluginHookCommand` hook-json (the
+Task 8 gate handles that). Register `renderOpencodeDev`/`renderOpencodeProd`. The
+JTE templates need **no fork** — but add an `isOpencode()` branch wherever
+`phase2-execute.jte.md` switches per-host if opencode's set-commit text must differ
+(it doesn't today — it falls through to the shared default).
+
+Acceptance: `renderOpencodeProd` emits `skills/start/SKILL.md` with correct
+frontmatter + cliBin path, plus `hooks/install-shipsmooth.sh` and no `hooks.json`.
+
+### Task 10: The TypeScript plugin module [High]
+
+*Depends-on: 9*
+
+Author `harness/opencode/src/index.ts` (per Task 4: TS authored, `tsc` transpiled,
+no bundle; `@opencode-ai/plugin` type-only devDependency). Behaviour proven by the
+de-risk, now productionised:
+- Factory returns hooks. On first `session.created` (via the generic `event` hook),
+  shell out via `$` to `<plugin-root>/hooks/install-shipsmooth.sh shipsmooth <ver>`;
+  idempotent, **non-fatal** on failure (log via `client.app.log`, never crash the
+  session). Keep a `node:child_process` fallback if `$` is absent.
+- Version is read from a generated config JSON (reuse `session-start-config.json` or
+  an opencode-specific file), not hardcoded — so a version bump re-renders one file
+  and the TS is untouched.
+- `config` hook registers `shipsmooth:start` (dev: `shipsmooth-dev:start`) whose
+  `template` is the **thin pointer** to the `start` skill (Task 3), not inlined text.
+
+Acceptance: a node `--test` unit suite (mirroring `harness:shared`'s TS test setup)
+covering: bootstrap fires once on `session.created`; failure is swallowed; command
+registered with the pointer template; version sourced from config. High risk: it's
+net-new executable code, the only code shipsmooth ships to a host.
+
+### Task 11: TS build + `assembleOpencode{Dev,Prod}` + `harness:opencode` module [High]
+
+*Depends-on: 10*
+
+Stand up the `harness:opencode` Gradle module (register in `settings.gradle.kts`
+after `harness:codex`; `base` plugin + node-gradle for the TS build). 
+- `compileTs`-equivalent (`NpmTask`, transpile-only) → `dist/index.js`.
+- Token-filtered `package.json` (name/description/version via `expand()`, like the
+  codex `registerCodexMeta` manifests).
+- `assembleOpencodeDev` (Sync → `build-opencode-dev/`) and `assembleOpencodeProd`
+  (Sync → `-Pbuild.outputDir`), each merging: render output (`skills/` +
+  `hooks/install-shipsmooth.sh` + config JSON), compiled `dist/index.js`, and
+  `package.json`, into the OpenCode config-dir layout (`plugin/`, `skills/`, …).
+- A `devBuild` convenience task (per Task 5) assembling into repo-root
+  `build-opencode-dev/`.
+
+Acceptance: `./gradlew :harness:opencode:assembleOpencodeDev` produces a payload that
+loads via `OPENCODE_CONFIG_DIR=$(pwd)/build-opencode-dev opencode` (the Task 5 dev
+loop) — bootstrap + skill + command all functional, matching the hand-built de-risk.
+High risk: new module wiring + the first TS-build-in-Gradle for this host.
+
+### Task 12: Release / distribution wiring [Medium]
+
+*Depends-on: 11*
+
+Wire the opencode-prod payload into the release flow. The jlink runtime zips are
+unchanged (opencode reuses the shared POSIX release zips via the installer — **no
+packaging change**). The new artifact is the plugin payload itself: decide publish
+form (npm package vs assembled-dir/marketplace) and hook `assembleOpencodeProd` into
+the release path alongside the other hosts. Update DEVELOPMENT.md / docs for the new
+module and the `OPENCODE_CONFIG_DIR` dev loop.
+
+Acceptance: a prod assembly produces an installable payload; release docs updated;
+no regression to the existing hosts' release.
+
+_(Windows verification remains **Task 6** above — deferred, depends-on 1; it also
+gains a soft dependency on Task 11 since the WSL end-to-end test needs the assembled
+payload. Not renumbered here to keep tracker IDs stable.)_
