@@ -1,7 +1,7 @@
 {
-  "name": "@plugin.name@",
-  "version": "@project.version@",
-  "description": "shipsmooth OpenCode plugin",
+  "name": "shipsmooth-opencode-build",
+  "version": "0.0.0",
+  "description": "shipsmooth OpenCode plugin (build project; shipped package.json is generated from manifest/)",
   "private": true,
   "type": "module",
   "main": "dist/index.js",
