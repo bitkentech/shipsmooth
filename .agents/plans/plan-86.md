@@ -192,21 +192,65 @@ artifact is the OpenCode plugin payload itself (publishable to npm, or installed
 from the assembled directory) — wiring it into the release flow is a later task,
 gated on the payload assembling correctly first.
 
-## Decisions to resolve
+## Tasks
 
-The four design questions below are **decision tasks**, not implementation tasks.
-Each must be resolved (a decision recorded in this plan) before the implementation
-tasks that depend on it can be risk-calibrated and tasked out in Phase 1. They are
-captured as tasks so the decision and its rationale land in the tracked task state
-and the plan's git history.
+Task 1 is a **de-risk / exploration** task: hand-build a complete OpenCode plugin
+by hand (no render pipeline, hardcoded values) and prove it loads and works on the
+real OpenCode CLI. Its findings *feed* the decision tasks (2–5) — several questions
+(Bun's `$` availability, whether a registered command vs a native skill actually
+surfaces, what `<plugin-root>` resolves to at runtime) are best answered by
+observing a working plugin rather than by reading docs. Tasks 2–5 are **decision
+tasks** (record a decision + rationale in this plan). The implementation slices then
+follow in Phase 1, gated on the relevant decision.
 
-### Task 1: Decide the render contract for the no-`hooks.json` host [Medium]
+Environment note: OpenCode `1.17.9` is installed at `~/.opencode/bin/opencode`;
+Node 18 is present; **Bun is not on PATH** — so the de-risk must check whether the
+plugin runtime exposes Bun's `$` (and fall back to `node:child_process` if not).
+
+### Task 1: De-risk — hand-build a hardcoded OpenCode plugin and prove it loads [High]
+
+Build, entirely by hand (hardcoded name/version, no JTE/Gradle), a minimal but
+*complete* OpenCode plugin and run it against the installed OpenCode CLI to see
+what it actually looks like and which surfaces work. This pins down the unknowns
+before any code-generation plumbing is built.
+
+Scope of the hand-built artifact:
+- A plugin module (`.opencode/plugin/shipsmooth.js` or a local package) that on a
+  lifecycle event (`server.connected` / first `session.created`) shells out to a
+  copy of `install-shipsmooth.sh shipsmooth <version>` and logs the result via
+  `client.app.log`.
+- A `config`-hook-registered `shipsmooth:start` command **and** a native
+  `SKILL.md` under `.opencode/skills/start/`, so both entry points can be compared
+  live.
+- The bundled `install-shipsmooth.sh` next to it (no `hooks.json`).
+
+What to observe and record (these answers feed Tasks 2–5):
+- Does the plugin load at all on `1.17.9`? Any manifest/`package.json` required?
+- Is Bun's `$` present in the plugin context, or must we use `node:child_process`?
+  (Bun is not on PATH in this env.) — feeds the TS-plugin impl + Task 3.
+- What does `<plugin-root>` / `directory` / `worktree` resolve to, and can the
+  bundled installer be located relative to the module? — feeds bootstrap impl.
+- Does the bootstrap actually fetch + unpack the jlink runtime, and does a
+  subsequent `shipsmooth` CLI call succeed? (End-to-end Local-mode proof.)
+- Do BOTH the registered command and the native skill surface to the agent? Which
+  feels canonical? — directly feeds Task 3 (entry point).
+- Does emitting no `hooks.json` cause any warning/error? — confirms Task 2's premise.
+
+Done = a working hand-built plugin in this repo's scratch area (`.agents/tmp/`,
+per repo convention) plus a short findings note appended to this plan, with each
+bullet above answered. This is exploration — quality/rendering rules don't apply;
+hardcoded values are expected.
+
+### Task 2: Decide the render contract for the no-`hooks.json` host [Medium]
+
+*Depends-on: 1*
 
 Claude/Codex/Gemini all emit a `hooks/hooks.json` declaring a `SessionStart` hook;
 OpenCode consumes no such file. But OpenCode still needs `hooks/install-shipsmooth.sh`
 (the JS plugin invokes it). Today `HooksRenderer.write()` produces both *together* —
 the installer script is copied as a side effect of writing `hooks.json` — so the two
-must be decoupled: ship the script without the JSON.
+must be decoupled: ship the script without the JSON. (Task 1 confirms whether an
+absent `hooks.json` is in fact benign for OpenCode.)
 
 Decide between:
 - **Branch in `Target.build()` on platform** — smallest diff; a `if (!isOpencode)`
@@ -221,44 +265,51 @@ Decide between:
 Either way, the shared sub-task is extracting "copy `install-shipsmooth.sh`" so it
 runs independently of "write `hooks.json`". Record the chosen option and why.
 
-### Task 2: Decide the entry point — plugin command vs native skill [Medium]
+### Task 3: Decide the entry point — plugin command vs native skill [Medium]
 
 *Depends-on: 1*
 
 OpenCode exposes the workflow two ways: a plugin-registered slash command
 (`shipsmooth:start`, via the `config` hook — explicit, discoverable) and/or the
-native `SKILL.md` skill (on-demand via the `skill` tool). Both can coexist, but the
-workflow text must be single-sourced (the JTE-rendered SKILL.md), not duplicated
-into a command template. Decide the canonical entry point and how the
-command — if registered — points at the skill rather than inlining its text.
-This shapes what the TS plugin's `config` hook does and whether the command
-template is a thin pointer or empty.
+native `SKILL.md` skill (on-demand via the `skill` tool). Task 1 shows live which
+of these actually surface. Both can coexist, but the workflow text must be
+single-sourced (the JTE-rendered SKILL.md), not duplicated into a command template.
+Decide the canonical entry point and how the command — if registered — points at
+the skill rather than inlining its text. This shapes what the TS plugin's `config`
+hook does and whether the command template is a thin pointer or empty.
 
-### Task 3: Decide the TypeScript toolchain [Medium]
+### Task 4: Decide the TypeScript toolchain [Medium]
 
-Pick the build tool for the single TS plugin module: tsc / bun / esbuild. Bun
-aligns with OpenCode's own runtime and is the natural bundler; tsc is the
-lowest-dependency option. Constraint: it must keep CI reproducible and not drag a
-heavy new toolchain into the otherwise Gradle/Java build. Decide the tool, how it's
-invoked from Gradle (Exec task wrapping the bundler), and how `@opencode-ai/plugin`
-is treated (bundled-external). This gates the build/assembly implementation task.
+*Depends-on: 1*
 
-### Task 4: Decide dev-loop ergonomics + target dir [Low]
+Pick the build tool for the single TS plugin module: tsc / bun / esbuild. Task 1
+reveals whether the plugin even needs a bundler (e.g. if plain `.js` loads as-is
+and Bun's `$` is unavailable, a no-bundle Node module may suffice). Bun aligns with
+OpenCode's own runtime; tsc is the lowest-dependency option. Constraint: keep CI
+reproducible and don't drag a heavy new toolchain into the Gradle/Java build.
+Decide the tool, how it's invoked from Gradle (Exec task wrapping the bundler), and
+how `@opencode-ai/plugin` is treated (bundled-external). Gates the build/assembly
+implementation task.
+
+### Task 5: Decide dev-loop ergonomics + target dir [Low]
+
+*Depends-on: 1*
 
 The other hosts ship a `devBuild` convenience task assembling into repo-root
-`build/`. Decide the OpenCode dev-payload target dir (e.g. `build-opencode-dev/`)
-and how a developer points a local OpenCode at it — `.opencode/plugin/` symlink vs
-an `opencode.json` `plugin` path entry — so the dev loop is documented and
-repeatable. Lowest-risk; mostly convention.
+`build/`. Task 1 establishes the working on-disk layout a local OpenCode actually
+reads. Decide the OpenCode dev-payload target dir (e.g. `build-opencode-dev/`) and
+how a developer points a local OpenCode at it — `.opencode/plugin/` symlink vs an
+`opencode.json` `plugin` path entry — so the dev loop is documented and repeatable.
+Lowest-risk; mostly convention.
 
 ## Implementation tasks (Phase 1 — after decisions above)
 
-_To be risk-calibrated and ordered in Phase 1 once Tasks 1–4 are resolved.
+_To be risk-calibrated and ordered in Phase 1 once Tasks 1–5 are resolved.
 Anticipated thin vertical slices, each depending on the relevant decision:_
 
-- `Platform.Opencode` + `isOpencode()` + render spec wiring [Med] — *needs Task 1*
+- `Platform.Opencode` + `isOpencode()` + render spec wiring [Med] — *needs Task 2*
 - Skill render parity for opencode [Low]
 - The TS plugin module — runtime bootstrap + entry-point registration [High] —
-  *needs Tasks 2, 3*
-- TS build + `assembleOpencode{Dev,Prod}` [High] — *needs Tasks 3, 4*
+  *needs Tasks 3, 4*
+- TS build + `assembleOpencode{Dev,Prod}` [High] — *needs Tasks 4, 5*
 - Release/distribution wiring for the plugin payload [Med]
