@@ -343,6 +343,56 @@ plugin will reference `<plugin-root>/hooks/install-shipsmooth.sh`, so the script
 location in the payload is unchanged — this task only governs whether `hooks.json`
 is written alongside it.
 
+**`Target.build()` — before / after.** Today:
+
+```java
+void build() throws IOException {
+    skillRenderer.renderBase();
+    if (experimentalEnabled) skillRenderer.renderExperimental();
+    hooksRenderer.write();              // writes hooks.json AND copies install-shipsmooth.sh
+    sessionStartConfigRenderer.write();
+}
+```
+
+After (capability-gated; the json is conditional, the script is not):
+
+```java
+void build() throws IOException {
+    skillRenderer.renderBase();
+    if (experimentalEnabled) skillRenderer.renderExperimental();
+    hooksRenderer.writeInstallerScript();          // ALWAYS — every POSIX host needs it
+    if (platform.emitsHooksJson()) {               // capability, not isOpencode
+        hooksRenderer.writeHooksJson();            // hook-based hosts only
+    }
+    sessionStartConfigRenderer.write();
+}
+```
+
+Three implementation edits behind this:
+1. `Platform` gains `boolean emitsHooksJson()` (default `true`; `Opencode` → `false`).
+2. `HooksRenderer.write()` splits into `writeInstallerScript()` (copies the script,
+   teased out of `HookCommandRenderer`'s command-string side effect) and
+   `writeHooksJson()` (the manifest). The real work is decoupling the installer copy
+   from the hook-command computation so it can run standalone.
+3. `Target` consults the capability at `build()` time — via a `Platform` field or a
+   `PluginModel` delegate (`PluginModel` already carries the platform). Exact
+   placement is an impl detail.
+
+Resulting per-host output:
+
+| Host | `hooks/install-shipsmooth.sh` | `hooks/hooks.json` |
+|---|---|---|
+| Claude / Codex / Gemini | ✅ always | ✅ (`emitsHooksJson()==true`) |
+| **OpenCode** | ✅ always | ❌ (`emitsHooksJson()==false`) |
+
+The three existing hosts produce byte-identical output (both files, unchanged);
+OpenCode gets the script without the JSON. Method names (`writeInstallerScript`/
+`writeHooksJson`) and the toggle's home (`Platform` vs `PluginModel`) are
+implementation choices to settle when coded, with a test asserting OpenCode emits
+the script and **no** `hooks.json` while the other three are unchanged. The
+*decision* is fixed: **capability-driven emit/skip — installer always, json
+conditional — never a `Target` `if`-branch on the platform name.**
+
 ### Task 3: Decide the entry point — plugin command vs native skill [Medium]
 
 *Depends-on: 1*
