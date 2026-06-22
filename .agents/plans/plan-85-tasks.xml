@@ -38,12 +38,17 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Rename `.agents/` → `.shipsmooth/` and make `stateRoot` own the layout</name>
-            <commit></commit>
+            <commit>c4145284f2669b68fa5dbfc54ab1145f54f60374</commit>
             <created-from>plan-85-v4</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T13:30:54.107+05:30</timestamp>
+                    <message>De-risk draft 809f07a: locator dataRoot() proves .shipsmooth (in-repo) vs bare stateRoot (standalone); both preamble layout tests green. 5 core + several cli tests hardcoding .agents/plans to fix in harden.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>2</depends-on>
         </task>
