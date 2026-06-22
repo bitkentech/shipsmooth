@@ -337,14 +337,33 @@ hook does and whether the command template is a thin pointer or empty.
 
 *Depends-on: 1*
 
-Pick the build tool for the single TS plugin module: tsc / bun / esbuild. Task 1
-reveals whether the plugin even needs a bundler (e.g. if plain `.js` loads as-is
-and Bun's `$` is unavailable, a no-bundle Node module may suffice). Bun aligns with
-OpenCode's own runtime; tsc is the lowest-dependency option. Constraint: keep CI
-reproducible and don't drag a heavy new toolchain into the Gradle/Java build.
-Decide the tool, how it's invoked from Gradle (Exec task wrapping the bundler), and
-how `@opencode-ai/plugin` is treated (bundled-external). Gates the build/assembly
-implementation task.
+Pick the build tool for the single TS plugin module: tsc / bun / esbuild, and
+whether to bundle.
+
+**Decision.** **Author the plugin in TypeScript; ship plain `.js`, transpiled with
+`tsc` — no bundler.** Rationale, grounded in Task 1 + the existing build:
+
+- The plugin's only runtime imports are **`node:*` built-ins** (`node:fs`,
+  `node:path`, `node:url`); its dependence on `@opencode-ai/plugin` is **type-only**
+  (`import type { Plugin }`), which `tsc` erases. So there is **nothing to bundle** —
+  a bundler (bun/esbuild) would inline zero third-party runtime code. Bundling is
+  rejected as unnecessary complexity.
+- Plain `.js` loads as-is on OpenCode (proven in Task 1: no build was even required
+  to load). So the only reason to have a build step at all is **authoring ergonomics
+  + type safety** against the `@opencode-ai/plugin` types — exactly what `tsc`
+  transpile gives us. Hence "build the `.js` from `.ts`: yes."
+- **Toolchain is already in the repo.** `harness:shared` drives TS via the
+  `com.github.node-gradle.node` Gradle plugin (`compileTs` = an `NpmTask` running
+  `npm run build`; node + npm + `typescript` are provisioned by node-gradle, so
+  `tsc` need not be on PATH and CI stays reproducible). The OpenCode module reuses
+  this exact pattern. The one difference from `session-start.ts`: that pipeline runs
+  `tsc + esbuild` (it may carry deps); ours is **`tsc` transpile-only** (no esbuild)
+  since there are no deps to bundle.
+
+So: a `scripts/`-style TS source (`src/index.ts`) + `package.json`/`tsconfig.json`,
+an `NpmTask`/node-gradle `compileTs`-equivalent emitting `dist/index.js`, consumed
+by the assembly task. `@opencode-ai/plugin` is a **devDependency only** (types,
+never shipped). Gates the build/assembly implementation task.
 
 ### Task 5: Decide dev-loop ergonomics + target dir [Low]
 
