@@ -351,6 +351,64 @@ class TargetIntegrationTest {
             "judgment-level rules must render before mechanical rules");
     }
 
+    // ---------------------------------------------------------------------------
+    // OpenCode (plan-86): the first host that ships NO hooks.json. An opencode
+    // render must still emit skills/start/SKILL.md and the bundled
+    // install-shipsmooth.sh (the JS plugin shells out to it), but must NOT write
+    // hooks/hooks.json (OpenCode has no SessionStart-hook mechanism; the de-risk
+    // proved an absent hooks.json is benign). These are the Phase-2 integration
+    // preamble tests for plan-86 — they define the feature's done-state and stay
+    // red until Tasks 7-9 (Platform.Opencode + emitsHooksJson gate + render spec)
+    // land.
+    // ---------------------------------------------------------------------------
+
+    @Test
+    void skillMdIsRenderedForOpencodeProfile() throws Exception {
+        setOpencodeProdProps();
+        Target.main(new String[]{});
+
+        Path output = tempDir.resolve("skills/start/SKILL.md");
+        assertTrue(Files.exists(output), "SKILL.md should be written");
+
+        String content = Files.readString(output);
+        assertTrue(content.startsWith("---\nname: start"),
+            "OpenCode profile should start with YAML frontmatter (name: start)");
+        assertTrue(content.contains("# start — Agent Coding Workflow"),
+            "Heading should follow frontmatter");
+        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.2.0/bin/shipsmooth"),
+            "OpenCode prod cliBin should use the shipsmooth subdir");
+    }
+
+    @Test
+    void opencodeRendersInstallerButNoHooksJson() throws Exception {
+        setOpencodeProdProps();
+        Target.main(new String[]{});
+
+        assertTrue(Files.exists(tempDir.resolve("hooks/install-shipsmooth.sh")),
+            "OpenCode render must ship install-shipsmooth.sh (the JS plugin invokes it)");
+        assertFalse(Files.exists(tempDir.resolve("hooks/hooks.json")),
+            "OpenCode must NOT emit hooks.json — it has no SessionStart-hook mechanism");
+    }
+
+    private void setOpencodeProdProps() {
+        String frontmatter = "---\nname: start\ndescription: Use when starting any task — applies the shipsmooth agent coding workflow.\n---\n\n";
+        System.setProperty("build.outputDir", tempDir.toString());
+        System.setProperty("build.env", "prod");
+        System.setProperty("build.platform", "opencode");
+        System.setProperty("build.os", "posix");
+        System.setProperty("plugin.base.name", "shipsmooth");
+        System.setProperty("plugin.skill.start.basename", "start");
+        System.setProperty("plugin.version", "0.2.0");
+        System.setProperty("plugin.description", "Agent coding workflow");
+        System.setProperty("skill.frontmatter", frontmatter);
+        System.setProperty("shipsmooth.jlink.dir", "");
+        System.setProperty("experimental.enabled", "false");
+        // OpenCode still needs the installer copied (the plugin shells out to it),
+        // so the hook command references it — but no hooks.json is written.
+        System.setProperty("plugin.hook.command",
+            "sh \"${PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth 0.2.0");
+    }
+
     private void setProdProps() {
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "prod");
