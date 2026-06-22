@@ -281,11 +281,20 @@ also installed globally at `~/.config/opencode/plugin/helloworld.js`). It logs t
   a true cold download from GitHub releases was not re-tested, but the installer is
   the same script already proven on the other hosts.)
 
-Still **unproven** (next steps within Task 1):
-- Whether a `config`-registered command AND a native `SKILL.md` skill both surface
-  to the agent (feeds Task 3).
-- Whether emitting no `hooks.json` produces any warning (so far: nothing observed
-  reading hooks; consistent with Task 2's premise that OpenCode ignores hooks.json).
+- **BOTH entry points surface and fire — confirmed.** With a `config`-hook
+  command (`/shipsmooth-start`) and a native skill
+  (`~/.config/opencode/skills/shipsmooth-start-skill/SKILL.md`, folder name ==
+  frontmatter `name`) installed together, the agent ran *each* on request and wrote
+  its distinct marker file (`command-entrypoint-fired` / `skill-entrypoint-fired`).
+  So the plugin can register a slash command via `config.command[name] =
+  { template, description }` AND ship a native SKILL.md; both are usable. This makes
+  Task 3 a free design choice (likely: skill = canonical workflow text via the
+  `skill` tool; command = thin launcher pointing at it), not a forced one.
+- **`hooks.json` is irrelevant to OpenCode** — none was emitted; no warning/error
+  observed; OpenCode never looks for it. Confirms Task 2's premise.
+
+**Task 1 is fully de-risked.** Every open question is answered; the runtime
+bootstrap and both entry points are proven end-to-end on OpenCode 1.17.9.
 
 ### Task 2: Decide the render contract for the no-`hooks.json` host [Medium]
 
