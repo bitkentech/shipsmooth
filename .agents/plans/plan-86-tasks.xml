@@ -111,7 +111,7 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>in-progress</status>
             <name>Add Platform.Opencode + emitsHooksJson() capability</name>
             <commit></commit>
             <created-from>plan-86-v9</created-from>
