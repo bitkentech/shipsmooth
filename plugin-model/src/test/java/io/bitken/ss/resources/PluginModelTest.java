@@ -96,4 +96,24 @@ class PluginModelTest {
     void skillFragmentDir_codex_isStartCodex() {
         assertEquals("start/codex", posixProd(Platform.CODEX).skillFragmentDir());
     }
+
+    @Test
+    void opencode_isOpencode_true() {
+        assertTrue(posixProd(Platform.OPENCODE).isOpencode());
+    }
+
+    @Test
+    void claude_isOpencode_false() {
+        assertFalse(claudeProd().isOpencode());
+    }
+
+    @Test
+    void opencode_isCodex_false() {
+        assertFalse(posixProd(Platform.OPENCODE).isCodex());
+    }
+
+    @Test
+    void skillFragmentDir_opencode_isStartOpencode() {
+        assertEquals("start/opencode", posixProd(Platform.OPENCODE).skillFragmentDir());
+    }
 }

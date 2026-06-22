@@ -38,4 +38,8 @@ public record PluginModel(
     public boolean isCodex() {
         return "codex".equals(platformId);
     }
+
+    public boolean isOpencode() {
+        return "opencode".equals(platformId);
+    }
 }
