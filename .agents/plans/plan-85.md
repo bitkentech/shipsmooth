@@ -10,8 +10,13 @@ It is the concrete realisation of the long-standing *standalone-as-default*
 direction: shipsmooth should be **non-intrusive by default**, not writing a folder
 into the user's repo unless they opt into in-repo mode.
 
-Backlog / feature link: _TODO — link the permanent backlog feature issue (e.g. a
-PB-xxx in "shipsmooth — Backlog & Roadmap") before `plan init`._
+Backlog / feature link (local): **Feature — "Non-intrusive standalone-by-default data
+storage."** Shipsmooth should not write a folder into the user's repo unless they opt into
+in-repo mode; its data tree should be tool-owned (`.shipsmooth/`) and, by default, live
+outside the project repo, with a first-run handshake to choose the location. This plan is
+the concrete delivery of that feature and of the long-standing *standalone-as-default*
+direction. (No external tracker; recorded here as the permanent feature reference per the
+[Local]-mode convention.)
 
 ### Current state of the world
 
@@ -99,9 +104,23 @@ clash with the emerging `.agents/`-as-config meaning.
 
 ## Tasks
 
-> Risk levels below are **proposed defaults** — to be calibrated with the human in
-> Phase 1 before re-ordering and `plan init`. Listed here in rough logical order, not
-> yet risk-sorted.
+> Risk levels below were **calibrated with the human in Phase 1** (Task 3 bumped
+> Low → Medium). Tasks are now **risk-sorted descending**, with dependencies overriding
+> pure risk order where a lower-risk task is a hard prerequisite for a higher-risk one.
+> **Task IDs are stable** (`### Task N:` — the CLI parses them as identifiers and
+> `Depends-on` references them by number); physical order ≠ numeric order on purpose.
+>
+> Final risk sort & rationale (dependencies override pure risk order; here the chain
+> 2←3←4←{5,6,7,8,9} pulls the result back to numeric order):
+> 1. **Task 1** (High, no deps) — foundational policy + legacy-`.agents/` fail-loud guard.
+> 2. **Task 2** (Low) — hard prerequisite for Task 3.
+> 3. **Task 3** (Medium) — load-bearing structural rename; prerequisite for Task 4.
+> 4. **Task 4** (High) — core `resolve()` rewrite; prerequisite for Tasks 5–9.
+> 5. **Task 5** (High) — first-run handshake + config write.
+> 6. **Task 6** (Medium) — manifest marker.
+> 7. **Task 7** (Medium) — external plan-context discoverability.
+> 8. **Task 8** (Medium) — de-fingerprint project-repo commits.
+> 9. **Task 9** (Low) — explore + design only (no implementation) for task↔SHA storage.
 
 ### Task 1: Decide and implement policy for existing users / deployments [High]
 Determine what (if anything) must be done for any existing users or deployments before
@@ -122,7 +141,7 @@ message in `ProjectDataStore`, javadoc references, and any docs/SKILL prose. No
 back-compat fallback to the old name (consistent with the no-`.agents/`-back-compat
 stance).
 
-### Task 3: Rename `.agents/` → `.shipsmooth/` and make `stateRoot` own the layout [Low]
+### Task 3: Rename `.agents/` → `.shipsmooth/` and make `stateRoot` own the layout [Medium]
 *Depends-on: 2*
 Change `ShipsmoothDataLocator` so the data-tree segment is `.shipsmooth` (in-repo) and
 `plans/` hangs directly off `stateRoot` in standalone mode (drop the dot-folder segment
@@ -186,18 +205,19 @@ standalone mode (the plan file lives there), so only the code commits need de-fi
 ing. Primarily a SKILL-prose change: the skill writes commit messages conditioned on the
 mode the CLI resolved. In-repo mode keeps the existing prefixed convention unchanged.
 
-### Task 9: Decide + implement storing task commit SHAs in the state repo [High]
+### Task 9: Explore + design storing task commit SHAs in the state repo [Low]
 *Depends-on: 4*
-In standalone mode the project-repo commits are de-fingerprinted (Task 8), so the **only**
-durable link between a task and the code commit that delivered it is whatever the state
-repo records. Decide whether — and how — task-related commit SHAs should be stored in the
-state repo for future reference, then implement it. The task XML already has a
-`set-commit`/`<commit>` field per task; settle whether that is sufficient as the canonical
-task↔SHA index, or whether more is needed (e.g. capturing draft/de-risk commit SHAs too,
-or a separate ledger), so that a human or agent can later reconstruct "which commit(s)
-delivered task N" purely from the state repo — even after the project-repo log has been
-de-fingerprinted. This is the traceability backbone that Task 8 leans on; get the
-durability and the exact stored shape right.
+**Scope: exploration and design only — no implementation in this task.** In standalone
+mode the project-repo commits are de-fingerprinted (Task 8), so the **only** durable link
+between a task and the code commit that delivered it is whatever the state repo records.
+Explore the options and produce a design recommendation (written into the plan/notes) for
+whether — and how — task-related commit SHAs should be stored in the state repo. The task
+XML already has a `set-commit`/`<commit>` field per task; assess whether that is sufficient
+as the canonical task↔SHA index, or whether more is needed (e.g. capturing draft/de-risk
+commit SHAs too, or a separate ledger), so that a human or agent could later reconstruct
+"which commit(s) delivered task N" purely from the state repo — even after the project-repo
+log has been de-fingerprinted. Deliverable is the analysis + recommended shape; actual
+implementation, if any, is deferred to a follow-up task/plan.
 
 ## Notes
 - External mode does **not** mean the agent loses plan context: the state dir is a git
