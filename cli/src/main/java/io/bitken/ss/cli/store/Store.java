@@ -17,29 +17,21 @@ import java.util.concurrent.Callable;
  */
 public class Store implements Callable<Integer>, HasSpec, RunsWithoutSettledStore {
 
+    private final CommandSpec spec;
+
+    public Store() {
+        this.spec = CommandSpec.wrapWithoutInspection(this);
+        this.spec.name("store");
+        this.spec.usageMessage().description("Manage where this project's shipsmooth state lives.");
+        addLeaves(spec, new Init(new ProjectDataStoreResolver(), new ConfigWriter()));
+    }
+
     @Override public boolean runsWithoutSettledStore() {
         return true;
     }
 
-
-    private final CommandSpec spec;
-    private final Init init;
-
-    public Store() {
-        this.init = new Init(new ProjectDataStoreResolver(), new ConfigWriter());
-        this.spec = CommandSpec.wrapWithoutInspection(this);
-        this.spec.name("store");
-        this.spec.usageMessage().description("Manage where this project's shipsmooth state lives.");
-        addLeaves(spec, init);
-    }
-
     public CommandSpec getSpec() {
         return spec;
-    }
-
-    /** The {@code init} leaf — {@code main} binds it to the resolution before execution. */
-    public Init init() {
-        return init;
     }
 
     @Override
