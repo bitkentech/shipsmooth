@@ -351,11 +351,33 @@ implementation task.
 *Depends-on: 1*
 
 The other hosts ship a `devBuild` convenience task assembling into repo-root
-`build/`. Task 1 establishes the working on-disk layout a local OpenCode actually
-reads. Decide the OpenCode dev-payload target dir (e.g. `build-opencode-dev/`) and
-how a developer points a local OpenCode at it — `.opencode/plugin/` symlink vs an
-`opencode.json` `plugin` path entry — so the dev loop is documented and repeatable.
-Lowest-risk; mostly convention.
+`build/`. Decide the OpenCode dev-payload target dir and how a developer points a
+local OpenCode at it, so the dev loop is documented and repeatable.
+
+**Finding (verified on 1.17.9).** OpenCode has **no `--plugin-dir` flag**, and the
+`opencode.json` `plugin` array only accepts npm package names (not filesystem
+paths). BUT there is an env var **`OPENCODE_CONFIG_DIR`** ("Path to config
+directory"). Probe-tested: with `OPENCODE_CONFIG_DIR=<dir>`, OpenCode loaded the
+plugin from `<dir>/plugin/*.js` and reads skills from `<dir>/skills/<name>/SKILL.md`
+— i.e. it treats `<dir>` exactly as it treats `~/.config/opencode`. Note it
+**replaces** (does not augment) the global config dir, so the dev dir must be
+self-contained. (Also: `--pure` disables external/npm plugins but not config-dir
+plugins.)
+
+**Decision.** Assemble the dev payload into repo-root **`build-opencode-dev/`** with
+the OpenCode config-dir layout (`plugin/`, `skills/`, plus our `hooks/` + config
+JSON). Primary dev loop:
+
+```
+OPENCODE_CONFIG_DIR=$(pwd)/build-opencode-dev opencode
+```
+
+— OpenCode picks the dev plugin + skill straight from the build dir, no copy into
+`~/.config/opencode`. This is the OpenCode analogue of `claude --plugin-dir` and the
+other hosts' `devBuild`. Plan B (if a dev wants it loaded alongside their real
+config) remains copying/symlinking into `~/.config/opencode/{plugin,skills}/`.
+Lowest-risk; the mechanism is now proven, only the Gradle `devBuild` wiring remains
+(an implementation task).
 
 ### Task 6: Verify OpenCode on Windows (WSL + native) [Medium]
 
