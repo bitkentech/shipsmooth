@@ -11,15 +11,19 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>in-progress</status>
+            <status>agent-coded</status>
             <name>De-risk — hand-build a hardcoded OpenCode plugin and prove it loads</name>
-            <commit></commit>
+            <commit>89d1d209c308d088ffd5e3c2c3665923dec558aa</commit>
             <created-from>plan-86-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
                     <timestamp>2026-06-22T13:33:18.750+05:30</timestamp>
                     <message>De-risk partial findings recorded in plan: plain .js global plugin loads (no manifest/build); Bun $ available despite no Bun on PATH; lifecycle via generic event hook; session.created is the SessionStart-equiv. Still to prove: runtime bootstrap E2E + command/skill surfacing.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-22T15:53:15.150+05:30</timestamp>
+                    <message>Both entry points proven: config-hook command (/shipsmooth-start) and native SKILL.md both surfaced and fired (distinct marker files written). hooks.json irrelevant to OpenCode. Task 1 fully de-risked end-to-end on 1.17.9.</message>
                 </comment>
             </comments>
             <deviations/>
