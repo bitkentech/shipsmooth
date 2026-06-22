@@ -1,10 +1,10 @@
 package io.bitken.ss.cli;
 
 import io.bitken.ss.cli.conf.ExperimentalModeParser;
-import io.bitken.ss.cli.conf.RemoteUrl;
-import io.bitken.ss.cli.conf.ProjectDataStore;
-import io.bitken.ss.cli.conf.ProjectDataStoreResolver;
-import io.bitken.ss.cli.conf.StandaloneConfigException;
+import io.bitken.ss.cli.conf.ds.RemoteUrl;
+import io.bitken.ss.cli.conf.ds.ProjectDataStore;
+import io.bitken.ss.cli.conf.ds.ProjectDataStoreResolver;
+import io.bitken.ss.cli.conf.ds.StandaloneConfigException;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;
 import io.bitken.ss.conf.ServicesModule;

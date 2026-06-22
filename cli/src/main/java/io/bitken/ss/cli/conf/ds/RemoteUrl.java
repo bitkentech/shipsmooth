@@ -1,4 +1,4 @@
-package io.bitken.ss.cli.conf;
+package io.bitken.ss.cli.conf.ds;
 
 import java.io.BufferedReader;
 import java.io.IOException;

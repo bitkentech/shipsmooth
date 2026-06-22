@@ -1,4 +1,4 @@
-package io.bitken.ss.cli.conf;
+package io.bitken.ss.cli.conf.ds;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

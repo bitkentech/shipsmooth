@@ -1,6 +1,8 @@
-package io.bitken.ss.cli.conf;
+package io.bitken.ss.cli.conf.ds;
 
 import com.fasterxml.jackson.dataformat.toml.TomlMapper;
+import io.bitken.ss.cli.conf.ConfigFileLocator;
+import io.bitken.ss.cli.conf.DefaultConfigFileLocator;
 
 import java.io.IOException;
 import java.nio.file.Files;
