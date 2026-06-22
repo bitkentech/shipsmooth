@@ -17,7 +17,7 @@ class ProjectDataStoreResolverTest {
     // Inv-1: no config file → in-repo default
     @Test
     void noConfigFile_returnsInRepo() {
-        Path absent = tmp.resolve("ss-config.toml");
+        Path absent = tmp.resolve("shipsmooth.toml");
         var result = new ProjectDataStoreResolver(() -> absent)
                 .resolve(tmp, Optional.of("https://github.com/org/repo.git"));
         assertInstanceOf(ProjectDataStore.InRepo.class, result);
@@ -123,7 +123,7 @@ class ProjectDataStoreResolverTest {
     }
 
     private static Path writeConfig(Path dir, String toml) throws IOException {
-        Path f = dir.resolve("ss-config.toml");
+        Path f = dir.resolve("shipsmooth.toml");
         Files.writeString(f, toml);
         return f;
     }

@@ -70,7 +70,7 @@ public interface ProjectDataStore {
                         standalone mode is configured but .agents/ exists in the project repo.
                         Mid-project switching is not supported. Either:
                           - remove .agents/ from the project repo, or
-                          - remove the entry from ~/.config/shipsmooth/ss-config.toml to continue in in-repo mode.""");
+                          - remove the entry from ~/.config/shipsmooth/shipsmooth.toml to continue in in-repo mode.""");
             }
         }
 

@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 /**
- * Resolves a {@link ProjectDataStore} from the user's {@code ss-config.toml}
+ * Resolves a {@link ProjectDataStore} from the user's {@code shipsmooth.toml}
  * (located by a {@link ConfigFileLocator}).
  *
  * <p>Matching is by the pair {@code (localPath, remoteUrl)}. No config file or no

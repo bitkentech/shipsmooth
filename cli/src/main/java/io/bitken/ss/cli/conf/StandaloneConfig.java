@@ -2,7 +2,7 @@ package io.bitken.ss.cli.conf;
 
 import java.util.List;
 
-/** Root of {@code ~/.config/shipsmooth/ss-config.toml}. */
+/** Root of {@code ~/.config/shipsmooth/shipsmooth.toml}. */
 public final class StandaloneConfig {
 
     private List<ProjectEntry> projects = List.of();

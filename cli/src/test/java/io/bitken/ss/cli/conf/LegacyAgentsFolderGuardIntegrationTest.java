@@ -36,7 +36,7 @@ class LegacyAgentsFolderGuardIntegrationTest {
         Files.createDirectories(legacyPlans);
         Files.writeString(legacyPlans.resolve("plan-3.md"), "# pre-existing plan history\n");
 
-        Path absentConfig = repoRoot.resolve("ss-config.toml"); // no config file present
+        Path absentConfig = repoRoot.resolve("shipsmooth.toml"); // no config file present
         var resolver = new ProjectDataStoreResolver(() -> absentConfig);
 
         RuntimeException ex = assertThrows(RuntimeException.class,
@@ -52,7 +52,7 @@ class LegacyAgentsFolderGuardIntegrationTest {
     @Test
     void cleanRepoWithoutLegacyTree_stillResolvesInRepo() {
         // Control: no legacy tree, no config → ordinary in-repo resolution, no guard.
-        Path absentConfig = repoRoot.resolve("ss-config.toml");
+        Path absentConfig = repoRoot.resolve("shipsmooth.toml");
         var result = new ProjectDataStoreResolver(() -> absentConfig)
                 .resolve(repoRoot, Optional.empty());
         assertInstanceOf(ProjectDataStore.InRepo.class, result);
