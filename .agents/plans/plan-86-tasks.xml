@@ -123,12 +123,17 @@
         <task>
             <id>8</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Decouple installer-copy from hooks.json; gate json in Target.build()</name>
-            <commit></commit>
+            <commit>70a872987c68e5e991b1531067441c35565cf3ad</commit>
             <created-from>plan-86-v9</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T17:03:18.810+05:30</timestamp>
+                    <message>De-risk draft ready for review. Split HooksRenderer into writeInstallerScript()+writeHooksJson(); Target.build() gates the json on platform.emitsHooksJson(). opencode ships installer + no hooks.json; other 3 hosts byte-identical. All affected tests green (harness:shared, packaging, plugin-model).</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>7</depends-on>
         </task>
