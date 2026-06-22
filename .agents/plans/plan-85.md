@@ -110,17 +110,18 @@ clash with the emerging `.agents/`-as-config meaning.
 > **Task IDs are stable** (`### Task N:` — the CLI parses them as identifiers and
 > `Depends-on` references them by number); physical order ≠ numeric order on purpose.
 >
-> Final risk sort & rationale (dependencies override pure risk order; here the chain
-> 2←3←4←{5,6,7,8,9} pulls the result back to numeric order):
+> Final risk sort & rationale (dependencies override pure risk order; the chain
+> 2←3←4←{5,6,7,8,9,10} keeps execution close to numeric order):
 > 1. **Task 1** (High, no deps) — foundational policy + legacy-`.agents/` fail-loud guard.
 > 2. **Task 2** (Low) — hard prerequisite for Task 3.
 > 3. **Task 3** (Medium) — load-bearing structural rename; prerequisite for Task 4.
-> 4. **Task 4** (High) — core `resolve()` rewrite; prerequisite for Tasks 5–9.
+> 4. **Task 4** (High) — core `resolve()` rewrite; prerequisite for Tasks 5–10.
 > 5. **Task 5** (High) — first-run handshake + config write.
-> 6. **Task 6** (Medium) — manifest marker.
-> 7. **Task 7** (Medium) — external plan-context discoverability.
-> 8. **Task 8** (Medium) — de-fingerprint project-repo commits.
-> 9. **Task 9** (Low) — explore + design only (no implementation) for task↔SHA storage.
+> 6. **Task 10** (Medium) — config can express in-repo explicitly (depends on 4; pairs with 5).
+> 7. **Task 6** (Medium) — manifest marker.
+> 8. **Task 7** (Medium) — external plan-context discoverability.
+> 9. **Task 8** (Medium) — de-fingerprint project-repo commits.
+> 10. **Task 9** (Low) — explore + design only (no implementation) for task↔SHA storage.
 
 ### Task 1: Decide and implement policy for existing users / deployments [High]
 Determine what (if anything) must be done for any existing users or deployments before
@@ -165,8 +166,10 @@ prompt on stdin. Define the machine-readable contract the skill consumes.
 Wire the skill side: when the CLI returns needs-decision, the skill presents the options
 (external recommended, in-repo offered), gets a real user answer, and re-invokes the CLI
 to (a) create the chosen state dir under consented-creation rules and (b) **write the
-config entry** recording an external choice keyed on `(localPath, remoteUrl)`. Steady
-state stays silent. Covers the clean-first-run and config-present-but-dir-missing flows.
+config entry** recording the choice keyed on `(localPath, remoteUrl)`. Steady state stays
+silent. Covers the clean-first-run and config-present-but-dir-missing flows. (The in-repo
+choice is persisted via the explicit in-repo config entry from **Task 10**, so a chosen
+in-repo project is not re-prompted on every run.)
 
 ### Task 6: Implement a "shipsmooth-owned folder" manifest marker [Medium]
 *Depends-on: 4*
@@ -219,7 +222,26 @@ commit SHAs too, or a separate ledger), so that a human or agent could later rec
 log has been de-fingerprinted. Deliverable is the analysis + recommended shape; actual
 implementation, if any, is deferred to a follow-up task/plan.
 
-## Notes
+### Task 10: Let `shipsmooth.toml` express in-repo mode explicitly [Medium]
+*Depends-on: 4*
+Today the config schema can only record an **external** choice (a `stateDir` per project
+entry); in-repo mode is purely the *negative* — inferred when no entry matches — and a
+matched entry without a `stateDir` is a hard error. With external-as-default, **in-repo
+becomes the opt-in choice**, so the config must be able to record it too. Otherwise the
+only durable record of an in-repo decision is the on-disk `.shipsmooth/` folder, and the
+handshake (Task 5) has nowhere to persist a user's "use in-repo" answer — risking a
+re-prompt every run.
+
+Make **config the single source of truth for what the user picked**: extend the schema so
+a project entry can declare in-repo mode (e.g. a `mode = "in-repo"` field, with `stateDir`
+optional/ignored for that mode; an entry must specify exactly one of in-repo vs an external
+`stateDir`). Update `ProjectDataStoreResolver` so a matched in-repo entry resolves to
+`ProjectDataStore.InRepo` (rather than only the no-match fallthrough), and update Task 5's
+handshake to **write an in-repo entry** when the user chooses in-repo. Folder presence
+remains corroborating (Task 6 marker), not the authoritative record. Settle precedence
+when a config entry and on-disk state disagree, consistent with the Task 4 branch table
+("config wins"). Keep validation loud: an entry that declares neither a valid mode nor a
+`stateDir` is still a hard error.
 - External mode does **not** mean the agent loses plan context: the state dir is a git
   repo on the same filesystem, Readable via the CLI-resolved path. The only real loss vs.
   in-repo is *same-repo co-evolution / travels-with-clone*; Task 7 closes the
