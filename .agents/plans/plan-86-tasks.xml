@@ -11,12 +11,17 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>in-progress</status>
             <name>De-risk — hand-build a hardcoded OpenCode plugin and prove it loads</name>
             <commit></commit>
             <created-from>plan-86-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T13:33:18.750+05:30</timestamp>
+                    <message>De-risk partial findings recorded in plan: plain .js global plugin loads (no manifest/build); Bun $ available despite no Bun on PATH; lifecycle via generic event hook; session.created is the SessionStart-equiv. Still to prove: runtime bootstrap E2E + command/skill surfacing.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
@@ -62,6 +67,18 @@
             <name>Decide dev-loop ergonomics + target dir</name>
             <commit></commit>
             <created-from>plan-86-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Verify OpenCode on Windows (WSL + native)</name>
+            <commit></commit>
+            <created-from>plan-86-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>

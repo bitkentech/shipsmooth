@@ -271,10 +271,17 @@ also installed globally at `~/.config/opencode/plugin/helloworld.js`). It logs t
   runtime bootstrap should trigger on the **first `session.created`** (idempotent
   installer ⇒ safe to also opportunistically run at factory load).
 
+- **End-to-end runtime bootstrap PROVEN.** On the first `session.created`, the
+  plugin ran `install-shipsmooth.sh shipsmooth 0.3.25` via `$` (exit 0; idempotent
+  fast-path since 0.3.25 was already cached), then ran the installed
+  `~/.cache/shipsmooth/0.3.25/bin/shipsmooth --version` via `$` → exit 0,
+  `out=0.3.25`. The full chain **plugin → `$` → installer → working Java CLI**
+  works on OpenCode 1.17.9. This retires the plan's single biggest risk: Local mode
+  is viable on OpenCode. (Only the already-installed fast-path was exercised here;
+  a true cold download from GitHub releases was not re-tested, but the installer is
+  the same script already proven on the other hosts.)
+
 Still **unproven** (next steps within Task 1):
-- End-to-end runtime bootstrap: `$` running `install-shipsmooth.sh shipsmooth <ver>`
-  actually fetching+unpacking the jlink runtime, and a subsequent `shipsmooth` CLI
-  call succeeding (the Local-mode proof).
 - Whether a `config`-registered command AND a native `SKILL.md` skill both surface
   to the agent (feeds Task 3).
 - Whether emitting no `hooks.json` produces any warning (so far: nothing observed
@@ -341,9 +348,46 @@ how a developer points a local OpenCode at it — `.opencode/plugin/` symlink vs
 `opencode.json` `plugin` path entry — so the dev loop is documented and repeatable.
 Lowest-risk; mostly convention.
 
+### Task 6: Verify OpenCode on Windows (WSL + native) [Medium]
+
+*Depends-on: 1*
+
+OpenCode *does* run on Windows (confirmed from the docs), but with a fork in the
+road that bears directly on our bootstrap:
+
+- **WSL (the OpenCode-recommended path).** Inside WSL, OpenCode is effectively
+  Linux: Bun's `$` and the POSIX `sh install-shipsmooth.sh` path should work
+  unchanged, and the runtime installs into the WSL `~/.cache/shipsmooth/…`. Expected
+  to be **free** — same code path as the Linux de-risk. This is the primary target
+  and the most likely supported configuration.
+- **Native Windows (no WSL).** Genuinely hard and possibly blocked today: the docs
+  note "OpenCode on Windows using Bun is currently in progress", so the `$` shell we
+  rely on may be absent/immature; `sh install-shipsmooth.sh` won't run natively;
+  and the other hosts' Windows support uses a *separate* `install-runtime.bat` +
+  `%LOCALAPPDATA%` layout (see `HookCommandRenderer.windowsCommand`). Note also that
+  `Target.guard` currently rejects every non-Claude platform on Windows — so native
+  Windows for OpenCode would require lifting that guard AND a Windows bootstrap path
+  (bat installer or a `node:child_process`/`cmd.exe` fallback in the plugin).
+
+Goal of this task: **establish which Windows configurations we support and prove
+the supported one(s)**. Concretely:
+- Confirm WSL works end-to-end (plugin load → `session.created` → installer → CLI
+  `--version`), mirroring the Linux de-risk inside WSL.
+- Decide whether native (non-WSL) Windows is in scope for this plan or explicitly
+  deferred. If in scope: design the Windows bootstrap (bat vs child_process), the
+  CLI-bin path shape (`%LOCALAPPDATA%\…` per `Os.Windows.cliBinPath`), and the
+  `Target.guard` change. If deferred: record it as a known limitation with a
+  pointer, matching how Windows is Claude-only today.
+- Whichever way: the plugin's bootstrap must **degrade gracefully** on an
+  unsupported Windows config (log + no-op, never crash the session).
+
+Recommended default: **support WSL, defer native Windows** unless there's a
+concrete need — it keeps us on the proven POSIX path and avoids lifting the
+Claude-only Windows guard before native OpenCode/Bun support matures.
+
 ## Implementation tasks (Phase 1 — after decisions above)
 
-_To be risk-calibrated and ordered in Phase 1 once Tasks 1–5 are resolved.
+_To be risk-calibrated and ordered in Phase 1 once Tasks 1–6 are resolved.
 Anticipated thin vertical slices, each depending on the relevant decision:_
 
 - `Platform.Opencode` + `isOpencode()` + render spec wiring [Med] — *needs Task 2*
