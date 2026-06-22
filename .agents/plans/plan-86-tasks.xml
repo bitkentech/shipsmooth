@@ -140,9 +140,9 @@
         <task>
             <id>9</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Render parity — opencode skill variant</name>
-            <commit></commit>
+            <commit>b006e5f0b675fea6cb1e402a315a748bc72ec1df</commit>
             <created-from>plan-86-v9</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
