@@ -144,6 +144,19 @@ val codexDevSpec = geminiDevSpec.copy(
     pluginHookCommand = "node \"\${PLUGIN_ROOT}/dist/session-start.js\"",
 )
 
+// OpenCode (plan-86): no hooks.json (Platform.Opencode.emitsHooksJson()==false),
+// so the hook command is NOT consumed by any host file — but it must still
+// reference install-shipsmooth.sh so HookCommandRenderer's POSIX branch copies the
+// script into hooks/ (the JS plugin shells out to it). OpenCode therefore uses the
+// sh-installer command form in BOTH dev and prod (there is no session-start.js Node
+// path for opencode). Frontmatter is required (like gemini/codex).
+val opencodeDevSpec = geminiDevSpec.copy(
+    buildPlatform = "opencode",
+    outputDir = renderOutputDir("opencode-dev"),
+    pluginHookCommand =
+        "sh \"\${PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth-dev $pluginVersion",
+)
+
 fun registerRender(taskName: String, spec: RenderSpec) =
     tasks.register<JavaExec>(taskName) {
         group = "render"
@@ -169,6 +182,7 @@ fun registerRender(taskName: String, spec: RenderSpec) =
 val renderClaudeDev = registerRender("renderClaudeDev", claudeDevSpec)
 val renderGeminiDev = registerRender("renderGeminiDev", geminiDevSpec)
 val renderCodexDev = registerRender("renderCodexDev", codexDevSpec)
+val renderOpencodeDev = registerRender("renderOpencodeDev", opencodeDevSpec)
 
 // ---------------------------------------------------------------------------
 // Prod render variants. Prod deltas vs dev: buildEnv=prod, experimentalEnabled=false,
@@ -208,6 +222,15 @@ val codexProdSpec = geminiProdSpec.copy(
         "sh \"\${PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion",
 )
 
+// OpenCode prod: prod frontmatter (name: start) + prod description from geminiProdSpec;
+// sh-installer hook command so the script is copied (no hooks.json is written).
+val opencodeProdSpec = geminiProdSpec.copy(
+    buildPlatform = "opencode",
+    outputDir = layout.buildDirectory.dir("render/opencode-prod").get().asFile.path,
+    pluginHookCommand =
+        "sh \"\${PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion",
+)
+
 val windowsSpec = claudeProdSpec.copy(
     buildOs = "windows",
     pluginDescription = "Agent coding workflow (Windows)",
@@ -219,6 +242,7 @@ val windowsSpec = claudeProdSpec.copy(
 val renderClaudeProd = registerRender("renderClaudeProd", claudeProdSpec)
 val renderGeminiProd = registerRender("renderGeminiProd", geminiProdSpec)
 val renderCodexProd = registerRender("renderCodexProd", codexProdSpec)
+val renderOpencodeProd = registerRender("renderOpencodeProd", opencodeProdSpec)
 val renderWindows = registerRender("renderWindows", windowsSpec)
 
 // ---------------------------------------------------------------------------
