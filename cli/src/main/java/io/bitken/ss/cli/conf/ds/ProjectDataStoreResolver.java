@@ -67,22 +67,61 @@ public final class ProjectDataStoreResolver {
         return fromFilesystem(localPath, remoteUrl);
     }
 
-    /** Config entry matched this project: external state (row 2/3) or malformed (Unresolvable). */
+    private static final String MODE_IN_REPO = "in-repo";
+    private static final String MODE_EXTERNAL = "external";
+
+    /**
+     * A config entry matched this project. Classify per its {@code mode}/{@code stateDir}:
+     * a valid in-repo entry resolves in-repo; a valid external entry resolves to its dir
+     * (recreate decision if missing); anything inconsistent is a malformed entry.
+     */
     private DataStoreResolution fromConfigEntry(Path localPath, StandaloneConfig.ProjectEntry entry) {
-        if (entry.getStateDir() == null || entry.getStateDir().isBlank()) {
-            return DataStoreResolution.Unresolvable.of(
-                    DataStoreResolution.UnresolvableReason.MALFORMED_CONFIG_ENTRY);
+        boolean hasStateDir = entry.getStateDir() != null && !entry.getStateDir().isBlank();
+        String mode = entry.getMode() == null ? null : entry.getMode().trim();
+
+        if (MODE_IN_REPO.equals(mode)) {
+            // In-repo entries must NOT also carry a stateDir.
+            return hasStateDir ? malformed() : fromInRepoEntry(localPath);
         }
+        if (MODE_EXTERNAL.equals(mode) || mode == null) {
+            // external mode, or back-compat (no mode): a stateDir is required.
+            return hasStateDir ? fromExternalEntry(localPath, entry) : malformed();
+        }
+        // Unknown mode value.
+        return malformed();
+    }
+
+    /** Valid external entry: settled when the dir exists, else offer to recreate it. */
+    private DataStoreResolution fromExternalEntry(Path localPath, StandaloneConfig.ProjectEntry entry) {
         Path stateDir = Path.of(entry.getStateDir()).toAbsolutePath().normalize();
         if (Files.isDirectory(stateDir)) {
             // Config wins over any in-repo folder: we do not even inspect the repo here.
             return new DataStoreResolution.Settled(new ProjectDataStore.Standalone(localPath, stateDir));
         }
-        // Configured external dir is gone — ask whether to recreate it.
         return new DataStoreResolution.NeedsDecision(
                 DataStoreResolution.UndecidableSituation.CONFIG_DIR_MISSING,
                 List.of(new DataStoreResolution.Option(
                         DataStoreResolution.Choice.RECREATE_MISSING_DIR, stateDir, true)));
+    }
+
+    /**
+     * Valid in-repo entry: settled only once the in-repo folder is actually set up. The
+     * entry records the choice, but settled-ness still requires the on-disk folder, so an
+     * unprovisioned repo is offered the in-repo setup rather than re-asked from scratch.
+     */
+    private DataStoreResolution fromInRepoEntry(Path localPath) {
+        if (Files.isDirectory(localPath.resolve(DATA_DIR).resolve(PLANS_SUBDIR))) {
+            return new DataStoreResolution.Settled(new ProjectDataStore.InRepo(localPath));
+        }
+        return new DataStoreResolution.NeedsDecision(
+                DataStoreResolution.UndecidableSituation.IN_REPO_NOT_SET_UP,
+                List.of(new DataStoreResolution.Option(
+                        DataStoreResolution.Choice.IN_REPO, localPath.resolve(DATA_DIR), true)));
+    }
+
+    private static DataStoreResolution malformed() {
+        return DataStoreResolution.Unresolvable.of(
+                DataStoreResolution.UnresolvableReason.MALFORMED_CONFIG_ENTRY);
     }
 
     /** No matching config entry: legacy guard, settled in-repo, or a clean first run. */

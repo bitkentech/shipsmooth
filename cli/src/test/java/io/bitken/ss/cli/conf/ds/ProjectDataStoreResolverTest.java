@@ -96,6 +96,75 @@ class ProjectDataStoreResolverTest {
         assertInstanceOf(ProjectDataStore.Standalone.class, settled.store());
     }
 
+    // ── mode = "in-repo" config entry (Task 10) ─────────────────────────────────
+
+    @Test
+    void inRepoEntry_folderPresent_settledInRepo() throws IOException {
+        Files.createDirectories(repo.resolve(".shipsmooth").resolve("plans"));
+        Path config = writeConfig("""
+                [[projects]]
+                localPath = "%s"
+                mode      = "in-repo"
+                """.formatted(repo));
+
+        var r = resolve(config, Optional.empty());
+        var settled = assertInstanceOf(DataStoreResolution.Settled.class, r);
+        assertInstanceOf(ProjectDataStore.InRepo.class, settled.store());
+    }
+
+    @Test
+    void inRepoEntry_folderMissing_needsDecisionNotSetUp() throws IOException {
+        Path config = writeConfig("""
+                [[projects]]
+                localPath = "%s"
+                mode      = "in-repo"
+                """.formatted(repo));
+
+        var r = resolve(config, Optional.empty());
+        var needs = assertInstanceOf(DataStoreResolution.NeedsDecision.class, r);
+        assertEquals(DataStoreResolution.UndecidableSituation.IN_REPO_NOT_SET_UP, needs.situation());
+        assertEquals(DataStoreResolution.Choice.IN_REPO, needs.recommended().choice());
+    }
+
+    @Test
+    void inRepoEntryWithStateDir_isMalformed() throws IOException {
+        Path config = writeConfig("""
+                [[projects]]
+                localPath = "%s"
+                mode      = "in-repo"
+                stateDir  = "/somewhere"
+                """.formatted(repo));
+
+        var bad = assertInstanceOf(DataStoreResolution.Unresolvable.class, resolve(config, Optional.empty()));
+        assertEquals(DataStoreResolution.UnresolvableReason.MALFORMED_CONFIG_ENTRY, bad.reason());
+    }
+
+    @Test
+    void explicitExternalMode_withStateDir_settled() throws IOException {
+        Path stateDir = Files.createDirectories(repo.resolve("state"));
+        Path config = writeConfig("""
+                [[projects]]
+                localPath = "%s"
+                mode      = "external"
+                stateDir  = "%s"
+                """.formatted(repo, stateDir));
+
+        assertInstanceOf(DataStoreResolution.Settled.class, resolve(config, Optional.empty()));
+    }
+
+    @Test
+    void unknownMode_isMalformed() throws IOException {
+        Path config = writeConfig("""
+                [[projects]]
+                localPath = "%s"
+                mode      = "sideways"
+                stateDir  = "/somewhere"
+                """.formatted(repo));
+
+        var bad = assertInstanceOf(DataStoreResolution.Unresolvable.class, resolve(config, Optional.empty()));
+        assertEquals(DataStoreResolution.UnresolvableReason.MALFORMED_CONFIG_ENTRY, bad.reason());
+    }
+
     // ── NeedsDecision ────────────────────────────────────────────────────────────
 
     @Test
