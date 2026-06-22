@@ -55,12 +55,17 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Decide the TypeScript toolchain</name>
-            <commit></commit>
+            <commit>7c5fb17aa441d9ee7054f8bb76798a02692590ad</commit>
             <created-from>plan-86-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T16:24:17.186+05:30</timestamp>
+                    <message>Resolved: author TS, ship plain .js via tsc transpile (no bundler). Plugin imports only node:* + type-only @opencode-ai/plugin -&gt; nothing to bundle. Reuse harness:shared node-gradle compileTs pattern (npm-provisioned tsc, CI-reproducible); transpile-only, no esbuild. @opencode-ai/plugin = devDependency (types only).</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
