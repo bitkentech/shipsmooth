@@ -55,12 +55,17 @@
         <task>
             <id>4</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Implement the branch-table resolution + needs-decision protocol</name>
-            <commit></commit>
+            <commit>802e77bc174b6b20d8f81b4cfce4ba5b5c537310</commit>
             <created-from>plan-85-v4</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T16:49:42.805+05:30</timestamp>
+                    <message>De-risk: resolve() returns DataStoreResolution per full branch table (802e77b). Detection-only, no side effects. main adapted minimally (Settled proceeds; others fail loud, TODO Task 5). Branch-table logic 100% covered, resolver 94%. Pre/post startup policy still deferred.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>3</depends-on>
         </task>
