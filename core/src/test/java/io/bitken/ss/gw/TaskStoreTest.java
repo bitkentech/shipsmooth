@@ -18,7 +18,7 @@ public class TaskStoreTest {
     @Test
     public void testReadPlanTasks() throws Exception {
         TaskStore service = new TaskStore(new ShipsmoothDataLocator(Paths.get(".")));
-        Path path = Paths.get("../.agents/plans/plan-27-tasks.xml");
+        Path path = Paths.get("../.shipsmooth/plans/plan-27-tasks.xml");
         PlanTasks planTasks = service.readPlanTasks(path.toFile());
         
         assertNotNull(planTasks);
