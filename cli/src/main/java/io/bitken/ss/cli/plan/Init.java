@@ -1,7 +1,6 @@
 package io.bitken.ss.cli.plan;
 
 import io.bitken.ss.cli.HasSpec;
-import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.gw.TaskStore;
@@ -56,14 +55,16 @@ public class Init implements Callable<Integer>, HasSpec {
             System.err.println("Plan file not found: " + tasksFrom);
             return 1;
         }
+        TaskStore store = taskStore.get();
         var markdown = Files.readString(markdownPath);
-        var tasks = taskStore.get().parseTasksFromPlan(markdown);
+        var tasks = store.parseTasksFromPlan(markdown);
         var planVersion = gitTagService.getPlanVersion(plan);
 
         planService.get().initPlan(plan, planVersion, tasks);
 
-        ShipsmoothDataLocator locator = new ShipsmoothDataLocator(Paths.get("."));
-        System.out.println("Written " + tasks.size() + " tasks to " + locator.planTasksFile(plan).getPath());
+        // Report the path via the resolved store (reflects the actual state root) rather than
+        // a throwaway locator assuming in-repo-at-CWD.
+        System.out.println("Written " + tasks.size() + " tasks to " + store.planTasksFile(plan).getPath());
 
         return 0;
     }

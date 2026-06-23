@@ -3,6 +3,7 @@ package io.bitken.ss.conf;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +30,18 @@ public class ResolvedStateRootTest {
     public void of_nonExistentPath_isRejectedAtMinting() {
         Path missing = dir.resolve("nope");
         assertThrows(InaccessibleRootException.class, () -> ResolvedStateRoot.of(missing));
+    }
+
+    @Test
+    public void of_null_isRejectedAtMinting() {
+        assertThrows(InaccessibleRootException.class, () -> ResolvedStateRoot.of(null));
+    }
+
+    @Test
+    public void of_fileNotDirectory_isRejectedAtMinting() throws Exception {
+        Path file = dir.resolve("a-file");
+        Files.writeString(file, "x");
+        assertThrows(InaccessibleRootException.class, () -> ResolvedStateRoot.of(file));
     }
 
     @Test
