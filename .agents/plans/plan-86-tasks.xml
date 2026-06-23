@@ -186,9 +186,9 @@
         <task>
             <id>12</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Release / distribution wiring</name>
-            <commit></commit>
+            <commit>8662a3822bbf245d464158c8c6829d4f8a3b8805</commit>
             <created-from>plan-86-v9</created-from>
             <closed-at-version></closed-at-version>
             <comments>
