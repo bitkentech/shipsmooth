@@ -142,13 +142,19 @@
         <task>
             <id>9</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>abandoned</status>
             <name>Explore + design storing task commit SHAs in the state repo</name>
             <commit></commit>
             <created-from>plan-85-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-23T15:50:45.240+05:30</timestamp>
+                    <message>Abandoned out of plan-85 and promoted to the permanent backlog as Linear PB-361. Design-only exploration of task-SHA storage in the state repo; its motivation (Task 8 de-fingerprinting) is itself still pending, so this is better tracked as a standalone backlog item.</message>
+                </deviation>
+            </deviations>
             <depends-on>4</depends-on>
         </task>
         <task>

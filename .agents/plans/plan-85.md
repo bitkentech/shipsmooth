@@ -218,6 +218,10 @@ mode the CLI resolved. In-repo mode keeps the existing prefixed convention uncha
 
 ### Task 9: Explore + design storing task commit SHAs in the state repo [Low]
 *Depends-on: 4*
+> **ABANDONED out of plan-85 → promoted to the permanent backlog as Linear PB-361.**
+> Design-only exploration; its motivation (Task 8 de-fingerprinting) is itself still
+> pending, so it's better tracked as a standalone backlog item.
+
 **Scope: exploration and design only — no implementation in this task.** In standalone
 mode the project-repo commits are de-fingerprinted (Task 8), so the **only** durable link
 between a task and the code commit that delivered it is whatever the state repo records.
