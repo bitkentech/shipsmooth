@@ -162,6 +162,30 @@
             <deviations/>
             <depends-on>4</depends-on>
         </task>
+        <task>
+            <id>11</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Convert command leaves to Provider&lt;T&gt; so the tree builds when unsettled</name>
+            <commit></commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>12</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Introduce a ResolvedStateRoot token consumed by ShipsmoothDataLocator</name>
+            <commit></commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>11</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>

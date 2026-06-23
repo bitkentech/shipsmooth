@@ -111,17 +111,21 @@ clash with the emerging `.agents/`-as-config meaning.
 > `Depends-on` references them by number); physical order ≠ numeric order on purpose.
 >
 > Final risk sort & rationale (dependencies override pure risk order; the chain
-> 2←3←4←{5,6,7,8,9,10} keeps execution close to numeric order):
+> 2←3←4←{5,6,7,8,9,10,11,12} keeps execution close to numeric order):
 > 1. **Task 1** (High, no deps) — foundational policy + legacy-`.agents/` fail-loud guard.
 > 2. **Task 2** (Low) — hard prerequisite for Task 3.
 > 3. **Task 3** (Medium) — load-bearing structural rename; prerequisite for Task 4.
-> 4. **Task 4** (High) — core `resolve()` rewrite; prerequisite for Tasks 5–10.
+> 4. **Task 4** (High) — core `resolve()` rewrite; prerequisite for Tasks 5–12.
 > 5. **Task 5** (High) — first-run handshake + config write.
-> 6. **Task 10** (Medium) — config can express in-repo explicitly (depends on 4; pairs with 5).
-> 7. **Task 6** (Medium) — manifest marker.
-> 8. **Task 7** (Medium) — external plan-context discoverability.
-> 9. **Task 8** (Medium) — de-fingerprint project-repo commits.
-> 10. **Task 9** (Low) — explore + design only (no implementation) for task↔SHA storage.
+> 6. **Task 11** (High) — `Provider<T>` leaf wiring so the command tree builds when the
+>    state root is unsettled (load-bearing for `--help`/comprehensive tree; depends on 4).
+> 7. **Task 10** (Medium) — config can express in-repo explicitly (depends on 4; pairs with 5).
+> 8. **Task 6** (Medium) — manifest marker.
+> 9. **Task 7** (Medium) — external plan-context discoverability.
+> 10. **Task 8** (Medium) — de-fingerprint project-repo commits.
+> 11. **Task 12** (Medium) — `ResolvedStateRoot` token hardening of the locator (depends on 11;
+>     rides the `Provider.get()` seam, removes redundant constructor I/O).
+> 12. **Task 9** (Low) — explore + design only (no implementation) for task↔SHA storage.
 
 ### Task 1: Decide and implement policy for existing users / deployments [High]
 Determine what (if anything) must be done for any existing users or deployments before
@@ -250,3 +254,66 @@ when a config entry and on-disk state disagree, consistent with the Task 4 branc
   with external-as-default, the only cross-host mechanism needed is the agent-agnostic
   config entry + the skill handshake, which work identically everywhere. The deferred/
   abandoned plan-84 per-host opt-in work is not revived here.
+
+### Task 11: Convert command leaves to `Provider<T>` so the tree builds when unsettled [High]
+*Depends-on: 4*
+External-by-default + the first-run handshake create a legitimate, common state — a clean
+first run — where **no valid state root exists yet**. Today commands hold their
+state-dependent collaborators (e.g. `TaskStore`) directly, built at construction time, so
+the *whole command tree cannot be constructed* without a settled state root. That blocks
+showing a comprehensive `--help`/command tree (and any state-independent command) on an
+unsettled project. Fix the **constructability** axis: change the affected command ctors to
+inject `Provider<TaskStore>` (Dagger `javax.inject.Provider`/`Lazy`) instead of the built
+collaborator, and pull `.get()` only inside `call()`. Group-parents that build their own
+leaves (`plan`/`task`, per the CLI conventions) must pass providers down rather than built
+collaborators. Net effect: every command **constructs** with no state, so the tree is
+state-independent; the first touch of state moves to `Provider.get()` inside `call()`,
+where the existing throwing `provideStateRoot()` still emits the needs-decision JSON +
+exit code (the resolve-gate from Task 4) for genuinely state-dependent commands. This is
+the load-bearing fix for the comprehensive tree; Task 12 hardens the seam it creates.
+Scope is mechanical but listable — enumerate the command classes that inject a
+state-dependent collaborator and convert each (plus the group-parent wiring). Note this is
+orthogonal to Task 12: Provider alone (with today's throwing provider) already yields the
+tree; the token is a separate refinement that rides the same `get()` seam.
+
+**Concrete edge:** the partiality lives in `core/.../conf/ServicesModule.java`. It already
+provides `@RepoRoot Path` (total), `@StateRoot Path`, and an `@Singleton`
+`ShipsmoothDataLocator` derived from both — that three-way provision is the correct shape
+and stays. The problem is `provideStateRoot()` does `stateRoot.orElseThrow(...)` (the
+`unsettled(...)` path holds `Optional.empty()`), and `provideDataLocator` injects
+`@StateRoot Path`, so the locator transitively inherits that partiality — and because
+`TaskStore`/`PlanNumbers`/`NewPlan`/`PlanService` are eager `@Singleton`s that pull the
+locator, the whole graph forces `provideStateRoot()` at construction. The conversion is to
+make those eager consumers (and the command leaves) take `Provider<…>`/`Lazy<…>` so the
+`orElseThrow` only fires on `.get()` inside `call()`; the module keeps providing all three
+unchanged.
+
+### Task 12: Introduce a `ResolvedStateRoot` token consumed by `ShipsmoothDataLocator` [Medium]
+*Depends-on: 11*
+Harden the **soundness** axis exposed by Task 11's seam. Today `ShipsmoothDataLocator`'s
+constructor re-validates the state root with `Files.exists` — a side-effecting,
+TOCTOU-prone re-derivation of a guarantee the resolver already established when it returned
+a *settled* `DataStoreResolution` (Task 4). Apply **parse-don't-validate**: introduce a
+small capability/token type — `ResolvedStateRoot` — that can **only** be minted by the
+resolver's settled branch, and change the locator signature to
+`ShipsmoothDataLocator(RepoRoot, ResolvedStateRoot)` so the unsettled case becomes
+**unrepresentable** rather than guarded by a runtime check. `repoRoot` stays eager (it
+always exists); only the state root carries the "not yet" state, now encoded as the absence
+of a token. This removes the constructor's redundant `Files.exists` I/O, makes "no usable
+state" a value carried by the type rather than a thrown exception, and leaves the resolver
+as the single place partiality lives. The token is demanded at the `Provider.get()` seam
+Task 11 creates: `get()` mints/consumes the token and, when there is none, fails into the
+existing gate (needs-decision JSON + exit code). **Independence note:** this is a clean
+follow-on, not a second migration through the call sites — once the Provider seam exists,
+swapping the throw for a token demand is isolated to `provideStateRoot()`/the locator and
+touches no command. If sizing proves larger than expected, it can ship after Task 11
+without blocking the rest of the plan.
+
+**Concrete edge:** same site as Task 11 — `ServicesModule.provideStateRoot()` and
+`provideDataLocator(@RepoRoot Path, @StateRoot Path)`. Change `provideStateRoot` to mint a
+`ResolvedStateRoot` from the settled branch (with `Optional.empty()` meaning "no token,"
+which becomes the single throw-or-gate site), and change `provideDataLocator` to take the
+token instead of a bare `@StateRoot Path`. `repoRoot` stays a total `@RepoRoot Path`. Once
+the state-root binding is a distinct type, the `@StateRoot` qualifier is no longer
+load-bearing for disambiguation (the two providers no longer collide on `Path`) — keep it
+for symmetry or drop it, implementer's call.
