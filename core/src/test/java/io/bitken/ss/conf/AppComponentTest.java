@@ -27,8 +27,10 @@ public class AppComponentTest {
                 .servicesModule(new ServicesModule(Paths.get(".")))
                 .build();
 
-        assertSame(app.taskStore(), app.taskStore());
+        // State-dependent services are handed out via Provider; the singleton guarantee is
+        // that repeated get() calls return the same instance.
+        assertSame(app.taskStore().get(), app.taskStore().get());
         assertSame(app.gitState(), app.gitState());
-        assertSame(app.planService(), app.planService());
+        assertSame(app.planService().get(), app.planService().get());
     }
 }

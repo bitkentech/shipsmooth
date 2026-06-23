@@ -2,6 +2,7 @@ package io.bitken.ss.cli.task;
 
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.svc.plan.PlanService;
+import jakarta.inject.Provider;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -10,9 +11,9 @@ import java.util.concurrent.Callable;
 public class AddComment implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
-    private final PlanService planService;
+    private final Provider<PlanService> planService;
 
-    public AddComment(PlanService planService) {
+    public AddComment(Provider<PlanService> planService) {
         this.planService = planService;
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("comment");
@@ -33,7 +34,7 @@ public class AddComment implements Callable<Integer>, HasSpec {
         int task = pr.matchedOption("task").getValue();
         String message = pr.matchedOption("message").getValue();
 
-        planService.addComment(plan, task, message);
+        planService.get().addComment(plan, task, message);
         System.out.println("Comment added to task " + task);
         return 0;
     }

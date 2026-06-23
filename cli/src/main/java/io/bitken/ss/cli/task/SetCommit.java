@@ -2,6 +2,7 @@ package io.bitken.ss.cli.task;
 
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.svc.plan.PlanService;
+import jakarta.inject.Provider;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -10,9 +11,9 @@ import java.util.concurrent.Callable;
 public class SetCommit implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
-    private final PlanService planService;
+    private final Provider<PlanService> planService;
 
-    public SetCommit(PlanService planService) {
+    public SetCommit(Provider<PlanService> planService) {
         this.planService = planService;
         this.spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("set-commit");
@@ -39,7 +40,7 @@ public class SetCommit implements Callable<Integer>, HasSpec {
         String commit = pr.matchedOption("commit").getValue();
         String branch = pr.matchedOptionValue("branch", null);
 
-        planService.setTaskCommit(plan, task, commit, branch);
+        planService.get().setTaskCommit(plan, task, commit, branch);
         System.out.println("Commit set for task " + task);
         return 0;
     }

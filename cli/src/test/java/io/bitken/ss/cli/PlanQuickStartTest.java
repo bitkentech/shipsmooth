@@ -43,7 +43,7 @@ public class PlanQuickStartTest {
         ShipsmoothDataLocator locator = new ShipsmoothDataLocator(repoRoot);
         NewPlan newPlan = new NewPlan(new PlanNumbers(locator), gitState, locator);
         PlanService planService = new PlanService(new TaskStore(locator), newPlan);
-        QuickStart cmd = new QuickStart(planService);
+        QuickStart cmd = new QuickStart(() -> planService);
         return new CommandLine(cmd.getSpec()).execute(args);
     }
 

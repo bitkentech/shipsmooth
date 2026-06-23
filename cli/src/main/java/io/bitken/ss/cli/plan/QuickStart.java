@@ -4,6 +4,7 @@ import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.svc.plan.ScaffoldException;
 import io.bitken.ss.svc.plan.ScaffoldResult;
+import jakarta.inject.Provider;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -21,9 +22,9 @@ import java.util.concurrent.Callable;
 public class QuickStart implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
-    private final PlanService planService;
+    private final Provider<PlanService> planService;
 
-    public QuickStart(PlanService planService) {
+    public QuickStart(Provider<PlanService> planService) {
         this.planService = planService;
         spec = CommandSpec.wrapWithoutInspection(this);
         spec.name("quick");
@@ -42,7 +43,7 @@ public class QuickStart implements Callable<Integer>, HasSpec {
     public Integer call() throws IOException {
         String desc = spec.commandLine().getParseResult().matchedOption("desc").getValue();
         try {
-            handoff(planService.quickStart(desc));
+            handoff(planService.get().quickStart(desc));
             return 0;
         } catch (ScaffoldException e) {
             System.out.println("ERROR: " + e.getMessage());

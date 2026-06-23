@@ -31,7 +31,7 @@ public class ShipsmoothDataLocatorIntegrationTest {
                 .build();
 
         ShipsmoothDataLocator locator = app.dataLocator();
-        TaskStore store = app.taskStore();
+        TaskStore store = app.taskStore().get();
 
         // Create the plans directory so the store can write
         locator.planTasksFile(99).getParentFile().mkdirs();

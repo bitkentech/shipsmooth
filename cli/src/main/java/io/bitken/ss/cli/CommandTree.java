@@ -26,16 +26,18 @@ class CommandTree {
     }
 
     /**
-     * @param settled when {@code false} (store not set up yet), only commands that
-     *        {@link RunsWithoutSettledStore run without a settled store} are built. The
-     *        state-dependent commands are not even instantiated, so their gateways — which
-     *        would resolve a state root that does not exist yet — are never pulled.
+     * @param settled retained for source compatibility; the tree is now comprehensive
+     *        regardless. Plan/task leaves hold {@link jakarta.inject.Provider Provider}s of
+     *        the state-dependent services and only resolve a state root when their
+     *        {@code call()} runs — so they can be constructed (and shown in {@code --help})
+     *        even when the store is not settled. The resolve-gate in {@link Shipsmooth}
+     *        stops a state-dependent command from actually dispatching while unsettled.
      */
     CommandTree(AppComponents app, boolean settled) {
         ExperimentalMode experimentalMode = app.experimentalMode();
 
         CommandSpec rootSpec = buildRootSpec();
-        for (Callable<?> command : buildCommands(app, settled)) {
+        for (Callable<?> command : buildCommands(app)) {
             if (!isExperimental(command) || experimentalMode.enabled()) {
                 register(rootSpec, command);
             }
@@ -47,15 +49,12 @@ class CommandTree {
         return commandLine;
     }
 
-    private static Callable<?>[] buildCommands(AppComponents app, boolean settled) {
-        Store store = new Store();
-        if (!settled) {
-            // Unsettled: build only the no-settle commands; do NOT construct plan/task,
-            // whose gateways would resolve a not-yet-existing state root.
-            return new Callable<?>[] { store };
-        }
+    private static Callable<?>[] buildCommands(AppComponents app) {
+        // Providers defer the state-root touch to call(), so the whole tree constructs
+        // even on a clean first run; the gate handles dispatch-time gating.
         Plan plan = new Plan(app.planService(), app.taskStore(), app.gitTags(), app.gitState());
         Task task = new Task(app.planService(), app.gitTags());
+        Store store = new Store();
         return new Callable<?>[] {
             plan,
             task,

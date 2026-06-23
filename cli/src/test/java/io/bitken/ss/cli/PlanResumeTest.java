@@ -37,7 +37,7 @@ public class PlanResumeTest {
     }
 
     private int run(TaskStore taskStore, String... args) {
-        Resume cmd = new Resume(taskStore);
+        Resume cmd = new Resume(() -> taskStore);
         return new CommandLine(cmd.getSpec()).execute(args);
     }
 

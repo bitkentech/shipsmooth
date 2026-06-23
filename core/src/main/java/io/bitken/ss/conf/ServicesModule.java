@@ -63,7 +63,10 @@ public class ServicesModule {
     @Singleton
     @StateRoot
     Path provideStateRoot() {
-        return stateRoot.orElseThrow(() -> new IllegalStateException(
+        // Thrown only when a command actually resolves the locator on an unsettled project
+        // (Provider.get() inside call()). The cli's execution-exception handler turns it into
+        // the needs-decision/unresolvable result for the skill. Help/version never get here.
+        return stateRoot.orElseThrow(() -> new StateRootUnsettledException(
                 "shipsmooth state is not set up yet — run `store init` first"));
     }
 

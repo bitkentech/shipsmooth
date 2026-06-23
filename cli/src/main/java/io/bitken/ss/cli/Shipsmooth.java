@@ -11,6 +11,7 @@ import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;
 import io.bitken.ss.conf.ExperimentalMode;
 import io.bitken.ss.conf.ServicesModule;
+import io.bitken.ss.conf.StateRootUnsettledException;
 import picocli.CommandLine;
 import picocli.CommandLine.ParseResult;
 
@@ -57,34 +58,34 @@ public class Shipsmooth {
     }
 
     public int execute() {
-        boolean settled = resolution instanceof DataStoreResolution.Settled;
-
-        ParseResult parsed;
+        // The store-init writer needs the single resolution main already computed. Bind it
+        // before dispatch (a cheap parse that does not touch state); ignore parse failures
+        // here — cmd.execute below re-parses and renders any real usage error itself.
         try {
-            parsed = cmd.parseArgs(args);
-        } catch (CommandLine.ParameterException e) {
-            // Unsettled: the requested command is not in the (no-settle-only) tree, so it
-            // needs a settled store — emit the resolution instead of a usage error.
-            if (!settled) {
+            bindStoreInit(cmd.parseArgs(args));
+        } catch (CommandLine.ParameterException ignored) {
+            // genuine bad args — let cmd.execute() report it
+        }
+
+        // The tree is comprehensive: --help/--version and state-independent commands run
+        // unconditionally. A state-dependent command only touches the state root when its
+        // call() resolves the locator (Provider.get()); on an unsettled project that throws
+        // StateRootUnsettledException, which this handler turns into the resolution JSON.
+        cmd.setExecutionExceptionHandler((ex, commandLine, parseResult) -> {
+            if (ex instanceof StateRootUnsettledException) {
                 return emitGate();
             }
-            return cmd.execute(args);
-        }
-
-        Object target = targetUserObject(parsed);
-
-        // The store-init writer is handed the single resolution so it validates against it.
-        if (target instanceof Init init) {
-            init.bind(repoRoot, remoteUrl, resolution);
-        }
-
-        // Settled commands cannot run while unsettled: emit the resolution as JSON for the
-        // skill on a distinct exit code, instead of dispatching.
-        if (!settled && !runsWithoutSettledStore(target)) {
-            return emitGate();
-        }
+            throw ex;
+        });
 
         return cmd.execute(args);
+    }
+
+    /** If the parsed target is {@code store init}, hand it the single resolution. */
+    private void bindStoreInit(ParseResult parsed) {
+        if (targetUserObject(parsed) instanceof Init init) {
+            init.bind(repoRoot, remoteUrl, resolution);
+        }
     }
 
     /** Print the (unsettled) resolution as JSON and return its exit code. */
@@ -98,7 +99,9 @@ public class Shipsmooth {
                 System.out.println(ResolutionJson.unresolvable(bad));
                 yield EXIT_UNRESOLVABLE;
             }
-            case DataStoreResolution.Settled ignored -> cmd.execute(args); // unreachable
+            // A settled project never throws StateRootUnsettledException, so the handler that
+            // calls this is unreachable when settled; satisfy the switch with a no-op exit.
+            case DataStoreResolution.Settled ignored -> 0;
         };
     }
 
@@ -109,10 +112,6 @@ public class Shipsmooth {
             pr = pr.subcommand();
         }
         return pr.commandSpec().userObject();
-    }
-
-    private static boolean runsWithoutSettledStore(Object target) {
-        return target instanceof RunsWithoutSettledStore r && r.runsWithoutSettledStore();
     }
 
     public static void main(String[] args) {
