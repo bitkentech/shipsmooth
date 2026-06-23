@@ -182,12 +182,17 @@
         <task>
             <id>12</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Introduce a ResolvedStateRoot token consumed by ShipsmoothDataLocator</name>
-            <commit></commit>
+            <commit>9fa16295c0bf7f5987551e284c0a375081b7c807</commit>
             <created-from>plan-85-v4</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-23T15:24:35.650+05:30</timestamp>
+                    <message>De-risk draft ready for review (ea1df6a). ResolvedStateRoot token in core; validation moved from locator ctor into ResolvedStateRoot.of(); provideStateRoot mints the token at the Provider.get() seam (still throws StateRootUnsettledException when unsettled, so Task-11 gate is intact). Full cli+core+build green. Future resolver lift tracked as PB-359.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>11</depends-on>
         </task>
