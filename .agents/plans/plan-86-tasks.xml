@@ -186,12 +186,17 @@
         <task>
             <id>12</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Release / distribution wiring</name>
             <commit></commit>
             <created-from>plan-86-v9</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-23T16:29:35.136+05:30</timestamp>
+                    <message>De-risk draft ready: npm-package distribution decided + npmPackOpencode produces a verified 6-file tarball. Outward npm publish wiring + ValidateRelease + docs pending Step B approval.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>11</depends-on>
         </task>
