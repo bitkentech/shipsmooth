@@ -43,6 +43,7 @@ public class Init implements Callable<Integer>, HasSpec {
         spec.name("init");
         spec.usageMessage().description(
                 "Act on a first-run choice: create the chosen state location and record it.");
+        // TODO: rename --choice to --type
         spec.addOption(OptionSpec.builder("--choice").required(true).type(String.class)
                 .paramLabel("CHOICE").description("external | in-repo | recreate").build());
         spec.addOption(OptionSpec.builder("--path").type(String.class)
@@ -78,13 +79,19 @@ public class Init implements Callable<Integer>, HasSpec {
             return fail("unknown --choice '" + choiceArg + "' (expected external | in-repo | recreate)");
         }
 
-        if (resolution instanceof DataStoreResolution.Settled) {
-            return fail("this project is already configured; nothing to do");
+        // Sealed switch (no default): adding a DataStoreResolution subtype breaks this at
+        // compile time rather than at the old unchecked cast. Terminal cases return; only
+        // NeedsDecision continues, so `needs` is definitely assigned below.
+        final DataStoreResolution.NeedsDecision needs;
+        switch (resolution) {
+            case DataStoreResolution.Settled ignored -> {
+                return fail("this project is already configured; nothing to do");
+            }
+            case DataStoreResolution.Unresolvable bad -> {
+                return fail(bad.message());
+            }
+            case DataStoreResolution.NeedsDecision n -> needs = n;
         }
-        if (resolution instanceof DataStoreResolution.Unresolvable bad) {
-            return fail(bad.message());
-        }
-        var needs = (DataStoreResolution.NeedsDecision) resolution;
 
         DataStoreResolution.Option option = needs.options().stream()
                 .filter(o -> o.choice() == choice)
