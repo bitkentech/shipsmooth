@@ -118,12 +118,17 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Point the agent at the external state path for plan context</name>
-            <commit></commit>
+            <commit>f1dd3590268a3147341f60ea83febdefb5c57a07</commit>
             <created-from>plan-85-v4</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-23T16:59:00.727+05:30</timestamp>
+                    <message>De-risk draft ready for review (99750e7). New store info leaf with -j/--json emits {status:ready,mode,stateRoot,plansDir}; plansDir from the locator (single path-truth source). All info to stdout. Hardening will add: store init -j flag + stdout ready output (drop stderr info), main-side bind, more test cases, skill prose.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>4</depends-on>
         </task>
