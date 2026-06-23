@@ -1,7 +1,6 @@
 package io.bitken.ss.cli.store;
 
 import io.bitken.ss.cli.HasSpec;
-import io.bitken.ss.cli.RunsWithoutSettledStore;
 import io.bitken.ss.cli.conf.ds.ConfigWriter;
 import io.bitken.ss.cli.conf.ds.ProjectDataStoreResolver;
 import picocli.CommandLine.Model.CommandSpec;
@@ -13,9 +12,11 @@ import java.util.concurrent.Callable;
  * Currently just {@code init} (act on a first-run choice). Builds its own leaves from the
  * gateways they need, like the other noun groups.
  *
- * <p>Runs without a settled store — it exists to settle one.
+ * <p>Runs without a settled store — it exists to settle one. Like every command it now
+ * constructs unconditionally; it touches no state root, so it simply runs (it does not
+ * resolve the locator, so the resolve-gate never fires for it).
  */
-public class Store implements Callable<Integer>, HasSpec, RunsWithoutSettledStore {
+public class Store implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
@@ -24,10 +25,6 @@ public class Store implements Callable<Integer>, HasSpec, RunsWithoutSettledStor
         this.spec.name("store");
         this.spec.usageMessage().description("Manage where this project's shipsmooth state lives.");
         addLeaves(spec, new Init(new ProjectDataStoreResolver(), new ConfigWriter()));
-    }
-
-    @Override public boolean runsWithoutSettledStore() {
-        return true;
     }
 
     public CommandSpec getSpec() {

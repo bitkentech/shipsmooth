@@ -104,4 +104,42 @@ public class ShipsmoothGateTest {
         assertFalse(out().contains("\"status\":\"needs-decision\""),
                 "store must bypass the resolve-gate");
     }
+
+    @Test
+    public void storeInit_isBoundWithResolution_throughExecute() {
+        var needs = new DataStoreResolution.NeedsDecision(
+                DataStoreResolution.UndecidableSituation.CLEAN_FIRST_RUN,
+                List.of(new DataStoreResolution.Option(
+                        DataStoreResolution.Choice.IN_REPO, Paths.get(".shipsmooth"), true)));
+
+        // Routing `store init` through execute() must bind the resolution to the Init leaf
+        // (bindStoreInit). An off-menu choice is rejected by Init *before* it touches the
+        // filesystem, so this exercises the bind seam without mutating real state — and it is
+        // NOT the gate JSON (store init runs; it is not gated).
+        int code = run(needs, "store", "init", "--choice", "sideways");
+
+        assertNotEquals(0, code, "off-menu choice must be refused by the bound Init");
+        assertFalse(out().contains("\"status\":\"needs-decision\""),
+                "store init runs (bound), it is not gated");
+    }
+
+    @Test
+    public void nonGateException_isNotTreatedAsGate_byGateHandler() {
+        // A settled app whose command throws something other than StateRootUnsettledException:
+        // `plan show` for a plan with no XML file. The gate handler must rethrow it (so picocli
+        // reports a real error) rather than mis-handle it as a needs-decision resolution.
+        var settled = new DataStoreResolution.Settled(
+                new io.bitken.ss.cli.conf.ds.ProjectDataStore.InRepo(
+                        Paths.get(".").toAbsolutePath().normalize()));
+        AppComponents settledApp = DaggerAppComponents.builder()
+                .servicesModule(new ServicesModule(Paths.get("."), new ExperimentalMode(false)))
+                .build();
+
+        int code = new Shipsmooth(settledApp, new String[]{"plan", "show", "--plan", "987654"},
+                Paths.get(".").toAbsolutePath().normalize(), Optional.empty(), settled).execute();
+
+        assertNotEquals(0, code, "an unrelated command failure must surface as a non-zero exit");
+        assertFalse(out().contains("\"status\":\"needs-decision\""),
+                "an unrelated failure must NOT be emitted as a gate resolution");
+    }
 }

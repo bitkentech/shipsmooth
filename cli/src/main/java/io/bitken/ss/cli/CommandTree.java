@@ -21,19 +21,15 @@ class CommandTree {
 
     private final CommandLine commandLine;
 
-    CommandTree(AppComponents app) {
-        this(app, true);
-    }
-
     /**
-     * @param settled retained for source compatibility; the tree is now comprehensive
-     *        regardless. Plan/task leaves hold {@link jakarta.inject.Provider Provider}s of
-     *        the state-dependent services and only resolve a state root when their
-     *        {@code call()} runs — so they can be constructed (and shown in {@code --help})
-     *        even when the store is not settled. The resolve-gate in {@link Shipsmooth}
-     *        stops a state-dependent command from actually dispatching while unsettled.
+     * Builds the full command tree. It is comprehensive regardless of whether the store is
+     * settled: plan/task leaves hold {@link jakarta.inject.Provider Provider}s of the
+     * state-dependent services and only resolve a state root when their {@code call()} runs,
+     * so they can be constructed (and shown in {@code --help}) even on an unsettled project.
+     * The resolve-gate in {@link Shipsmooth} stops a state-dependent command from actually
+     * dispatching while unsettled.
      */
-    CommandTree(AppComponents app, boolean settled) {
+    CommandTree(AppComponents app) {
         ExperimentalMode experimentalMode = app.experimentalMode();
 
         CommandSpec rootSpec = buildRootSpec();

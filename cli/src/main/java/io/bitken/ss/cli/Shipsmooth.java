@@ -42,8 +42,7 @@ public class Shipsmooth {
         this.repoRoot = repoRoot;
         this.remoteUrl = remoteUrl;
         this.resolution = resolution;
-        boolean settled = resolution instanceof DataStoreResolution.Settled;
-        this.cmd = new CommandTree(app, settled).commandLine();
+        this.cmd = new CommandTree(app).commandLine();
     }
 
     /**
@@ -99,9 +98,12 @@ public class Shipsmooth {
                 System.out.println(ResolutionJson.unresolvable(bad));
                 yield EXIT_UNRESOLVABLE;
             }
-            // A settled project never throws StateRootUnsettledException, so the handler that
-            // calls this is unreachable when settled; satisfy the switch with a no-op exit.
-            case DataStoreResolution.Settled ignored -> 0;
+            // A settled project never throws StateRootUnsettledException, so this branch is
+            // unreachable; if it is ever hit, the gate was invoked against a settled
+            // resolution — a wiring bug, not a user error.
+            case DataStoreResolution.Settled ignored ->
+                    throw new IllegalStateException(
+                            "resolve-gate reached with a settled resolution — should be unreachable");
         };
     }
 
