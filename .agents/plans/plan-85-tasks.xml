@@ -165,12 +165,17 @@
         <task>
             <id>11</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Convert command leaves to Provider&lt;T&gt; so the tree builds when unsettled</name>
             <commit></commit>
             <created-from>plan-85-v4</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-23T13:31:57.203+05:30</timestamp>
+                    <message>De-risk draft ready for review (ea777cd). Provider&lt;T&gt; leaf wiring makes the unsettled command tree comprehensive; gate moved to the Provider.get() seam (StateRootUnsettledException + picocli ExecutionExceptionHandler), so --help works for free with no special-case bypass. Full cli+core suites green.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>4</depends-on>
         </task>
