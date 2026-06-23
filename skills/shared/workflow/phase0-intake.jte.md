@@ -11,11 +11,13 @@ one:
   `.shipsmooth/plans/` but a separate state dir. Ask the CLI:
   `${model.cliBin()} store info --json` reports `plansDir` (when `status` is `ready`).
   List `plansDir`'s `plan-*-tasks.xml` (the highest plan number is the most likely
-  candidate); if `status` is not `ready`, there is no settled state yet, so there is
-  no active plan to resume.
+  candidate); if `status` is **not** `ready`, state is not set up yet — run the
+  **first-run handshake** below before going further (there is no active plan to resume).
 - check that plan's state with
   `${model.cliBin()} plan resume --plan {N}` — a plan-level status of `active` /
   `in-review` with tasks still `pending` / in-progress means work is unfinished.
+
+@template.shared.workflow.first-run-handshake(model = model)
 
 If any plan looks active, **surface it as a question** before doing anything
 else: name the plan and ask the user whether to continue it or deliberately
