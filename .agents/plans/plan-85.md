@@ -177,6 +177,10 @@ in-repo project is not re-prompted on every run.)
 
 ### Task 6: Implement a "shipsmooth-owned folder" manifest marker [Medium]
 *Depends-on: 4*
+> **ABANDONED out of plan-85 → promoted to the permanent backlog as Linear PB-360.**
+> Independent slice; the machinery it hooks into (Task 4 resolution/branch-table, Tasks
+> 11/12 Provider/ResolvedStateRoot) has landed, so it can be picked up on its own later.
+
 Tag a folder as shipsmooth data with a manifest marker file (e.g.
 `.shipsmooth/shipsmooth.manifest`) written at creation time, so that "is this folder
 really shipsmooth state?" becomes a fact, not a heuristic. The marker lets the CLI

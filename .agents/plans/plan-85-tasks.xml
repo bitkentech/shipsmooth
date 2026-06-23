@@ -100,13 +100,19 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>abandoned</status>
             <name>Implement a "shipsmooth-owned folder" manifest marker</name>
             <commit></commit>
             <created-from>plan-85-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-23T15:47:25.007+05:30</timestamp>
+                    <message>Abandoned out of plan-85 and promoted to the permanent backlog as Linear PB-360. The manifest marker is an independent slice; the resolution/branch-table machinery (Task 4) and Provider/ResolvedStateRoot spine (Tasks 11/12) it would hook into are already landed, so it can be picked up later on its own.</message>
+                </deviation>
+            </deviations>
             <depends-on>4</depends-on>
         </task>
         <task>
