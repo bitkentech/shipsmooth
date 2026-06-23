@@ -5,6 +5,7 @@ import io.bitken.ss.gw.GitState;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.gw.TaskStore;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -12,8 +13,12 @@ import jakarta.inject.Singleton;
 public interface AppComponents {
     ShipsmoothDataLocator dataLocator();
     ExperimentalMode experimentalMode();
-    TaskStore taskStore();
     GitState gitState();
     GitTags gitTags();
-    PlanService planService();
+
+    // State-dependent services are handed out as Providers so command leaves can be
+    // constructed without a settled state root (the locator is only built — and the
+    // state root only touched — when .get() is called inside a command's call()).
+    Provider<TaskStore> taskStore();
+    Provider<PlanService> planService();
 }

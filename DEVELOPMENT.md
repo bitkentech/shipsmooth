@@ -28,9 +28,9 @@ This repo uses a multi-module Gradle layout:
 ./gradlew assembleClaudeDev
 ```
 
-This produces a `build/` directory containing the `shipsmooth-dev` plugin and skill:
+This produces a `build-claude-dev/` directory containing the `shipsmooth-dev` plugin and skill:
 ```
-build/
+build-claude-dev/
   .claude-plugin/marketplace.json
   .claude-plugin/plugin.json
   hooks/hooks.json
@@ -40,13 +40,19 @@ build/
 ```
 
 > `assembleClaudeDev` renders `SKILL.md`, `hooks/hooks.json`, and
-> `dist/session-start-config.json` and composes the full payload into `build/`.
+> `dist/session-start-config.json` and composes the full payload into `build-claude-dev/`.
 
 **Dev-loop shortcut:** `./gradlew :harness:claude:devBuild` assembles the same full
-payload into repo-root `build/` *and* auto-builds the host jlink runtime image
+payload into repo-root `build-claude-dev/` *and* auto-builds the host jlink runtime image
 (the dev `session-start-config.json` `jlinkDir` is wired to `:cli:image_<host>`,
 so the image is built on demand — no `-PjlinkBuild` flag needed). Point Claude at
-`build/` and you have a runnable dev plugin backed by a local runtime.
+`build-claude-dev/` and you have a runnable dev plugin backed by a local runtime.
+
+> **Dev and prod use separate output dirs.** The dev payload lands in `build-claude-dev/`;
+> the prod assembly (`assembleClaudeProd`) targets `build/`. They are kept apart on purpose:
+> the dev assembly co-deposits (it does not prune the destination), so a shared dir let a
+> stale prod file leak into the dev payload. This mirrors `build-gemini-dev/` /
+> `build-codex-dev/`.
 
 ## Register the dev build with Claude Code
 
@@ -57,7 +63,7 @@ Add to `~/.claude/settings.json`:
   "shipsmooth-dev": {
     "source": {
       "source": "directory",
-      "path": "/path/to/shipsmooth/build"
+      "path": "/path/to/shipsmooth/build-claude-dev"
     }
   }
 },
@@ -86,7 +92,7 @@ Toggle `enabledPlugins` in `~/.claude/settings.json`:
 
 ## Notes
 - Restart Claude after each `./gradlew assembleClaudeDev` run to pick up changes
-- `build/` is gitignored — it is always a local, derived artifact
+- `build-claude-dev/` is gitignored — it is always a local, derived artifact
 
 ## Gemini CLI development
 

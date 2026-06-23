@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>85</plan>
+    <plan-version>plan-85-v4</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-22</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Decide and implement policy for existing users / deployments</name>
+            <commit>995bf96bee68fa563248009d5dcaee1e67759ead</commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T12:37:13.519+05:30</timestamp>
+                    <message>De-risk draft ready for review (commit c14d9d7); status restored after plan-85-v4 re-init</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Rename config file `ss-config.toml` → `shipsmooth.toml`</name>
+            <commit>07f93b8662fd768764f086a7f959684b27aee542</commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Rename `.agents/` → `.shipsmooth/` and make `stateRoot` own the layout</name>
+            <commit>c4145284f2669b68fa5dbfc54ab1145f54f60374</commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T13:30:54.107+05:30</timestamp>
+                    <message>De-risk draft 809f07a: locator dataRoot() proves .shipsmooth (in-repo) vs bare stateRoot (standalone); both preamble layout tests green. 5 core + several cli tests hardcoding .agents/plans to fix in harden.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Implement the branch-table resolution + needs-decision protocol</name>
+            <commit>802e77bc174b6b20d8f81b4cfce4ba5b5c537310</commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T16:49:42.805+05:30</timestamp>
+                    <message>De-risk: resolve() returns DataStoreResolution per full branch table (802e77b). Detection-only, no side effects. main adapted minimally (Settled proceeds; others fail loud, TODO Task 5). Branch-table logic 100% covered, resolver 94%. Pre/post startup policy still deferred.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>First-run handshake in the skill + config-writing path</name>
+            <commit>a24685a43513b52d6033b67e3f2be8ff1a35b1d0</commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T18:22:53.864+05:30</timestamp>
+                    <message>De-risk CLI side (d9fa2b1): store init guarded act-on-answer + ConfigWriter + main resolve-gate (JSON exit 10/11) + unsettled-only command tree + Standalone guard removed. New logic ~100% covered; main() glue untested as before. Skill prose still deferred.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-22T16:59:06.846+05:30</timestamp>
+                    <message>Execution reorder: do Task 10 (config expresses in-repo) BEFORE Task 5, so the handshake persists both external+in-repo choices uniformly via config. Both depend only on Task 4 (done); no plan-body change. Task 5 surface decided: dedicated act-on-answer subcommand; JSON needs-decision emission; reconcile Standalone in-repo guard within Task 5.</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-22T17:11:25.165+05:30</timestamp>
+                    <message>Scope split: Task 5 delivers the CLI side (store init subcommand + ConfigWriter + main gate emitting JSON exit10/11 + remove Standalone in-repo guard). Skill handshake PROSE deferred to a follow-up pass (like Task 3's SKILL updates). store init is STRICT: re-resolves and validates choice against the live NeedsDecision before mutating.</message>
+                </deviation>
+            </deviations>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>medium</risk>
+            <status>abandoned</status>
+            <name>Implement a "shipsmooth-owned folder" manifest marker</name>
+            <commit></commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-23T15:47:25.007+05:30</timestamp>
+                    <message>Abandoned out of plan-85 and promoted to the permanent backlog as Linear PB-360. The manifest marker is an independent slice; the resolution/branch-table machinery (Task 4) and Provider/ResolvedStateRoot spine (Tasks 11/12) it would hook into are already landed, so it can be picked up later on its own.</message>
+                </deviation>
+            </deviations>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Point the agent at the external state path for plan context</name>
+            <commit>f1dd3590268a3147341f60ea83febdefb5c57a07</commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-23T16:59:00.727+05:30</timestamp>
+                    <message>De-risk draft ready for review (99750e7). New store info leaf with -j/--json emits {status:ready,mode,stateRoot,plansDir}; plansDir from the locator (single path-truth source). All info to stdout. Hardening will add: store init -j flag + stdout ready output (drop stderr info), main-side bind, more test cases, skill prose.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Strip plan/task fingerprints from project-repo commits in standalone mode</name>
+            <commit>f64c1c7130ccabc55f4f574fdacc8e58c8aa6ad6</commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>low</risk>
+            <status>abandoned</status>
+            <name>Explore + design storing task commit SHAs in the state repo</name>
+            <commit></commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-23T15:50:45.240+05:30</timestamp>
+                    <message>Abandoned out of plan-85 and promoted to the permanent backlog as Linear PB-361. Design-only exploration of task-SHA storage in the state repo; its motivation (Task 8 de-fingerprinting) is itself still pending, so this is better tracked as a standalone backlog item.</message>
+                </deviation>
+            </deviations>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>10</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Let `shipsmooth.toml` express in-repo mode explicitly</name>
+            <commit>736580bf1911acd6a32268bdd1473a2d250c87a1</commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T17:04:45.380+05:30</timestamp>
+                    <message>De-risk (736580b): mode field + resolver classification; in-repo entry settled only if folder exists else NeedsDecision(IN_REPO_NOT_SET_UP). Per-row tests; resolver 95%. Ran before Task 5 per reorder decision.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>11</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Convert command leaves to Provider&lt;T&gt; so the tree builds when unsettled</name>
+            <commit>01e95ff78ba7fed3c111234e89b16a2a359e2e54</commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-23T13:31:57.203+05:30</timestamp>
+                    <message>De-risk draft ready for review (ea777cd). Provider&lt;T&gt; leaf wiring makes the unsettled command tree comprehensive; gate moved to the Provider.get() seam (StateRootUnsettledException + picocli ExecutionExceptionHandler), so --help works for free with no special-case bypass. Full cli+core suites green.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>12</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Introduce a ResolvedStateRoot token consumed by ShipsmoothDataLocator</name>
+            <commit>9fa16295c0bf7f5987551e284c0a375081b7c807</commit>
+            <created-from>plan-85-v4</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-23T15:24:35.650+05:30</timestamp>
+                    <message>De-risk draft ready for review (ea1df6a). ResolvedStateRoot token in core; validation moved from locator ctor into ResolvedStateRoot.of(); provideStateRoot mints the token at the Provider.get() seam (still throws StateRootUnsettledException when unsettled, so Task-11 gate is intact). Full cli+core+build green. Future resolver lift tracked as PB-359.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>11</depends-on>
+        </task>
+        <task>
+            <id>13</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>First-run handshake skill prose + CLI prompt field (deferred Task-5 skill side)</name>
+            <commit>fcf2aaae1060a175e247cf72a0db732226fc14bd</commit>
+            <created-from>plan-85-v5</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-23T17:50:17.642+05:30</timestamp>
+                    <message>De-risk: CLI prompt field landed (47d9b49). needs-decision JSON now carries a display-ready multi-line prompt the skill renders verbatim; newline escaping added. Skill handshake prose (present/capture/re-invoke) is the hardening half.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-22T12:36:07.003+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-23T18:22:13.008+05:30</timestamp>
+            <message>Plan complete. All active tasks agent-coded; tasks 6 &amp; 9 promoted to backlog (PB-360, PB-361).</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

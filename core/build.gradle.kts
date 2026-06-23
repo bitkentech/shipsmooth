@@ -18,7 +18,11 @@ dependencies {
     implementation("org.glassfish.jaxb:jaxb-runtime:4.0.5")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2")
-    implementation("jakarta.inject:jakarta.inject-api:2.0.1")
+    // jakarta.inject is part of core's PUBLIC API: AppComponents hands out
+    // Provider<TaskStore>/Provider<PlanService> so cli command leaves can be built
+    // without a settled state root (the locator is touched only at Provider.get()).
+    // Consumers (cli) need it transitively -> api, not implementation.
+    api("jakarta.inject:jakarta.inject-api:2.0.1")
 
     // Dagger: `requires static dagger` in module-info is a compile/module concern,
     // but the generated DaggerAppComponents needs dagger.internal.* on the RUNTIME

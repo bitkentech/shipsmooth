@@ -2,6 +2,7 @@ package io.bitken.ss.cli.task;
 
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.svc.plan.PlanService;
+import jakarta.inject.Provider;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -10,9 +11,9 @@ import java.util.concurrent.Callable;
 public class AddDeviation implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
-    private final PlanService planService;
+    private final Provider<PlanService> planService;
 
-    public AddDeviation(PlanService planService) {
+    public AddDeviation(Provider<PlanService> planService) {
         this.planService = planService;
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("deviation");
@@ -35,7 +36,7 @@ public class AddDeviation implements Callable<Integer>, HasSpec {
         String type = pr.matchedOption("type").getValue();
         String message = pr.matchedOption("message").getValue();
 
-        planService.addDeviation(plan, task, type, message);
+        planService.get().addDeviation(plan, task, type, message);
         System.out.println("Deviation added to task " + task);
         return 0;
     }

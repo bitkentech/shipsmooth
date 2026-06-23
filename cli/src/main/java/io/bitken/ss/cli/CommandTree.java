@@ -2,6 +2,7 @@ package io.bitken.ss.cli;
 
 import io.bitken.ss.Build;
 import io.bitken.ss.cli.plan.Plan;
+import io.bitken.ss.cli.store.Store;
 import io.bitken.ss.cli.task.Task;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.ExperimentalMode;
@@ -20,6 +21,14 @@ class CommandTree {
 
     private final CommandLine commandLine;
 
+    /**
+     * Builds the full command tree. It is comprehensive regardless of whether the store is
+     * settled: plan/task leaves hold {@link jakarta.inject.Provider Provider}s of the
+     * state-dependent services and only resolve a state root when their {@code call()} runs,
+     * so they can be constructed (and shown in {@code --help}) even on an unsettled project.
+     * The resolve-gate in {@link Shipsmooth} stops a state-dependent command from actually
+     * dispatching while unsettled.
+     */
     CommandTree(AppComponents app) {
         ExperimentalMode experimentalMode = app.experimentalMode();
 
@@ -37,11 +46,15 @@ class CommandTree {
     }
 
     private static Callable<?>[] buildCommands(AppComponents app) {
+        // Providers defer the state-root touch to call(), so the whole tree constructs
+        // even on a clean first run; the gate handles dispatch-time gating.
         Plan plan = new Plan(app.planService(), app.taskStore(), app.gitTags(), app.gitState());
         Task task = new Task(app.planService(), app.gitTags());
+        Store store = new Store();
         return new Callable<?>[] {
             plan,
             task,
+            store,
         };
     }
 

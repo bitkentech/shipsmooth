@@ -44,7 +44,8 @@ public class TaskStore {
         }
     }
 
-    private File planTasksFile(int planId) {
+    /** Canonical XML task file for this plan, under the resolved state root's layout. */
+    public File planTasksFile(int planId) {
         return locator.planTasksFile(planId);
     }
 

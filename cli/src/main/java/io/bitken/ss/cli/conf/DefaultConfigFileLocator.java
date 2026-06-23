@@ -3,7 +3,7 @@ package io.bitken.ss.cli.conf;
 import java.nio.file.Path;
 
 /**
- * Default {@link ConfigFileLocator}: locates {@code ss-config.toml} under the
+ * Default {@link ConfigFileLocator}: locates {@code shipsmooth.toml} under the
  * platform's per-user config home.
  *
  * <p>Precedence: {@code XDG_CONFIG_HOME} (explicit override, any platform) →
@@ -29,7 +29,6 @@ public final class DefaultConfigFileLocator implements ConfigFileLocator {
         } else {
             configHome = Path.of(userHome, ".config");
         }
-        // TODO: file name and path hardcoded
-        return configHome.resolve("shipsmooth/ss-config.toml");
+        return configHome.resolve("shipsmooth/shipsmooth.toml");
     }
 }

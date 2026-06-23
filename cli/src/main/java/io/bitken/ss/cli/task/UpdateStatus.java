@@ -2,6 +2,7 @@ package io.bitken.ss.cli.task;
 
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.svc.plan.PlanService;
+import jakarta.inject.Provider;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -10,9 +11,9 @@ import java.util.concurrent.Callable;
 public class UpdateStatus implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
-    private final PlanService planService;
+    private final Provider<PlanService> planService;
 
-    public UpdateStatus(PlanService planService) {
+    public UpdateStatus(Provider<PlanService> planService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("status");
         this.spec.usageMessage().description("Update the status of a task.");
@@ -47,7 +48,7 @@ public class UpdateStatus implements Callable<Integer>, HasSpec {
             return 2;
         }
 
-        planService.updateTaskStatus(plan, task, status);
+        planService.get().updateTaskStatus(plan, task, status);
         System.out.println("Task " + task + " status set to \"" + status + "\"");
         return 0;
     }

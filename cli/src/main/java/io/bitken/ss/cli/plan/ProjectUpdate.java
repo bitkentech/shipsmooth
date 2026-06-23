@@ -2,6 +2,7 @@ package io.bitken.ss.cli.plan;
 
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.svc.plan.PlanService;
+import jakarta.inject.Provider;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -10,9 +11,9 @@ import java.util.concurrent.Callable;
 public class ProjectUpdate implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
-    private final PlanService planService;
+    private final Provider<PlanService> planService;
 
-    public ProjectUpdate(PlanService planService) {
+    public ProjectUpdate(Provider<PlanService> planService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.planService = planService;
         this.spec.name("update");
@@ -39,7 +40,7 @@ public class ProjectUpdate implements Callable<Integer>, HasSpec {
         Boolean blocked = pr.matchedOptionValue("blocked", null);
         String message = pr.matchedOptionValue("message", null);
 
-        planService.projectUpdate(plan, status, blocked, message);
+        planService.get().projectUpdate(plan, status, blocked, message);
         System.out.println("Project update added.");
         return 0;
     }

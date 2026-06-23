@@ -26,7 +26,7 @@ public class PlanNumbersTest {
 
     @Test
     void returnsOneWhenPlansDirEmpty() throws IOException {
-        Files.createDirectories(repoRoot.resolve(".agents/plans"));
+        Files.createDirectories(repoRoot.resolve(".shipsmooth/plans"));
         assertEquals(1, planNumbers().next());
     }
 
@@ -49,7 +49,7 @@ public class PlanNumbersTest {
     }
 
     private void writePlans(String... names) throws IOException {
-        Path plansDir = repoRoot.resolve(".agents/plans");
+        Path plansDir = repoRoot.resolve(".shipsmooth/plans");
         Files.createDirectories(plansDir);
         for (String name : names) {
             Files.writeString(plansDir.resolve(name), "x");

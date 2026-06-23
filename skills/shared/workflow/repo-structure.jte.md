@@ -3,7 +3,7 @@
 ## Repository Structure
 
 ```
-.agents/
+.shipsmooth/
   plans/
     plan-07.md            # plan files live here, versioned in git
     plan-07-tasks.xml     # [Local] task state (sibling to plan file)

@@ -37,7 +37,7 @@ public class PlanResumeTest {
     }
 
     private int run(TaskStore taskStore, String... args) {
-        Resume cmd = new Resume(taskStore);
+        Resume cmd = new Resume(() -> taskStore);
         return new CommandLine(cmd.getSpec()).execute(args);
     }
 
@@ -52,7 +52,7 @@ public class PlanResumeTest {
     @Test
     void printsTaskSummary() throws Exception {
         // Create the plans dir and a minimal XML file
-        Path plansDir = repoRoot.resolve(".agents/plans");
+        Path plansDir = repoRoot.resolve(".shipsmooth/plans");
         Files.createDirectories(plansDir);
         ShipsmoothDataLocator locator = new ShipsmoothDataLocator(repoRoot);
         TaskStore store = new TaskStore(locator);
@@ -68,7 +68,7 @@ public class PlanResumeTest {
 
     @Test
     void reportsErrorOnMalformedXml() throws Exception {
-        Path plansDir = repoRoot.resolve(".agents/plans");
+        Path plansDir = repoRoot.resolve(".shipsmooth/plans");
         Files.createDirectories(plansDir);
         ShipsmoothDataLocator locator = new ShipsmoothDataLocator(repoRoot);
         TaskStore store = new TaskStore(locator);
