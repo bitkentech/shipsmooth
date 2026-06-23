@@ -4,7 +4,7 @@
     <plan-version>plan-86-v2</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-22</created>
     </metadata>
     <tasks>
@@ -211,6 +211,11 @@
         <update>
             <timestamp>2026-06-22T13:20:06.190+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-23T23:18:29.401+05:30</timestamp>
+            <message>OpenCode host complete: TS plugin, dev+prod assembly, npm publish wiring verified. Task 6 (Windows verify) abandoned/deferred — Linux+macOS proven; Windows tracked as a follow-up.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
