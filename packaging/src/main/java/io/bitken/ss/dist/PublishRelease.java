@@ -84,6 +84,11 @@ public class PublishRelease {
             git("checkout", "-f", originalBranch);
         }
 
+        // plan-86: publish the OpenCode plugin to npm. Outward; needs npm auth for the
+        // @bitkentech scope (like gh for the GitHub release). The payload was assembled
+        // + validated in buildAndPackage().
+        publishOpencodeNpm();
+
         buildWindowsPlugin();
         publishWindowsRelease(mainSha);
 
@@ -156,6 +161,32 @@ public class PublishRelease {
                 "-Pbuild.outputDir=" + repoRoot.resolve("build-codex"));
     }
 
+    // plan-86: assemble the opencode prod payload (npm-package layout) into build-opencode/.
+    static List<String> assembleOpencodeProdCommand(Path repoRoot) {
+        return List.of(gradlew(repoRoot), "assembleOpencodeProd",
+                "-Pbuild.outputDir=" + repoRoot.resolve("build-opencode"));
+    }
+
+    // plan-86: pack the assembled opencode payload into a publishable npm tarball
+    // (build-opencode/ -> harness/opencode/build/npm/<pkg>-<ver>.tgz).
+    static List<String> npmPackOpencodeCommand(Path repoRoot) {
+        return List.of(gradlew(repoRoot), ":harness:opencode:npmPackOpencode",
+                "-Pbuild.outputDir=" + repoRoot.resolve("build-opencode"));
+    }
+
+    /**
+     * plan-86: publish the OpenCode plugin to npm (@bitkentech/shipsmooth-opencode).
+     * OUTWARD — runs `npm publish` on the assembled payload dir, which honours the
+     * manifest's {@code files} allowlist + {@code publishConfig.access=public}.
+     * Auth is the caller's responsibility (an npm session / token authorised for the
+     * {@code @bitkentech} scope), mirroring how the GitHub release relies on {@code gh}
+     * being authed. Only the PROD variant is ever published; the dev variant is
+     * loaded from the local filesystem (OPENCODE_CONFIG_DIR) and never reaches npm.
+     */
+    static List<String> npmPublishOpencodeCommand(Path repoRoot) {
+        return List.of("npm", "publish", repoRoot.resolve("build-opencode").toString());
+    }
+
     /** Windows payload into {@code build-windows/}. Replaces {@code mvn compile -Pwindows -P!dev}. */
     static List<String> assembleWindowsCommand(Path repoRoot) {
         return List.of(gradlew(repoRoot), "assembleWindows",
@@ -172,6 +203,15 @@ public class PublishRelease {
             return;
         }
         validateBuildOutput(buildDir);
+    }
+
+    // plan-86: validate just the opencode payload (its package.json + main + skill).
+    static void maybeValidateOpencodeOutput(Path opencodeBuildDir, boolean skip) throws IOException {
+        if (skip) {
+            System.out.println("WARNING: opencode release validation skipped — --dangerous-skip-release-validation was passed");
+            return;
+        }
+        ValidateRelease.validateOpencode(opencodeBuildDir);
     }
 
     /** The four platform image tags whose baked Build constants the guard verifies. */
@@ -211,6 +251,13 @@ public class PublishRelease {
         // releases-branch push can stage its flat plugin folder at dist-codex/.
         runCommand(assembleCodexProdCommand(repoRoot), repoRoot);
 
+        // plan-86: assemble + validate the opencode prod payload (npm-package layout)
+        // into build-opencode/. Validated here, before any publish, like the others.
+        Path opencodeBuildDir = repoRoot.resolve("build-opencode");
+        if (Files.exists(opencodeBuildDir)) deleteDirectory(opencodeBuildDir);
+        runCommand(assembleOpencodeProdCommand(repoRoot), repoRoot);
+        maybeValidateOpencodeOutput(opencodeBuildDir, skipValidation);
+
         Path outputDir = repoRoot.resolve("packaging/target/dist");
         Files.createDirectories(outputDir);
         new PackageRuntime("linux-x64", linuxJdkHome, jlinkImagePath(repoRoot, "linux-x64"), outputDir, version).run();
@@ -236,6 +283,24 @@ public class PublishRelease {
         // -prod means the release can never package a stale dev image left behind in
         // cli/build — clean provenance by path, no clean task required.
         return repoRoot.resolve("cli/build/jlink-image-" + platform + "-prod");
+    }
+
+    /**
+     * plan-86: publish the assembled OpenCode prod payload to npm as
+     * {@code @bitkentech/shipsmooth-opencode}. {@code npm publish <dir>} honours the
+     * payload's {@code package.json} {@code files} allowlist + {@code publishConfig}.
+     * Requires the caller's npm session/token to be authorised for the
+     * {@code @bitkentech} scope — a one-time {@code npm login} (or {@code NODE_AUTH_TOKEN}
+     * / {@code .npmrc}) prerequisite, the npm analogue of {@code gh auth}. Only the prod
+     * variant ships to npm; the dev variant is filesystem-only (OPENCODE_CONFIG_DIR).
+     */
+    private void publishOpencodeNpm() throws IOException, InterruptedException {
+        Path payload = repoRoot.resolve("build-opencode");
+        if (!Files.exists(payload.resolve("package.json"))) {
+            throw new IllegalStateException("opencode payload not assembled at " + payload);
+        }
+        runCommand(npmPublishOpencodeCommand(repoRoot), repoRoot);
+        System.out.println("OpenCode plugin published to npm: @bitkentech/shipsmooth-opencode@" + version);
     }
 
     private void buildWindowsPlugin() throws IOException, InterruptedException {

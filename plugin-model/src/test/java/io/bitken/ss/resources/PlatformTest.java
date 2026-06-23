@@ -75,4 +75,51 @@ class PlatformTest {
     void gemini_dev_cacheSubdir_hasDevSuffix() {
         assertEquals("shipsmooth-dev", Platform.GEMINI.cacheSubdir("shipsmooth", Env.DEV));
     }
+
+    @Test
+    void opencode_id_isOpencode() {
+        assertEquals("opencode", Platform.OPENCODE.id());
+    }
+
+    @Test
+    void opencode_skillFragmentDir_isStartOpencode() {
+        assertEquals("start/opencode", Platform.OPENCODE.skillFragmentDir());
+    }
+
+    @Test
+    void from_opencode_resolvesOpencode() {
+        assertEquals(Platform.OPENCODE, Platform.from("opencode"));
+    }
+
+    @Test
+    void opencode_prod_cacheSubdir_hasNoSuffix() {
+        assertEquals("shipsmooth", Platform.OPENCODE.cacheSubdir("shipsmooth", Env.PROD));
+    }
+
+    @Test
+    void opencode_dev_cacheSubdir_hasDevSuffix() {
+        assertEquals("shipsmooth-dev", Platform.OPENCODE.cacheSubdir("shipsmooth", Env.DEV));
+    }
+
+    // emitsHooksJson capability (plan-86 Task 2): hook-based hosts emit hooks.json;
+    // OpenCode does not.
+    @Test
+    void claude_emitsHooksJson_true() {
+        assertTrue(Platform.CLAUDE.emitsHooksJson());
+    }
+
+    @Test
+    void gemini_emitsHooksJson_true() {
+        assertTrue(Platform.GEMINI.emitsHooksJson());
+    }
+
+    @Test
+    void codex_emitsHooksJson_true() {
+        assertTrue(Platform.CODEX.emitsHooksJson());
+    }
+
+    @Test
+    void opencode_emitsHooksJson_false() {
+        assertFalse(Platform.OPENCODE.emitsHooksJson());
+    }
 }

@@ -11,6 +11,7 @@ public class Target {
     private final HooksRenderer hooksRenderer;
     private final SessionStartConfigRenderer sessionStartConfigRenderer;
     private final boolean experimentalEnabled;
+    private final boolean emitsHooksJson;
 
     Target(String platformProp, String osProp, String envProp,
            String basePluginName, String version, String description,
@@ -39,6 +40,7 @@ public class Target {
         this.hooksRenderer              = new HooksRenderer(mapper, baseModel, outDir);
         this.sessionStartConfigRenderer = new SessionStartConfigRenderer(mapper, baseModel, outDir);
         this.experimentalEnabled        = experimentalEnabled;
+        this.emitsHooksJson             = platform.emitsHooksJson();
     }
 
     public static void main(String[] args) throws IOException {
@@ -63,7 +65,10 @@ public class Target {
         if (experimentalEnabled) {
             skillRenderer.renderExperimental();
         }
-        hooksRenderer.write();
+        String hookCommand = hooksRenderer.writeInstallerScript();
+        if (emitsHooksJson) {
+            hooksRenderer.writeHooksJson(hookCommand);
+        }
         sessionStartConfigRenderer.write();
     }
 

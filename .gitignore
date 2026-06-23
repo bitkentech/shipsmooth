@@ -5,6 +5,8 @@ build-codex-dev/
 build-gemini/
 build-gemini-dev/
 build-windows/
+build-opencode/
+build-opencode-dev/
 plugin-node/node_modules/
 plugin-node/dist/
 dist-test/

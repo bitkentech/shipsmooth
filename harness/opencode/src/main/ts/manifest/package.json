@@ -1,0 +1,20 @@
+{
+  "name": "${plugin.name}",
+  "version": "${project.version}",
+  "description": "${plugin.description}",
+  "type": "module",
+  "main": "plugin/index.js",
+  "files": [
+    "plugin/",
+    "skills/"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": {
+    "name": "Pramod Biligiri"
+  },
+  "homepage": "https://github.com/bitkentech/shipsmooth",
+  "repository": "https://github.com/bitkentech/shipsmooth",
+  "license": "Apache-2.0"
+}

@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>86</plan>
+    <plan-version>plan-86-v2</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-22</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>De-risk — hand-build a hardcoded OpenCode plugin and prove it loads</name>
+            <commit>89d1d209c308d088ffd5e3c2c3665923dec558aa</commit>
+            <created-from>plan-86-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T13:33:18.750+05:30</timestamp>
+                    <message>De-risk partial findings recorded in plan: plain .js global plugin loads (no manifest/build); Bun $ available despite no Bun on PATH; lifecycle via generic event hook; session.created is the SessionStart-equiv. Still to prove: runtime bootstrap E2E + command/skill surfacing.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-22T15:53:15.150+05:30</timestamp>
+                    <message>Both entry points proven: config-hook command (/shipsmooth-start) and native SKILL.md both surfaced and fired (distinct marker files written). hooks.json irrelevant to OpenCode. Task 1 fully de-risked end-to-end on 1.17.9.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Decide the render contract for the no-`hooks.json` host</name>
+            <commit>6348443487bb78304a96b7baa7804c57ecb82b28</commit>
+            <created-from>plan-86-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T16:28:23.732+05:30</timestamp>
+                    <message>Resolved: add boolean Platform.emitsHooksJson() (default true; Opencode=false); extract installer-copy from hooks.json so the script ships without the JSON. Target.build() always emits installer, emits hooks.json only when capability true. Absent hooks.json proven benign for OpenCode.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Decide the entry point — plugin command vs native skill</name>
+            <commit>6348443487bb78304a96b7baa7804c57ecb82b28</commit>
+            <created-from>plan-86-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T16:28:25.373+05:30</timestamp>
+                    <message>Resolved: native SKILL.md canonical (single-sourced workflow, on-demand via skill tool); config-hook command shipsmooth:start is a thin launcher whose template points at the start skill (discoverable, zero duplication). Both surfaces proven in Task 1.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Decide the TypeScript toolchain</name>
+            <commit>7c5fb17aa441d9ee7054f8bb76798a02692590ad</commit>
+            <created-from>plan-86-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T16:24:17.186+05:30</timestamp>
+                    <message>Resolved: author TS, ship plain .js via tsc transpile (no bundler). Plugin imports only node:* + type-only @opencode-ai/plugin -&gt; nothing to bundle. Reuse harness:shared node-gradle compileTs pattern (npm-provisioned tsc, CI-reproducible); transpile-only, no esbuild. @opencode-ai/plugin = devDependency (types only).</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Decide dev-loop ergonomics + target dir</name>
+            <commit>b17c99b9d9a5fbfa46db67379299a05dcb7d7b4b</commit>
+            <created-from>plan-86-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T16:18:16.985+05:30</timestamp>
+                    <message>Resolved. OPENCODE_CONFIG_DIR=&lt;dir&gt; loads plugin+skills from &lt;dir&gt;/plugin and &lt;dir&gt;/skills (verified on 1.17.9; no --plugin-dir flag, plugin array is npm-only). Decision: dev payload -&gt; build-opencode-dev/; run OPENCODE_CONFIG_DIR=$(pwd)/build-opencode-dev opencode. Replaces global config dir, so self-contained. Plan B: copy/symlink into ~/.config/opencode.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>medium</risk>
+            <status>abandoned</status>
+            <name>Verify OpenCode on Windows (WSL + native)</name>
+            <commit></commit>
+            <created-from>plan-86-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-23T17:26:19.316+05:30</timestamp>
+                    <message>Windows verification deferred out of plan-86; migrated to backlog as PB-362 (Verify OpenCode plugin on Windows). plan-86 closes on the proven POSIX path.</message>
+                </deviation>
+            </deviations>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Add Platform.Opencode + emitsHooksJson() capability</name>
+            <commit>7ab32aa17e058e69ea3272d0a4bc857e35917fd8</commit>
+            <created-from>plan-86-v9</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Decouple installer-copy from hooks.json; gate json in Target.build()</name>
+            <commit>70a872987c68e5e991b1531067441c35565cf3ad</commit>
+            <created-from>plan-86-v9</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T17:03:18.810+05:30</timestamp>
+                    <message>De-risk draft ready for review. Split HooksRenderer into writeInstallerScript()+writeHooksJson(); Target.build() gates the json on platform.emitsHooksJson(). opencode ships installer + no hooks.json; other 3 hosts byte-identical. All affected tests green (harness:shared, packaging, plugin-model).</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>7</depends-on>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Render parity — opencode skill variant</name>
+            <commit>b006e5f0b675fea6cb1e402a315a748bc72ec1df</commit>
+            <created-from>plan-86-v9</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>7,8</depends-on>
+        </task>
+        <task>
+            <id>10</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>The TypeScript plugin module</name>
+            <commit>91b4bc84bd08a61dde2cd8adac747c87aebe798d</commit>
+            <created-from>plan-86-v9</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T17:40:13.833+05:30</timestamp>
+                    <message>De-risk draft ready. Typed TS plugin (harness/opencode/src/main/ts): session.created bootstrap via $, start command thin-pointer to skill, config-driven version. npm run build typechecks vs real @opencode-ai/plugin 1.17.9 + emits valid ESM importing only node:*. Caught a real client.app.log signature mismatch. Pending hardening: unit tests + Gradle node-build wiring.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>9</depends-on>
+        </task>
+        <task>
+            <id>11</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>TS build + assembleOpencode{Dev,Prod} + harness:opencode module</name>
+            <commit>622c401d6909ba2279d4fbd5718a099064c32aa3</commit>
+            <created-from>plan-86-v9</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-22T18:32:33.678+05:30</timestamp>
+                    <message>De-risk draft ready. harness:opencode module + assembleOpencodeDev produce the correct config-dir payload; proven to LOAD via OPENCODE_CONFIG_DIR (marker). Findings: plugin resolves config/installer relative to plugin/ (render co-located there); OpenCode installs into any config dir with a package.json (node_modules collides with Sync) -&gt; build-opencode-dev gitignored. Pending: prod assembly + devBuild + regression.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>10</depends-on>
+        </task>
+        <task>
+            <id>12</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Release / distribution wiring</name>
+            <commit>8662a3822bbf245d464158c8c6829d4f8a3b8805</commit>
+            <created-from>plan-86-v9</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-23T16:29:35.136+05:30</timestamp>
+                    <message>De-risk draft ready: npm-package distribution decided + npmPackOpencode produces a verified 6-file tarball. Outward npm publish wiring + ValidateRelease + docs pending Step B approval.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>11</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-22T13:20:06.190+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-23T23:18:29.401+05:30</timestamp>
+            <message>OpenCode host complete: TS plugin, dev+prod assembly, npm publish wiring verified. Task 6 (Windows verify) abandoned/deferred — Linux+macOS proven; Windows tracked as a follow-up.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
