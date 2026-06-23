@@ -75,7 +75,7 @@ public sealed interface DataStoreResolution
     /** Why a decision is needed — lets a later policy/skill layer word the prompt. */
     enum UndecidableSituation {
         /** Nothing configured and no state anywhere: offer external (recommended) or in-repo. */
-        CLEAN_FIRST_RUN("No shipsmooth state is configured and none exists yet; choose where it should live."),
+        CLEAN_FIRST_RUN("Where should shipsmooth store all its information for this project?"),
         /** A config entry names an external state dir that no longer exists: offer to recreate. */
         CONFIG_DIR_MISSING("The configured external state directory no longer exists; choose whether to recreate it."),
         /** A config entry selects in-repo mode but the in-repo data folder is not set up yet. */

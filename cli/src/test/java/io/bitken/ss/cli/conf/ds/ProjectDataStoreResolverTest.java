@@ -175,6 +175,12 @@ class ProjectDataStoreResolverTest {
         var needs = assertInstanceOf(DataStoreResolution.NeedsDecision.class, r);
         assertEquals(DataStoreResolution.UndecidableSituation.CLEAN_FIRST_RUN, needs.situation());
         assertEquals(DataStoreResolution.Choice.EXTERNAL, needs.recommended().choice());
+        // The recommended external path is a SIBLING of the repo (<parent>/<repo>-shipsmooth),
+        // not a hidden ~/.local/state path — it is the user's project content, pushable to its
+        // own git remote, so it must be discoverable next to the repo.
+        Path repoAbs = repo.toAbsolutePath().normalize();
+        Path expectedSibling = repoAbs.resolveSibling(repoAbs.getFileName() + "-shipsmooth");
+        assertEquals(expectedSibling, needs.recommended().proposedPath());
         // in-repo is offered too, but not recommended
         assertTrue(needs.options().stream()
                 .anyMatch(o -> o.choice() == DataStoreResolution.Choice.IN_REPO && !o.recommended()));

@@ -38,15 +38,19 @@ class ResolutionJsonTest {
 
         String json = ResolutionJson.needsDecision(needs);
 
-        // A single `prompt` field the skill renders verbatim: situation message + each
-        // option (token, path) with the recommended one marked.
+        // A single `prompt` field the skill renders verbatim: the question + each option
+        // (human label, path) with the recommended one marked.
         assertTrue(json.contains("\"prompt\":\""), "prompt field present: " + json);
-        assertTrue(json.contains("choose where it should live"), "prompt carries the situation message: " + json);
-        assertTrue(json.contains("external"), json);
-        assertTrue(json.contains("recommended"), json);
+        assertTrue(json.contains("Where should shipsmooth store all its information"),
+                "prompt carries the question: " + json);
+        assertTrue(json.contains("Recommended"), json);
+        assertTrue(json.contains("next to this repo"), json);
         assertTrue(json.contains("/ext"), json);
-        assertTrue(json.contains("in-repo"), json);
+        assertTrue(json.contains("Alternative"), json);
+        assertTrue(json.contains("inside this repo"), json);
         assertTrue(json.contains("/in"), json);
+        // When a separate folder is offered, the prompt invites a custom path.
+        assertTrue(json.contains("enter a different folder path"), json);
         // Multi-line prompt must keep the JSON line valid: real newlines are escaped.
         assertTrue(json.contains("\\n"), "embedded newlines must be escaped: " + json);
         assertFalse(json.contains("\n"), "the JSON must remain a single physical line: " + json);

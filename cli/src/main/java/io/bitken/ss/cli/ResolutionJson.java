@@ -42,14 +42,27 @@ public final class ResolutionJson {
      */
     private static String prompt(DataStoreResolution.NeedsDecision needs) {
         StringBuilder sb = new StringBuilder(needs.situation().message());
+        boolean offersExternal = false;
         for (DataStoreResolution.Option o : needs.options()) {
-            sb.append("\n  - ").append(choiceToken(o.choice()));
-            if (o.recommended()) {
-                sb.append(" (recommended)");
-            }
-            sb.append(" → ").append(o.proposedPath());
+            sb.append("\n  ").append(o.recommended() ? "Recommended" : "Alternative")
+                    .append(" — ").append(optionLabel(o.choice()))
+                    .append(": ").append(o.proposedPath());
+            offersExternal |= o.choice() == DataStoreResolution.Choice.EXTERNAL;
+        }
+        // When a separate folder is on offer, the proposed path is only a default.
+        if (offersExternal) {
+            sb.append("\n\nYou can also enter a different folder path.");
         }
         return sb.toString();
+    }
+
+    /** Human-facing label for an option in the prompt (the skill shows this verbatim). */
+    private static String optionLabel(DataStoreResolution.Choice c) {
+        return switch (c) {
+            case EXTERNAL -> "a separate folder next to this repo";
+            case IN_REPO -> "inside this repo";
+            case RECREATE_MISSING_DIR -> "recreate the configured folder";
+        };
     }
 
     public static String unresolvable(DataStoreResolution.Unresolvable bad) {

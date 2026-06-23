@@ -152,14 +152,18 @@ public final class ProjectDataStoreResolver {
      * accept — never hash-derived. {@code XDG_STATE_HOME} else {@code ~/.local/state}, then
      * {@code shipsmooth/<repo-dir-name>}.
      */
+    /**
+     * Propose the external state location as a <em>sibling</em> of the project repo —
+     * {@code <parent>/<repo>-shipsmooth}. This is deliberately next to the repo, not hidden
+     * under {@code ~/.local/state}: the external dir is the user's project content (plan
+     * narratives, task history, its own git repo) which they may push to a remote — not
+     * ephemeral local-install state — so it must be discoverable.
+     */
     private static Path proposedExternalPath(Path localPath) {
-        String xdgState = System.getenv("XDG_STATE_HOME");
-        Path stateHome = (xdgState != null && !xdgState.isBlank())
-                ? Path.of(xdgState)
-                : Path.of(System.getProperty("user.home"), ".local", "state");
-        Path name = localPath.toAbsolutePath().normalize().getFileName();
+        Path repo = localPath.toAbsolutePath().normalize();
+        Path name = repo.getFileName();
         String repoName = (name != null) ? name.toString() : "project";
-        return stateHome.resolve("shipsmooth").resolve(repoName).toAbsolutePath().normalize();
+        return repo.resolveSibling(repoName + "-shipsmooth");
     }
 
     private StandaloneConfig parseConfig(Path configFile) throws IOException {
