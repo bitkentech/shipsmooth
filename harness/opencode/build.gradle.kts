@@ -87,6 +87,13 @@ fun registerPackageJson(taskName: String, tokens: Map<String, Any>, baseDir: Fil
 evaluationDependsOn(":harness:shared")
 val renderModule = project(":harness:shared")
 
+// Where the assembled payload goes. -Pbuild.outputDir targets the shared payload
+// tree (prod); standalone defaults to the repo-root build-opencode-dev/ dir (the
+// Task-5 dev-loop target, gitignored). Both assemble tasks share this var, mirroring
+// codex: the dev render reads from its OWN fixed render/opencode-dev stage, so
+// assembleOpencodeDev must NOT be invoked with -Pbuild.outputDir (that would only
+// move the Sync destination, not the render stage it reads). Prod is the variant
+// that takes the property.
 val outputDir = (findProperty("build.outputDir") as String?)
     ?.let { file(it) }
     ?: rootProject.layout.projectDirectory.dir("build-opencode-dev").asFile
@@ -114,4 +121,43 @@ tasks.register<Sync>("assembleOpencodeDev") {
     from(tsDir.dir("dist")) { into("plugin") }
     from(devPkgStage)
     into(outputDir)
+}
+
+// ---------------------------------------------------------------------------
+// assembleOpencodeProd → <build.outputDir> (pass -Pbuild.outputDir). Sync is the
+// sole writer (overlap-immune; mirrors assembleOpencodeDev with prod tokens + the
+// prod render: start frontmatter, prod description, experimental skills hidden).
+// The compiled plugin JS is identical across dev/prod (one TS build), so both
+// variants source it from the module's own src/main/ts/dist.
+// ---------------------------------------------------------------------------
+val prodRenderStage = renderModule.layout.buildDirectory.dir("render/opencode-prod").get().asFile
+val prodPkgStage = layout.buildDirectory.dir("stage/opencode-prod-pkg").get().asFile
+val packageJsonProd = registerPackageJson("packageJsonProd", prodTokens, prodPkgStage)
+
+tasks.register<Sync>("assembleOpencodeProd") {
+    group = "assemble"
+    description = "Assemble the opencode-prod plugin payload into <build.outputDir> (pass -Pbuild.outputDir)."
+    dependsOn(renderModule.tasks.named("renderOpencodeProd"), compileTs, packageJsonProd)
+    // skills/ stays at the payload root — OpenCode discovers <config-dir>/skills/<name>.
+    from(prodRenderStage) { include("skills/**") }
+    // Co-locate the plugin's config + installer under plugin/ next to index.js, so the
+    // plugin resolves them relative to its own module dir (proven in Task 1/11 de-risk).
+    from(prodRenderStage) { include("hooks/**", "dist/**"); into("plugin") }
+    from(tsDir.dir("dist")) { into("plugin") }
+    from(prodPkgStage)
+    into(outputDir)
+}
+
+// devBuild: local dev-loop convenience (Task 5). Unlike claude's devBuild, the
+// opencode dev render writes to its OWN fixed render/opencode-dev stage and
+// assembleOpencodeDev already defaults to repo-root build-opencode-dev/, so no
+// nested GradleBuild / build.outputDir retargeting is needed — a no-arg
+// assembleOpencodeDev lands the full payload in the right dir. This alias just gives
+// OpenCode the same uniformly-named entry point the other hosts expose.
+// Run: ./gradlew :harness:opencode:devBuild
+//   then: OPENCODE_CONFIG_DIR=$(pwd)/build-opencode-dev opencode
+val devBuild by tasks.registering {
+    group = "assemble"
+    description = "Assemble the full opencode-dev payload into repo-root build-opencode-dev/ for local dev/test."
+    dependsOn(tasks.named("assembleOpencodeDev"))
 }

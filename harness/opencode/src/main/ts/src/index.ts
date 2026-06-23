@@ -1,4 +1,4 @@
-// shipsmooth OpenCode plugin (plan-86 Task 10).
+// shipsmooth OpenCode plugin entry (plan-86 Task 10/11).
 //
 // The only executable code shipsmooth ships to any host. Two jobs, both proven
 // in the Task 1 de-risk:
@@ -12,75 +12,36 @@
 // Authored in TS, shipped as plain transpiled .js (Task 4). `@opencode-ai/plugin`
 // is a type-only devDependency.
 //
+// IMPORTANT (Task 11 integration finding). OpenCode 1.17.9 discovers plugins by
+// scanning `<config-dir>/plugin/*.js` (NON-recursively) and, for each file, calls
+// EVERY export as a plugin factory (`for (const v of Object.values(mod))`). Two
+// consequences this module is shaped around:
+//   1. The entry exports ONLY the factory (named + default). Exporting a helper
+//      here would make OpenCode call e.g. readConfig(context) → it path.joins the
+//      context object → plugin load crashes with `"paths[0]" ... got object`.
+//   2. The pure helpers live in ./lib/internal.js — under plugin/lib/, NOT
+//      plugin/, so OpenCode's non-recursive scan never loads them as a plugin (a
+//      sibling plugin/internal.js WOULD be loaded and rejected as
+//      "Plugin export is not a function" for its non-function exports).
+//
 // The version + skill name come from the rendered config JSON next to the
 // compiled module (dist/session-start-config.json), so a version bump re-renders
 // one file and this source is untouched.
 
-import { readFileSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 import type { Plugin, Hooks } from "@opencode-ai/plugin";
-
-interface PluginConfig {
-  name: string;
-  version: string;
-}
-
-const CONFIG_FILE = "session-start-config.json";
-
-/** Resolve the directory the compiled plugin module lives in. */
-function moduleDir(): string {
-  return dirname(fileURLToPath(import.meta.url));
-}
-
-/**
- * Read {name, version} from the rendered config JSON. The renderer writes it to
- * `dist/session-start-config.json`; the compiled plugin lives next to that dist
- * dir, so we look in the module dir and its `dist` sibling. Throws if absent —
- * the payload is malformed without it.
- */
-export function readConfig(baseDir: string): PluginConfig {
-  const candidates = [
-    join(baseDir, CONFIG_FILE),
-    join(baseDir, "dist", CONFIG_FILE),
-  ];
-  for (const c of candidates) {
-    if (existsSync(c)) {
-      const parsed = JSON.parse(readFileSync(c, "utf-8")) as PluginConfig;
-      return { name: parsed.name, version: parsed.version };
-    }
-  }
-  throw new Error(`shipsmooth: ${CONFIG_FILE} not found near ${baseDir}`);
-}
-
-/** The skill the start command delegates to: `start` (prod) or `start-dev` (dev). */
-export function skillName(pluginName: string): string {
-  return pluginName.endsWith("-dev") ? "start-dev" : "start";
-}
-
-/** Thin launcher template — points the agent at the canonical skill, no inlined workflow. */
-export function startCommandTemplate(pluginName: string): string {
-  const skill = skillName(pluginName);
-  return (
-    `Apply the shipsmooth agent coding workflow. Invoke the \`${skill}\` skill ` +
-    `(via the skill tool) and follow it for this task.`
-  );
-}
-
-/** Command id registered in OpenCode's config.command map. */
-export function startCommandId(pluginName: string): string {
-  return `${pluginName}:start`;
-}
-
-/** Path to the bundled installer the bootstrap shells out to. */
-export function installerPath(baseDir: string): string {
-  return join(baseDir, "hooks", "install-shipsmooth.sh");
-}
-
-type LogClient = Parameters<Plugin>[0]["client"];
+import {
+  type PluginConfig,
+  moduleDir,
+  readConfig,
+  startCommandId,
+  startCommandTemplate,
+  installerPath,
+  safeLog,
+} from "./lib/internal.js";
 
 export const ShipsmoothPlugin: Plugin = async ({ client, $ }) => {
-  const base = moduleDir();
+  const base = moduleDir(import.meta.url);
   let cfg: PluginConfig;
   try {
     cfg = readConfig(base);
@@ -130,17 +91,5 @@ export const ShipsmoothPlugin: Plugin = async ({ client, $ }) => {
   };
   return hooks;
 };
-
-async function safeLog(
-  client: LogClient,
-  level: "info" | "error",
-  message: string,
-): Promise<void> {
-  try {
-    await client.app.log({ body: { service: "shipsmooth", level, message } });
-  } catch {
-    // logging is best-effort
-  }
-}
 
 export default ShipsmoothPlugin;

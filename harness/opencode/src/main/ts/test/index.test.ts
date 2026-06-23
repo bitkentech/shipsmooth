@@ -4,14 +4,16 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { ShipsmoothPlugin } from "../src/index.js";
 import {
-  ShipsmoothPlugin,
   readConfig,
   skillName,
   startCommandId,
   startCommandTemplate,
   installerPath,
-} from "../src/index.js";
+  moduleDir,
+  safeLog,
+} from "../src/lib/internal.js";
 
 function tmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), "ss-oc-test-"));
@@ -65,6 +67,39 @@ test("readConfig: finds the config in a dist/ subdir too", () => {
 
 test("readConfig: throws when the config is absent", () => {
   assert.throws(() => readConfig(tmpDir()), /not found/);
+});
+
+test("moduleDir: resolves the directory of a file: URL", () => {
+  assert.equal(moduleDir("file:///a/b/index.js"), path.join("/a", "b"));
+});
+
+test("safeLog: forwards a structured shipsmooth log entry", async () => {
+  const entries: any[] = [];
+  const client: any = { app: { log: async (e: any) => { entries.push(e); } } };
+  await safeLog(client, "info", "hello");
+  assert.equal(entries.length, 1);
+  assert.deepEqual(entries[0].body, { service: "shipsmooth", level: "info", message: "hello" });
+});
+
+test("safeLog: swallows a throwing logger", async () => {
+  const client: any = { app: { log: async () => { throw new Error("down"); } } };
+  // Must resolve without throwing.
+  await safeLog(client, "error", "x");
+});
+
+// ── Entry-module export surface (Task 11 regression guard) ─────────────────
+
+// OpenCode 1.17.9 invokes EVERY named export of a plugin file as a plugin
+// factory. The entry module must therefore export ONLY the factory (named +
+// default) — any extra export (e.g. a path helper) gets called with the plugin
+// context and crashes plugin load with `"paths[0]" ... got object`. Pure helpers
+// live in ./internal precisely so they are never on this surface.
+test("index entry exports only the plugin factory (+ default)", async () => {
+  const mod: Record<string, unknown> = await import("../src/index.js");
+  const named = Object.keys(mod).filter((k) => k !== "default").sort();
+  assert.deepEqual(named, ["ShipsmoothPlugin"],
+    `entry module must export only ShipsmoothPlugin; found: ${named.join(", ")}`);
+  assert.equal(mod.default, mod.ShipsmoothPlugin, "default export must be the factory");
 });
 
 // ── Factory / hooks ────────────────────────────────────────────────────────
