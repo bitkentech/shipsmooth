@@ -254,14 +254,38 @@ class ProjectDataStoreResolverTest {
         assertEquals(DataStoreResolution.UnresolvableReason.MALFORMED_CONFIG_ENTRY, bad.reason());
     }
 
+    // ── Bad config file is tolerated, not fatal (plan-87) ──────────────────────────
+    // A failed `store init` write can leave a 0-byte / garbage shipsmooth.toml behind. A
+    // stray or truncated global config must NOT wedge resolution: it is treated as "no
+    // usable config" and resolution falls through to the filesystem.
+
     @Test
-    void unparseableConfig_unresolvableUnknownWithCause() throws IOException {
+    void unparseableConfig_fallsThroughToFilesystem() throws IOException {
         Path config = writeConfig("this is = = not valid toml [[[");
 
+        // Clean repo (no .shipsmooth/plans) => first-run decision, not Unresolvable.
         var r = resolve(config, Optional.empty());
-        var bad = assertInstanceOf(DataStoreResolution.Unresolvable.class, r);
-        assertEquals(DataStoreResolution.UnresolvableReason.UNKNOWN, bad.reason());
-        assertTrue(bad.cause().isPresent(), "UNKNOWN must retain the underlying cause");
+        var needs = assertInstanceOf(DataStoreResolution.NeedsDecision.class, r);
+        assertEquals(DataStoreResolution.UndecidableSituation.CLEAN_FIRST_RUN, needs.situation());
+    }
+
+    @Test
+    void emptyConfigFile_fallsThroughToFilesystem() throws IOException {
+        Path config = writeConfig(""); // the 0-byte file the defect leaves behind
+
+        var r = resolve(config, Optional.empty());
+        assertInstanceOf(DataStoreResolution.NeedsDecision.class, r);
+    }
+
+    @Test
+    void emptyConfig_withInRepoState_staysSettled() throws IOException {
+        // The repo already has valid in-repo state; a poisoned global config must not break it.
+        Files.createDirectories(repo.resolve(".shipsmooth").resolve("plans"));
+        Path config = writeConfig("");
+
+        var r = resolve(config, Optional.empty());
+        var settled = assertInstanceOf(DataStoreResolution.Settled.class, r);
+        assertInstanceOf(ProjectDataStore.InRepo.class, settled.store());
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────────

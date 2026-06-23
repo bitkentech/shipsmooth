@@ -58,7 +58,7 @@ public final class ProjectDataStoreResolver {
     private DataStoreResolution classify(Path localPath, Optional<String> remoteUrl) throws IOException {
         Path configFile = configFileLocator.locate();
         Optional<StandaloneConfig.ProjectEntry> match = Files.exists(configFile)
-                ? matchingEntry(parseConfig(configFile), localPath, remoteUrl)
+                ? parseConfig(configFile).flatMap(c -> matchingEntry(c, localPath, remoteUrl))
                 : Optional.empty();
 
         if (match.isPresent()) {
@@ -166,8 +166,20 @@ public final class ProjectDataStoreResolver {
         return repo.resolveSibling(repoName + "-shipsmooth");
     }
 
-    private StandaloneConfig parseConfig(Path configFile) throws IOException {
-        return toml.readValue(configFile.toFile(), StandaloneConfig.class);
+    /**
+     * Read the config file, tolerating an unusable one. An empty or unparseable file
+     * resolves as {@link Optional#empty()} — "no usable config" — so resolution falls
+     * through to the filesystem rather than wedging on {@code Unresolvable(UNKNOWN)}. This
+     * matters because a failed {@code store init} write can leave a 0-byte config behind
+     * (plan-87); a stray or truncated global config must never poison an otherwise-valid
+     * project. A parse that yields {@code null} (empty TOML) is likewise treated as absent.
+     */
+    private Optional<StandaloneConfig> parseConfig(Path configFile) {
+        try {
+            return Optional.ofNullable(toml.readValue(configFile.toFile(), StandaloneConfig.class));
+        } catch (IOException e) {
+            return Optional.empty();
+        }
     }
 
     private Optional<StandaloneConfig.ProjectEntry> matchingEntry(

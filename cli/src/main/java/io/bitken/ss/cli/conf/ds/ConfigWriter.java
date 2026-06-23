@@ -5,8 +5,10 @@ import io.bitken.ss.cli.conf.ConfigFileLocator;
 import io.bitken.ss.cli.conf.DefaultConfigFileLocator;
 
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -30,8 +32,13 @@ public final class ConfigWriter {
 
     /** Inject a specific config-file locator (used by {@code store init} wiring and tests). */
     public ConfigWriter(ConfigFileLocator configFileLocator) {
+        this(configFileLocator, new TomlMapper());
+    }
+
+    /** Inject both the locator and the mapper — used by tests to simulate a failed write. */
+    ConfigWriter(ConfigFileLocator configFileLocator, TomlMapper toml) {
         this.configFileLocator = configFileLocator;
-        toml = new TomlMapper();
+        this.toml = toml;
     }
 
     /** Upsert an external-mode entry recording the chosen {@code stateDir}. */
@@ -69,7 +76,29 @@ public final class ConfigWriter {
         if (parent != null) {
             Files.createDirectories(parent);
         }
-        toml.writeValue(configFile.toFile(), config);
+        writeAtomically(configFile, config);
+    }
+
+    /**
+     * Serialize to a sibling temp file first, then atomically move it into place. A failed
+     * serialize (e.g. the JPMS reflection failure fixed in plan-87) leaves only the discarded
+     * temp file behind — never a truncated 0-byte {@code shipsmooth.toml} that would wedge
+     * every subsequent {@link ProjectDataStoreResolver#resolve}.
+     */
+    private void writeAtomically(Path configFile, StandaloneConfig config) throws IOException {
+        Path dir = configFile.toAbsolutePath().getParent();
+        Path tmp = Files.createTempFile(dir, configFile.getFileName().toString(), ".tmp");
+        try {
+            toml.writeValue(tmp.toFile(), config);
+            try {
+                Files.move(tmp, configFile,
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(tmp, configFile, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(tmp);
+        }
     }
 
     private StandaloneConfig readOrEmpty(Path configFile) throws IOException {
