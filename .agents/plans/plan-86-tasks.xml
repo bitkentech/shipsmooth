@@ -99,13 +99,19 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>abandoned</status>
             <name>Verify OpenCode on Windows (WSL + native)</name>
             <commit></commit>
             <created-from>plan-86-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-23T17:26:19.316+05:30</timestamp>
+                    <message>Windows verification deferred out of plan-86; migrated to backlog as PB-362 (Verify OpenCode plugin on Windows). plan-86 closes on the proven POSIX path.</message>
+                </deviation>
+            </deviations>
             <depends-on>1</depends-on>
         </task>
         <task>

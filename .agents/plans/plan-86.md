@@ -498,6 +498,11 @@ Lowest-risk; the mechanism is now proven, only the Gradle `devBuild` wiring rema
 
 *Depends-on: 1*
 
+> **ABANDONED (deferred out of plan-86).** Migrated to the permanent backlog as
+> **PB-362** — *Verify OpenCode plugin on Windows (WSL + native)*. plan-86 closes
+> on the proven POSIX (Linux) path; Windows verification is tracked separately for
+> a future plan. The analysis below is retained as the starting point for PB-362.
+
 OpenCode *does* run on Windows (confirmed from the docs), but with a fork in the
 road that bears directly on our bootstrap:
 
