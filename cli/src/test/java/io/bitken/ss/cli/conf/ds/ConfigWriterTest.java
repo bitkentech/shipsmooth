@@ -1,11 +1,14 @@
 package io.bitken.ss.cli.conf.ds;
 
+import com.fasterxml.jackson.dataformat.toml.TomlMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -89,5 +92,41 @@ class ConfigWriterTest {
         assertEquals(state2.toAbsolutePath().normalize(),
                 ((ProjectDataStore.Standalone) ((DataStoreResolution.Settled)
                         resolver.resolve(repo2, Optional.empty())).store()).stateRoot());
+    }
+
+    // ── Atomic write: a failed serialize never truncates the config (plan-87) ──────
+
+    @Test
+    void failedSerialize_leavesExistingConfigIntactAndNoTempLitter() throws IOException {
+        Path config = tmp.resolve("shipsmooth.toml");
+        Path repo = Files.createDirectories(tmp.resolve("repo"));
+        Path good = Files.createDirectories(tmp.resolve("good"));
+
+        // First write a valid config the normal way.
+        new ConfigWriter(() -> config).writeExternal(repo, Optional.empty(), good);
+        String before = Files.readString(config);
+        assertFalse(before.isBlank(), "precondition: a valid non-empty config exists");
+
+        // Now attempt a write whose serialize blows up (mirrors the JPMS reflection failure).
+        TomlMapper exploding = new TomlMapper() {
+            @Override
+            public void writeValue(File file, Object value) throws IOException {
+                throw new IOException("boom");
+            }
+        };
+        Path repo2 = Files.createDirectories(tmp.resolve("repo2"));
+        Path other = Files.createDirectories(tmp.resolve("other"));
+        assertThrows(IOException.class,
+                () -> new ConfigWriter(() -> config, exploding)
+                        .writeExternal(repo2, Optional.empty(), other));
+
+        // The original config must survive byte-for-byte — never a truncated 0-byte file.
+        assertEquals(before, Files.readString(config),
+                "a failed write must not corrupt the existing config");
+        // And no temp file may be left behind in the config directory.
+        try (var listing = Files.list(config.getParent())) {
+            List<Path> tmps = listing.filter(p -> p.getFileName().toString().contains(".tmp")).toList();
+            assertTrue(tmps.isEmpty(), "failed write left temp litter: " + tmps);
+        }
     }
 }

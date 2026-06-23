@@ -151,3 +151,16 @@ val jlinkSmokeShow by tasks.registering(Exec::class) {
         "plan", "show", "--plan", "27",
     )
 }
+
+// store first-run round-trip through the modular runtime (plan-87 Task 1). Catches the
+// conf.ds JPMS-opens defect that classpath unit tests miss: `store init` must serialize
+// StandaloneConfig and `store info` must deserialize it when the CLI runs as a real
+// module. The script isolates XDG_CONFIG_HOME so it never touches the real ~/.config.
+val jlinkSmokeStore by tasks.registering(Exec::class) {
+    dependsOn(writeSccLauncher)
+    commandLine(
+        "sh",
+        layout.projectDirectory.file("src/jlinkSmoke/store-roundtrip.sh").asFile.absolutePath,
+        layout.buildDirectory.file("scc-launcher/shipsmooth").get().asFile.absolutePath,
+    )
+}

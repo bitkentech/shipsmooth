@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>87</plan>
+    <plan-version>plan-87-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-23</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Modular regression test for `store init` → `store info` round-trip</name>
+            <commit>7939869</commit>
+            <created-from>plan-87-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-24T00:01:04.674+05:30</timestamp>
+                    <message>De-risk draft ready: modular smoke test jlinkSmokeStore drives store init+info through the SCC launcher with isolated XDG_CONFIG_HOME. Red on main: 'module io.bitken.ss.cli does not open conf.ds to com.fasterxml.jackson.databind' at ConfigWriter.upsert. Reproduces the shipped defect that classpath unit tests miss.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>agent-coded</status>
+            <name>Open `conf.ds` to Jackson in `module-info.java`</name>
+            <commit>e6cac82feef0a5483f56fd95325ec3c8bb7949f5</commit>
+            <created-from>plan-87-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Harden the resolver + writer against a bad config file</name>
+            <commit>3b45c3e7ed044029bd1c2687e1f5ccf94f4c2945</commit>
+            <created-from>plan-87-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-23T23:53:57.830+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-24T00:13:12.664+05:30</timestamp>
+            <message>Plan complete: conf.ds opened to Jackson (modular store init/info work), resolver tolerates a bad config file, config writes are atomic. Modular smoke test jlinkSmokeStore guards the fix. TaskStoreTest .agents path also repaired.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

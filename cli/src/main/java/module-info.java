@@ -8,4 +8,10 @@ module io.bitken.ss.cli {
     opens io.bitken.ss.cli to info.picocli;
     opens io.bitken.ss.cli.task to info.picocli;
     opens io.bitken.ss.cli.plan to info.picocli;
+
+    // Jackson (TomlMapper) reflects over StandaloneConfig/ProjectEntry to read and write
+    // ~/.config/shipsmooth/shipsmooth.toml. Without this open, store init/info throw
+    // InaccessibleObjectException in the modular jlink runtime (caught only by the
+    // jlinkSmokeStore smoke test, not classpath unit tests). See plan-87.
+    opens io.bitken.ss.cli.conf.ds to com.fasterxml.jackson.databind;
 }
