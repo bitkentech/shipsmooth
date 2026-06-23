@@ -24,8 +24,17 @@ val pluginVersion = (findProperty("plugin.version") as String?) ?: "0.3.25"
 val prodDescription = "Agent coding workflow with plan-before-implement discipline, " +
     "TDD, vertical slices, Linear integration, and immutable git-based plan versioning."
 
-val pluginName = pluginBaseName            // prod: "shipsmooth"
-val pluginNameDev = "$pluginBaseName-dev"  // dev:  "shipsmooth-dev"
+// These feed ONLY the npm package.json `name` (decoupled from the in-OpenCode
+// command/skill identity, which comes from the render pipeline's pluginName via
+// session-start-config.json — that stays "shipsmooth"/"shipsmooth-dev", so the
+// slash command remains /shipsmooth:start regardless of the npm name).
+//
+// Prod publishes to npm under the @bitkentech scope (Task 12). Dev is loaded ONLY
+// from the local filesystem (OPENCODE_CONFIG_DIR, Task 5) and is NEVER published,
+// so its package.json `name` is a plain descriptive string with no scoped npm
+// identity (the name field is irrelevant to OpenCode's filesystem load anyway).
+val pluginName = "@bitkentech/$pluginBaseName-opencode"  // prod npm: "@bitkentech/shipsmooth-opencode"
+val pluginNameDev = "$pluginBaseName-dev"                // dev (filesystem-only): "shipsmooth-dev"
 
 val tsDir = layout.projectDirectory.dir("src/main/ts")
 

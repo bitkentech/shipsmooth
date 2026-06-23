@@ -13,6 +13,7 @@ public class ValidateRelease {
         String outputDirProp = System.getProperty("build.outputDir");
         String geminiDirProp = System.getProperty("build.gemini.outputDir");
         String codexDirProp = System.getProperty("build.codex.outputDir");
+        String opencodeDirProp = System.getProperty("build.opencode.outputDir");
         if (outputDirProp == null) {
             System.err.println("Error: -Dbuild.outputDir=<dir> is required");
             System.exit(1);
@@ -20,11 +21,17 @@ public class ValidateRelease {
         Path outputDir = Path.of(outputDirProp);
         Path geminiDir = geminiDirProp != null ? Path.of(geminiDirProp) : null;
         Path codexDir = codexDirProp != null ? Path.of(codexDirProp) : null;
-        validate(outputDir, geminiDir, codexDir);
+        Path opencodeDir = opencodeDirProp != null ? Path.of(opencodeDirProp) : null;
+        validate(outputDir, geminiDir, codexDir, opencodeDir);
         System.out.println("ValidateRelease: all manifest checks passed.");
     }
 
+    /** 3-arg overload (no opencode payload) — preserves existing call sites. */
     static void validate(Path outputDir, Path geminiDir, Path codexDir) throws IOException {
+        validate(outputDir, geminiDir, codexDir, null);
+    }
+
+    static void validate(Path outputDir, Path geminiDir, Path codexDir, Path opencodeDir) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         validatePluginJson(mapper, outputDir.resolve(".claude-plugin/plugin.json"));
         validateMarketplaceJson(mapper, outputDir.resolve(".claude-plugin/marketplace.json"));
@@ -36,6 +43,53 @@ public class ValidateRelease {
         }
         if (codexDir != null) {
             validateCodexPayload(mapper, codexDir);
+        }
+        if (opencodeDir != null) {
+            validateOpencodePayload(mapper, opencodeDir);
+        }
+    }
+
+    /**
+     * Validate ONLY the opencode payload (PublishRelease's per-host check). Unlike the
+     * multi-host {@link #validate} path — which tolerates an unassembled payload — this
+     * requires the manifest to be present, since the release just assembled it.
+     */
+    static void validateOpencode(Path opencodeDir) throws IOException {
+        Path manifest = opencodeDir.resolve("package.json");
+        if (!Files.exists(manifest)) {
+            throw new IllegalStateException(opencodeDir + ": package.json missing — opencode payload not assembled");
+        }
+        validateOpencodePayload(new ObjectMapper(), opencodeDir);
+    }
+
+    /**
+     * OpenCode payload (plan-86): a publishable npm package rooted at {@code package.json}
+     * ({@code name}/{@code version}/{@code description}/{@code main}) with the plugin under
+     * {@code plugin/} and skills under {@code skills/}. The {@code main} entry and the
+     * compiled plugin file must actually exist, and no field may carry an unresolved
+     * {@code ${...}} placeholder (the gemini-prod {@code ${plugin.name}} class of bug).
+     */
+    private static void validateOpencodePayload(ObjectMapper mapper, Path opencodeDir) throws IOException {
+        Path manifest = opencodeDir.resolve("package.json");
+        if (!Files.exists(manifest)) {
+            return; // opencode payload not assembled for this release
+        }
+        JsonNode root = mapper.readTree(manifest.toFile());
+        checkField(manifest, root, "name");
+        checkField(manifest, root, "version");
+        checkField(manifest, root, "description");
+        String main = root.path("main").asText(null);
+        checkField(manifest, root, "main", main);
+
+        // The npm `main` must resolve to a real file (this is what OpenCode loads).
+        Path mainFile = opencodeDir.resolve(main);
+        if (!Files.exists(mainFile)) {
+            throw new IllegalStateException(manifest + ": 'main' points at a missing file: " + main);
+        }
+        // The canonical skill must ship too.
+        Path startSkill = opencodeDir.resolve("skills/start/SKILL.md");
+        if (!Files.exists(startSkill)) {
+            throw new IllegalStateException(opencodeDir + ": missing skills/start/SKILL.md");
         }
     }
 

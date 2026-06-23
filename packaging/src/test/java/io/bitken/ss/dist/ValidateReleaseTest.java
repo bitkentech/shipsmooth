@@ -200,4 +200,95 @@ public class ValidateReleaseTest {
         assertTrue(ex.getMessage().contains("plugin.json"), ex.getMessage());
         assertTrue(ex.getMessage().contains("name"), ex.getMessage());
     }
+
+    // --- OpenCode payload (plan-86) ------------------------------------------
+
+    /**
+     * Writes a valid opencode npm-package payload: package.json + the plugin entry
+     * it points at (main) + skills/start/SKILL.md.
+     */
+    private Path writeOpencodePayload(String name, String main, boolean writeMainFile, boolean writeSkill)
+            throws IOException {
+        Path ocDir = tempDir.resolve("build-opencode");
+        Files.createDirectories(ocDir);
+        Files.writeString(ocDir.resolve("package.json"), """
+                {
+                  "name": "%s",
+                  "version": "0.3.25",
+                  "description": "Agent coding workflow",
+                  "type": "module",
+                  "main": "%s"
+                }
+                """.formatted(name, main));
+        if (writeMainFile) {
+            Path mainPath = ocDir.resolve(main);
+            Files.createDirectories(mainPath.getParent());
+            Files.writeString(mainPath, "export default async () => ({});\n");
+        }
+        if (writeSkill) {
+            Path skill = ocDir.resolve("skills/start/SKILL.md");
+            Files.createDirectories(skill.getParent());
+            Files.writeString(skill, "# start\n");
+        }
+        return ocDir;
+    }
+
+    @Test
+    void passesOnValidOpencodePayload() throws IOException {
+        Path dir = claudePlugin();
+        writePluginJson(dir, "shipsmooth", "0.3.25", "Agent coding workflow");
+        writeMarketplaceJson(dir, "bitkentech", "shipsmooth", "Agent coding workflow");
+        Path ocDir = writeOpencodePayload("@bitkentech/shipsmooth-opencode", "plugin/index.js", true, true);
+
+        assertDoesNotThrow(() -> ValidateRelease.validate(tempDir, null, null, ocDir));
+    }
+
+    @Test
+    void skipsOpencodeValidationWhenManifestAbsentInMultiHostPath() throws IOException {
+        Path dir = claudePlugin();
+        writePluginJson(dir, "shipsmooth", "0.3.25", "Agent coding workflow");
+        writeMarketplaceJson(dir, "bitkentech", "shipsmooth", "Agent coding workflow");
+
+        Path ocDir = tempDir.resolve("build-opencode");
+        Files.createDirectories(ocDir); // package.json intentionally absent
+
+        assertDoesNotThrow(() -> ValidateRelease.validate(tempDir, null, null, ocDir));
+    }
+
+    @Test
+    void detectsPlaceholderInOpencodePackageJson() throws IOException {
+        Path ocDir = writeOpencodePayload("${plugin.name}", "plugin/index.js", true, true);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> ValidateRelease.validateOpencode(ocDir));
+        assertTrue(ex.getMessage().contains("name"), ex.getMessage());
+    }
+
+    @Test
+    void detectsMissingMainFileInOpencodePayload() throws IOException {
+        Path ocDir = writeOpencodePayload("@bitkentech/shipsmooth-opencode", "plugin/index.js", false, true);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> ValidateRelease.validateOpencode(ocDir));
+        assertTrue(ex.getMessage().contains("main"), ex.getMessage());
+    }
+
+    @Test
+    void detectsMissingStartSkillInOpencodePayload() throws IOException {
+        Path ocDir = writeOpencodePayload("@bitkentech/shipsmooth-opencode", "plugin/index.js", true, false);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> ValidateRelease.validateOpencode(ocDir));
+        assertTrue(ex.getMessage().contains("SKILL.md"), ex.getMessage());
+    }
+
+    @Test
+    void validateOpencodeRequiresManifestPresent() throws IOException {
+        Path ocDir = tempDir.resolve("build-opencode");
+        Files.createDirectories(ocDir); // no package.json
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> ValidateRelease.validateOpencode(ocDir));
+        assertTrue(ex.getMessage().contains("package.json"), ex.getMessage());
+    }
 }

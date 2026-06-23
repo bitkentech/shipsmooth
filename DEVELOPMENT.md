@@ -185,6 +185,85 @@ refresh the cache — a local marketplace is read live from disk.
   `install-shipsmooth.sh`), exactly like Claude/Gemini — no one-time installer
 - There is no Codex smoke script yet (Claude/Gemini have one; Codex does not)
 
+## OpenCode development
+
+### Prerequisites
+- OpenCode CLI installed (`opencode --version`; verified on 1.17.9)
+- System Node + npm on PATH (the `harness:opencode` module builds the TS plugin
+  and packs the npm tarball with them; Bun is not required for the build)
+
+### Build the OpenCode plugin
+
+```bash
+./gradlew :harness:opencode:assembleOpencodeDev
+# or the uniformly-named alias:
+./gradlew :harness:opencode:devBuild
+```
+
+This produces `build-opencode-dev/` in OpenCode's config-dir layout:
+
+```
+build-opencode-dev/
+  package.json                       # name: shipsmooth-dev (filesystem-only; never published)
+  skills/start-dev/SKILL.md          # discovered at <config-dir>/skills/<name>
+  plugin/
+    index.js                         # the plugin entry OpenCode loads
+    lib/internal.js                  # helpers — under plugin/lib/ ON PURPOSE (see Notes)
+    dist/session-start-config.json   # {name, version} the plugin reads at runtime
+    hooks/install-shipsmooth.sh      # bootstraps the jlink runtime
+```
+
+### Run the dev plugin
+
+OpenCode has no `--plugin-dir` flag and its `opencode.json` `plugin` array accepts
+**npm package names only**. The dev loop instead uses `OPENCODE_CONFIG_DIR`, which
+points OpenCode at a self-contained config dir (it *replaces* the global config):
+
+```bash
+OPENCODE_CONFIG_DIR=$(pwd)/build-opencode-dev opencode
+```
+
+OpenCode loads `plugin/index.js`, registers the `/shipsmooth-dev:start` command, and
+reads the `start-dev` skill. After a re-render, just restart OpenCode.
+
+### Notes
+- `build-opencode-dev/` (and prod `build-opencode/`) are gitignored — local derived
+  artifacts. Re-assemble against a clean dir: OpenCode runs an install inside any
+  config dir holding a `package.json`, dropping a `node_modules/` that the sole-writer
+  Sync would otherwise collide with.
+- **Helpers live under `plugin/lib/`, not beside `index.js`.** OpenCode scans
+  `<config-dir>/plugin/*.js` **non-recursively** and treats every export of each
+  file as a plugin factory. The entry (`index.js`) therefore exports only the
+  factory; the pure helpers sit in `plugin/lib/internal.js` so the scan never loads
+  them (a sibling `plugin/internal.js` would be loaded and rejected).
+- Do **not** pass `-Pbuild.outputDir` to `assembleOpencodeDev` — the dev render reads
+  from its own fixed stage; the property is for `assembleOpencodeProd` only.
+- The plugin bootstraps the jlink runtime on `session.created` (reusing
+  `install-shipsmooth.sh`); there is **no** `hooks/hooks.json` (OpenCode reads none).
+
+### Distribution (prod)
+
+The prod payload is published to npm as **`@bitkentech/shipsmooth-opencode`**; users
+install it via `opencode.json`:
+
+```json
+{ "$schema": "https://opencode.ai/config.json", "plugin": ["@bitkentech/shipsmooth-opencode"] }
+```
+
+The jlink runtime is unchanged — OpenCode reuses the shared POSIX release zips via
+the bundled installer (no packaging change). Build + pack the tarball locally:
+
+```bash
+./gradlew :harness:opencode:assembleOpencodeProd -Pbuild.outputDir=$(pwd)/build-opencode
+./gradlew :harness:opencode:npmPackOpencode      -Pbuild.outputDir=$(pwd)/build-opencode
+# -> harness/opencode/build/npm/bitkentech-shipsmooth-opencode-<ver>.tgz
+```
+
+Publishing is wired into `PublishRelease` (run only at release time). It needs an npm
+session/token authorised for the `@bitkentech` scope — a one-time `npm login` (or
+`NODE_AUTH_TOKEN` / `.npmrc`), the npm analogue of `gh auth`. Only the prod variant
+ships to npm; the dev variant is filesystem-only (`OPENCODE_CONFIG_DIR`).
+
 ## Releasing a new version
 
 Release orchestration (Claude Code, Gemini CLI, and Windows releases, prod builds, and the
