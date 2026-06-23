@@ -4,6 +4,13 @@
   "description": "${plugin.description}",
   "type": "module",
   "main": "plugin/index.js",
+  "files": [
+    "plugin/",
+    "skills/"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "author": {
     "name": "Pramod Biligiri"
   },

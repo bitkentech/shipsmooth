@@ -161,3 +161,26 @@ val devBuild by tasks.registering {
     description = "Assemble the full opencode-dev payload into repo-root build-opencode-dev/ for local dev/test."
     dependsOn(tasks.named("assembleOpencodeDev"))
 }
+
+// ---------------------------------------------------------------------------
+// npmPackOpencode (Task 12): pack the assembled prod payload into a publishable
+// npm tarball. OpenCode's ONLY remote install form is an npm package named in
+// opencode.json's `plugin` array (verified on 1.17.9 — no github/path/marketplace
+// support), so the release artifact is `npm publish`-able. This task is the
+// de-riskable, NON-outward half: it produces shipsmooth-<ver>.tgz from build-
+// opencode/ (the manifest's `files` allowlist governs the tarball contents). The
+// actual `npm publish` lives in PublishRelease (outward, explicit).
+//
+// `npm pack` runs IN the assembled payload dir (outputDir) and writes the tarball
+// to build/npm/. Pass -Pbuild.outputDir=<dir> (matching assembleOpencodeProd) so
+// it packs the prod payload; standalone defaults to repo-root build-opencode-dev/.
+val npmTarballDir = layout.buildDirectory.dir("npm")
+tasks.register<NpmTask>("npmPackOpencode") {
+    group = "assemble"
+    description = "Pack the assembled opencode-prod payload (<build.outputDir>) into a publishable npm tarball."
+    dependsOn(tasks.named("assembleOpencodeProd"))
+    workingDir.set(outputDir)
+    args.set(listOf("pack", "--pack-destination", npmTarballDir.get().asFile.absolutePath))
+    inputs.dir(outputDir).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(npmTarballDir)
+}
