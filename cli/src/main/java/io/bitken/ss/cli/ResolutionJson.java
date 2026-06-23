@@ -29,8 +29,27 @@ public final class ResolutionJson {
                 + kv("status", "needs-decision") + ","
                 + kv("situation", situationToken(needs.situation())) + ","
                 + kv("message", needs.situation().message()) + ","
+                + kv("prompt", prompt(needs)) + ","
                 + "\"options\":" + options
                 + "}";
+    }
+
+    /**
+     * A display-ready, multi-line rendering of the decision the skill shows the user
+     * verbatim: the situation message, then one line per option with its path and the
+     * recommended one marked. Keeping the rendering here (the brain) keeps the skill's job
+     * to "show this and capture the answer" — it never has to compose the prompt itself.
+     */
+    private static String prompt(DataStoreResolution.NeedsDecision needs) {
+        StringBuilder sb = new StringBuilder(needs.situation().message());
+        for (DataStoreResolution.Option o : needs.options()) {
+            sb.append("\n  - ").append(choiceToken(o.choice()));
+            if (o.recommended()) {
+                sb.append(" (recommended)");
+            }
+            sb.append(" → ").append(o.proposedPath());
+        }
+        return sb.toString();
     }
 
     public static String unresolvable(DataStoreResolution.Unresolvable bad) {
@@ -77,6 +96,10 @@ public final class ResolutionJson {
     }
 
     private static String escape(String s) {
-        return s.replace("\\", "\\\\").replace("\"", "\\\"");
+        return s.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 }
