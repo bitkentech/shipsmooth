@@ -646,3 +646,34 @@ no regression to the existing hosts' release.
 _(Windows verification remains **Task 6** above — deferred, depends-on 1; it also
 gains a soft dependency on Task 11 since the WSL end-to-end test needs the assembled
 payload. Not renumbered here to keep tracker IDs stable.)_
+
+**Decision (plan-86-v3): distribution form = npm package.** Verified against the
+OpenCode 1.17.9 docs and binary: the `opencode.json` `plugin` array accepts **npm
+package names only** — no GitHub-repo spec, git URL, or filesystem path — and there
+is **no plugin marketplace / `plugin.json`-from-repo mechanism** (unlike claude's
+`marketplace.json` or codex's git-subdir source). The only non-npm install path is
+dropping files into a plugin dir (the proven `OPENCODE_CONFIG_DIR` / `~/.config/
+opencode` mechanism, which is the dev loop, not a release channel). So a published
+npm package — `plugin: ["shipsmooth"]`, auto-installed by OpenCode via Bun at
+startup and cached under `~/.cache/opencode/` — is the only remote, zero-clone
+install OpenCode supports, and is the release form.
+
+Wiring shape:
+- The assembled prod payload (`build-opencode/`: `package.json` + `plugin/**` +
+  `skills/**`) is already a valid npm package. `npm pack` proves it bundles exactly
+  the right files (`package.json`, `plugin/index.js`, `plugin/lib/internal.js`,
+  `plugin/dist/session-start-config.json`, `plugin/hooks/install-shipsmooth.sh`,
+  `skills/start/SKILL.md`). A `files` allowlist + `publishConfig.access=public` are
+  added to the manifest template so the published tarball is deterministic.
+- A Gradle `npmPackOpencode` task (de-riskable, NOT outward-facing) runs `npm pack`
+  over the assembled payload → the publishable tarball.
+- `PublishRelease` gains the outward `npm publish` step (wired but explicit, like
+  `publishRelease` itself — never invoked by an aggregate task). The jlink runtime
+  zips are unchanged: opencode reuses the shared POSIX release zips via the bundled
+  installer, so there is **no packaging change** to the runtime side.
+
+De-risk boundary: the npm *package shape* and the plugin's *load+run* are both
+proven (the latter end-to-end in Task 11; the module is byte-identical whether
+OpenCode loads it from a config dir or from `node_modules`). The one link that
+cannot be proven without actually publishing (an outward action) is OpenCode's
+npm-registry resolve of `shipsmooth@<version>` — that is the publish step itself.
