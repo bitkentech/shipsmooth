@@ -3,6 +3,7 @@ package io.bitken.ss;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;
 import io.bitken.ss.conf.ExperimentalMode;
+import io.bitken.ss.conf.ResolvedStateRoot;
 import io.bitken.ss.conf.ServicesModule;
 import io.bitken.ss.conf.ShipsmoothDataLocator;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,8 @@ public class SeparateRepoModeIntegrationTest {
     public void planFilesLiveUnderStateRootLeavingProjectTreeUntouched() {
         // In separate-repo mode the locator is given both roots: the project repo
         // (for git ops) and a distinct state root that owns the data tree.
-        ShipsmoothDataLocator locator = new ShipsmoothDataLocator(projectRoot, stateRoot);
+        ShipsmoothDataLocator locator = new ShipsmoothDataLocator(
+                projectRoot, ResolvedStateRoot.of(stateRoot));
 
         // Plan files must resolve under the STATE root...
         assertTrue(locator.planTasksFile(82).toPath().startsWith(stateRoot),

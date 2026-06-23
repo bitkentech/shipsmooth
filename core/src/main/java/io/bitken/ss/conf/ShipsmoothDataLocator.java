@@ -18,22 +18,26 @@ public final class ShipsmoothDataLocator {
     private final Path repoRoot;
     private final Path stateRoot;
 
-    /** Single-root (default / in-repo) mode: data lives under the project repo. */
+    /**
+     * Single-root (default / in-repo) mode: data lives under the project repo, so the state
+     * root <em>is</em> the repo root. The token is minted here (validating the repo root as a
+     * state root) and handed to the two-root constructor.
+     */
     public ShipsmoothDataLocator(Path repoRoot) {
-        this(repoRoot, repoRoot);
+        this(repoRoot, ResolvedStateRoot.of(repoRoot));
     }
 
     /**
      * Two-root ("separate repo") mode: {@code repoRoot} is the project repo
      * (git ops / worktree attachment); {@code stateRoot} owns the data tree
-     * (plan files, ledger, objects). When the two are equal, behavior is
-     * identical to the legacy single-root mode.
+     * (plan files, etc.). The state root arrives as a {@link ResolvedStateRoot} token — proof
+     * it was already validated — so this constructor does not re-check it; only the project
+     * repo root is validated eagerly here (it must always exist).
      */
-    public ShipsmoothDataLocator(Path repoRoot, Path stateRoot) {
+    public ShipsmoothDataLocator(Path repoRoot, ResolvedStateRoot stateRoot) {
         validateRoot("project", repoRoot);
-        validateRoot("state", stateRoot);
         this.repoRoot = repoRoot;
-        this.stateRoot = stateRoot;
+        this.stateRoot = stateRoot.path();
     }
 
     /** Fail fast if a root does not point at an existing directory. */

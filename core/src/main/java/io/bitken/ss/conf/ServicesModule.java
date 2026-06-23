@@ -62,12 +62,14 @@ public class ServicesModule {
     @Provides
     @Singleton
     @StateRoot
-    Path provideStateRoot() {
-        // Thrown only when a command actually resolves the locator on an unsettled project
-        // (Provider.get() inside call()). The cli's execution-exception handler turns it into
-        // the needs-decision/unresolvable result for the skill. Help/version never get here.
-        return stateRoot.orElseThrow(() -> new StateRootUnsettledException(
+    ResolvedStateRoot provideStateRoot() {
+        // Mint the token here: validate the stored state root exactly once, on first use
+        // (Provider.get() inside a command's call()). When the project is unsettled there is
+        // no state root, so we throw instead — the cli's execution-exception handler turns
+        // that into the needs-decision/unresolvable result. Help/version never get here.
+        Path root = stateRoot.orElseThrow(() -> new StateRootUnsettledException(
                 "shipsmooth state is not set up yet — run `store init` first"));
+        return ResolvedStateRoot.of(root);
     }
 
     @Provides
@@ -78,7 +80,7 @@ public class ServicesModule {
 
     @Provides
     @Singleton
-    ShipsmoothDataLocator provideDataLocator(@RepoRoot Path repoRoot, @StateRoot Path stateRoot) {
+    ShipsmoothDataLocator provideDataLocator(@RepoRoot Path repoRoot, @StateRoot ResolvedStateRoot stateRoot) {
         return new ShipsmoothDataLocator(repoRoot, stateRoot);
     }
 

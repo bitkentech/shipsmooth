@@ -3,16 +3,16 @@ package io.bitken.ss.conf;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Plan-82 Task 5/6: the two-root {@link ShipsmoothDataLocator} validates both
- * roots eagerly (in the constructor) and fails fast with a clear, named error
- * when a root is inaccessible — rather than silently resolving paths under a
- * bad root and failing obscurely later.
+ * The two-root {@link ShipsmoothDataLocator} validates the <em>project repo root</em>
+ * eagerly in its constructor and fails fast with a clear, named error when it is
+ * inaccessible. The <em>state root</em> arrives as a {@link ResolvedStateRoot} token —
+ * already validated at mint time (see {@link ResolvedStateRootTest}) — so the locator does
+ * not re-check it.
  */
 public class ShipsmoothDataLocatorValidationTest {
 
@@ -20,40 +20,22 @@ public class ShipsmoothDataLocatorValidationTest {
     Path good;
 
     @Test
-    public void acceptsAccessibleRoots() {
-        // Two real, writable directories construct fine (this is also the common
-        // case for every existing test using TempDir / ".").
-        assertDoesNotThrow(() -> new ShipsmoothDataLocator(good, good));
-    }
-
-    @Test
-    public void rejectsNonExistentStateRoot() {
-        Path missing = good.resolve("does-not-exist");
-        InaccessibleRootException ex = assertThrows(InaccessibleRootException.class,
-                () -> new ShipsmoothDataLocator(good, missing));
-        assertTrue(ex.getMessage().contains(missing.toString()),
-                "error must name the offending path");
+    public void acceptsAccessibleRepoRootAndToken() {
+        assertDoesNotThrow(() -> new ShipsmoothDataLocator(good, ResolvedStateRoot.of(good)));
     }
 
     @Test
     public void rejectsNonExistentRepoRoot() {
         Path missing = good.resolve("nope");
-        assertThrows(InaccessibleRootException.class,
-                () -> new ShipsmoothDataLocator(missing, good));
+        InaccessibleRootException ex = assertThrows(InaccessibleRootException.class,
+                () -> new ShipsmoothDataLocator(missing, ResolvedStateRoot.of(good)));
+        assertTrue(ex.getMessage().contains(missing.toString()),
+                "error must name the offending path");
     }
 
     @Test
-    public void rejectsRootThatIsAFileNotADirectory() throws Exception {
-        Path file = good.resolve("a-file");
-        Files.writeString(file, "x");
+    public void rejectsNullRepoRoot() {
         assertThrows(InaccessibleRootException.class,
-                () -> new ShipsmoothDataLocator(good, file));
-    }
-
-    @Test
-    public void rejectsNullRoot() {
-        // The project root is validated first, so a null repoRoot is the null path.
-        assertThrows(InaccessibleRootException.class,
-                () -> new ShipsmoothDataLocator(null, good));
+                () -> new ShipsmoothDataLocator(null, ResolvedStateRoot.of(good)));
     }
 }
