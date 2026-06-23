@@ -4,7 +4,7 @@
     <plan-version>plan-85-v4</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-22</created>
     </metadata>
     <tasks>
@@ -235,6 +235,11 @@
         <update>
             <timestamp>2026-06-22T12:36:07.003+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-23T18:22:13.008+05:30</timestamp>
+            <message>Plan complete. All active tasks agent-coded; tasks 6 &amp; 9 promoted to backlog (PB-360, PB-361).</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
