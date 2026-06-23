@@ -24,7 +24,9 @@ public class Store implements Callable<Integer>, HasSpec {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("store");
         this.spec.usageMessage().description("Manage where this project's shipsmooth state lives.");
-        addLeaves(spec, new Init(new ProjectDataStoreResolver(), new ConfigWriter()));
+        addLeaves(spec,
+            new Init(new ProjectDataStoreResolver(), new ConfigWriter()),
+            new Info(new ProjectDataStoreResolver()));
     }
 
     public CommandSpec getSpec() {

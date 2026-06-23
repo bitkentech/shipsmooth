@@ -11,12 +11,12 @@ import java.util.StringJoiner;
  * — and never has to read stderr. Hand-built to avoid pulling a JSON dependency into the
  * startup path; the field set is small and fixed.
  */
-final class ResolutionJson {
+public final class ResolutionJson {
 
     private ResolutionJson() {
     }
 
-    static String needsDecision(DataStoreResolution.NeedsDecision needs) {
+    public static String needsDecision(DataStoreResolution.NeedsDecision needs) {
         StringJoiner options = new StringJoiner(",", "[", "]");
         for (DataStoreResolution.Option o : needs.options()) {
             options.add("{"
@@ -33,11 +33,25 @@ final class ResolutionJson {
                 + "}";
     }
 
-    static String unresolvable(DataStoreResolution.Unresolvable bad) {
+    public static String unresolvable(DataStoreResolution.Unresolvable bad) {
         return "{"
                 + kv("status", "unresolvable") + ","
                 + kv("reason", bad.reason().name()) + ","
                 + kv("message", bad.message())
+                + "}";
+    }
+
+    /**
+     * Settled state: where shipsmooth state lives. {@code mode} is {@code external} or
+     * {@code in-repo}; {@code plansDir} is the ready-to-read directory holding plan files,
+     * so the skill can point an agent straight at plan context.
+     */
+    public static String ready(String mode, java.nio.file.Path stateRoot, java.nio.file.Path plansDir) {
+        return "{"
+                + kv("status", "ready") + ","
+                + kv("mode", mode) + ","
+                + kv("stateRoot", stateRoot.toString()) + ","
+                + kv("plansDir", plansDir.toString())
                 + "}";
     }
 
