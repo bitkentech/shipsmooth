@@ -9,7 +9,7 @@ plugin-node/node_modules/
 plugin-node/dist/
 dist-test/
 gemini-extension-spike/
-.agents/tmp/
+.shipsmooth/tmp/
 target/
 **/target/
 *.so
