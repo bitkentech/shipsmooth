@@ -169,9 +169,9 @@
         <task>
             <id>11</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>TS build + assembleOpencode{Dev,Prod} + harness:opencode module</name>
-            <commit></commit>
+            <commit>622c401d6909ba2279d4fbd5718a099064c32aa3</commit>
             <created-from>plan-86-v9</created-from>
             <closed-at-version></closed-at-version>
             <comments>
