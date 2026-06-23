@@ -6,6 +6,7 @@ import io.bitken.ss.cli.conf.ds.RemoteUrl;
 import io.bitken.ss.cli.conf.ds.ProjectDataStore;
 import io.bitken.ss.cli.conf.ds.ProjectDataStoreResolver;
 import io.bitken.ss.cli.conf.ds.StandaloneConfigException;
+import io.bitken.ss.cli.store.Info;
 import io.bitken.ss.cli.store.Init;
 import io.bitken.ss.conf.AppComponents;
 import io.bitken.ss.conf.DaggerAppComponents;
@@ -80,10 +81,13 @@ public class Shipsmooth {
         return cmd.execute(args);
     }
 
-    /** If the parsed target is {@code store init}, hand it the single resolution. */
+    /** Hand the store leaves their project context (and {@code init} the single resolution). */
     private void bindStoreInit(ParseResult parsed) {
-        if (targetUserObject(parsed) instanceof Init init) {
+        Object target = targetUserObject(parsed);
+        if (target instanceof Init init) {
             init.bind(repoRoot, remoteUrl, resolution);
+        } else if (target instanceof Info info) {
+            info.bind(repoRoot, remoteUrl);
         }
     }
 

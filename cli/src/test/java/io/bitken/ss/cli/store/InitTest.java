@@ -34,6 +34,36 @@ class InitTest {
         return new CommandLine(init.getSpec()).execute(args);
     }
 
+    private String runCapturingOut(Init init, String... args) {
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        java.io.PrintStream original = System.out;
+        System.setOut(new java.io.PrintStream(out));
+        try {
+            run(init, args);
+        } finally {
+            System.setOut(original);
+        }
+        return out.toString();
+    }
+
+    @Test
+    void external_json_emitsReadyShapeOnSuccess() throws IOException {
+        Path config = tmp.resolve("shipsmooth.toml");
+        Path repo = Files.createDirectories(tmp.resolve("repo"));
+        Path external = tmp.resolve("ext");
+
+        var needs = new DataStoreResolution.NeedsDecision(
+                DataStoreResolution.UndecidableSituation.CLEAN_FIRST_RUN,
+                List.of(new DataStoreResolution.Option(DataStoreResolution.Choice.EXTERNAL, external, true)));
+
+        String out = runCapturingOut(boundInit(config, needs, repo),
+                "--choice", "external", "--path", external.toString(), "--json");
+
+        assertTrue(out.contains("\"status\":\"ready\""), out);
+        assertTrue(out.contains("\"mode\":\"external\""), out);
+        assertTrue(out.contains("\"plansDir\":\"" + external.resolve("plans") + "\""), out);
+    }
+
     @Test
     void external_createsDirWritesConfigAndSettles() throws IOException {
         Path config = tmp.resolve("shipsmooth.toml");

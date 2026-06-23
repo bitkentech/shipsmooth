@@ -48,6 +48,8 @@ public class Init implements Callable<Integer>, HasSpec {
                 .paramLabel("CHOICE").description("external | in-repo | recreate").build());
         spec.addOption(OptionSpec.builder("--path").type(String.class)
                 .paramLabel("PATH").description("State directory (for external/recreate)").build());
+        spec.addOption(OptionSpec.builder("--json", "-j").type(boolean.class)
+                .description("Emit the resulting state location as a machine-readable JSON line.").build());
     }
 
     /**
@@ -109,7 +111,8 @@ public class Init implements Callable<Integer>, HasSpec {
         if (!(after instanceof DataStoreResolution.Settled settled)) {
             return fail("state did not settle after acting on the choice");
         }
-        System.out.println("shipsmooth: state ready at " + settled.store().stateRoot());
+        boolean json = pr.hasMatchedOption("--json");
+        StateReport.printReady(repoRoot, settled.store(), json);
         return 0;
     }
 

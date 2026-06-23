@@ -11,6 +11,21 @@ ${model.cliBin()} plan resume --plan {N}
 
 Only proceed once you know which tasks are done and which are next.
 
+**Where the plan files live `[Local]`** — Do not assume plan narratives are under
+`.shipsmooth/plans/` in the project repo. In **external** mode (the default) the project
+repo stays untouched and the plan files live in a separate state directory. Ask the CLI
+where to read them — it is the source of truth — rather than guessing:
+
+```bash
+${model.cliBin()} store info --json
+# -> {"status":"ready","mode":"external","stateRoot":"...","plansDir":"<dir>/plans"}
+#    Read plan narratives (plan-{N}.md) and task XML from the reported `plansDir`.
+#    If status is not "ready", state is not set up yet — handle per first-run (Phase 0).
+```
+
+Load the plan narrative for `{N}` from the reported `plansDir` before executing, the same
+as you would for an in-repo plan — `mode: in-repo` simply reports the in-repo `plansDir`.
+
 ---
 
 **Step 0: Create a branch**

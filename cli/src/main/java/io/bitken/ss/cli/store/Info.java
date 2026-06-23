@@ -3,10 +3,7 @@ package io.bitken.ss.cli.store;
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.cli.ResolutionJson;
 import io.bitken.ss.cli.conf.ds.DataStoreResolution;
-import io.bitken.ss.cli.conf.ds.ProjectDataStore;
 import io.bitken.ss.cli.conf.ds.ProjectDataStoreResolver;
-import io.bitken.ss.conf.ResolvedStateRoot;
-import io.bitken.ss.conf.ShipsmoothDataLocator;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -61,7 +58,10 @@ public class Info implements Callable<Integer>, HasSpec {
 
         DataStoreResolution resolution = resolver.resolve(repo, remoteUrl);
         return switch (resolution) {
-            case DataStoreResolution.Settled settled -> reportReady(repo, settled.store(), json);
+            case DataStoreResolution.Settled settled -> {
+                StateReport.printReady(repo, settled.store(), json);
+                yield 0;
+            }
             case DataStoreResolution.NeedsDecision needs -> {
                 System.out.println(json
                         ? ResolutionJson.needsDecision(needs)
@@ -75,21 +75,5 @@ public class Info implements Callable<Integer>, HasSpec {
                 yield 0;
             }
         };
-    }
-
-    private int reportReady(Path repo, ProjectDataStore store, boolean json) {
-        Path stateRoot = store.stateRoot();
-        String mode = store instanceof ProjectDataStore.InRepo ? "in-repo" : "external";
-        // plansDir via the locator so the in-repo (.shipsmooth) vs external layout difference
-        // is owned by the single source of path truth, not re-derived here.
-        Path plansDir = new ShipsmoothDataLocator(repo, ResolvedStateRoot.of(stateRoot)).plansDir();
-
-        if (json) {
-            System.out.println(ResolutionJson.ready(mode, stateRoot, plansDir));
-        } else {
-            System.out.println("shipsmooth: " + mode + " state at " + stateRoot);
-            System.out.println("plans: " + plansDir);
-        }
-        return 0;
     }
 }

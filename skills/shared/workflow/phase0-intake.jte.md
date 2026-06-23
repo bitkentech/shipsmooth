@@ -7,8 +7,12 @@ Before treating any message as a fresh kickoff, look for a plan that is already
 in flight. Glance at the plans on disk and their state — especially the **latest**
 one:
 
-- list `.shipsmooth/plans/plan-*-tasks.xml` (the highest plan number is the most
-  likely candidate), and
+- find the plans directory first — in **external** mode (the default) it is not
+  `.shipsmooth/plans/` but a separate state dir. Ask the CLI:
+  `${model.cliBin()} store info --json` reports `plansDir` (when `status` is `ready`).
+  List `plansDir`'s `plan-*-tasks.xml` (the highest plan number is the most likely
+  candidate); if `status` is not `ready`, there is no settled state yet, so there is
+  no active plan to resume.
 - check that plan's state with
   `${model.cliBin()} plan resume --plan {N}` — a plan-level status of `active` /
   `in-review` with tasks still `pending` / in-progress means work is unfinished.
