@@ -3,6 +3,7 @@ package io.bitken.ss.cli.task;
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.svc.plan.PlanService;
+import jakarta.inject.Provider;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -16,10 +17,10 @@ import java.util.concurrent.Callable;
 public class AddTask implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
-    private final PlanService planService;
+    private final Provider<PlanService> planService;
     private final GitTags gitTags;
 
-    public AddTask(PlanService planService, GitTags gitTags) {
+    public AddTask(Provider<PlanService> planService, GitTags gitTags) {
         this.planService = planService;
         this.gitTags = gitTags;
         spec = CommandSpec.wrapWithoutInspection(this);
@@ -44,7 +45,7 @@ public class AddTask implements Callable<Integer>, HasSpec {
         String dependsOn = pr.matchedOptionValue("depends-on", "");
 
         String planVersion = gitTags.getPlanVersion(plan);
-        int id = planService.addTask(plan, name, risk, dependsOn, planVersion);
+        int id = planService.get().addTask(plan, name, risk, dependsOn, planVersion);
         System.out.println("Added task " + id + ": " + name);
         return 0;
     }

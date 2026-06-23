@@ -70,7 +70,7 @@ public class NewPlanTest {
 
         ScaffoldException ex = assertThrows(ScaffoldException.class, () -> newPlan.scaffold("Desktop UI"));
         assertTrue(ex.getMessage().contains("already exists"), ex.getMessage());
-        assertFalse(Files.exists(repoRoot.resolve(".agents/plans/plan-1.md")));
+        assertFalse(Files.exists(repoRoot.resolve(".shipsmooth/plans/plan-1.md")));
         assertTrue(created.isEmpty());
     }
 
@@ -79,7 +79,7 @@ public class NewPlanTest {
         NewPlan newPlan = newPlan(refusingToCreate());
 
         assertThrows(ScaffoldException.class, () -> newPlan.scaffold("Desktop UI"));
-        assertFalse(Files.exists(repoRoot.resolve(".agents/plans/plan-1.md")));
+        assertFalse(Files.exists(repoRoot.resolve(".shipsmooth/plans/plan-1.md")));
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ public class NewPlanTest {
     }
 
     private void writePlans(String... names) throws IOException {
-        Path plansDir = repoRoot.resolve(".agents/plans");
+        Path plansDir = repoRoot.resolve(".shipsmooth/plans");
         Files.createDirectories(plansDir);
         for (String name : names) {
             Files.writeString(plansDir.resolve(name), "x");

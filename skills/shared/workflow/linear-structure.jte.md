@@ -20,7 +20,7 @@
 
 ### Tag-based GitHub permalink format
 ```
-https://github.com/{org}/{repo}/blob/{tag-commit-hash}/.agents/plans/plan-07.md
+https://github.com/{org}/{repo}/blob/{tag-commit-hash}/.shipsmooth/plans/plan-07.md
 ```
 
 Resolve the commit hash for a tag:

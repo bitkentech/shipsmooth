@@ -1,10 +1,10 @@
 package io.bitken.ss.cli.plan;
 
 import io.bitken.ss.cli.HasSpec;
-import io.bitken.ss.conf.ShipsmoothDataLocator;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.svc.plan.PlanService;
 import io.bitken.ss.gw.TaskStore;
+import jakarta.inject.Provider;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -16,11 +16,11 @@ import java.util.concurrent.Callable;
 public class Init implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
-    private final PlanService planService;
-    private final TaskStore taskStore;
+    private final Provider<PlanService> planService;
+    private final Provider<TaskStore> taskStore;
     private final GitTags gitTagService;
 
-    public Init(PlanService planService, TaskStore taskStore, GitTags gitTagService) {
+    public Init(Provider<PlanService> planService, Provider<TaskStore> taskStore, GitTags gitTagService) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.planService = planService;
         this.taskStore = taskStore;
@@ -55,14 +55,16 @@ public class Init implements Callable<Integer>, HasSpec {
             System.err.println("Plan file not found: " + tasksFrom);
             return 1;
         }
+        TaskStore store = taskStore.get();
         var markdown = Files.readString(markdownPath);
-        var tasks = taskStore.parseTasksFromPlan(markdown);
+        var tasks = store.parseTasksFromPlan(markdown);
         var planVersion = gitTagService.getPlanVersion(plan);
 
-        planService.initPlan(plan, planVersion, tasks);
+        planService.get().initPlan(plan, planVersion, tasks);
 
-        ShipsmoothDataLocator locator = new ShipsmoothDataLocator(Paths.get("."));
-        System.out.println("Written " + tasks.size() + " tasks to " + locator.planTasksFile(plan).getPath());
+        // Report the path via the resolved store (reflects the actual state root) rather than
+        // a throwaway locator assuming in-repo-at-CWD.
+        System.out.println("Written " + tasks.size() + " tasks to " + store.planTasksFile(plan).getPath());
 
         return 0;
     }

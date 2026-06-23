@@ -5,19 +5,22 @@ import io.bitken.ss.gw.GitState;
 import io.bitken.ss.gw.GitTags;
 import io.bitken.ss.gw.TaskStore;
 import io.bitken.ss.svc.plan.PlanService;
+import jakarta.inject.Provider;
 import picocli.CommandLine.Model.CommandSpec;
 
 import java.util.concurrent.Callable;
 
 /**
  * {@code plan} noun group: bundles the plan-level subcommands under one parent.
- * Builds its own leaves in the constructor.
+ * Builds its own leaves in the constructor. State-dependent services arrive as
+ * {@link Provider}s, threaded down to the leaves that need them, so the group and its
+ * leaves construct without a settled state root (the root is touched only in {@code call()}).
  */
 public class Plan implements Callable<Integer>, HasSpec {
 
     private final CommandSpec spec;
 
-    public Plan(PlanService planService, TaskStore taskStore, GitTags gitTags,
+    public Plan(Provider<PlanService> planService, Provider<TaskStore> taskStore, GitTags gitTags,
                 GitState gitState) {
         this.spec = CommandSpec.wrapWithoutInspection(this);
         this.spec.name("plan");

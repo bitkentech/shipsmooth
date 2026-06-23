@@ -7,11 +7,17 @@ Before treating any message as a fresh kickoff, look for a plan that is already
 in flight. Glance at the plans on disk and their state — especially the **latest**
 one:
 
-- list `.agents/plans/plan-*-tasks.xml` (the highest plan number is the most
-  likely candidate), and
+- find the plans directory first — in **external** mode (the default) it is not
+  `.shipsmooth/plans/` but a separate state dir. Ask the CLI:
+  `${model.cliBin()} store info --json` reports `plansDir` (when `status` is `ready`).
+  List `plansDir`'s `plan-*-tasks.xml` (the highest plan number is the most likely
+  candidate); if `status` is **not** `ready`, state is not set up yet — run the
+  **first-run handshake** below before going further (there is no active plan to resume).
 - check that plan's state with
   `${model.cliBin()} plan resume --plan {N}` — a plan-level status of `active` /
   `in-review` with tasks still `pending` / in-progress means work is unfinished.
+
+@template.shared.workflow.first-run-handshake(model = model)
 
 If any plan looks active, **surface it as a question** before doing anything
 else: name the plan and ask the user whether to continue it or deliberately
@@ -41,7 +47,7 @@ Run **one** command and hand back:
 ```bash
 ${model.cliBin()} plan quick --desc "{short-description}"
 # derives the next plan number, creates + checks out t/{N}-{slug},
-# and writes a stub .agents/plans/plan-{N}.md.
+# and writes a stub .shipsmooth/plans/plan-{N}.md.
 # It does NOT commit — that is intentional.
 ```
 

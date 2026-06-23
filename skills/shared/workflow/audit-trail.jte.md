@@ -6,8 +6,8 @@
 
 | Event | What to store in the issue |
 |---|---|
-| Task created | `github.com/.../blob/{plan-07-v1-hash}/.agents/plans/plan-07.md` |
-| Task closed / obsoleted | `github.com/.../blob/{plan-07-vN-hash}/.agents/plans/plan-07.md` + one-line reason |
+| Task created | `github.com/.../blob/{plan-07-v1-hash}/.shipsmooth/plans/plan-07.md` |
+| Task closed / obsoleted | `github.com/.../blob/{plan-07-vN-hash}/.shipsmooth/plans/plan-07.md` + one-line reason |
 
 `[Local]` The XML file is the audit trail. `<created-from>` and `<closed-at-version>` child elements on each `<task>` serve the same role. The XML is versioned in git, so `git diff` between two plan tags shows exactly what changed.
 

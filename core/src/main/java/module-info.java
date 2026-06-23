@@ -3,7 +3,8 @@ module io.bitken.ss.core {
     requires java.xml;
     requires org.glassfish.jaxb.runtime;
     requires static dagger;
-    requires jakarta.inject;
+    // transitive: AppComponents exposes Provider<…> in its public API (see core build.gradle.kts).
+    requires transitive jakarta.inject;
     requires static java.compiler;
 
     // Public API consumed by cli (and future targets)

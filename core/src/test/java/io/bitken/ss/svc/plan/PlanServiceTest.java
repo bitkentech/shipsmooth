@@ -83,9 +83,9 @@ public class PlanServiceTest {
         assertEquals("agent-coded",
             svc.loadPlan(1).getTasks().getTask().get(0).getStatus().value());
         // ...and no ledger.jsonl / object store is ever created (subsystem removed).
-        assertFalse(tempDir.resolve(".agents/ledger.jsonl").toFile().exists(),
+        assertFalse(tempDir.resolve(".shipsmooth/ledger.jsonl").toFile().exists(),
             "no ledger.jsonl must be written");
-        assertFalse(tempDir.resolve(".agents/objects").toFile().exists(),
+        assertFalse(tempDir.resolve(".shipsmooth/objects").toFile().exists(),
             "no object store must be created");
     }
 }

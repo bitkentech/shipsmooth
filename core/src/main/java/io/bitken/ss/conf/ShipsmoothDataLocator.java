@@ -6,33 +6,38 @@ import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 /**
- * Registry of filesystem paths for all shipsmooth data under {@code .agents/}.
+ * Registry of filesystem paths for all shipsmooth data.
  *
  * <p>Single source of truth for path construction — no other class should
- * hardcode {@code .agents/} strings. Named "Locator" to anticipate a future
- * option to relocate the data tree outside the repo.
+ * hardcode the data-folder name. In-repo mode keeps data under the tool-owned
+ * {@code .shipsmooth/} folder in the project repo; standalone mode points
+ * {@code stateRoot} at a dedicated directory that <em>is</em> the data root.
  */
 public final class ShipsmoothDataLocator {
 
     private final Path repoRoot;
     private final Path stateRoot;
 
-    /** Single-root (default / in-repo) mode: data lives under the project repo. */
+    /**
+     * Single-root (default / in-repo) mode: data lives under the project repo, so the state
+     * root <em>is</em> the repo root. The token is minted here (validating the repo root as a
+     * state root) and handed to the two-root constructor.
+     */
     public ShipsmoothDataLocator(Path repoRoot) {
-        this(repoRoot, repoRoot);
+        this(repoRoot, ResolvedStateRoot.of(repoRoot));
     }
 
     /**
      * Two-root ("separate repo") mode: {@code repoRoot} is the project repo
      * (git ops / worktree attachment); {@code stateRoot} owns the data tree
-     * (plan files, ledger, objects). When the two are equal, behavior is
-     * identical to the legacy single-root mode.
+     * (plan files, etc.). The state root arrives as a {@link ResolvedStateRoot} token — proof
+     * it was already validated — so this constructor does not re-check it; only the project
+     * repo root is validated eagerly here (it must always exist).
      */
-    public ShipsmoothDataLocator(Path repoRoot, Path stateRoot) {
+    public ShipsmoothDataLocator(Path repoRoot, ResolvedStateRoot stateRoot) {
         validateRoot("project", repoRoot);
-        validateRoot("state", stateRoot);
         this.repoRoot = repoRoot;
-        this.stateRoot = stateRoot;
+        this.stateRoot = stateRoot.path();
     }
 
     /** Fail fast if a root does not point at an existing directory. */
@@ -50,22 +55,34 @@ public final class ShipsmoothDataLocator {
 
     // ── plan files ─────────────────────────────────────────────────────────────
 
-    private static final String PLANS_DIR = ".agents/plans";
+    /** Tool-owned data folder used in in-repo mode (replaces the legacy {@code .agents/}). */
+    private static final String DATA_DIR = ".shipsmooth";
+    private static final String PLANS_SUBDIR = "plans";
     private static final String PLAN_PREFIX = "plan-";
     private static final String MARKDOWN_SUFFIX = ".md";
     private static final String TASKS_SUFFIX = "-tasks.xml";
 
-    /** {@code .agents/plans/} — the directory holding all plan files (under the state root). */
-    public Path plansDir() {
-        return stateRoot.resolve(PLANS_DIR);
+    /**
+     * Root of the data tree. In in-repo mode ({@code repoRoot == stateRoot}) the data lives
+     * under {@code <repoRoot>/.shipsmooth}; in standalone mode the dedicated {@code stateRoot}
+     * <em>is</em> the data root, so {@code plans/} hangs directly off it with no dot-folder
+     * segment.
+     */
+    private Path dataRoot() {
+        return repoRoot.equals(stateRoot) ? stateRoot.resolve(DATA_DIR) : stateRoot;
     }
 
-    /** {@code .agents/plans/plan-{planId}-tasks.xml} */
+    /** {@code plans/} — the directory holding all plan files (under {@link #dataRoot()}). */
+    public Path plansDir() {
+        return dataRoot().resolve(PLANS_SUBDIR);
+    }
+
+    /** {@code plans/plan-{planId}-tasks.xml} under the data root. */
     public File planTasksFile(int planId) {
         return plansDir().resolve(PLAN_PREFIX + planId + TASKS_SUFFIX).toFile();
     }
 
-    /** {@code .agents/plans/plan-{planId}.md} */
+    /** {@code plans/plan-{planId}.md} under the data root. */
     public File planMarkdownFile(int planId) {
         return plansDir().resolve(PLAN_PREFIX + planId + MARKDOWN_SUFFIX).toFile();
     }

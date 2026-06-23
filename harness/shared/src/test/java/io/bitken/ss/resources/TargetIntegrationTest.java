@@ -339,8 +339,8 @@ class TargetIntegrationTest {
         String content = Files.readString(
             tempDir.resolve("skills/experimental-refine-dev/SKILL.md"));
 
-        assertTrue(content.contains(".agents/tmp/refine-"),
-            "refine skill should direct Phase-1 extraction to the .agents/tmp scratchpad");
+        assertTrue(content.contains(".shipsmooth/tmp/refine-"),
+            "refine skill should direct Phase-1 extraction to the .shipsmooth/tmp scratchpad");
 
         // Judgment-level rules must precede mechanical rules in the rendered output.
         int richDomain = content.indexOf("Prefer Rich Domain Models");

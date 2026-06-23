@@ -1,4 +1,4 @@
-package io.bitken.ss.cli.conf;
+package io.bitken.ss.cli.conf.ds;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,10 +17,11 @@ import java.nio.file.Path;
 public interface ProjectDataStore {
 
     /**
-     * Perform one-time setup for this store. No-op for {@link InRepo}.
+     * Perform one-time setup for this store. No-op for {@link InRepo}; for {@link Standalone}
+     * it creates and git-initialises the state repo if absent. The resolver has already
+     * decided this store is the right one, so {@code init()} does not re-litigate config vs.
+     * in-repo state.
      *
-     * @throws StandaloneConfigException if standalone mode collides with existing
-     *         in-repo state (mid-project switching is not supported)
      * @throws IOException if creating or git-initialising the state repo fails
      */
     void init() throws IOException;
@@ -58,20 +59,10 @@ public interface ProjectDataStore {
         }
 
         @Override public void init() throws IOException {
-            guardAgainstExistingInRepoState();
+            // No in-repo-state guard here: ProjectDataStoreResolver is now the single decision
+            // point and already implements "config wins" when both a configured external store
+            // and an in-repo .shipsmooth/ exist. init() just provisions the chosen store.
             initStateRepoIfAbsent();
-        }
-
-        private void guardAgainstExistingInRepoState() {
-            // TODO: .agents is hardcoded here. Also what if .agents
-            // folder has been created independently of shipsmooth?
-            if (Files.exists(repoRoot.resolve(".agents"))) {
-                throw new StandaloneConfigException("""
-                        standalone mode is configured but .agents/ exists in the project repo.
-                        Mid-project switching is not supported. Either:
-                          - remove .agents/ from the project repo, or
-                          - remove the entry from ~/.config/shipsmooth/ss-config.toml to continue in in-repo mode.""");
-            }
         }
 
         private void initStateRepoIfAbsent() throws IOException {

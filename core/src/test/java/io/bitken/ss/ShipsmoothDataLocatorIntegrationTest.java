@@ -31,7 +31,7 @@ public class ShipsmoothDataLocatorIntegrationTest {
                 .build();
 
         ShipsmoothDataLocator locator = app.dataLocator();
-        TaskStore store = app.taskStore();
+        TaskStore store = app.taskStore().get();
 
         // Create the plans directory so the store can write
         locator.planTasksFile(99).getParentFile().mkdirs();
@@ -59,7 +59,7 @@ public class ShipsmoothDataLocatorIntegrationTest {
         ShipsmoothDataLocator locator = app.dataLocator();
 
         // The path the locator advertises must use repoRoot, not the process working dir
-        Path expected = repoRoot.resolve(".agents/plans/plan-42-tasks.xml");
+        Path expected = repoRoot.resolve(".shipsmooth/plans/plan-42-tasks.xml");
         assertEquals(expected.toFile().getCanonicalPath(),
                 locator.planTasksFile(42).getCanonicalPath(),
                 "locator must resolve paths under the injected repoRoot");

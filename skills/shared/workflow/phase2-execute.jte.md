@@ -11,6 +11,21 @@ ${model.cliBin()} plan resume --plan {N}
 
 Only proceed once you know which tasks are done and which are next.
 
+**Where the plan files live `[Local]`** — Do not assume plan narratives are under
+`.shipsmooth/plans/` in the project repo. In **external** mode (the default) the project
+repo stays untouched and the plan files live in a separate state directory. Ask the CLI
+where to read them — it is the source of truth — rather than guessing:
+
+```bash
+${model.cliBin()} store info --json
+# -> {"status":"ready","mode":"external","stateRoot":"...","plansDir":"<dir>/plans"}
+#    Read plan narratives (plan-{N}.md) and task XML from the reported `plansDir`.
+#    If status is not "ready", state is not set up yet — handle per first-run (Phase 0).
+```
+
+Load the plan narrative for `{N}` from the reported `plansDir` before executing, the same
+as you would for an in-repo plan — `mode: in-repo` simply reports the in-repo `plansDir`.
+
 ---
 
 **Step 0: Create a branch**
@@ -24,10 +39,12 @@ All task commits go on this branch. The `t/` prefix stands for "task". Usernames
 
 **Before writing any code**, confirm the test coverage threshold with the human (default: 95%). Record the agreed value before proceeding.
 
+@template.shared.workflow.commit-message-convention(model = model)
+
 ### Preamble: integration tests (once, before any task)
 
 1. Write 1–2 integration tests that exercise the feature end-to-end. No more than two.
-2. Commit and push them with no implementation — they must fail (red). `[Linear]` Reference the Linear project in the commit message.
+2. Commit and push them with no implementation — they must fail (red). Word the commit message per the **commit-message convention** above (in standalone mode, no `plan(N)`/`task(N)` reference — this is a project-repo commit too). `[Linear]` Reference the Linear project in the commit message.
 3. Confirm red state:
    ```bash
    # run your project's test command, e.g.:
@@ -46,7 +63,7 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
 - Write at least one failing test (and not more than 3) that targets the core logic (preserving 
 Core Invariant #6).
 - Implement just enough to prove the approach works. Focus on the core complexity.
-- Commit as `draft(N): de-risk [task name]`.
+- Commit per the **commit-message convention**: `draft(N): de-risk [task name]` in in-repo mode; in standalone mode a plain feature message with no `draft(N)`/`task(N)` reference.
 - `[Linear]` Post a comment on the Linear issue notifying the human the draft is ready.
 - `[Local]` Run `${model.cliBin()} task status --plan {N} --task {id} --status de-risked` and `${model.cliBin()} task comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
 - **Wait for explicit approval of the approach.**
@@ -63,9 +80,9 @@ quality conforms to its instructions):
   # example — adjust to your toolchain:
   npm test -- --coverage --coverageThreshold='{"global":{"lines":95}}'
   ```
-- Commit the completed task (tests + implementation):
+- Commit the completed task (tests + implementation), wording the message per the **commit-message convention** (standalone → plain feature message, no `task(N)` prefix):
   ```bash
-  git commit -m "task(N): <short description>"
+  git commit -m "task(N): <short description>"   # in-repo mode; standalone: plain feature message
   git push origin t/{issue-id}-{short-description}
   ```
   This creates a stable rollback point. A human reviewing the PR can check out this commit to inspect each task in isolation.
@@ -88,9 +105,9 @@ quality conforms to its instructions):
    npm test -- --coverage --coverageThreshold='{"global":{"lines":95}}'
    ```
    Do not proceed until coverage passes.
-4. Commit the completed task (tests + implementation):
+4. Commit the completed task (tests + implementation), wording the message per the **commit-message convention** (standalone → plain feature message, no `task(N)` prefix):
    ```bash
-   git commit -m "task(N): <short description>"
+   git commit -m "task(N): <short description>"   # in-repo mode; standalone: plain feature message
    git push origin t/{issue-id}-{short-description}
    ```
    - `[Linear]` Mark the Linear issue **Agent Coded**. No draft review needed.
@@ -112,6 +129,6 @@ quality conforms to its instructions):
   - `[Local]` Run `${model.cliBin()} plan update --plan {N} --blocked --message "..."`.
   - Wait for the human to revise the plan file, commit, push, and give a new go-ahead.
 
-Never autonomously modify the `.agents/plans/` file during execution. If a plan change is needed, surface it and wait.
+Never autonomously modify the `.shipsmooth/plans/` file during execution. If a plan change is needed, surface it and wait.
 
 ---

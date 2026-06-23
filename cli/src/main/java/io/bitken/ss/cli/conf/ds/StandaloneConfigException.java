@@ -1,4 +1,4 @@
-package io.bitken.ss.cli.conf;
+package io.bitken.ss.cli.conf.ds;
 
 public final class StandaloneConfigException extends RuntimeException {
     public StandaloneConfigException(String message, Throwable cause) {
