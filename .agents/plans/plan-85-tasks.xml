@@ -135,9 +135,9 @@
         <task>
             <id>8</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Strip plan/task fingerprints from project-repo commits in standalone mode</name>
-            <commit></commit>
+            <commit>f64c1c7130ccabc55f4f574fdacc8e58c8aa6ad6</commit>
             <created-from>plan-85-v4</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
