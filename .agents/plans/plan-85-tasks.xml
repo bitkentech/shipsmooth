@@ -216,12 +216,17 @@
         <task>
             <id>13</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>First-run handshake skill prose + CLI prompt field (deferred Task-5 skill side)</name>
-            <commit></commit>
+            <commit>fcf2aaae1060a175e247cf72a0db732226fc14bd</commit>
             <created-from>plan-85-v5</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-23T17:50:17.642+05:30</timestamp>
+                    <message>De-risk: CLI prompt field landed (47d9b49). needs-decision JSON now carries a display-ready multi-line prompt the skill renders verbatim; newline escaping added. Skill handshake prose (present/capture/re-invoke) is the hardening half.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>5</depends-on>
         </task>
