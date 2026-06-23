@@ -325,3 +325,28 @@ token instead of a bare `@StateRoot Path`. `repoRoot` stays a total `@RepoRoot P
 the state-root binding is a distinct type, the `@StateRoot` qualifier is no longer
 load-bearing for disambiguation (the two providers no longer collide on `Path`) — keep it
 for symmetry or drop it, implementer's call.
+
+### Task 13: First-run handshake skill prose + CLI prompt field [Medium]
+*Depends-on: 5*
+The skill (mouth) side of Task 5's first-run handshake, deferred at the time because it
+depended on Task 7's `store info`/`ready` shape existing to reference a stable "where is
+state" signal. Task 5's CLI side (resolve-gate, `store init` act-on-answer, `ConfigWriter`)
+already landed; this closes the loop. Two parts:
+
+- **CLI (TDD-able):** add a display-ready `prompt` field to the `needs-decision` JSON — a
+  multi-line, human-readable rendering of the situation message + each option (token, path,
+  recommended marked) — so the skill *renders verbatim* rather than composing the prompt
+  from `options[]` itself. Keeping the rendering in the brain shrinks the skill's job and
+  reduces LLM-obedience risk. (User chose this over skill-composes-only.) Newline escaping
+  added to `ResolutionJson` so the multi-line prompt stays a valid single-line JSON.
+- **Skill prose:** script the handshake — detect the gate (exit 10/11 + `needs-decision`),
+  show the CLI's `prompt` verbatim with the recommended option as default, **wait for a real
+  human answer** (consented-creation invariant — never auto-pick), then re-invoke
+  `${cliBin} store init --choice <…> [--path <…>] --json` and read back the `ready` shape to
+  confirm + learn `plansDir`. Cover clean-first-run and config-dir-missing (→ recreate);
+  `unresolvable` → surface message and stop; steady state stays silent. Pure prose, not
+  TDD-able; lives in a shared template referenced from intake/execute.
+
+The irreducible skill core is "present + capture human answer" (steps that need a chat turn
+— the CLI must never prompt on stdin); everything else is CLI-owned. A future "lift the
+resolver/presentation into core" is tracked separately (PB-359).

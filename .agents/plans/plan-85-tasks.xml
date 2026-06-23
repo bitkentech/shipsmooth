@@ -213,6 +213,18 @@
             <deviations/>
             <depends-on>11</depends-on>
         </task>
+        <task>
+            <id>13</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>First-run handshake skill prose + CLI prompt field (deferred Task-5 skill side)</name>
+            <commit></commit>
+            <created-from>plan-85-v5</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
