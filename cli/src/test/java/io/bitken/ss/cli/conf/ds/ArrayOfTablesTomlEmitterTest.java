@@ -75,6 +75,21 @@ class ArrayOfTablesTomlEmitterTest {
     }
 
     @Test
+    void escapesBasicStringSpecials_andRoundTrips() throws IOException {
+        // A double-quote forces the basic-string branch; each special must escape correctly.
+        String raw = "a\"b\\c\td\re\nf";
+        StandaloneConfig cfg = new StandaloneConfig();
+        cfg.setProjects(List.of(entry(null, raw, null, "external")));
+
+        String toml = new ArrayOfTablesTomlEmitter().emit(cfg);
+        assertTrue(toml.contains("localPath = \""), "value with a quote must use a basic string:\n" + toml);
+
+        StandaloneConfig back = new TomlMapper().readValue(toml, StandaloneConfig.class);
+        assertEquals(raw, back.getProjects().get(0).getLocalPath(),
+                "all basic-string escapes must round-trip:\n" + toml);
+    }
+
+    @Test
     void emptyConfigReadsBackEmpty() throws IOException {
         String toml = new ArrayOfTablesTomlEmitter().emit(new StandaloneConfig());
         StandaloneConfig back = new TomlMapper().readValue(toml, StandaloneConfig.class);
