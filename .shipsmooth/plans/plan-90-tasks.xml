@@ -4,27 +4,32 @@
     <plan-version>plan-90-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>in-review</status>
         <created>2026-06-24</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Hand-rolled `[[projects]]` TOML emitter with round-trip + escaping coverage</name>
-            <commit></commit>
+            <commit>2134768a6906daa1b5fafd1153084f7025e60126</commit>
             <created-from>plan-90-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-24T20:59:36.476+05:30</timestamp>
+                    <message>De-risk draft ready for review</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Preserve atomic-write guarantees through the new emitter</name>
-            <commit></commit>
+            <commit>ddcd73299e7b00216a33e147f1840712c0a4baa9</commit>
             <created-from>plan-90-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -34,9 +39,9 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Verify against the modular/jlink runtime and real upsert flow</name>
-            <commit></commit>
+            <commit>e5b3762f90f3c4e0e0bea5291ed218329f729352</commit>
             <created-from>plan-90-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -48,6 +53,11 @@
         <update>
             <timestamp>2026-06-24T20:11:34.492+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-24T21:42:58.491+05:30</timestamp>
+            <message>All 3 tasks agent-coded. Hand-rolled [[projects]] emitter replaces Jackson's single-line write path; Jackson read path unchanged. Full cli test suite green; jlink store round-trip verified multi-line output through the modular runtime. Ready for review.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
