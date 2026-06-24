@@ -110,52 +110,121 @@ fun renderOutputDir(variantDefault: String): String =
     (findProperty("build.outputDir") as String?)
         ?: layout.buildDirectory.dir("render/$variantDefault").get().asFile.path
 
-val claudeDevSpec = RenderSpec(
-    buildPlatform = "claude",
+// ---------------------------------------------------------------------------
+// Render specs (plan-88: de-coupled). Each host customises a host-agnostic base;
+// NO host spec is derived from another host's spec. This kills the old `.copy()`
+// chain (claudeDevSpec → geminiDevSpec → codex/opencode), where one host silently
+// inherited another's skill frontmatter and basename — so editing one host's spec
+// could change another's render output. The base holds only env-keyed, host-blind
+// defaults; each host owns its full identity (platform, output dir, hook command,
+// and — where required — skill frontmatter/basename) in its own function.
+//
+// The dev→prod axis lives in `baseSpec(env)` (description, jlinkDir, buildEnv);
+// host identity lives in the per-host functions. The two axes never cross.
+// ---------------------------------------------------------------------------
+val prodDescription = "Agent coding workflow with plan-before-implement discipline, " +
+    "TDD, vertical slices, Linear integration, and immutable git-based plan versioning."
+
+// Host-agnostic defaults for an env. buildPlatform/outputDir/pluginHookCommand are
+// empty placeholders — each host MUST set its own. The dev variant resolves jlinkDir
+// lazily from the cli image; prod uses the "/dev/null" sentinel (no host image).
+fun baseSpec(env: BuildEnv) = RenderSpec(
+    buildPlatform = "",
     buildOs = "posix",
-    buildEnv = BuildEnv.DEV,
+    buildEnv = env,
     pluginBaseName = "shipsmooth",
     pluginVersion = pluginVersion,
-    pluginDescription = "Agent coding workflow (dev build)",
+    pluginDescription = if (env == BuildEnv.PROD) prodDescription else "Agent coding workflow (dev build)",
     pluginSkillStartBasename = "start",
     skillFrontmatter = "",
-    jlinkDir = devJlinkDir,
+    jlinkDir = if (env == BuildEnv.PROD) constJlink("/dev/null") else devJlinkDir,
     pluginRepoName = "shipsmooth",
-    outputDir = renderOutputDir("claude-dev"),
-    pluginHookCommand = "node \"\${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"",
+    outputDir = "",
+    pluginHookCommand = "",
     objects = objects,
 )
 
-val geminiDevSpec = claudeDevSpec.copy(
-    buildPlatform = "gemini",
-    skillFrontmatter = """
+// outputDir: dev variants honour -Pbuild.outputDir (renderOutputDir); prod variants
+// pin a fixed per-variant build dir (matching the pre-refactor behaviour exactly).
+fun variantOutputDir(host: String, env: BuildEnv): String =
+    if (env == BuildEnv.PROD) layout.buildDirectory.dir("render/$host-prod").get().asFile.path
+    else renderOutputDir("$host-dev")
+
+// jlinkDir for the non-Claude prod hosts (gemini/codex/opencode): the empty-string
+// sentinel, NOT baseSpec's "/dev/null". Their prod payloads ship no host jlink image,
+// so the renderer emits no jlink dir. Dev keeps the lazily-resolved cli image.
+fun noImageJlink(env: BuildEnv): Provider<String> =
+    if (env == BuildEnv.PROD) constJlink("") else devJlinkDir
+
+// gemini/codex/opencode require skill frontmatter; the `name:` is the skill basename
+// decorated for the env (start / start-dev), matching how the renderer names the dir.
+fun frontmatter(env: BuildEnv, base: String): String = if (env == BuildEnv.PROD) """
         ---
-        name: start-dev
+        name: $base
+        description: Use when starting any task — applies the shipsmooth agent coding workflow.
+        ---
+    """.trimIndent() else """
+        ---
+        name: $base-dev
         description: Use when starting any task — applies the shipsmooth agent coding workflow (dev build).
         ---
-    """.trimIndent(),
-    outputDir = renderOutputDir("gemini-dev"),
-    pluginHookCommand = "node \"\${extensionPath}/dist/session-start.js\"",
+    """.trimIndent()
+
+fun claudeSpec(env: BuildEnv) = baseSpec(env).copy(
+    buildPlatform = "claude",
+    // Claude: no skill frontmatter; bare "start" basename (both from base).
+    outputDir = variantOutputDir("claude", env),
+    pluginHookCommand = if (env == BuildEnv.PROD)
+        "sh \"\${CLAUDE_PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion"
+    else "node \"\${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"",
 )
 
-val codexDevSpec = geminiDevSpec.copy(
+fun geminiSpec(env: BuildEnv) = baseSpec(env).copy(
+    buildPlatform = "gemini",
+    skillFrontmatter = frontmatter(env, "start"),
+    jlinkDir = noImageJlink(env),
+    outputDir = variantOutputDir("gemini", env),
+    pluginHookCommand = if (env == BuildEnv.PROD)
+        "sh \"\${extensionPath}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion"
+    else "node \"\${extensionPath}/dist/session-start.js\"",
+)
+
+fun codexSpec(env: BuildEnv) = baseSpec(env).copy(
     buildPlatform = "codex",
-    outputDir = renderOutputDir("codex-dev"),
-    pluginHookCommand = "node \"\${PLUGIN_ROOT}/dist/session-start.js\"",
+    skillFrontmatter = frontmatter(env, "start"),
+    jlinkDir = noImageJlink(env),
+    outputDir = variantOutputDir("codex", env),
+    pluginHookCommand = if (env == BuildEnv.PROD)
+        "sh \"\${PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion"
+    else "node \"\${PLUGIN_ROOT}/dist/session-start.js\"",
 )
 
 // OpenCode (plan-86): no hooks.json (Platform.Opencode.emitsHooksJson()==false),
-// so the hook command is NOT consumed by any host file — but it must still
-// reference install-shipsmooth.sh so HookCommandRenderer's POSIX branch copies the
-// script into hooks/ (the JS plugin shells out to it). OpenCode therefore uses the
-// sh-installer command form in BOTH dev and prod (there is no session-start.js Node
-// path for opencode). Frontmatter is required (like gemini/codex).
-val opencodeDevSpec = geminiDevSpec.copy(
+// so the hook command is NOT consumed by any host file — but it must still reference
+// install-shipsmooth.sh so HookCommandRenderer's POSIX branch copies the script into
+// hooks/ (the JS plugin shells out to it). OpenCode therefore uses the sh-installer
+// command form in BOTH dev and prod (no session-start.js Node path). Frontmatter is
+// required (like gemini/codex). The skill basename/frontmatter name are set in Task 3.
+fun opencodeSpec(env: BuildEnv) = baseSpec(env).copy(
     buildPlatform = "opencode",
-    outputDir = renderOutputDir("opencode-dev"),
+    // OpenCode's skills/ namespace is flat + host-wide, so the skill is namespaced
+    // (shipsmooth-start, not bare start) to avoid colliding with any other `start`
+    // skill. The plugin stages skills/<this>/SKILL.md (skillName() must agree). The
+    // renderer decorates the basename with -dev for the dev variant; the frontmatter
+    // name is spelled out per env to match. Only OpenCode renames — the other hosts
+    // keep `start` (Claude/Codex/Gemini manage their own per-plugin skill namespaces).
+    pluginSkillStartBasename = "shipsmooth-start",
+    skillFrontmatter = frontmatter(env, "shipsmooth-start"),
+    jlinkDir = noImageJlink(env),
+    outputDir = variantOutputDir("opencode", env),
     pluginHookCommand =
-        "sh \"\${PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth-dev $pluginVersion",
+        "sh \"\${PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" ${if (env == BuildEnv.PROD) "shipsmooth" else "shipsmooth-dev"} $pluginVersion",
 )
+
+val claudeDevSpec = claudeSpec(BuildEnv.DEV)
+val geminiDevSpec = geminiSpec(BuildEnv.DEV)
+val codexDevSpec = codexSpec(BuildEnv.DEV)
+val opencodeDevSpec = opencodeSpec(BuildEnv.DEV)
 
 fun registerRender(taskName: String, spec: RenderSpec) =
     tasks.register<JavaExec>(taskName) {
@@ -184,54 +253,17 @@ val renderGeminiDev = registerRender("renderGeminiDev", geminiDevSpec)
 val renderCodexDev = registerRender("renderCodexDev", codexDevSpec)
 val renderOpencodeDev = registerRender("renderOpencodeDev", opencodeDevSpec)
 
-// ---------------------------------------------------------------------------
-// Prod render variants. Prod deltas vs dev: buildEnv=prod, experimentalEnabled=false,
-// prod description, empty/prod frontmatter.
-// ---------------------------------------------------------------------------
-val prodDescription = "Agent coding workflow with plan-before-implement discipline, " +
-    "TDD, vertical slices, Linear integration, and immutable git-based plan versioning."
+// Prod render variants — each derived from its own host function at PROD env, so the
+// prod deltas (buildEnv, prod description, jlink sentinel) come from baseSpec(PROD).
+val claudeProdSpec = claudeSpec(BuildEnv.PROD)
+val geminiProdSpec = geminiSpec(BuildEnv.PROD)
+val codexProdSpec = codexSpec(BuildEnv.PROD)
+val opencodeProdSpec = opencodeSpec(BuildEnv.PROD)
 
-val claudeProdSpec = claudeDevSpec.copy(
-    buildEnv = BuildEnv.PROD,
-    pluginDescription = prodDescription,
-    skillFrontmatter = "",
-    jlinkDir = constJlink("/dev/null"),
-    outputDir = layout.buildDirectory.dir("render/claude-prod").get().asFile.path,
-    pluginHookCommand =
-        "sh \"\${CLAUDE_PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion",
-)
-
-val geminiProdSpec = claudeProdSpec.copy(
-    buildPlatform = "gemini",
-    skillFrontmatter = """
-        ---
-        name: start
-        description: Use when starting any task — applies the shipsmooth agent coding workflow.
-        ---
-    """.trimIndent(),
-    jlinkDir = constJlink(""),
-    outputDir = layout.buildDirectory.dir("render/gemini-prod").get().asFile.path,
-    pluginHookCommand =
-        "sh \"\${extensionPath}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion",
-)
-
-val codexProdSpec = geminiProdSpec.copy(
-    buildPlatform = "codex",
-    outputDir = layout.buildDirectory.dir("render/codex-prod").get().asFile.path,
-    pluginHookCommand =
-        "sh \"\${PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion",
-)
-
-// OpenCode prod: prod frontmatter (name: start) + prod description from geminiProdSpec;
-// sh-installer hook command so the script is copied (no hooks.json is written).
-val opencodeProdSpec = geminiProdSpec.copy(
-    buildPlatform = "opencode",
-    outputDir = layout.buildDirectory.dir("render/opencode-prod").get().asFile.path,
-    pluginHookCommand =
-        "sh \"\${PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion",
-)
-
-val windowsSpec = claudeProdSpec.copy(
+// Windows: claude-prod identity on the windows OS with the windows jlink image and no
+// hook command (was claudeProdSpec.copy in the old chain — kept as an explicit
+// claude-prod derivation since windows IS the claude host on windows).
+val windowsSpec = claudeSpec(BuildEnv.PROD).copy(
     buildOs = "windows",
     pluginDescription = "Agent coding workflow (Windows)",
     jlinkDir = constJlink(repoRoot.dir("cli/build/jlink-image-windows-x64").asFile.path),

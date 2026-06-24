@@ -28,20 +28,27 @@
 // compiled module (dist/session-start-config.json), so a version bump re-renders
 // one file and this source is untouched.
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { Plugin, Hooks } from "@opencode-ai/plugin";
 import {
   type PluginConfig,
   moduleDir,
   readConfig,
+  skillName,
   startCommandId,
   startCommandTemplate,
   installerPath,
+  installSkill,
   safeLog,
 } from "./lib/internal.js";
 
-export const ShipsmoothPlugin: Plugin = async ({ client, $ }) => {
-  const base = moduleDir(import.meta.url);
+export const ShipsmoothPlugin: Plugin = async ({ client, $, worktree }, options) => {
+  // The module dir holds the bundled config/installer/skills. Tests may override it
+  // (via `__baseDir`) so they can stage fixtures in a tmp dir instead of polluting
+  // the real src/; production always uses the compiled module's own location.
+  const override = (options as { __baseDir?: unknown } | undefined)?.__baseDir;
+  const base = typeof override === "string" ? override : moduleDir(import.meta.url);
   let cfg: PluginConfig;
   try {
     cfg = readConfig(base);
@@ -55,6 +62,11 @@ export const ShipsmoothPlugin: Plugin = async ({ client, $ }) => {
   async function bootstrap(): Promise<void> {
     if (bootstrapped) return;
     bootstrapped = true;
+    await installRuntime();
+    await stageSkill();
+  }
+
+  async function installRuntime(): Promise<void> {
     const installer = installerPath(base);
     if (!existsSync(installer)) {
       await safeLog(client, "error", `shipsmooth: installer not found at ${installer}`);
@@ -73,6 +85,50 @@ export const ShipsmoothPlugin: Plugin = async ({ client, $ }) => {
       // Non-fatal: a missing runtime degrades to "CLI unavailable", never crashes.
       await safeLog(client, "error", `shipsmooth: bootstrap failed: ${(e as Error).message}`);
     }
+  }
+
+  // Stage the bundled SKILL.md into an OpenCode-scanned skills/ dir, mirroring the
+  // plugin's install scope. Non-fatal: a failure leaves the slash command pointing at
+  // an undiscovered skill (degraded), but never crashes the session.
+  async function stageSkill(): Promise<void> {
+    try {
+      const path = await client.path.get();
+      const configDir = path?.data?.config;
+      if (!configDir) {
+        await safeLog(client, "error", "shipsmooth: no config dir from path.get(); skipping skill staging");
+        return;
+      }
+      const res = installSkill({
+        baseDir: base,
+        skill: skillName(cfg.name),
+        version: cfg.version,
+        pkgName: packageName(base),
+        configDir,
+        worktree,
+      });
+      if (res.action === "staged") {
+        await safeLog(client, "info", `shipsmooth: skill staged at ${res.dest}`);
+      } else if (res.action === "noop") {
+        await safeLog(client, "error", `shipsmooth: skill not staged (${res.reason})`);
+      }
+    } catch (e) {
+      await safeLog(client, "error", `shipsmooth: skill staging failed: ${(e as Error).message}`);
+    }
+  }
+
+  // The npm package name as it appears in opencode.json's `plugin` array — read from
+  // the plugin's own package.json (one dir above the compiled module's plugin/ root).
+  // Falls back to cfg.name if unreadable (scope inference then defaults to global).
+  function packageName(baseDir: string): string {
+    for (const candidate of [join(baseDir, "package.json"), join(baseDir, "..", "package.json")]) {
+      try {
+        const pkg = JSON.parse(readFileSync(candidate, "utf-8")) as { name?: string };
+        if (pkg.name) return pkg.name;
+      } catch {
+        // try the next candidate
+      }
+    }
+    return cfg.name;
   }
 
   const hooks: Hooks = {

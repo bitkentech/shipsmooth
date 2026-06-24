@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>88</plan>
+    <plan-version>plan-88-v2</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-24</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>De-couple render specs into base + per-host overrides</name>
+            <commit>1eca28bb9ccd4af880a38ba0effbf9d8173ec2e9</commit>
+            <created-from>plan-88-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-24T13:16:25.003+05:30</timestamp>
+                    <message>De-risk draft ready: base+per-host refactor, all 9 renders byte-identical to baseline (fingerprint 03bb329f)</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Scope-aware skill staging in the plugin</name>
+            <commit>0d7925b3f8223ebe94303d96dd0e33922de76c55</commit>
+            <created-from>plan-88-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-24T13:29:53.212+05:30</timestamp>
+                    <message>De-risk draft ready: installSkill staging proven by green integration test (global-fallback path). Scope-inference branch tests + non-fatal edge tests come in hardening.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Rename the rendered skill to `shipsmooth-start`</name>
+            <commit>e35b18c6a2b50b896bdf695828612c7300337975</commit>
+            <created-from>plan-88-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>End-to-end verification in a real OpenCode</name>
+            <commit>cf3580455b57b60d777619197e70808798f6f921</commit>
+            <created-from>plan-88-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2,3</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-24T12:59:38.457+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-24T14:18:29.049+05:30</timestamp>
+            <message>Plan complete. OpenCode skill staging + render-spec de-coupling; verified live in dev build. Dev CLI-path gap tracked as PB-363.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
