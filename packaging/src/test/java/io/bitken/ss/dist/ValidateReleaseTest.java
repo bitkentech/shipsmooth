@@ -205,7 +205,9 @@ public class ValidateReleaseTest {
 
     /**
      * Writes a valid opencode npm-package payload: package.json + the plugin entry
-     * it points at (main) + skills/start/SKILL.md.
+     * it points at (main) + the namespaced skill skills/shipsmooth-start/SKILL.md.
+     * (plan-88: OpenCode's flat host-wide skills namespace means the skill ships as
+     * {@code shipsmooth-start}, not bare {@code start}.)
      */
     private Path writeOpencodePayload(String name, String main, boolean writeMainFile, boolean writeSkill)
             throws IOException {
@@ -226,9 +228,9 @@ public class ValidateReleaseTest {
             Files.writeString(mainPath, "export default async () => ({});\n");
         }
         if (writeSkill) {
-            Path skill = ocDir.resolve("skills/start/SKILL.md");
+            Path skill = ocDir.resolve("skills/shipsmooth-start/SKILL.md");
             Files.createDirectories(skill.getParent());
-            Files.writeString(skill, "# start\n");
+            Files.writeString(skill, "# shipsmooth-start\n");
         }
         return ocDir;
     }

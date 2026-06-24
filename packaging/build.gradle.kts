@@ -160,17 +160,17 @@ tasks.register<JavaExec>("publishRelease") {
     }
 }
 
-// plan-89: publishReleaseOpenCode — standalone, OUTWARD. Assembles + validates the opencode
-// prod payload, then publishes it to npm (@bitkentech/shipsmooth-opencode). Run separately by
-// a human with @bitkentech npm auth; decoupled from publishRelease so a missing npm token can
-// never strand the GitHub/Windows releases. Idempotent: an already-published version is a no-op.
+// plan-89/90: publishReleaseOpenCode — standalone, OUTWARD. Run separately by a human with
+// @bitkentech npm auth; decoupled from publishRelease so a missing npm token (or a broken
+// opencode build) can never strand the GitHub/Windows releases. PublishOpencode.run is fully
+// self-contained: it assembles the prod payload into build-opencode/ (with the explicit
+// -Pbuild.outputDir), validates it, then publishes idempotently (already-published = no-op).
+// No dependsOn on assembleOpencodeProd — a bare dependsOn can't pass -Pbuild.outputDir, so it
+// would write the dev dir while validate/publish read build-opencode/.
 tasks.register<JavaExec>("publishReleaseOpenCode") {
     group = "release"
     description = "Publish the OpenCode plugin to npm. Outward-facing — needs @bitkentech npm auth."
-    dependsOn(":harness:opencode:assembleOpencodeProd")
     withDistDefaults()
     mainClass.set("io.bitken.ss.dist.PublishOpencode")
     args((findProperty("shipsmooth.release.version") as String?) ?: pluginVersion)
-    // PublishOpencode.run validates the assembled payload (ValidateRelease.validateOpencode)
-    // before publishing, then fail-fasts / publishes idempotently.
 }

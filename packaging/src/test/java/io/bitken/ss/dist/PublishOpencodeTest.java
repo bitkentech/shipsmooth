@@ -1,19 +1,13 @@
 package io.bitken.ss.dist;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class PublishOpencodeTest {
-
-    @TempDir
-    Path tempDir;
 
     // ---- npmPublishCommand: pure command builder targeting the payload dir ----
 
@@ -68,22 +62,17 @@ public class PublishOpencodeTest {
                 "npm error code E403\nnpm error 403 Forbidden - PUT (not authorized)"));
     }
 
-    // ---- run(): fail-fast (via ValidateRelease.validateOpencode) when payload absent ----
+    // ---- assembleOpencodeCommand: targets build-opencode/ with the explicit outputDir ----
 
+    // plan-90: the assemble MUST pass -Pbuild.outputDir, else assembleOpencodeProd writes to
+    // the dev dir while validate/publish read build-opencode/ — they'd disagree and validate
+    // would fail "not assembled" right after a successful build.
     @Test
-    void runFailsFastWhenPayloadNotAssembled() {
-        // tempDir has no build-opencode/package.json — validateOpencode rejects it
-        IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> new PublishOpencode("9.9.9", tempDir).run());
-        assertTrue(ex.getMessage().contains("package.json"), ex.getMessage());
-        assertTrue(ex.getMessage().contains("build-opencode"), ex.getMessage());
-    }
-
-    @Test
-    void runFailsFastWhenPayloadDirExistsButNoManifest() throws IOException {
-        // dir present but package.json missing — still not a publishable payload
-        Files.createDirectories(tempDir.resolve("build-opencode"));
-        assertThrows(IllegalStateException.class,
-                () -> new PublishOpencode("9.9.9", tempDir).run());
+    void assembleCommandTargetsBuildOpencodeWithExplicitOutputDir() {
+        List<String> cmd = PublishOpencode.assembleOpencodeCommand(Path.of("/tmp/repo"));
+        assertTrue(cmd.contains("assembleOpencodeProd"), cmd.toString());
+        assertTrue(cmd.contains("-Pbuild.outputDir=/tmp/repo/build-opencode"),
+                "assemble must target build-opencode/ explicitly: " + cmd);
+        assertTrue(cmd.get(0).endsWith("gradlew"), cmd.toString());
     }
 }

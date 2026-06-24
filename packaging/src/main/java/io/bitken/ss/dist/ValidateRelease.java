@@ -86,10 +86,12 @@ public class ValidateRelease {
         if (!Files.exists(mainFile)) {
             throw new IllegalStateException(manifest + ": 'main' points at a missing file: " + main);
         }
-        // The canonical skill must ship too.
-        Path startSkill = opencodeDir.resolve("skills/start/SKILL.md");
+        // The canonical skill must ship too. plan-88: OpenCode's skills namespace is flat
+        // and host-wide, so the skill ships namespaced as `shipsmooth-start` (not bare
+        // `start`, which the other hosts use) to avoid colliding with any other `start` skill.
+        Path startSkill = opencodeDir.resolve("skills/shipsmooth-start/SKILL.md");
         if (!Files.exists(startSkill)) {
-            throw new IllegalStateException(opencodeDir + ": missing skills/start/SKILL.md");
+            throw new IllegalStateException(opencodeDir + ": missing skills/shipsmooth-start/SKILL.md");
         }
     }
 

@@ -45,10 +45,21 @@ public class PublishOpencode {
         new PublishOpencode(version, repoRoot).run();
     }
 
-    /** Validate the assembled payload (fail-fast) then idempotent {@code npm publish}. */
+    /** Assemble the prod payload, validate it (fail-fast), then idempotent {@code npm publish}. */
     public void run() throws IOException, InterruptedException {
+        PublishRelease.runCommand(assembleOpencodeCommand(repoRoot), repoRoot);
         ValidateRelease.validateOpencode(payload);
         publishOpencode();
+    }
+
+    /**
+     * Assemble the opencode prod payload into {@link #PAYLOAD_DIR} under the repo root. The
+     * {@code -Pbuild.outputDir} is required: {@code assembleOpencodeProd} otherwise defaults
+     * to the dev payload dir, so the publish and validate would read a different (empty) dir.
+     */
+    static List<String> assembleOpencodeCommand(Path repoRoot) {
+        return List.of(repoRoot.resolve("gradlew").toString(), "assembleOpencodeProd",
+                "-Pbuild.outputDir=" + repoRoot.resolve(PAYLOAD_DIR));
     }
 
     private void publishOpencode() throws IOException, InterruptedException {

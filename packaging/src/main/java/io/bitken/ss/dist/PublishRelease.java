@@ -188,12 +188,6 @@ public class PublishRelease {
                 "-Pbuild.outputDir=" + repoRoot.resolve("build-codex"));
     }
 
-    // plan-86: assemble the opencode prod payload (npm-package layout) into build-opencode/.
-    static List<String> assembleOpencodeProdCommand(Path repoRoot) {
-        return List.of(gradlew(repoRoot), "assembleOpencodeProd",
-                "-Pbuild.outputDir=" + repoRoot.resolve("build-opencode"));
-    }
-
     // plan-86: pack the assembled opencode payload into a publishable npm tarball
     // (build-opencode/ -> harness/opencode/build/npm/<pkg>-<ver>.tgz).
     static List<String> npmPackOpencodeCommand(Path repoRoot) {
@@ -217,15 +211,6 @@ public class PublishRelease {
             return;
         }
         validateBuildOutput(buildDir);
-    }
-
-    // plan-86: validate just the opencode payload (its package.json + main + skill).
-    static void maybeValidateOpencodeOutput(Path opencodeBuildDir, boolean skip) throws IOException {
-        if (skip) {
-            System.out.println("WARNING: opencode release validation skipped — --dangerous-skip-release-validation was passed");
-            return;
-        }
-        ValidateRelease.validateOpencode(opencodeBuildDir);
     }
 
     /** The four platform image tags whose baked Build constants the guard verifies. */
@@ -265,12 +250,11 @@ public class PublishRelease {
         // releases-branch push can stage its flat plugin folder at dist-codex/.
         runCommand(assembleCodexProdCommand(repoRoot), repoRoot);
 
-        // plan-86: assemble + validate the opencode prod payload (npm-package layout)
-        // into build-opencode/. Validated here, before any publish, like the others.
-        Path opencodeBuildDir = repoRoot.resolve("build-opencode");
-        if (Files.exists(opencodeBuildDir)) deleteDirectory(opencodeBuildDir);
-        runCommand(assembleOpencodeProdCommand(repoRoot), repoRoot);
-        maybeValidateOpencodeOutput(opencodeBuildDir, skipValidation);
+        // plan-90: the opencode payload is NOT assembled here. opencode ships only via npm
+        // (never on the releases branch), and that publish is a separate, human-run step
+        // (publishReleaseOpenCode / PublishOpencode), which assembles + validates its own
+        // payload. The main release is opencode-free, so a broken opencode build can't block
+        // the GitHub/Windows release.
 
         Path outputDir = repoRoot.resolve("packaging/target/dist");
         Files.createDirectories(outputDir);
