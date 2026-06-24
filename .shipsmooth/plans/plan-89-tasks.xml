@@ -4,7 +4,7 @@
     <plan-version>plan-89-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-24</created>
     </metadata>
     <tasks>
@@ -71,6 +71,11 @@
         <update>
             <timestamp>2026-06-24T17:39:25.016+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-24T19:14:31.438+05:30</timestamp>
+            <message>All 4 tasks agent-coded; opencode npm decoupled into standalone idempotent publishReleaseOpenCode task; release no longer stranded by missing npm auth. Tests green.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
