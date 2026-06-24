@@ -265,10 +265,23 @@ the bundled installer (no packaging change). Build + pack the tarball locally:
 # -> harness/opencode/build/npm/bitkentech-shipsmooth-opencode-<ver>.tgz
 ```
 
-Publishing is wired into `PublishRelease` (run only at release time). It needs an npm
-session/token authorised for the `@bitkentech` scope — a one-time `npm login` (or
-`NODE_AUTH_TOKEN` / `.npmrc`), the npm analogue of `gh auth`. Only the prod variant
-ships to npm; the dev variant is filesystem-only (`OPENCODE_CONFIG_DIR`).
+Publishing is a **separate, standalone step** — the dedicated `publishReleaseOpenCode`
+Gradle task, run by a human with npm auth:
+
+```bash
+./gradlew publishReleaseOpenCode -Pshipsmooth.release.version=<X.Y.Z>
+# assembles + validates build-opencode/, then npm-publishes @bitkentech/shipsmooth-opencode
+```
+
+It is **decoupled from the main `publishRelease`** on purpose: npm publish needs an npm
+session/token authorised for the `@bitkentech` scope (a one-time `npm login` / a
+`NODE_AUTH_TOKEN` / `.npmrc` — the npm analogue of `gh auth`), and that credential isn't
+reliably present at release time. The main release therefore **skips opencode-npm by
+default**, so a missing token can never strand the GitHub/Windows releases. A fully-authed
+operator can still do it in one shot with `./gradlew publishRelease -PpublishOpencodeNpm`
+(that step runs last, after the Windows release). Re-running is safe — an already-published
+version is an idempotent no-op. Only the prod variant ships to npm; the dev variant is
+filesystem-only (`OPENCODE_CONFIG_DIR`).
 
 ## Releasing a new version
 
