@@ -51,4 +51,13 @@ esac
 CONFIG="$XDG_CONFIG_HOME/shipsmooth/shipsmooth.toml"
 [ -s "$CONFIG" ] || fail "config file is empty or missing: $CONFIG"
 
-echo "PASS: store init -> store info round-trip ready through modular runtime"
+# plan-90: the config must be multi-line array-of-tables, not a single inline line.
+grep -q '^\[\[projects\]\]' "$CONFIG" \
+  || fail "config is not multi-line [[projects]] form:
+$(cat "$CONFIG")"
+if grep -q 'projects = \[{' "$CONFIG"; then
+  fail "config collapsed to a single inline-array line:
+$(cat "$CONFIG")"
+fi
+
+echo "PASS: store init -> store info round-trip ready (multi-line [[projects]]) through modular runtime"
