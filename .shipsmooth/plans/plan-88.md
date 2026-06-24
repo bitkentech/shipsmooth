@@ -1,4 +1,12 @@
-# plan-88 — OpenCode skill install + scope-aware staging
+# plan-88 — OpenCode skill install + scope-aware staging (v2)
+
+> **v2 scope change.** v1 was a surgical OpenCode-only skill fix. v2 additionally
+> de-couples the render-spec definitions so one host's spec can no longer leak into
+> another's (the `.copy()` inheritance chain — `codexSpec = geminiSpec.copy(...)` etc.
+> — made Codex/OpenCode silently inherit Gemini's frontmatter and Claude's skill
+> basename). Folded in at the user's request; re-versioned per the plan-version-bump
+> convention. New Task 1 (the refactor) precedes the OpenCode changes because they now
+> live on the de-coupled structure.
 
 ## Context
 
@@ -29,6 +37,46 @@ project), and unversioned** — so the plugin must stage the skill into a scanne
 itself.
 
 ## Approach
+
+### Pre-work: de-couple the render specs (new in v2)
+
+Today `harness/shared/build.gradle.kts` builds the 9 render variants through a
+host→host `.copy()` chain:
+
+```
+claudeDevSpec → geminiDevSpec → codexDevSpec / opencodeDevSpec
+claudeDevSpec → claudeProdSpec → geminiProdSpec → codexProdSpec / opencodeProdSpec / windowsSpec
+```
+
+This conflates two independent axes: **env deltas** (dev→prod: `buildEnv`,
+`pluginDescription`, `jlinkDir` — host-agnostic) and **host identity**
+(`buildPlatform`, `pluginHookCommand`, `skillFrontmatter`, `pluginSkillStartBasename`,
+`outputDir` — must never cross hosts). Because the chain entangles them, OpenCode
+inherits Gemini's `skillFrontmatter` (`name: start`) and Claude's basename — so an edit
+to one host can silently change another, the exact trap this plan otherwise has to
+tiptoe around.
+
+Replace it with a host-agnostic base + per-host overrides, **no host→host edges**:
+
+- `baseSpec(env: BuildEnv)` — holds only env-keyed, host-blind defaults
+  (`buildOs`, `pluginBaseName`, `pluginVersion`, env-derived `pluginDescription` and
+  `jlinkDir`, default `pluginSkillStartBasename="start"`, empty `skillFrontmatter`,
+  `pluginRepoName`, `objects`). Sets `buildPlatform`/`outputDir`/`pluginHookCommand`
+  to empty — each host supplies its own.
+- `claudeSpec(env)`, `geminiSpec(env)`, `codexSpec(env)`, `opencodeSpec(env)`,
+  and the windows variant — each `baseSpec(env).copy(...)` overriding **only its own**
+  host fields. Each host function is the single home of that host's identity.
+- Derive the 9 named specs from these (`claudeDevSpec = claudeSpec(DEV)`, …).
+
+Invariant: every host's rendered output (skills tree, frontmatter,
+session-start-config.json, hooks) must be **byte-identical** to pre-refactor — the
+refactor is pure restructuring. (`RenderSpec`'s own doc calls render-variable drift
+"the #1 correctness risk", so this is proven, not assumed.)
+
+This makes the OpenCode skill-name change (Task 3) a clean per-host override that
+provably cannot touch claude/gemini/codex.
+
+### The skill fix (from v1)
 
 The plugin already shells out to install the jlink runtime on `session.created`
 (idempotent, non-fatal). Extend that bootstrap to **also stage the bundled SKILL.md
@@ -82,12 +130,29 @@ Contract matches the runtime bootstrap: idempotent, non-fatal (a failure logs vi
 
 ## Tasks
 
-Risk-sorted (High → Medium), with the one dependency overriding pure risk order:
-Task 1 defines the namespaced skill name that Task 2 consumes, so Task 1 comes first
-anyway (it is also the highest-risk task). Task 3 verifies the whole thing in a real
-host last.
+Risk-sorted (High → Medium). Task 1 (the de-coupling refactor) lands first because the
+OpenCode skill-name change (Task 3) lives on the de-coupled structure. Task 2 (staging
+logic) is independent of the refactor but shares the namespaced name Task 3 sets, so
+Task 3's name decision is fixed at the start of Task 2.
 
-### Task 1: Scope-aware skill staging in the plugin [High]
+### Task 1: De-couple render specs into base + per-host overrides [High]
+
+Refactor `harness/shared/build.gradle.kts`'s render-variant section:
+
+- Add `baseSpec(env: BuildEnv)` with host-agnostic, env-keyed defaults only
+  (no `buildPlatform`/`outputDir`/`pluginHookCommand` identity — those default empty).
+- Add `claudeSpec(env)`, `geminiSpec(env)`, `codexSpec(env)`, `opencodeSpec(env)`
+  (+ the windows variant), each `baseSpec(env).copy(...)` overriding only its own host
+  fields. **No host function references another host's spec.**
+- Re-derive the 9 named specs (`claudeDevSpec = claudeSpec(DEV)`, `claudeProdSpec =
+  claudeSpec(PROD)`, …) and leave `registerRender(...)` wiring unchanged.
+- **Regression proof:** render all 9 variants before (baseline) and after; assert the
+  output trees (skills/, hooks/, dist/session-start-config.json) are byte-identical.
+  No host's payload may change in this task.
+
+### Task 2: Scope-aware skill staging in the plugin [High]
+
+*Depends-on: 1*
 
 The core fix. Add a pure `installSkill(...)` helper to
 `harness/opencode/src/main/ts/src/lib/internal.ts` and call it from the
@@ -103,7 +168,7 @@ Behaviour:
 - **Fallback = global** when neither config lists it or a config can’t be read
   (plugins-dir install, unreadable file).
 - `<skillName>` = `skillName(cfg.name)` (defined to return `shipsmooth-start` /
-  `shipsmooth-start-dev` — see Task 2). Source SKILL.md = the bundled
+  `shipsmooth-start-dev` — see Task 3). Source SKILL.md = the bundled
   `skills/<skillName>/SKILL.md` resolved relative to the plugin module dir.
 - **Version-stamped freshness:** write `cfg.version` to a marker beside the staged
   skill; re-stage only when the bundled version differs from the marker (or the
@@ -115,18 +180,19 @@ project dir; global-listed → global dir; neither → global fallback); version
 re-stage vs skip; non-fatal on unreadable/missing source. Keep `internal.ts` helpers
 out of the plugin entry’s exports (the OpenCode every-export-is-a-factory constraint).
 
-### Task 2: Rename the rendered skill to `shipsmooth-start` [Medium]
+### Task 3: Rename the rendered skill to `shipsmooth-start` [Medium]
 
-*Depends-on: 1*
+*Depends-on: 1,2*
 
 Make the rendered skill dir, its frontmatter `name:`, and the plugin’s
-`skillName()` all resolve to the namespaced name, **for OpenCode only**.
+`skillName()` all resolve to the namespaced name, **for OpenCode only**. With Task 1's
+de-coupling done, this is a clean per-host override that cannot affect other hosts.
 
-- `harness/shared/build.gradle.kts`: in `opencodeDevSpec` / `opencodeProdSpec` set
-  `pluginSkillStartBasename = "shipsmooth-start"` and update `skillFrontmatter`’s
-  `name:` to `shipsmooth-start` (dev frontmatter → `shipsmooth-start-dev`).
-  `env.decorate()` already appends `-dev` for the dev variant, so one basename covers
-  both. Do **not** touch claude/gemini/codex specs (they keep `start`).
+- `harness/shared/build.gradle.kts`: in the new `opencodeSpec(env)` function set
+  `pluginSkillStartBasename = "shipsmooth-start"` and write its own `skillFrontmatter`
+  with `name: shipsmooth-start` (the dev variant's frontmatter → `shipsmooth-start-dev`).
+  Because `opencodeSpec` no longer descends from `geminiSpec`, the frontmatter is
+  authored here, not inherited. claude/gemini/codex specs are untouched (still `start`).
 - `lib/internal.ts`: change `skillName(pluginName)` to return
   `shipsmooth-start` / `shipsmooth-start-dev` (was `start` / `start-dev`); the command
   template (`startCommandTemplate`) already derives from it, so the backticked name in
@@ -135,9 +201,9 @@ Make the rendered skill dir, its frontmatter `name:`, and the plugin’s
   generically). Confirm the rendered prod payload now contains
   `skills/shipsmooth-start/SKILL.md` with `name: shipsmooth-start`.
 
-### Task 3: End-to-end verification in a real OpenCode [Medium]
+### Task 4: End-to-end verification in a real OpenCode [Medium]
 
-*Depends-on: 1,2*
+*Depends-on: 1,2,3*
 
 Prove detection works and nothing regressed.
 
@@ -148,5 +214,7 @@ Prove detection works and nothing regressed.
   a global-scoped install into `<config>/skills/`, and the fallback into global.
 - Confirm OpenCode’s `skill` tool now resolves `shipsmooth-start` (skill-discovery log
   lists it; `shipsmooth:start` command → skill invocation succeeds end-to-end).
-- Regression check: claude/codex/gemini renders still emit `skills/start/` unchanged.
+- Regression check: claude/codex/gemini/windows renders still emit `skills/start/`
+  unchanged, and (covering Task 1) all 9 render outputs match the pre-refactor baseline
+  except the intended OpenCode `shipsmooth-start` delta from Task 3.
 
