@@ -25,6 +25,7 @@ public final class ConfigWriter {
 
     private final TomlMapper toml;
     private final ConfigFileLocator configFileLocator;
+    private final ArrayOfTablesTomlEmitter emitter;
 
     public ConfigWriter() {
         this(new DefaultConfigFileLocator());
@@ -39,6 +40,7 @@ public final class ConfigWriter {
     ConfigWriter(ConfigFileLocator configFileLocator, TomlMapper toml) {
         this.configFileLocator = configFileLocator;
         this.toml = toml;
+        this.emitter = new ArrayOfTablesTomlEmitter();
     }
 
     /** Upsert an external-mode entry recording the chosen {@code stateDir}. */
@@ -89,7 +91,7 @@ public final class ConfigWriter {
         Path dir = configFile.toAbsolutePath().getParent();
         Path tmp = Files.createTempFile(dir, configFile.getFileName().toString(), ".tmp");
         try {
-            toml.writeValue(tmp.toFile(), config);
+            Files.writeString(tmp, emitter.emit(config));
             try {
                 Files.move(tmp, configFile,
                         StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
