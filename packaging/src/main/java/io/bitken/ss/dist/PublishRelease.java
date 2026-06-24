@@ -18,6 +18,16 @@ public class PublishRelease {
     static final List<String> SHIPPED_BUILD_SUBPATHS =
             List.of(".claude-plugin", "hooks", "dist", "skills");
 
+    /**
+     * plan-89: whether the main {@code publishRelease} attempts the opencode npm publish.
+     * Defaults to {@code false} — npm publish needs a separate {@code @bitkentech}
+     * credential not reliably present at release time, and folding it in once stranded the
+     * GitHub/Windows releases. The dedicated {@code publishReleaseOpenCode} task (run by a
+     * human with npm auth) is the normal path; set {@code -PpublishOpencodeNpm=true} to also
+     * publish from a fully-authed one-shot release run.
+     */
+    static final boolean PUBLISH_OPENCODE_NPM_DEFAULT = false;
+
     private final String version;
     private final Path repoRoot;
     private final Path linuxJdkHome;
@@ -26,6 +36,7 @@ public class PublishRelease {
     private final Path windowsX64JdkHome;
     private final Path windowsRepoPath;
     private final boolean skipValidation;
+    private final boolean publishOpencodeNpm;
 
     public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome, Path windowsX64JdkHome) {
         this(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome, windowsX64JdkHome, false);
@@ -33,10 +44,10 @@ public class PublishRelease {
 
     public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome, Path windowsX64JdkHome, boolean skipValidation) {
         this(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome, windowsX64JdkHome,
-                repoRoot.getParent().resolve("shipsmooth-windows"), skipValidation);
+                repoRoot.getParent().resolve("shipsmooth-windows"), skipValidation, PUBLISH_OPENCODE_NPM_DEFAULT);
     }
 
-    public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome, Path windowsX64JdkHome, Path windowsRepoPath, boolean skipValidation) {
+    public PublishRelease(String version, Path repoRoot, Path linuxJdkHome, Path darwinX64JdkHome, Path darwinArm64JdkHome, Path windowsX64JdkHome, Path windowsRepoPath, boolean skipValidation, boolean publishOpencodeNpm) {
         this.version = version;
         this.repoRoot = repoRoot;
         this.linuxJdkHome = linuxJdkHome;
@@ -45,6 +56,7 @@ public class PublishRelease {
         this.windowsX64JdkHome = windowsX64JdkHome;
         this.windowsRepoPath = windowsRepoPath;
         this.skipValidation = skipValidation;
+        this.publishOpencodeNpm = publishOpencodeNpm;
     }
 
     public static void main(String[] args) throws Exception {
@@ -57,13 +69,24 @@ public class PublishRelease {
         }
         String version = args[0];
         boolean skipValidation = List.of(args).contains("--dangerous-skip-release-validation");
+        boolean publishOpencodeNpm = shouldPublishOpencodeNpm(args);
         Path repoRoot = Path.of(System.getProperty("shipsmooth.repo.root", System.getProperty("user.dir"))).toAbsolutePath();
         Path linuxJdkHome = Path.of(System.getProperty("jdk.semeru.linux-x64", "/opt/installers/jdk-semeru/jdk-25.0.2+10"));
         Path darwinX64JdkHome = Path.of(System.getProperty("jdk.semeru.darwin-x64", "/opt/installers/jdk-semeru-mac-x64/Contents/Home"));
         Path darwinArm64JdkHome = Path.of(System.getProperty("jdk.semeru.darwin-arm64", "/opt/installers/jdk-semeru-mac-arm64/Contents/Home"));
         Path windowsX64JdkHome = Path.of(System.getProperty("jdk.semeru.windows-x64", "/opt/installers/jdk-semeru-win-x64/jdk-25.0.2+10"));
         Path windowsRepoPath = Path.of(System.getProperty("shipsmooth.windows.repo", repoRoot.getParent().resolve("shipsmooth-windows").toString()));
-        new PublishRelease(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome, windowsX64JdkHome, windowsRepoPath, skipValidation).run();
+        new PublishRelease(version, repoRoot, linuxJdkHome, darwinX64JdkHome, darwinArm64JdkHome, windowsX64JdkHome, windowsRepoPath, skipValidation, publishOpencodeNpm).run();
+    }
+
+    /**
+     * plan-89: whether this release run should also publish the opencode npm package.
+     * Off by default ({@link #PUBLISH_OPENCODE_NPM_DEFAULT}); the {@code --publish-opencode-npm}
+     * flag (plumbed from Gradle's {@code -PpublishOpencodeNpm}) opts a fully-authed one-shot
+     * release back in. The normal path is the dedicated {@code publishReleaseOpenCode} task.
+     */
+    static boolean shouldPublishOpencodeNpm(String[] args) {
+        return List.of(args).contains("--publish-opencode-npm") || PUBLISH_OPENCODE_NPM_DEFAULT;
     }
 
     public void run() throws IOException, InterruptedException {
@@ -84,13 +107,17 @@ public class PublishRelease {
             git("checkout", "-f", originalBranch);
         }
 
-        // plan-86: publish the OpenCode plugin to npm. Outward; needs npm auth for the
-        // @bitkentech scope (like gh for the GitHub release). The payload was assembled
-        // + validated in buildAndPackage().
-        publishOpencodeNpm();
-
         buildWindowsPlugin();
         publishWindowsRelease(mainSha);
+
+        // plan-89: opencode npm publish runs LAST and is off by default. npm publish needs a
+        // separate @bitkentech credential not reliably present at release time; folding it in
+        // mid-flow once stranded the Windows release. Running it last means even an explicit
+        // opt-in (--publish-opencode-npm) can't strand the GitHub/Windows releases, and the
+        // default path skips it entirely (the dedicated publishReleaseOpenCode task is normal).
+        if (publishOpencodeNpm) {
+            new PublishOpencode(version, repoRoot).run();
+        }
 
         System.out.println("Release v" + version + " complete.");
     }
@@ -172,19 +199,6 @@ public class PublishRelease {
     static List<String> npmPackOpencodeCommand(Path repoRoot) {
         return List.of(gradlew(repoRoot), ":harness:opencode:npmPackOpencode",
                 "-Pbuild.outputDir=" + repoRoot.resolve("build-opencode"));
-    }
-
-    /**
-     * plan-86: publish the OpenCode plugin to npm (@bitkentech/shipsmooth-opencode).
-     * OUTWARD — runs `npm publish` on the assembled payload dir, which honours the
-     * manifest's {@code files} allowlist + {@code publishConfig.access=public}.
-     * Auth is the caller's responsibility (an npm session / token authorised for the
-     * {@code @bitkentech} scope), mirroring how the GitHub release relies on {@code gh}
-     * being authed. Only the PROD variant is ever published; the dev variant is
-     * loaded from the local filesystem (OPENCODE_CONFIG_DIR) and never reaches npm.
-     */
-    static List<String> npmPublishOpencodeCommand(Path repoRoot) {
-        return List.of("npm", "publish", repoRoot.resolve("build-opencode").toString());
     }
 
     /** Windows payload into {@code build-windows/}. Replaces {@code mvn compile -Pwindows -P!dev}. */
@@ -283,24 +297,6 @@ public class PublishRelease {
         // -prod means the release can never package a stale dev image left behind in
         // cli/build — clean provenance by path, no clean task required.
         return repoRoot.resolve("cli/build/jlink-image-" + platform + "-prod");
-    }
-
-    /**
-     * plan-86: publish the assembled OpenCode prod payload to npm as
-     * {@code @bitkentech/shipsmooth-opencode}. {@code npm publish <dir>} honours the
-     * payload's {@code package.json} {@code files} allowlist + {@code publishConfig}.
-     * Requires the caller's npm session/token to be authorised for the
-     * {@code @bitkentech} scope — a one-time {@code npm login} (or {@code NODE_AUTH_TOKEN}
-     * / {@code .npmrc}) prerequisite, the npm analogue of {@code gh auth}. Only the prod
-     * variant ships to npm; the dev variant is filesystem-only (OPENCODE_CONFIG_DIR).
-     */
-    private void publishOpencodeNpm() throws IOException, InterruptedException {
-        Path payload = repoRoot.resolve("build-opencode");
-        if (!Files.exists(payload.resolve("package.json"))) {
-            throw new IllegalStateException("opencode payload not assembled at " + payload);
-        }
-        runCommand(npmPublishOpencodeCommand(repoRoot), repoRoot);
-        System.out.println("OpenCode plugin published to npm: @bitkentech/shipsmooth-opencode@" + version);
     }
 
     private void buildWindowsPlugin() throws IOException, InterruptedException {

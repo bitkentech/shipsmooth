@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>89</plan>
+    <plan-version>plan-89-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-24</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Extract `PublishOpencode` class with idempotent publish</name>
+            <commit>93299414892865840661edc4049d98537f6a7109</commit>
+            <created-from>plan-89-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-24T17:48:01.679+05:30</timestamp>
+                    <message>De-risk draft ready for review</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-24T17:42:16.893+05:30</timestamp>
+                    <message>Coverage policy (per human): match PublishRelease's current approach — no numeric jacoco gate exists (report-only); unit-test pure/static seams like PublishReleaseTest, no live-npm tests.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Self-contained `publishReleaseOpenCode` Gradle task</name>
+            <commit>8340670bb3d38815f56bf7ea86bc021bd2dc08be</commit>
+            <created-from>plan-89-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Gate opencode-npm out of `publishRelease`, run last</name>
+            <commit>8340670bb3d38815f56bf7ea86bc021bd2dc08be</commit>
+            <created-from>plan-89-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Update release docs + memory</name>
+            <commit>97d626b32824dc433f8bad05e70fa5212dc069f2</commit>
+            <created-from>plan-89-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2,3</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-24T17:39:25.016+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-24T19:14:31.438+05:30</timestamp>
+            <message>All 4 tasks agent-coded; opencode npm decoupled into standalone idempotent publishReleaseOpenCode task; release no longer stranded by missing npm auth. Tests green.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

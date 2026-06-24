@@ -146,8 +146,31 @@ tasks.register<JavaExec>("publishRelease") {
     description = "Publish a GitHub release. Outward-facing — run only when intended."
     withDistDefaults()
     mainClass.set("io.bitken.ss.dist.PublishRelease")
-    args((findProperty("shipsmooth.release.version") as String?) ?: pluginVersion)
+    val releaseArgs = mutableListOf((findProperty("shipsmooth.release.version") as String?) ?: pluginVersion)
+    // plan-89: opt the opencode npm publish back into a one-shot release with
+    // -PpublishOpencodeNpm (off by default; the dedicated publishReleaseOpenCode task is
+    // the normal path). Any value except "false" enables it (e.g. -PpublishOpencodeNpm).
+    if ((findProperty("publishOpencodeNpm") as String?)?.lowercase() != null
+        && (findProperty("publishOpencodeNpm") as String?)?.lowercase() != "false") {
+        releaseArgs.add("--publish-opencode-npm")
+    }
+    args(releaseArgs)
     semeruByTarget.forEach { (target, home) ->
         systemProperty("jdk.semeru.${semeruPropertyKey(target)}", home)
     }
+}
+
+// plan-89: publishReleaseOpenCode — standalone, OUTWARD. Assembles + validates the opencode
+// prod payload, then publishes it to npm (@bitkentech/shipsmooth-opencode). Run separately by
+// a human with @bitkentech npm auth; decoupled from publishRelease so a missing npm token can
+// never strand the GitHub/Windows releases. Idempotent: an already-published version is a no-op.
+tasks.register<JavaExec>("publishReleaseOpenCode") {
+    group = "release"
+    description = "Publish the OpenCode plugin to npm. Outward-facing — needs @bitkentech npm auth."
+    dependsOn(":harness:opencode:assembleOpencodeProd")
+    withDistDefaults()
+    mainClass.set("io.bitken.ss.dist.PublishOpencode")
+    args((findProperty("shipsmooth.release.version") as String?) ?: pluginVersion)
+    // PublishOpencode.run validates the assembled payload (ValidateRelease.validateOpencode)
+    // before publishing, then fail-fasts / publishes idempotently.
 }
