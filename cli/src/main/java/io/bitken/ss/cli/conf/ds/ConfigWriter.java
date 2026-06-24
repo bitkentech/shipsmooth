@@ -36,11 +36,16 @@ public final class ConfigWriter {
         this(configFileLocator, new TomlMapper());
     }
 
-    /** Inject both the locator and the mapper — used by tests to simulate a failed write. */
+    /** Inject the locator and mapper; the emitter is the default. */
     ConfigWriter(ConfigFileLocator configFileLocator, TomlMapper toml) {
+        this(configFileLocator, toml, new ArrayOfTablesTomlEmitter());
+    }
+
+    /** Inject the emitter too — used by tests to simulate a failed serialize on the write path. */
+    ConfigWriter(ConfigFileLocator configFileLocator, TomlMapper toml, ArrayOfTablesTomlEmitter emitter) {
         this.configFileLocator = configFileLocator;
         this.toml = toml;
-        this.emitter = new ArrayOfTablesTomlEmitter();
+        this.emitter = emitter;
     }
 
     /** Upsert an external-mode entry recording the chosen {@code stateDir}. */

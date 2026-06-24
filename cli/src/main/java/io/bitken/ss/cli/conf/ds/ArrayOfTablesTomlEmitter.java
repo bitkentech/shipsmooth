@@ -8,7 +8,7 @@ package io.bitken.ss.cli.conf.ds;
  * <p>Read-side is unaffected: Jackson's TOML <em>parser</em> already understands
  * {@code [[projects]]}, so this emitter only replaces the write path.
  */
-final class ArrayOfTablesTomlEmitter {
+class ArrayOfTablesTomlEmitter {
 
     /** Keys are emitted in this stable, readable order; absent (null) values are skipped. */
     String emit(StandaloneConfig config) {

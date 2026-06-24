@@ -4,7 +4,6 @@ import com.fasterxml.jackson.dataformat.toml.TomlMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -107,17 +106,18 @@ class ConfigWriterTest {
         String before = Files.readString(config);
         assertFalse(before.isBlank(), "precondition: a valid non-empty config exists");
 
-        // Now attempt a write whose serialize blows up (mirrors the JPMS reflection failure).
-        TomlMapper exploding = new TomlMapper() {
+        // Now attempt a write whose serialize blows up (mirrors the JPMS reflection failure,
+        // now on the hand-rolled emitter that replaced the Jackson write path in plan-90).
+        ArrayOfTablesTomlEmitter exploding = new ArrayOfTablesTomlEmitter() {
             @Override
-            public void writeValue(File file, Object value) throws IOException {
-                throw new IOException("boom");
+            String emit(StandaloneConfig cfg) {
+                throw new RuntimeException("boom");
             }
         };
         Path repo2 = Files.createDirectories(tmp.resolve("repo2"));
         Path other = Files.createDirectories(tmp.resolve("other"));
-        assertThrows(IOException.class,
-                () -> new ConfigWriter(() -> config, exploding)
+        assertThrows(RuntimeException.class,
+                () -> new ConfigWriter(() -> config, new TomlMapper(), exploding)
                         .writeExternal(repo2, Optional.empty(), other));
 
         // The original config must survive byte-for-byte — never a truncated 0-byte file.
