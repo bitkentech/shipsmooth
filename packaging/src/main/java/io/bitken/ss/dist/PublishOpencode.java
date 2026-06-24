@@ -1,7 +1,6 @@
 package io.bitken.ss.dist;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -46,12 +45,9 @@ public class PublishOpencode {
         new PublishOpencode(version, repoRoot).run();
     }
 
-    /** Assemble-check (fail-fast) then idempotent {@code npm publish}. */
+    /** Validate the assembled payload (fail-fast) then idempotent {@code npm publish}. */
     public void run() throws IOException, InterruptedException {
-        if (!Files.exists(payload.resolve("package.json"))) {
-            throw new IllegalStateException("opencode payload not assembled at " + payload
-                    + " — run assembleOpencodeProd first (the publishReleaseOpenCode task does).");
-        }
+        ValidateRelease.validateOpencode(payload);
         publishOpencode();
     }
 

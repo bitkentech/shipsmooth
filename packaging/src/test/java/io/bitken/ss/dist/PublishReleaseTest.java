@@ -261,6 +261,29 @@ public class PublishReleaseTest {
             PublishRelease.GUARDED_PLATFORMS);
     }
 
+    // ---- plan-89: opencode npm publish is gated out of the default release ----
+
+    // The default release must NOT attempt the opencode npm publish — a missing
+    // @bitkentech npm token can no longer strand the GitHub/Windows releases.
+    @Test
+    void opencodeNpmPublishDefaultsToSkip() {
+        assertFalse(PublishRelease.PUBLISH_OPENCODE_NPM_DEFAULT,
+                "default release must not publish opencode to npm");
+    }
+
+    // With no opt-in flag, the release does not publish opencode (matches the default).
+    @Test
+    void shouldPublishOpencodeNpmFalseWithoutFlag() {
+        assertFalse(PublishRelease.shouldPublishOpencodeNpm(new String[]{"0.4.0"}));
+    }
+
+    // The explicit opt-in (a fully-authed one-shot release) turns it back on.
+    @Test
+    void shouldPublishOpencodeNpmTrueWithFlag() {
+        assertTrue(PublishRelease.shouldPublishOpencodeNpm(
+                new String[]{"0.4.0", "--publish-opencode-npm"}));
+    }
+
     @Test
     void validateBuildOutputPassesOnCleanManifests() throws IOException {
         Path claudePlugin = tempDir.resolve(".claude-plugin");

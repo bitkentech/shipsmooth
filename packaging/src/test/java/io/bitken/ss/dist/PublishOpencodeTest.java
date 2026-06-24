@@ -68,14 +68,14 @@ public class PublishOpencodeTest {
                 "npm error code E403\nnpm error 403 Forbidden - PUT (not authorized)"));
     }
 
-    // ---- run(): fail-fast when the payload was not assembled ----
+    // ---- run(): fail-fast (via ValidateRelease.validateOpencode) when payload absent ----
 
     @Test
     void runFailsFastWhenPayloadNotAssembled() {
-        // tempDir has no build-opencode/package.json
+        // tempDir has no build-opencode/package.json — validateOpencode rejects it
         IllegalStateException ex = assertThrows(IllegalStateException.class,
                 () -> new PublishOpencode("9.9.9", tempDir).run());
-        assertTrue(ex.getMessage().contains("not assembled"), ex.getMessage());
+        assertTrue(ex.getMessage().contains("package.json"), ex.getMessage());
         assertTrue(ex.getMessage().contains("build-opencode"), ex.getMessage());
     }
 
