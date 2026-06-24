@@ -18,6 +18,16 @@ public class PublishRelease {
     static final List<String> SHIPPED_BUILD_SUBPATHS =
             List.of(".claude-plugin", "hooks", "dist", "skills");
 
+    /**
+     * plan-89: whether the main {@code publishRelease} attempts the opencode npm publish.
+     * Defaults to {@code false} — npm publish needs a separate {@code @bitkentech}
+     * credential not reliably present at release time, and folding it in once stranded the
+     * GitHub/Windows releases. The dedicated {@code publishReleaseOpenCode} task (run by a
+     * human with npm auth) is the normal path; set {@code -PpublishOpencodeNpm=true} to also
+     * publish from a fully-authed one-shot release run.
+     */
+    static final boolean PUBLISH_OPENCODE_NPM_DEFAULT = false;
+
     private final String version;
     private final Path repoRoot;
     private final Path linuxJdkHome;
