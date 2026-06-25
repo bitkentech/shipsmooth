@@ -71,6 +71,34 @@ A test that validates emitter output against the schema.
 
 *Risk: Low — standard test pattern once infrastructure is in place.*
 
+### Task 4: Make the schema available to the app for reference [Medium]
+
+*Depends-on: 1*
+
+The emitted `[toml-schema]` block currently sets `location = './shipsmooth.tosd'`, a relative
+path that resolves next to the user's `~/.config/shipsmooth/shipsmooth.toml` — but the `.tosd`
+is never installed there, so the reference is a dangling pointer. Figure out how to make the
+schema actually reachable.
+
+Design direction (from review):
+- The `location` must **not** point at `cli/src/test/resources/shipsmooth.tosd` — that is a
+  build-internal test path and leaks an implementation detail.
+- Prefer a stable, published location: a `dist/shipsmooth.tosd` on the release branch,
+  referenced by a pinned raw GitHub URL
+  (`https://raw.githubusercontent.com/bitkentech/shipsmooth/<release-ref>/dist/shipsmooth.tosd`).
+- The `.tosd` **may** ship inside the CLI bundle / hooks / scripts if an offline copy is wanted,
+  but it must **never** be written next to the user's `shipsmooth.toml`.
+
+Open sub-questions to resolve as part of this task:
+- Wire a build/release step that stages `shipsmooth.tosd` into `dist/` (otherwise the URL is a
+  dead link on first ship), or confirm `dist/` is populated manually.
+- Pin the URL to a tag/commit (immutable, must bump per release) vs. a moving branch ref
+  (simpler, semantics drift). Schema is documentary/test-time-validated, so a branch ref is
+  likely acceptable — decide explicitly.
+
+*Risk: Medium — touches release/build wiring and a user-visible config value; needs a decision
+on pinning and a publish step, not just a string change.*
+
 ## Open questions
 
 - When adding `toml-schema` version/URL to emitted config, should we bump it on every

@@ -60,6 +60,18 @@
             </comments>
             <deviations/>
         </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Make the schema available to the app for reference</name>
+            <commit></commit>
+            <created-from>plan-91-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
