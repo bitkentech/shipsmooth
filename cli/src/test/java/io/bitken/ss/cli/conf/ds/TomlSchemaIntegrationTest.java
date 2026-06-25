@@ -15,9 +15,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * header and the result must validate against {@code shipsmooth.tosd} via the TOML Schema
  * reference implementation.
  *
- * <p>This test will fail (red) until all three tasks are complete — Task 2 (reference
- * impl dependency), Task 1 ({@code [toml-schema]} header in emitter), and Task 3 (the
- * conformance test infrastructure this integration test overlaps with).
+ * <p>All three plan-91 tasks are now delivered: Task 2 (reference impl dependency),
+ * Task 1 ({@code [toml-schema]} header in emitter), and Task 3 (schema conformance).
+ * This test should stay green.
  */
 class TomlSchemaIntegrationTest {
 
@@ -41,10 +41,10 @@ class TomlSchemaIntegrationTest {
 
         // 2. The emitted TOML must validate against the schema file (Tasks 2 + 3).
         Path schemaPath = Path.of("src/test/resources/shipsmooth.tosd");
-        // TomlSchema.load(schemaPath).validate(toml) — from the reference implementation.
-        // This line won't compile until Task 2 adds the dependency and source files.
-        // TomlSchema schema = TomlSchema.load(schemaPath);
-        // var result = schema.validate(toml);
-        // assertTrue(result.isValid(), "emitted config must conform to shipsmooth.tosd:\n" + toml);
+        Path tomlFile = tmp.resolve("validated.toml");
+        Files.writeString(tomlFile, toml);
+        org.tomlschema.TomlSchema schema = org.tomlschema.TomlSchema.load(schemaPath);
+        var result = schema.validate(tomlFile);
+        assertTrue(result.isValid(), "emitted config must conform to shipsmooth.tosd:\n" + toml);
     }
 }
