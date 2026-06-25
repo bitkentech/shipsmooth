@@ -93,44 +93,62 @@ the schema from a `Path` handed to it directly and rejects any key other than `v
 dereferences `location`; it is a documentary pointer for humans / external tooling. That is fine
 — a single stable public URL is the right shape.
 
-#### Decided shape
+#### Dev/prod split — the `location` differs by build variant
 
-- The repo (`bitkentech/shipsmooth`) is **public**, so a raw GitHub URL resolves for anyone.
-- Emit `location = "https://raw.githubusercontent.com/bitkentech/shipsmooth/releases/dist/schemas/shipsmooth.tosd"`
-  (branch ref `releases`, not a per-version tag — acceptable since nothing fetches it and it must
-  track the latest release).
-- Publish the `.tosd` once, into the Claude `dist/` payload at `dist/schemas/shipsmooth.tosd`.
-- The `location` must **not** point at `cli/src/test/resources/shipsmooth.tosd` (build-internal
-  test path) and the file must **never** be written next to the user's `shipsmooth.toml`.
+A single URL for every build is **wrong**: a dev build that emitted the `releases` URL would point
+at whatever prod last published, not the working-tree schema under test — the same dangling-pointer
+class of bug, harder to notice. So `location` is **build-variant-dependent**:
 
-#### One URL for all hosts (release-layout finding)
+- **PROD** (`build.env=prod`, the release path): emit
+  `https://raw.githubusercontent.com/bitkentech/shipsmooth/releases/dist/schemas/shipsmooth.tosd`
+  (branch ref `releases`, not a per-version tag — nothing fetches it and it must track latest).
+  Published once into the Claude `dist/` payload at `dist/schemas/shipsmooth.tosd`.
+- **DEV** (`build.env` absent): physically copy `shipsmooth.tosd` into **each platform's** payload
+  under `schemas/`, and emit an absolute `file://` `location` pointing at that staged copy — so a
+  dev build's emitted config reflects the schema in the tree being built, resolvable offline.
 
-`PublishRelease` publishes **separate per-host payloads** on the `releases` branch, not one shared
-tree: Claude → `dist/`; Codex → `dist-codex/` (flat folder); Windows → orphan `releases-<version>`
-branch; OpenCode → **npm only**, never on `releases`; Gemini assembled separately. Therefore the
-`.tosd` is only physically published under **Claude's `dist/`**. Because `location` is documentary
-(no per-host fetch), every host's `ConfigWriter` should reference the **same single URL** above —
-do **not** stage a per-plugin offline copy; that only multiplies the sync surface for no benefit.
+The `location` must **not** point at `cli/src/test/resources/shipsmooth.tosd` (build-internal test
+path) in the emitted config, and the file must **never** be written next to the user's
+`shipsmooth.toml`.
 
-#### Auto-sync mechanism — and the gap to close
+Why a runtime CLI can't just use a payload-relative path: `ConfigWriter` runs from the **jlink
+image** in `~/.cache/shipsmooth/<ver>/`, a *separate* tree from the plugin payload
+(`build-claude-dev/`, `dist/`). It has no relative anchor to the staged `schemas/`. Hence the value
+is **baked at build time**, absolute.
 
-`PublishRelease.syncDistAndPublish` rebuilds `dist/` from scratch each release by copying a fixed
-list `SHIPPED_BUILD_SUBPATHS = [".claude-plugin", "hooks", "dist", "skills"]` out of `build/`,
-then commits + pushes `releases`. So anything in those dirs is republished in lockstep with zero
-drift — but `schemas/` is **not** in that list, so the URL is a dead link until wired in.
+#### How the value is injected — reuse the `BuildEnv` → `Build.java` machine
 
-Implementation steps:
-1. Stage `cli/src/test/resources/shipsmooth.tosd` into the Claude prod build payload at
-   `build/schemas/shipsmooth.tosd` (during `assembleClaudeProd`, the same way skills/hooks are
-   assembled).
-2. Add `"schemas"` to `SHIPPED_BUILD_SUBPATHS` in `PublishRelease` so the publish step copies it
-   to `dist/schemas/` and pushes it. With both in place the schema is auto-synced and
-   version-locked — re-copied from `build/` on every cut, so it can never drift from the release.
-3. Update `ConfigWriter` to emit the raw `releases` URL as `location` in place of
-   `./shipsmooth.tosd`, and adjust the conformance test / any fixture asserting the old value.
+The location string is the same *kind* of build-variant value the repo already bakes (`VERSION`,
+`EXPERIMENTAL_BUILD`). Reuse that machine rather than threading anything through `PublishRelease`:
 
-*Risk: Medium — touches release/build wiring (`PublishRelease`, Claude assembly) and a
-user-visible config value; needs a publish step, not just a string change.*
+1. **`buildSrc/BuildEnv.kt`** — add a derived `schemaLocation` property next to `experimentalEnabled`
+   (the one spot the build-variant meaning lives, by design): `PROD` → the releases URL; `DEV` →
+   the absolute `file://` to the staged copy.
+2. **`core/src/main/java-templates/.../Build.java`** + `generateBuildConstants.expand(...)` — add
+   `public static final String SCHEMA_LOCATION = "${schema.location}";`.
+3. **`ConfigWriter`** (in `cli`, which depends on `core`) — emit `Build.SCHEMA_LOCATION` in place of
+   the hardcoded `./shipsmooth.tosd`. No Dagger, no `PublishRelease` involvement — `build.env=prod`
+   at compile time bakes the prod URL straight into the released CLI.
+4. Adjust the conformance / integration tests (and any fixture) that assert the old `location`.
+
+#### Per-platform dev staging + prod publish
+
+- **Dev staging:** copy `cli/src/test/resources/shipsmooth.tosd` into each dev payload's `schemas/`
+  folder (Claude `build-claude-dev/`, and the other hosts as their dev assemblies are touched),
+  from the one source so copies can't drift. The baked dev `file://` must agree with this path.
+- **Prod publish — release-layout finding:** `PublishRelease.syncDistAndPublish` rebuilds `dist/`
+  each release by copying a fixed list `SHIPPED_BUILD_SUBPATHS` out of `build/`, then pushes
+  `releases`. `schemas/` was **not** in that list, so the prod URL would be a dead link. Add
+  `"schemas"` to `SHIPPED_BUILD_SUBPATHS` **(done in de-risk draft)** and stage
+  `build/schemas/shipsmooth.tosd` during `assembleClaudeProd`. With both, the prod schema is
+  auto-synced and version-locked — re-copied from `build/` on every cut.
+- Per-host note: prod publishes separate payloads (Claude `dist/`, Codex `dist-codex/`, Windows
+  orphan branch, OpenCode npm-only). The **prod URL** is a single canonical pointer all hosts share
+  (only physically published under Claude's `dist/`); the **dev** per-platform copies are for
+  offline/local-file resolution in each dev payload.
+
+*Risk: Medium — touches build-constant generation (`BuildEnv`, `Build.java`), per-platform dev
+staging, release wiring (`PublishRelease`, Claude assembly), and a user-visible config value.*
 
 ## Open questions
 
