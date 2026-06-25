@@ -63,12 +63,17 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Make the schema available to the app for reference</name>
-            <commit></commit>
+            <commit>d1e4f75821c0a2720f35342f04adae46bafa6d52</commit>
             <created-from>plan-91-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-25T20:24:07.710+05:30</timestamp>
+                    <message>De-risk ready: BuildEnv.schemaLocation injects Build.SCHEMA_LOCATION -&gt; ConfigWriter. DEV bakes file:// to test-resources .tosd; PROD bakes version-pinned v&lt;version&gt; raw URL. SHIPPED_BUILD_SUBPATHS += schemas. Tests green. NOT YET DONE (hardening): build does not stage build/schemas/ or build-claude-dev/schemas/ from the source, so the file isn't physically present in payloads yet; dev file:// currently points at test-resources not a staged payload copy.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
