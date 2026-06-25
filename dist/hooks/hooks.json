@@ -3,7 +3,7 @@
     "SessionStart" : [ {
       "hooks" : [ {
         "type" : "command",
-        "command" : "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth 0.3.28"
+        "command" : "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth 0.3.29"
       } ]
     } ]
   }
