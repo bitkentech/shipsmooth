@@ -99,12 +99,22 @@ public class PublishReleaseTest {
     // restructured build no longer emits — causing the v0.3.14 release to fail.
     @Test
     void shippedBuildSubpathsExcludeObsoleteNodeArtifacts() {
-        assertEquals(List.of(".claude-plugin", "hooks", "dist", "skills"),
+        assertEquals(List.of(".claude-plugin", "hooks", "dist", "skills", "schemas"),
                 PublishRelease.SHIPPED_BUILD_SUBPATHS);
         assertFalse(PublishRelease.SHIPPED_BUILD_SUBPATHS.contains("scripts"),
                 "build/scripts is no longer produced by the jlink build");
         assertFalse(PublishRelease.SHIPPED_BUILD_SUBPATHS.contains("package.json"),
                 "build/package.json is no longer produced by the jlink build");
+    }
+
+    // plan-91 Task 4: the TOML schema must be published into the releases-branch
+    // dist/ payload so the [toml-schema] location URL resolves. The publish step
+    // copies SHIPPED_BUILD_SUBPATHS out of build/ — schemas/ must be in that list,
+    // otherwise dist/schemas/shipsmooth.tosd is never pushed and the URL is dead.
+    @Test
+    void shippedBuildSubpathsIncludeSchemasForTomlSchema() {
+        assertTrue(PublishRelease.SHIPPED_BUILD_SUBPATHS.contains("schemas"),
+                "build/schemas must ship so dist/schemas/shipsmooth.tosd resolves at the location URL");
     }
 
     // ---- plan-77 Task 10: codex payload → dist-codex/ on releases ----

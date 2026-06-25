@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>91</plan>
+    <plan-version>plan-91-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-25</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Integrate TOML Schema reference implementation in tests</name>
+            <commit></commit>
+            <created-from>plan-91-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-25T13:03:14.150+05:30</timestamp>
+                    <message>De-risk draft ready for review</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-25T13:06:47.759+05:30</timestamp>
+                    <message>Task delivered</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Add `[toml-schema]` header to emitter and data model</name>
+            <commit></commit>
+            <created-from>plan-91-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-25T13:12:18.292+05:30</timestamp>
+                    <message>Task delivered</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Write schema conformance test</name>
+            <commit></commit>
+            <created-from>plan-91-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-25T13:14:14.784+05:30</timestamp>
+                    <message>Task delivered</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Make the schema available to the app for reference</name>
+            <commit>d1e4f75821c0a2720f35342f04adae46bafa6d52</commit>
+            <created-from>plan-91-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-25T20:24:07.710+05:30</timestamp>
+                    <message>De-risk ready: BuildEnv.schemaLocation injects Build.SCHEMA_LOCATION -&gt; ConfigWriter. DEV bakes file:// to test-resources .tosd; PROD bakes version-pinned v&lt;version&gt; raw URL. SHIPPED_BUILD_SUBPATHS += schemas. Tests green. NOT YET DONE (hardening): build does not stage build/schemas/ or build-claude-dev/schemas/ from the source, so the file isn't physically present in payloads yet; dev file:// currently points at test-resources not a staged payload copy.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-25T12:38:35.714+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-25T21:59:43.062+05:30</timestamp>
+            <message>Plan complete. All 4 tasks agent-coded; TOML schema + version-pinned location shipped.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-25T22:00:45.425+05:30</timestamp>
+            <message>Reopened: verifying dev claude build before close-out.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-25T22:12:38.748+05:30</timestamp>
+            <message>Plan complete. All 4 tasks agent-coded; TOML schema + version-pinned location shipped and dev-verified.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

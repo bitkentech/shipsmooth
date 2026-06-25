@@ -16,7 +16,7 @@ public class PublishRelease {
      * directly). Keep this in sync with the build output.
      */
     static final List<String> SHIPPED_BUILD_SUBPATHS =
-            List.of(".claude-plugin", "hooks", "dist", "skills");
+            List.of(".claude-plugin", "hooks", "dist", "skills", "schemas");
 
     /**
      * plan-89: whether the main {@code publishRelease} attempts the opencode npm publish.

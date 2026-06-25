@@ -116,6 +116,8 @@ registerPayloadAssembly(
         PayloadProducer("renderClaudeDev", pluginResources.tasks.named("renderClaudeDev"), ownsFilesOnly = false),
         PayloadProducer("copyDist", pluginResources.tasks.named("copyDist"), ownsFilesOnly = true),
         PayloadProducer("copyClaudeMetaDev", copyClaudeMetaDev, ownsFilesOnly = true),
+        // plan-91 Task 4: stage shipsmooth.tosd into build-claude-dev/schemas/.
+        PayloadProducer("copySchema", pluginResources.tasks.named("copySchema"), ownsFilesOnly = true),
     ),
 )
 
@@ -161,6 +163,9 @@ val devBuild by tasks.registering(GradleBuild::class) {
 // ---------------------------------------------------------------------------
 val claudeProdRenderStage = pluginResources.layout.buildDirectory.dir("render/claude-prod").get().asFile
 val claudeProdDistStage = pluginResources.layout.buildDirectory.dir("stage/dist-prod").get().asFile
+// plan-91 Task 4: copySchemaProd stages shipsmooth.tosd into schemas-prod; Synced into
+// build/schemas/, which PublishRelease ships to releases dist/schemas/.
+val claudeProdSchemaStage = pluginResources.layout.buildDirectory.dir("stage/schemas-prod").get().asFile
 registerPayloadSync(
     syncTaskName = "assembleClaudeProd",
     description = "Assemble the full claude-prod plugin payload into <build.outputDir> (default build/).",
@@ -169,6 +174,8 @@ registerPayloadSync(
         SyncSource(pluginResources.tasks.named("renderClaudeProd"), claudeProdRenderStage),
         SyncSource(pluginResources.tasks.named("copyDistProd"), claudeProdDistStage),
         SyncSource(copyClaudeMetaProd, claudeProdMetaStage),
+        // plan-91 Task 4: stage shipsmooth.tosd into build/schemas/ (-> releases dist/schemas/).
+        SyncSource(pluginResources.tasks.named("copySchemaProd"), claudeProdSchemaStage),
     ),
 )
 

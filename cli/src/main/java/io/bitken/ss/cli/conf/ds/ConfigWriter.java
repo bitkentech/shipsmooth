@@ -26,24 +26,40 @@ public final class ConfigWriter {
     private final TomlMapper toml;
     private final ConfigFileLocator configFileLocator;
     private final ArrayOfTablesTomlEmitter emitter;
+    private final String schemaLocation;
 
+    /**
+     * Production entry point: the schema {@code location} is the value baked into this build
+     * ({@link SchemaConfig#SCHEMA_LOCATION}).
+     */
     public ConfigWriter() {
         this(new DefaultConfigFileLocator());
     }
 
-    /** Inject a specific config-file locator (used by {@code store init} wiring and tests). */
+    /** Inject a specific config-file locator; emits the build's baked schema location. */
     public ConfigWriter(ConfigFileLocator configFileLocator) {
-        this(configFileLocator, new TomlMapper());
+        this(configFileLocator, SchemaConfig.SCHEMA_LOCATION);
     }
 
-    /** Inject the locator and mapper; the emitter is the default. */
-    ConfigWriter(ConfigFileLocator configFileLocator, TomlMapper toml) {
-        this(configFileLocator, toml, new ArrayOfTablesTomlEmitter());
+    /**
+     * Inject the locator and the schema {@code location} to emit. A {@code null} location
+     * means the emitted {@code [toml-schema]} table carries {@code version} only — no
+     * {@code location} key (spec-valid: {@code location} is optional).
+     */
+    public ConfigWriter(ConfigFileLocator configFileLocator, String schemaLocation) {
+        this(configFileLocator, schemaLocation, new TomlMapper());
+    }
+
+    /** Inject the locator, schema location, and mapper; the emitter is the default. */
+    ConfigWriter(ConfigFileLocator configFileLocator, String schemaLocation, TomlMapper toml) {
+        this(configFileLocator, schemaLocation, toml, new ArrayOfTablesTomlEmitter());
     }
 
     /** Inject the emitter too — used by tests to simulate a failed serialize on the write path. */
-    ConfigWriter(ConfigFileLocator configFileLocator, TomlMapper toml, ArrayOfTablesTomlEmitter emitter) {
+    ConfigWriter(ConfigFileLocator configFileLocator, String schemaLocation, TomlMapper toml,
+                 ArrayOfTablesTomlEmitter emitter) {
         this.configFileLocator = configFileLocator;
+        this.schemaLocation = schemaLocation;
         this.toml = toml;
         this.emitter = emitter;
     }
@@ -63,6 +79,20 @@ public final class ConfigWriter {
         upsert(entry);
     }
 
+    private StandaloneConfig schemaRef(StandaloneConfig config) {
+        if (config.getTomlSchema() == null) {
+            StandaloneConfig.TomlSchemaRef ref = new StandaloneConfig.TomlSchemaRef();
+            ref.setVersion(SchemaConfig.SCHEMA_VERSION);
+            // No default: when no location was injected, emit version only — the emitter
+            // skips a null location (spec-valid; location is optional under [toml-schema]).
+            if (schemaLocation != null) {
+                ref.setLocation(schemaLocation);
+            }
+            config.setTomlSchema(ref);
+        }
+        return config;
+    }
+
     private static StandaloneConfig.ProjectEntry baseEntry(Path localPath, Optional<String> remoteUrl) {
         StandaloneConfig.ProjectEntry entry = new StandaloneConfig.ProjectEntry();
         entry.setLocalPath(localPath.toAbsolutePath().normalize().toString());
@@ -72,7 +102,7 @@ public final class ConfigWriter {
 
     private void upsert(StandaloneConfig.ProjectEntry entry) throws IOException {
         Path configFile = configFileLocator.locate();
-        StandaloneConfig config = readOrEmpty(configFile);
+        StandaloneConfig config = schemaRef(readOrEmpty(configFile));
 
         List<StandaloneConfig.ProjectEntry> entries = new ArrayList<>(config.getProjects());
         entries.removeIf(e -> sameProject(e, entry));

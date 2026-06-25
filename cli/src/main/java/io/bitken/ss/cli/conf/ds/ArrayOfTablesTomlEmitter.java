@@ -13,6 +13,15 @@ class ArrayOfTablesTomlEmitter {
     /** Keys are emitted in this stable, readable order; absent (null) values are skipped. */
     String emit(StandaloneConfig config) {
         StringBuilder sb = new StringBuilder();
+
+        StandaloneConfig.TomlSchemaRef schema = config.getTomlSchema();
+        if (schema != null) {
+            sb.append("[toml-schema]\n");
+            appendKey(sb, "version", schema.getVersion());
+            appendKey(sb, "location", schema.getLocation());
+            sb.append('\n');
+        }
+
         for (StandaloneConfig.ProjectEntry e : config.getProjects()) {
             sb.append("[[projects]]\n");
             appendKey(sb, "remoteUrl", e.getRemoteUrl());
