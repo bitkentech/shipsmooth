@@ -100,9 +100,12 @@ at whatever prod last published, not the working-tree schema under test — the 
 class of bug, harder to notice. So `location` is **build-variant-dependent**:
 
 - **PROD** (`build.env=prod`, the release path): emit
-  `https://raw.githubusercontent.com/bitkentech/shipsmooth/releases/dist/schemas/shipsmooth.tosd`
-  (branch ref `releases`, not a per-version tag — nothing fetches it and it must track latest).
-  Published once into the Claude `dist/` payload at `dist/schemas/shipsmooth.tosd`.
+  `https://raw.githubusercontent.com/bitkentech/shipsmooth/v<version>/dist/schemas/shipsmooth.tosd`
+  — pinned to **this build's `v<version>` release tag**, not the moving `releases` branch. The
+  release pushes the tag and the `releases` branch at the same commit, so the tag tree carries
+  `dist/schemas/shipsmooth.tosd`. Pinning means a config written by version X points forever at
+  X's own schema instead of drifting to whatever a later release publishes. Published into the
+  Claude `dist/` payload at `dist/schemas/shipsmooth.tosd`.
 - **DEV** (`build.env` absent): physically copy `shipsmooth.tosd` into **each platform's** payload
   under `schemas/`, and emit an absolute `file://` `location` pointing at that staged copy — so a
   dev build's emitted config reflects the schema in the tree being built, resolvable offline.
