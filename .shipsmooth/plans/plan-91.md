@@ -77,27 +77,60 @@ A test that validates emitter output against the schema.
 
 The emitted `[toml-schema]` block currently sets `location = './shipsmooth.tosd'`, a relative
 path that resolves next to the user's `~/.config/shipsmooth/shipsmooth.toml` — but the `.tosd`
-is never installed there, so the reference is a dangling pointer. Figure out how to make the
-schema actually reachable.
+is never installed there, so the reference is a dangling pointer. Make the schema reachable
+at a stable, published URL.
 
-Design direction (from review):
-- The `location` must **not** point at `cli/src/test/resources/shipsmooth.tosd` — that is a
-  build-internal test path and leaks an implementation detail.
-- Prefer a stable, published location: a `dist/shipsmooth.tosd` on the release branch,
-  referenced by a pinned raw GitHub URL
-  (`https://raw.githubusercontent.com/bitkentech/shipsmooth/<release-ref>/dist/shipsmooth.tosd`).
-- The `.tosd` **may** ship inside the CLI bundle / hooks / scripts if an offline copy is wanted,
-  but it must **never** be written next to the user's `shipsmooth.toml`.
+#### Spec finding — `location` is a real spec key, URI-valued
 
-Open sub-questions to resolve as part of this task:
-- Wire a build/release step that stages `shipsmooth.tosd` into `dist/` (otherwise the URL is a
-  dead link on first ship), or confirm `dist/` is populated manually.
-- Pin the URL to a tag/commit (immutable, must bump per release) vs. a moving branch ref
-  (simpler, semantics drift). Schema is documentary/test-time-validated, so a branch ref is
-  likely acceptable — decide explicitly.
+Per the upstream TOML Schema spec (`brunoborges/toml-schema`), `[toml-schema]` in a *config*
+file may carry exactly `version`, `location`, and a `meta` subtable — nothing else. `location`
+is defined as a URI ("either remote URL or local path") naming "which schema file to use for
+validation". So a remote `https://` URL is spec-conformant and first-class, not a mere comment.
 
-*Risk: Medium — touches release/build wiring and a user-visible config value; needs a decision
-on pinning and a publish step, not just a string change.*
+Caveat: the **vendored Java reference impl** (`SchemaLoader`) never reads `location` — it loads
+the schema from a `Path` handed to it directly and rejects any key other than `version`/`meta`
+*inside a `.tosd` file's* `[toml-schema]`. So at runtime nothing in shipsmooth (nor the ref impl)
+dereferences `location`; it is a documentary pointer for humans / external tooling. That is fine
+— a single stable public URL is the right shape.
+
+#### Decided shape
+
+- The repo (`bitkentech/shipsmooth`) is **public**, so a raw GitHub URL resolves for anyone.
+- Emit `location = "https://raw.githubusercontent.com/bitkentech/shipsmooth/releases/dist/schemas/shipsmooth.tosd"`
+  (branch ref `releases`, not a per-version tag — acceptable since nothing fetches it and it must
+  track the latest release).
+- Publish the `.tosd` once, into the Claude `dist/` payload at `dist/schemas/shipsmooth.tosd`.
+- The `location` must **not** point at `cli/src/test/resources/shipsmooth.tosd` (build-internal
+  test path) and the file must **never** be written next to the user's `shipsmooth.toml`.
+
+#### One URL for all hosts (release-layout finding)
+
+`PublishRelease` publishes **separate per-host payloads** on the `releases` branch, not one shared
+tree: Claude → `dist/`; Codex → `dist-codex/` (flat folder); Windows → orphan `releases-<version>`
+branch; OpenCode → **npm only**, never on `releases`; Gemini assembled separately. Therefore the
+`.tosd` is only physically published under **Claude's `dist/`**. Because `location` is documentary
+(no per-host fetch), every host's `ConfigWriter` should reference the **same single URL** above —
+do **not** stage a per-plugin offline copy; that only multiplies the sync surface for no benefit.
+
+#### Auto-sync mechanism — and the gap to close
+
+`PublishRelease.syncDistAndPublish` rebuilds `dist/` from scratch each release by copying a fixed
+list `SHIPPED_BUILD_SUBPATHS = [".claude-plugin", "hooks", "dist", "skills"]` out of `build/`,
+then commits + pushes `releases`. So anything in those dirs is republished in lockstep with zero
+drift — but `schemas/` is **not** in that list, so the URL is a dead link until wired in.
+
+Implementation steps:
+1. Stage `cli/src/test/resources/shipsmooth.tosd` into the Claude prod build payload at
+   `build/schemas/shipsmooth.tosd` (during `assembleClaudeProd`, the same way skills/hooks are
+   assembled).
+2. Add `"schemas"` to `SHIPPED_BUILD_SUBPATHS` in `PublishRelease` so the publish step copies it
+   to `dist/schemas/` and pushes it. With both in place the schema is auto-synced and
+   version-locked — re-copied from `build/` on every cut, so it can never drift from the release.
+3. Update `ConfigWriter` to emit the raw `releases` URL as `location` in place of
+   `./shipsmooth.tosd`, and adjust the conformance test / any fixture asserting the old value.
+
+*Risk: Medium — touches release/build wiring (`PublishRelease`, Claude assembly) and a
+user-visible config value; needs a publish step, not just a string change.*
 
 ## Open questions
 
