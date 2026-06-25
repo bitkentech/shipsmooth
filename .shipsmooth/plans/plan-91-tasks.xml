@@ -47,12 +47,17 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Write schema conformance test</name>
             <commit></commit>
             <created-from>plan-91-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-25T13:14:14.784+05:30</timestamp>
+                    <message>Task delivered</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
     </tasks>
