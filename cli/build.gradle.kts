@@ -9,6 +9,8 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.17.2")
+
+    testImplementation("org.tomlj:tomlj:1.1.1")
 }
 
 application {
