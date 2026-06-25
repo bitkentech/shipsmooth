@@ -308,3 +308,25 @@ val copyDistProd = registerCopyDist(
     layout.buildDirectory.dir("stage/dist-prod").get().asFile,
     withFileGranularOutputs = false,
 )
+
+// plan-91 Task 4: stage shipsmooth.tosd into the payload's schemas/ folder. The schema
+// is a CLI main resource (single source); both dev and prod payloads carry a copy. Prod's
+// build/schemas/ is published to releases dist/schemas/ via SHIPPED_BUILD_SUBPATHS, where
+// the version-pinned [toml-schema] location URL resolves; dev's build-claude-dev/schemas/
+// is what the dev build's baked file:// location points at.
+val schemaSource = repoRoot.dir("cli/src/main/resources").file("shipsmooth.tosd").asFile
+fun registerCopySchema(taskName: String, payloadRoot: File) =
+    tasks.register<Copy>(taskName) {
+        group = "assemble"
+        description = "Copy shipsmooth.tosd into $payloadRoot/schemas."
+        from(schemaSource)
+        val dest = File(payloadRoot, "schemas")
+        into(dest)
+        outputs.file(File(dest, "shipsmooth.tosd"))
+    }
+
+val copySchema = registerCopySchema("copySchema", payloadDir)
+val copySchemaProd = registerCopySchema(
+    "copySchemaProd",
+    layout.buildDirectory.dir("stage/schemas-prod").get().asFile,
+)

@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class SchemaConformanceTest {
 
-    private static final Path SCHEMA = Path.of("src/test/resources/shipsmooth.tosd");
+    private static final Path SCHEMA = SchemaResource.schemaPath();
 
     @TempDir Path tmp;
 
@@ -81,5 +81,32 @@ class SchemaConformanceTest {
         // Zero projects — valid initial state before any project is added.
         config.setProjects(List.of());
         assertValid(config, "empty config (zero projects)");
+    }
+
+    @Test
+    void schemaTableWithLocation() throws IOException {
+        // The full [toml-schema] table (version + location) as ConfigWriter bakes it.
+        StandaloneConfig config = new StandaloneConfig();
+        StandaloneConfig.TomlSchemaRef ref = new StandaloneConfig.TomlSchemaRef();
+        ref.setVersion("1.0.0");
+        ref.setLocation("https://raw.githubusercontent.com/bitkentech/shipsmooth/v0.3.29/dist/schemas/shipsmooth.tosd");
+        config.setTomlSchema(ref);
+        config.setProjects(List.of());
+        assertValid(config, "[toml-schema] with location");
+    }
+
+    @Test
+    void schemaTableVersionOnly() throws IOException {
+        // No location injected — the emitted table carries version only. Spec-valid:
+        // location is optional under [toml-schema]. (plan-91 Task 4: no default.)
+        StandaloneConfig config = new StandaloneConfig();
+        StandaloneConfig.TomlSchemaRef ref = new StandaloneConfig.TomlSchemaRef();
+        ref.setVersion("1.0.0");
+        // location deliberately left null
+        config.setTomlSchema(ref);
+        config.setProjects(List.of());
+        String toml = new ArrayOfTablesTomlEmitter().emit(config);
+        assertFalse(toml.contains("location"), "version-only table must omit location:\n" + toml);
+        assertValid(config, "[toml-schema] version only");
     }
 }

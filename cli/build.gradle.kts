@@ -20,6 +20,32 @@ application {
 }
 
 // ---------------------------------------------------------------------------
+// plan-91 Task 4: the [toml-schema] location ConfigWriter emits, baked per build
+// variant into SchemaConfig.SCHEMA_LOCATION. The schema location is a CLI/TOML
+// concern (core has zero TOML refs), so the constant lives here, not in core's
+// Build. The dev/prod rule lives once in buildSrc BuildEnv.schemaLocation,
+// mirroring experimentalEnabled: PROD -> the v<version>-pinned releases URL; DEV ->
+// a file:// to the schema staged into the dev payload (build-claude-dev/schemas/).
+// build.env at CLI-compile time picks the variant; the same signal drives the jlink
+// image folder (imageDirSuffix) so they can't disagree.
+val schemaPluginVersion = (findProperty("plugin.version") as String?)?.takeIf { it.isNotBlank() }
+    ?: throw GradleException("plugin.version is not set — refusing to generate SchemaConfig.")
+val devStagedSchema = rootProject.layout.projectDirectory
+    .dir("build-claude-dev/schemas").file("shipsmooth.tosd").asFile
+val schemaLocation = buildEnv().schemaLocation(schemaPluginVersion, devStagedSchema)
+val generateSchemaConfig by tasks.registering(Copy::class) {
+    from(layout.projectDirectory.dir("src/main/java-templates"))
+    into(layout.buildDirectory.dir("generated/sources/schema-config"))
+    // expand() values aren't part of a Copy's up-to-date check — declare as inputs so
+    // flipping build.env (dev<->prod) or bumping the version regenerates SchemaConfig.
+    inputs.property("schemaLocation", schemaLocation)
+    expand("schema" to mapOf("location" to schemaLocation))
+}
+sourceSets.main {
+    java.srcDir(generateSchemaConfig)
+}
+
+// ---------------------------------------------------------------------------
 // jlink images + SCC launcher. Mirrors the Maven cli jlink profile: a hand-pinned
 // runtime module path (with the SHADED core jar in place of the plain one), 5
 // platform images via the Linux jlink + platform jmods, the OpenJ9 SCC launcher,

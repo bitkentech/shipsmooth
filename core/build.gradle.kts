@@ -55,13 +55,6 @@ val pluginVersion = (findProperty("plugin.version") as String?)?.takeIf { it.isN
         "plugin.version is not set — refusing to generate Build constants. " +
         "Set it in gradle.properties or pass -Pplugin.version=<version>."
     )
-// plan-91 Task 4: the [toml-schema] location ConfigWriter emits, baked per build variant.
-// PROD -> the releases-branch raw URL; DEV -> an absolute file:// to the schema staged into
-// the dev payload (so a dev build points at the tree being built, not prod's last release).
-// The rule lives once in BuildEnv.schemaLocation, mirroring experimentalEnabled.
-val devStagedSchema = rootProject.layout.projectDirectory
-    .file("cli/src/test/resources/shipsmooth.tosd").asFile
-val schemaLocation = buildEnv().schemaLocation(pluginVersion, devStagedSchema)
 val generateBuildConstants by tasks.registering(Copy::class) {
     from(layout.projectDirectory.dir("src/main/java-templates"))
     into(layout.buildDirectory.dir("generated/sources/build-constants"))
@@ -72,7 +65,6 @@ val generateBuildConstants by tasks.registering(Copy::class) {
     // stale Build.java ships — the 0.3.17 prod leak (see plan-75 Defect 1).
     inputs.property("experimentalEnabled", experimentalEnabled)
     inputs.property("pluginVersion", pluginVersion)
-    inputs.property("schemaLocation", schemaLocation)
     // The template uses Maven-style dotted tokens (${experimental.enabled},
     // ${project.version}). Gradle's expand() is Groovy SimpleTemplateEngine, which
     // reads those as nested property access, so supply nested maps rather than
@@ -80,7 +72,6 @@ val generateBuildConstants by tasks.registering(Copy::class) {
     expand(
         "experimental" to mapOf("enabled" to experimentalEnabled),
         "project" to mapOf("version" to pluginVersion),
-        "schema" to mapOf("location" to schemaLocation),
     )
 }
 sourceSets.main {

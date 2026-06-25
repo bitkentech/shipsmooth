@@ -36,6 +36,33 @@ class ConfigWriterTest {
     }
 
     @Test
+    void emitsInjectedSchemaLocation() throws IOException {
+        Path config = tmp.resolve("shipsmooth.toml");
+        Path repo = Files.createDirectories(tmp.resolve("repo"));
+
+        String loc = "https://example.test/shipsmooth.tosd";
+        new ConfigWriter(() -> config, loc).writeInRepo(repo, Optional.empty());
+
+        String written = Files.readString(config);
+        assertTrue(written.contains("[toml-schema]"), written);
+        assertTrue(written.contains("location = '" + loc + "'"), written);
+    }
+
+    @Test
+    void omitsLocationWhenNotInjected() throws IOException {
+        Path config = tmp.resolve("shipsmooth.toml");
+        Path repo = Files.createDirectories(tmp.resolve("repo"));
+
+        // Null schema location → [toml-schema] carries version only, no location key.
+        new ConfigWriter(() -> config, null).writeInRepo(repo, Optional.empty());
+
+        String written = Files.readString(config);
+        assertTrue(written.contains("[toml-schema]"), written);
+        assertTrue(written.contains("version = "), written);
+        assertFalse(written.contains("location"), "no location key when none injected:\n" + written);
+    }
+
+    @Test
     void writeInRepo_thenResolverSeesInRepoEntry() throws IOException {
         Path config = tmp.resolve("shipsmooth.toml");
         Path repo = Files.createDirectories(tmp.resolve("repo"));
@@ -117,7 +144,7 @@ class ConfigWriterTest {
         Path repo2 = Files.createDirectories(tmp.resolve("repo2"));
         Path other = Files.createDirectories(tmp.resolve("other"));
         assertThrows(RuntimeException.class,
-                () -> new ConfigWriter(() -> config, new TomlMapper(), exploding)
+                () -> new ConfigWriter(() -> config, SchemaConfig.SCHEMA_LOCATION, new TomlMapper(), exploding)
                         .writeExternal(repo2, Optional.empty(), other));
 
         // The original config must survive byte-for-byte — never a truncated 0-byte file.

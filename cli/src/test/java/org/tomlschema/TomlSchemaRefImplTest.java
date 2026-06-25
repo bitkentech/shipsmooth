@@ -18,7 +18,11 @@ class TomlSchemaRefImplTest {
     @TempDir Path tmp;
 
     private Path schema() {
-        return Path.of("src/test/resources/shipsmooth.tosd");
+        try {
+            return Path.of(getClass().getResource("/shipsmooth.tosd").toURI());
+        } catch (java.net.URISyntaxException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Test

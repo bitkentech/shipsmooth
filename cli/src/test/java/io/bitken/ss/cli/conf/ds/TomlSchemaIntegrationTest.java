@@ -40,7 +40,7 @@ class TomlSchemaIntegrationTest {
                 "emitted config must include a [toml-schema] header:\n" + toml);
 
         // 2. The emitted TOML must validate against the schema file (Tasks 2 + 3).
-        Path schemaPath = Path.of("src/test/resources/shipsmooth.tosd");
+        Path schemaPath = SchemaResource.schemaPath();
         Path tomlFile = tmp.resolve("validated.toml");
         Files.writeString(tomlFile, toml);
         org.tomlschema.TomlSchema schema = org.tomlschema.TomlSchema.load(schemaPath);
