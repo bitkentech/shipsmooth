@@ -11,12 +11,21 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Integrate TOML Schema reference implementation in tests</name>
             <commit></commit>
             <created-from>plan-91-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-25T13:03:14.150+05:30</timestamp>
+                    <message>De-risk draft ready for review</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-25T13:06:47.759+05:30</timestamp>
+                    <message>Task delivered</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>

@@ -63,6 +63,16 @@ public final class ConfigWriter {
         upsert(entry);
     }
 
+    private StandaloneConfig schemaRef(StandaloneConfig config) {
+        if (config.getTomlSchema() == null) {
+            StandaloneConfig.TomlSchemaRef ref = new StandaloneConfig.TomlSchemaRef();
+            ref.setVersion("1.0.0");
+            ref.setLocation("./shipsmooth.tosd");
+            config.setTomlSchema(ref);
+        }
+        return config;
+    }
+
     private static StandaloneConfig.ProjectEntry baseEntry(Path localPath, Optional<String> remoteUrl) {
         StandaloneConfig.ProjectEntry entry = new StandaloneConfig.ProjectEntry();
         entry.setLocalPath(localPath.toAbsolutePath().normalize().toString());
@@ -72,7 +82,7 @@ public final class ConfigWriter {
 
     private void upsert(StandaloneConfig.ProjectEntry entry) throws IOException {
         Path configFile = configFileLocator.locate();
-        StandaloneConfig config = readOrEmpty(configFile);
+        StandaloneConfig config = schemaRef(readOrEmpty(configFile));
 
         List<StandaloneConfig.ProjectEntry> entries = new ArrayList<>(config.getProjects());
         entries.removeIf(e -> sameProject(e, entry));
