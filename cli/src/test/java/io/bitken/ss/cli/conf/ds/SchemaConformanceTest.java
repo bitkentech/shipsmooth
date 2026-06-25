@@ -76,14 +76,10 @@ class SchemaConformanceTest {
     }
 
     @Test
-    void emptyConfigIsInvalid() throws IOException {
+    void emptyConfig() throws IOException {
         StandaloneConfig config = new StandaloneConfig();
+        // Zero projects — valid initial state before any project is added.
         config.setProjects(List.of());
-        String toml = new ArrayOfTablesTomlEmitter().emit(config);
-        Path file = tmp.resolve("empty.toml");
-        Files.writeString(file, toml);
-
-        ValidationResult result = TomlSchema.load(SCHEMA).validate(file);
-        assertFalse(result.isValid(), "empty config (zero projects) must be rejected by the schema");
+        assertValid(config, "empty config (zero projects)");
     }
 }

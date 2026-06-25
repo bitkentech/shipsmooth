@@ -59,11 +59,11 @@ class TomlSchemaRefImplTest {
     }
 
     @Test
-    void emptyConfigHasErrors() throws IOException {
+    void emptyConfigIsValid() throws IOException {
         Path config = tmp.resolve("config.toml");
         Files.writeString(config, "");
 
         ValidationResult result = TomlSchema.load(schema()).validate(config);
-        assertFalse(result.isValid(), "empty config must have errors");
+        assertTrue(result.isValid(), "empty config must be valid (projects is optional)");
     }
 }
