@@ -1,6 +1,7 @@
 package io.bitken.ss.cli.conf.ds;
 
 import com.fasterxml.jackson.dataformat.toml.TomlMapper;
+import io.bitken.ss.Build;
 import io.bitken.ss.cli.conf.ConfigFileLocator;
 import io.bitken.ss.cli.conf.DefaultConfigFileLocator;
 
@@ -67,7 +68,7 @@ public final class ConfigWriter {
         if (config.getTomlSchema() == null) {
             StandaloneConfig.TomlSchemaRef ref = new StandaloneConfig.TomlSchemaRef();
             ref.setVersion("1.0.0");
-            ref.setLocation("./shipsmooth.tosd");
+            ref.setLocation(Build.SCHEMA_LOCATION);
             config.setTomlSchema(ref);
         }
         return config;
