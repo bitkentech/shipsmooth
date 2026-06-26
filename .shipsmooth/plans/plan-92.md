@@ -1,168 +1,163 @@
-# plan-92 — claude code remote should fetch latest build
+# plan-92 — remote SessionStart hook must not depend on CLAUDE_PLUGIN_ROOT
+
+> **v2 — repointed.** v1 targeted "fetch latest build / version drift." Tracing the
+> code showed the published plugin already render-stamps the matching version (no
+> drift in the shipped artifact), and the *real* failure is that the published
+> SessionStart hook locates its installer via `${CLAUDE_PLUGIN_ROOT}`, which Claude
+> Code leaves **empty for SessionStart hooks** in the cloud env — so the install
+> silently does nothing. v2 targets that. Per workflow, scope shift → version bump.
 
 ## Context
 
-Feature (in the user's words): claude code remote should fetch latest build
+Feature (in the user's words): claude code remote should fetch latest build.
+What that actually means once traced: **a `CLAUDE_CODE_REMOTE=true` (cloud) session
+must reliably install the shipsmooth Java CLI runtime — and today it can fail to
+install anything because the hook can't find its own installer script.**
 
-### The bug
+### Two hooks, two behaviours
 
-The "claude code remote" mechanism is `.claude/hooks/session-start.sh`. It runs
-**only** when `CLAUDE_CODE_REMOTE=true` (cloud/remote agents, not local sessions),
-and hardcodes a **stale, pinned** version:
+There are two distinct copies of the SessionStart hook:
+
+1. **The repo's committed hook** — `.claude/hooks/session-start.sh`, wired by
+   `.claude/settings.json` as `$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh`.
+   Runs for sessions on *this repo* (dev / self-host). **It is gated to remote only**
+   — its first lines are:
+
+   ```sh
+   if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
+     exit 0          # local sessions do nothing; it acts only when CLAUDE_CODE_REMOTE=true
+   fi
+   ```
+
+   It locates its installer via `$SCRIPT_DIR`/`$REPO_ROOT` (`dirname "$0"`), **not**
+   `CLAUDE_PLUGIN_ROOT`, and `CLAUDE_PROJECT_DIR` *is* set in cloud — so it is already
+   `CLAUDE_PLUGIN_ROOT`-independent. Its only flaw is a hand-maintained
+   `PLUGIN_VERSION="0.3.24"` literal that has drifted (repo is at 0.3.29).
+
+2. **The published plugin hook** — `hooks/hooks.json` shipped inside the marketplace
+   plugin, rendered by `HookCommandRenderer`. What a normal cloud user gets. Its
+   command is:
+
+   ```sh
+   sh "${CLAUDE_PLUGIN_ROOT}/hooks/install-shipsmooth.sh" shipsmooth 0.3.27
+   ```
+
+   **Note the asymmetry:** the published command has **no `CLAUDE_CODE_REMOTE` guard**
+   — it runs on *every* SessionStart, local or remote (`install-shipsmooth.sh`
+   self-short-circuits when the runtime is already installed, which is how repeated/
+   local sessions avoid re-downloading). The version (`0.3.27`) is **render-stamped
+   from the build**, so it already matches the plugin — no drift there. The problem is
+   `${CLAUDE_PLUGIN_ROOT}`.
+
+### The real failure (cloud)
+
+`${CLAUDE_PLUGIN_ROOT}` is documented as the plugin's install dir, but Claude Code
+**does not set it for SessionStart hooks** — a confirmed, still-open bug
+(anthropics/claude-code #27145, #39550, #42564, #59713, and many plugin-side reports
+e.g. claude-mem #629, everything-claude-code #256). When it is empty, the shell
+expands the command to:
 
 ```sh
-PLUGIN_VERSION="0.3.24"   # repo is at 0.3.29 — drifted 5 patches
+sh "/hooks/install-shipsmooth.sh" shipsmooth 0.3.27   # → file not found → nothing installs
 ```
 
-Flow: the hook passes `0.3.24` to
-`harness/shared/src/main/resources/install-shipsmooth.sh`, which builds the GitHub
-release URL `.../releases/download/v0.3.24/shipsmooth-0.3.24-<platform>.zip` and
-installs into `~/.cache/shipsmooth/0.3.24/`. So a remote agent fetches an **old**
-runtime build, not the latest. The literal is a hand-copied constant that drifts
-on every release.
+So in the cloud env, a marketplace user's SessionStart hook can **silently install no
+runtime at all**. The skills then shell out to a `~/.cache/shipsmooth/<v>/bin/...`
+path that was never created → every `[Local]` CLI command fails. This is the failure
+behind the user's request, and we are treating the cloud failure mode as **real**
+(decision: do not rely on `CLAUDE_PLUGIN_ROOT` in the published cloud hook).
 
-### Two independently-versioned things — don't conflate
+The empty-`CLAUDE_PLUGIN_ROOT` symptom is specifically the **SessionStart-hook** bug,
+so the failure surfaces in the cloud / `CLAUDE_CODE_REMOTE=true` environment — exactly
+the scope the user is asking about. (The published command itself has no
+`CLAUDE_CODE_REMOTE` gate, but the empty-var condition that breaks it is what the
+remote SessionStart env produces.)
 
-1. **The plugin** — `.claude/settings.json` enables `shipsmooth@bitkentech` with
-   **no version pin**, resolved against the `bitkentech/claude-plugins` marketplace.
-   Claude Code installs whatever the marketplace HEAD points at, at session start.
-   So the plugin **already** tracks "latest." Not the problem.
-2. **The Java CLI runtime** (jlink build at `~/.cache/shipsmooth/<v>/bin/shipsmooth`)
-   — downloaded by `session-start.sh`, pinned to the stale `0.3.24`. **This** is
-   the problem. The skills shell out to a *version-pinned* CLI path
-   (`~/.cache/shipsmooth/0.3.27/bin/...`), so the runtime the hook installs must
-   match the path the skills call.
+### Fix direction
 
-### Cloud-environment facts (verified against docs, 2026-06)
+The published hook command must locate `install-shipsmooth.sh` **without depending on
+`${CLAUDE_PLUGIN_ROOT}` being set**, while still using it when it *is* set (normal
+non-SessionStart contexts, and any env where the bug is fixed). The community-proven
+shape is bash parameter-expansion with a reconstructed-cache-path fallback — and the
+renderer already knows every piece of that path at stamp time (marketplace `bitkentech`,
+plugin/repo name, version):
 
-- **Cloud runs the committed repo hook, not a local cache copy.** "Cloud sessions
-  start from a fresh clone of your repository. Anything committed to the repo is
-  available; anything configured only on your machine is not." → the file that
-  executes in cloud is the repo's committed `.claude/hooks/session-start.sh` — the
-  exact `0.3.24` literal flagged above. (Confirms which file matters.)
-- **Plugins *are* installed in cloud**, at session start, from the declared
-  marketplace (needs network to the marketplace source). So the resolved plugin
-  version is determinable at runtime in cloud.
-- **Node is guaranteed in cloud** — base image ships Node 20/21/22 via nvm (+ npm,
-  jq-able tooling), also OpenJDK 21 + Gradle, Python, etc. So JSON parsing in the
-  hook is feasible *in cloud*. (But the hook is shared with non-cloud remotes, so
-  keep the bootstrap POSIX-sh and don't hard-depend on Node — the existing
-  node-free design of `install-shipsmooth.sh` stands.)
-- **`CLAUDE_PLUGIN_ROOT` self-location is unavailable here** — it is documented but
-  **not set for SessionStart hooks** (anthropics/claude-code #27145, open cluster
-  #24529/#36585/#42564), *and* the committed repo hook isn't in a version-named
-  dir anyway. So the hook cannot learn its version from its own path.
+```sh
+_R="${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/cache/bitkentech/shipsmooth/0.3.27}"; \
+  sh "$_R/hooks/install-shipsmooth.sh" shipsmooth 0.3.27
+```
 
-### Decision: match the installed plugin (not `releases/latest`)
+- When `CLAUDE_PLUGIN_ROOT` is set → unchanged behaviour.
+- When empty (cloud SessionStart) → falls back to the reconstructed absolute cache
+  path. Fully determined at render time; nothing hand-maintained.
 
-The goal is "the CLI for **exactly the plugin that's running**," not "newest release
-tag on GitHub." Those usually coincide but can skew (marketplace HEAD behind a
-fresh release, yanked plugin, release published before the manifest bumps). If the
-hook fetched `releases/latest` while CC installed an older marketplace HEAD, the
-runtime would be **newer** than the plugin calling it, and the skills' pinned CLI
-path would point at a dir the hook never created — the path mismatch just moves,
-it doesn't go away.
+This mirrors the existing **Windows** branch in `HookCommandRenderer`, which already
+hardcodes the reconstructed cache root (`%USERPROFILE%\.claude\plugins\cache\
+bitkentech\<repo>\<version>`) instead of trusting a plugin-root variable — so the
+POSIX fix brings the two branches into parity rather than inventing a new pattern.
 
-`settings.json` names the plugin (`shipsmooth@bitkentech: true`) but does **not**
-carry the resolved version — so "match the installed plugin" requires a discovery
-step. The resolved version lives in:
+### What this plan does NOT do
 
-- `~/.claude/plugins/installed_plugins.json` → `shipsmooth@bitkentech → version`
-  (authoritative; Node/jq-parseable)
-- `~/.claude/plugins/cache/bitkentech/shipsmooth/<version>/` (version is the dir name)
+- It does **not** add version discovery (`installed_plugins.json` parsing) or
+  `releases/latest` fetching. v1 proposed those to "track latest," but the published
+  artifact already stamps the matching version. Re-targeting the fetched version is a
+  separate concern and out of scope here.
+- It does **not** change the skills' pinned CLI path or the version semantics.
 
-**Recommended approach:** the hook reads the resolved plugin version from
-`installed_plugins.json` (cache-dir glob as a secondary read), fetches the matching
-CLI runtime, and installs to `~/.cache/shipsmooth/<that-version>/` — which is then
-the same path the skills already call. **`releases/latest` is the fallback only**
-(robust because it depends on nothing on disk: `/releases/latest/download/<asset>`
-resolves with HTTP 200 — verified — but the asset name embeds the version, so it
-needs either a version-less asset published at release time, or a redirect-parse of
-`/releases/latest` → `tag_name` first).
+### Verification reality
 
-### De-risk first (the one open empirical risk)
-
-Everything above is settled except one thing the docs can't confirm: **does
-`~/.claude/plugins/installed_plugins.json` exist and contain
-`shipsmooth@bitkentech`'s resolved version at the moment our SessionStart hook fires
-in the `CLAUDE_CODE_REMOTE=true` sandbox?** Cloud docs say plugins are installed at
-session start, so it's *very likely yes*, but ordering (hook-fire vs. plugin-install)
-is unverified. This gates the whole design and must be the first, highest-risk task:
-probe in a real cloud session, then branch — file present → read-and-match; absent →
-`releases/latest` fallback.
+The cloud `CLAUDE_PLUGIN_ROOT`-empty behaviour is taken as established (user-confirmed
++ documented bug cluster). The fallback is testable **without** a cloud session: a unit
+test can run the rendered command string with `CLAUDE_PLUGIN_ROOT` unset and assert it
+resolves to the reconstructed path; the renderer output is assertable in `HookCommand­
+RendererTest`. Final confirmation in a real cloud session is a nice-to-have, not a
+blocker for the code change.
 
 ### Backlog feature (Local mode — Core Invariant #3)
 
-**Feature:** *Remote/cloud sessions install the CLI runtime matching the running
-plugin.* A `CLAUDE_CODE_REMOTE=true` session must bootstrap the shipsmooth Java CLI
-at the version of the plugin that Claude Code actually installed, with no
-hand-maintained version literal. (Recorded in the `<backlog-issue>` element when the
-task XML is generated.)
-
-_Open design questions carried into the tasks:_
-- _Whether the repo's own copy of the hook (self-host / dev) needs a different
-  version source than the marketplace-installed copy, or both share discovery +
-  fallback. (Task 4 settles this.)_
-- _Whether the skills should stop pinning the CLI path (decouple) or keep pinning
-  and trust the hook to install the matching version. (Resolved: keep pinning; the
-  hook installs the matching version so the pinned path resolves — Task 3.)_
+**Feature:** *Remote/cloud SessionStart hook installs the runtime without relying on
+`CLAUDE_PLUGIN_ROOT`.* A `CLAUDE_CODE_REMOTE=true` session must successfully bootstrap
+the shipsmooth Java CLI even when Claude Code leaves `CLAUDE_PLUGIN_ROOT` empty for
+SessionStart hooks. Secondarily, the repo's own dev hook must stop hardcoding a drifted
+version literal.
 
 ## Tasks
 
-> Risk-sorted High → Low. Task 1 is the de-risk probe that gates the design;
-> Task 2 builds the version-resolution core; Task 3 wires it into the bootstrap;
-> Task 4 reconciles the repo-copy/dev hook; Task 5 removes the dead literal and
-> documents. Risk levels below are **proposed** — pending human calibration.
+> Risk-sorted High → Low. Task 1 is the core fix (published hook
+> `CLAUDE_PLUGIN_ROOT`-independence) — the highest-risk because it touches the render
+> path every host's hook flows through. Task 2 fixes the repo dev-hook version drift.
+> Task 3 documents + guards. Risk levels are **proposed** — pending human calibration.
 
-### Task 1: Probe installed_plugins.json availability in cloud [High]
+### Task 1: Make the published POSIX hook command CLAUDE_PLUGIN_ROOT-independent [High]
 
-De-risk the one fact the docs can't confirm: in a real `CLAUDE_CODE_REMOTE=true`
-cloud session, does `~/.claude/plugins/installed_plugins.json` exist and contain
-`shipsmooth@bitkentech`'s resolved version **at the moment the SessionStart hook
-fires**? Also confirm the cache-dir form
-`~/.claude/plugins/cache/bitkentech/shipsmooth/<version>/` is present. Capture the
-actual on-disk shape (the hook-fire-vs-plugin-install ordering is the risk). The
-result branches the whole design: present → read-and-match (Task 2); absent →
-`releases/latest` fallback becomes primary. Output is a recorded finding, not
-production code.
+In `HookCommandRenderer.posixCommand`, change the rendered command so it locates
+`install-shipsmooth.sh` via a `${CLAUDE_PLUGIN_ROOT:-<reconstructed-cache-path>}`
+fallback instead of a bare `${CLAUDE_PLUGIN_ROOT}`. The reconstructed path is built
+from the marketplace org (`bitkentech`), plugin/repo name, and version the renderer
+already has (mirror the existing Windows branch's `windowsCacheRoot`). Preserve exact
+behaviour when `CLAUDE_PLUGIN_ROOT` is set. Update `HookCommandRendererTest` to assert
+both branches (set → original path; unset → reconstructed path resolves). This is the
+fix for the real cloud failure.
 
-### Task 2: Version-resolution helper (read installed plugin, fallback to latest) [High]
+### Task 2: Fix the repo dev-hook version drift [Medium]
 
 *Depends-on: 1*
 
-A POSIX-sh resolver that returns the version string to install: first read it from
-`installed_plugins.json` (Node/jq parse — Node is guaranteed in cloud); on
-absence/parse-failure, fall back to resolving GitHub `releases/latest` (redirect
-→ `tag_name`, or a version-less asset). Must degrade safely and emit only to stderr
-for logs (info to stdout per repo convention). This is the core logic — prove it
-against the real file shape from Task 1.
+`.claude/hooks/session-start.sh` hardcodes `PLUGIN_VERSION="0.3.24"` (drifted from the
+repo's 0.3.29). This hook is **gated to `CLAUDE_CODE_REMOTE=true`** (it `exit 0`s
+otherwise), so the fix only affects remote/cloud sessions on this repo — preserve that
+guard exactly. Make the committed dev hook derive its version from the build's single
+source of truth (`gradle.properties → plugin.version`) instead of a hand-typed literal,
+so the self-host/dev cloud path installs the version matching the checked-out tree. The
+dev hook already locates its installer via `$REPO_ROOT` (no `CLAUDE_PLUGIN_ROOT`
+dependency), so this task is version-only.
 
-### Task 3: Wire resolver into the bootstrap + match the skill's pinned path [Medium]
+### Task 3: Document the fallback + guard against regressing to bare CLAUDE_PLUGIN_ROOT [Low]
 
 *Depends-on: 2*
 
-Replace `install-shipsmooth.sh`'s reliance on a passed-in pinned version with the
-resolver's output, installing to `~/.cache/shipsmooth/<resolved>/` — the same path
-the skills already call (keep skill pinning; the hook installs the matching version
-so the pinned path resolves). Preserve the existing node-free download/unzip/atomic-mv
-and the `SS_URL_BASE` test override. Confirm the "already installed" short-circuit
-still works per resolved version.
-
-### Task 4: Reconcile the committed repo hook (session-start.sh) [Medium]
-
-*Depends-on: 3*
-
-`session-start.sh` currently passes a hardcoded `PLUGIN_VERSION`. Decide and
-implement how the committed repo copy (which runs in cloud and self-host, and is
-**not** in a version-named dir) obtains the version: route it through the Task 2
-resolver rather than a literal. Ensure the dev/self-host path still works when there
-is no marketplace install (resolver falls back cleanly).
-
-### Task 5: Remove the dead literal, add drift guard, document [Low]
-
-*Depends-on: 4*
-
-Delete the `PLUGIN_VERSION="0.3.24"` literal and any now-dead pinned-version plumbing.
-Add a guard/test that fails if a hand-maintained version constant reappears in the
-hook path. Update DEVELOPMENT.md / relevant docs to describe the new
-resolve-from-installed-plugin behaviour and the `releases/latest` fallback.
+Document (DEVELOPMENT.md / the renderer's javadoc) that the POSIX SessionStart command
+must never use a bare `${CLAUDE_PLUGIN_ROOT}` because Claude Code leaves it empty for
+SessionStart hooks (link the issue cluster). Add a guard — a renderer test or a simple
+check — that fails if the rendered POSIX command contains `${CLAUDE_PLUGIN_ROOT}`
+without the `:-` fallback, so the regression can't silently return.
