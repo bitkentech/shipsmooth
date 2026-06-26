@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>92</plan>
+    <plan-version>plan-92-v1</plan-version>
+    <metadata>
+        <backlog-issue>Remote/cloud sessions install the CLI runtime matching the running plugin (no hand-maintained version literal). See plan-92.md Context.</backlog-issue>
+        <status>complete</status>
+        <created>2026-06-26</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>abandoned</status>
+            <name>Probe installed_plugins.json availability in cloud</name>
+            <commit></commit>
+            <created-from>plan-92-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-26T17:06:26.381+05:30</timestamp>
+                    <message>v1 task set (version-drift / installed_plugins.json discovery / releases-latest) abandoned: tracing showed the published plugin already render-stamps the matching version. Real bug repointed in v2 to CLAUDE_PLUGIN_ROOT-empty in cloud SessionStart hooks. Superseded by v2 tasks.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>abandoned</status>
+            <name>Version-resolution helper (read installed plugin, fallback to latest)</name>
+            <commit></commit>
+            <created-from>plan-92-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>abandoned</status>
+            <name>Wire resolver into the bootstrap + match the skill's pinned path</name>
+            <commit></commit>
+            <created-from>plan-92-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>abandoned</status>
+            <name>Reconcile the committed repo hook (session-start.sh)</name>
+            <commit></commit>
+            <created-from>plan-92-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>abandoned</status>
+            <name>Remove the dead literal, add drift guard, document</name>
+            <commit></commit>
+            <created-from>plan-92-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Make the published POSIX hook command CLAUDE_PLUGIN_ROOT-independent</name>
+            <commit>5a34818aea5f085bb6c4fbe04917b71e907c4b81</commit>
+            <created-from>plan-92-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Fix the repo dev-hook version drift</name>
+            <commit>bb3ef65f821dbfb1c829614e342eb999ed547101</commit>
+            <created-from>plan-92-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>6</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Document the fallback + guard against regressing to bare CLAUDE_PLUGIN_ROOT</name>
+            <commit>78935403edd36d1b00908faccc13bd67c78c0e7a</commit>
+            <created-from>plan-92-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>7</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-26T12:08:07.838+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-26T19:11:26.203+05:30</timestamp>
+            <message>Plan complete. Published Claude SessionStart hook hardened against empty CLAUDE_PLUGIN_ROOT in remote env (verified); dev-hook version drift fixed; regression guard added. Tasks 6/7/8 closed; v1 tasks abandoned.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

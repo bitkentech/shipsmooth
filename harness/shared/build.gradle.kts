@@ -174,8 +174,15 @@ fun claudeSpec(env: BuildEnv) = baseSpec(env).copy(
     buildPlatform = "claude",
     // Claude: no skill frontmatter; bare "start" basename (both from base).
     outputDir = variantOutputDir("claude", env),
+    // PROD: Claude Code leaves ${CLAUDE_PLUGIN_ROOT} EMPTY for SessionStart hooks
+    // (anthropics/claude-code #27145 et al.), so a bare ${CLAUDE_PLUGIN_ROOT} expands
+    // to "/hooks/install-shipsmooth.sh" in the cloud/remote env and installs nothing.
+    // Use a ${VAR:-fallback} that reconstructs the install path from the known
+    // marketplace/plugin/version when the var is unset — mirroring the Windows branch
+    // (HookCommandRenderer.windowsCacheRoot), which already hardcodes the cache root
+    // rather than trusting a plugin-root variable.
     pluginHookCommand = if (env == BuildEnv.PROD)
-        "sh \"\${CLAUDE_PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion"
+        "sh \"\${CLAUDE_PLUGIN_ROOT:-\$HOME/.claude/plugins/cache/bitkentech/shipsmooth/$pluginVersion}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion"
     else "node \"\${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"",
 )
 
@@ -276,6 +283,28 @@ val renderGeminiProd = registerRender("renderGeminiProd", geminiProdSpec)
 val renderCodexProd = registerRender("renderCodexProd", codexProdSpec)
 val renderOpencodeProd = registerRender("renderOpencodeProd", opencodeProdSpec)
 val renderWindows = registerRender("renderWindows", windowsSpec)
+
+// Guard the cloud-SessionStart fix (plan-92): Claude Code leaves ${CLAUDE_PLUGIN_ROOT}
+// empty for SessionStart hooks (anthropics/claude-code #27145), so the published
+// claude-prod hooks.json must never reference a *bare* ${CLAUDE_PLUGIN_ROOT} — only
+// the ${CLAUDE_PLUGIN_ROOT:-<fallback>} form. Fail the build if the fallback regresses.
+val verifyClaudeHookFallback by tasks.registering {
+    description = "Fail if claude-prod hooks.json uses a bare \${CLAUDE_PLUGIN_ROOT} (no :- fallback)."
+    group = "verification"
+    dependsOn(renderClaudeProd)
+    val hooksJson = layout.buildDirectory.file("render/claude-prod/hooks/hooks.json")
+    inputs.file(hooksJson)
+    doLast {
+        val text = hooksJson.get().asFile.readText()
+        if (text.contains("\${CLAUDE_PLUGIN_ROOT}")) {
+            throw GradleException(
+                "claude-prod hooks.json contains a bare \${CLAUDE_PLUGIN_ROOT} — it expands empty for " +
+                "SessionStart hooks in the cloud env and installs nothing. Use \${CLAUDE_PLUGIN_ROOT:-<fallback>} " +
+                "(see claudeSpec in harness/shared/build.gradle.kts, plan-92).")
+        }
+    }
+}
+tasks.named("check") { dependsOn(verifyClaudeHookFallback) }
 
 // ---------------------------------------------------------------------------
 // Payload JS/TS copies — populate the plugin payload (not the jlink runtime).
