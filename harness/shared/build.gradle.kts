@@ -284,6 +284,28 @@ val renderCodexProd = registerRender("renderCodexProd", codexProdSpec)
 val renderOpencodeProd = registerRender("renderOpencodeProd", opencodeProdSpec)
 val renderWindows = registerRender("renderWindows", windowsSpec)
 
+// Guard the cloud-SessionStart fix (plan-92): Claude Code leaves ${CLAUDE_PLUGIN_ROOT}
+// empty for SessionStart hooks (anthropics/claude-code #27145), so the published
+// claude-prod hooks.json must never reference a *bare* ${CLAUDE_PLUGIN_ROOT} — only
+// the ${CLAUDE_PLUGIN_ROOT:-<fallback>} form. Fail the build if the fallback regresses.
+val verifyClaudeHookFallback by tasks.registering {
+    description = "Fail if claude-prod hooks.json uses a bare \${CLAUDE_PLUGIN_ROOT} (no :- fallback)."
+    group = "verification"
+    dependsOn(renderClaudeProd)
+    val hooksJson = layout.buildDirectory.file("render/claude-prod/hooks/hooks.json")
+    inputs.file(hooksJson)
+    doLast {
+        val text = hooksJson.get().asFile.readText()
+        if (text.contains("\${CLAUDE_PLUGIN_ROOT}")) {
+            throw GradleException(
+                "claude-prod hooks.json contains a bare \${CLAUDE_PLUGIN_ROOT} — it expands empty for " +
+                "SessionStart hooks in the cloud env and installs nothing. Use \${CLAUDE_PLUGIN_ROOT:-<fallback>} " +
+                "(see claudeSpec in harness/shared/build.gradle.kts, plan-92).")
+        }
+    }
+}
+tasks.named("check") { dependsOn(verifyClaudeHookFallback) }
+
 // ---------------------------------------------------------------------------
 // Payload JS/TS copies — populate the plugin payload (not the jlink runtime).
 // Source trees are local to this module (scripts/dist).

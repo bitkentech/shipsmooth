@@ -93,6 +93,13 @@ Toggle `enabledPlugins` in `~/.claude/settings.json`:
 ## Notes
 - Restart Claude after each `./gradlew assembleClaudeDev` run to pick up changes
 - `build-claude-dev/` is gitignored — it is always a local, derived artifact
+- The Claude **prod** SessionStart hook command (in `claudeSpec`, `harness/shared/build.gradle.kts`)
+  must use `${CLAUDE_PLUGIN_ROOT:-<fallback>}`, never a bare `${CLAUDE_PLUGIN_ROOT}`.
+  Claude Code leaves that variable **empty for SessionStart hooks**
+  ([anthropics/claude-code#27145](https://github.com/anthropics/claude-code/issues/27145)),
+  so a bare reference expands to `/hooks/install-shipsmooth.sh` in the cloud/remote env
+  and installs nothing. The `verifyClaudeHookFallback` check task fails the build if this
+  regresses.
 
 ## Gemini CLI development
 
