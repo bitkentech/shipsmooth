@@ -174,8 +174,15 @@ fun claudeSpec(env: BuildEnv) = baseSpec(env).copy(
     buildPlatform = "claude",
     // Claude: no skill frontmatter; bare "start" basename (both from base).
     outputDir = variantOutputDir("claude", env),
+    // PROD: Claude Code leaves ${CLAUDE_PLUGIN_ROOT} EMPTY for SessionStart hooks
+    // (anthropics/claude-code #27145 et al.), so a bare ${CLAUDE_PLUGIN_ROOT} expands
+    // to "/hooks/install-shipsmooth.sh" in the cloud/remote env and installs nothing.
+    // Use a ${VAR:-fallback} that reconstructs the install path from the known
+    // marketplace/plugin/version when the var is unset — mirroring the Windows branch
+    // (HookCommandRenderer.windowsCacheRoot), which already hardcodes the cache root
+    // rather than trusting a plugin-root variable.
     pluginHookCommand = if (env == BuildEnv.PROD)
-        "sh \"\${CLAUDE_PLUGIN_ROOT}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion"
+        "sh \"\${CLAUDE_PLUGIN_ROOT:-\$HOME/.claude/plugins/cache/bitkentech/shipsmooth/$pluginVersion}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion"
     else "node \"\${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"",
 )
 
