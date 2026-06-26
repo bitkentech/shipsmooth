@@ -11,18 +11,24 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>abandoned</status>
             <name>Probe installed_plugins.json availability in cloud</name>
             <commit></commit>
             <created-from>plan-92-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-06-26T17:06:26.381+05:30</timestamp>
+                    <message>v1 task set (version-drift / installed_plugins.json discovery / releases-latest) abandoned: tracing showed the published plugin already render-stamps the matching version. Real bug repointed in v2 to CLAUDE_PLUGIN_ROOT-empty in cloud SessionStart hooks. Superseded by v2 tasks.</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>abandoned</status>
             <name>Version-resolution helper (read installed plugin, fallback to latest)</name>
             <commit></commit>
             <created-from>plan-92-v1</created-from>
@@ -34,7 +40,7 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>abandoned</status>
             <name>Wire resolver into the bootstrap + match the skill's pinned path</name>
             <commit></commit>
             <created-from>plan-92-v1</created-from>
@@ -46,7 +52,7 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>abandoned</status>
             <name>Reconcile the committed repo hook (session-start.sh)</name>
             <commit></commit>
             <created-from>plan-92-v1</created-from>
@@ -58,7 +64,7 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>abandoned</status>
             <name>Remove the dead literal, add drift guard, document</name>
             <commit></commit>
             <created-from>plan-92-v1</created-from>
@@ -66,6 +72,41 @@
             <comments/>
             <deviations/>
             <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Make the published POSIX hook command CLAUDE_PLUGIN_ROOT-independent</name>
+            <commit></commit>
+            <created-from>plan-92-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Fix the repo dev-hook version drift</name>
+            <commit></commit>
+            <created-from>plan-92-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>6</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Document the fallback + guard against regressing to bare CLAUDE_PLUGIN_ROOT</name>
+            <commit></commit>
+            <created-from>plan-92-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>7</depends-on>
         </task>
     </tasks>
     <project-updates>
