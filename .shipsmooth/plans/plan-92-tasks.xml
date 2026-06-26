@@ -4,7 +4,7 @@
     <plan-version>plan-92-v1</plan-version>
     <metadata>
         <backlog-issue>Remote/cloud sessions install the CLI runtime matching the running plugin (no hand-maintained version literal). See plan-92.md Context.</backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-26</created>
     </metadata>
     <tasks>
@@ -76,9 +76,9 @@
         <task>
             <id>6</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Make the published POSIX hook command CLAUDE_PLUGIN_ROOT-independent</name>
-            <commit></commit>
+            <commit>5a34818aea5f085bb6c4fbe04917b71e907c4b81</commit>
             <created-from>plan-92-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -87,9 +87,9 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Fix the repo dev-hook version drift</name>
-            <commit></commit>
+            <commit>bb3ef65f821dbfb1c829614e342eb999ed547101</commit>
             <created-from>plan-92-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -99,9 +99,9 @@
         <task>
             <id>8</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Document the fallback + guard against regressing to bare CLAUDE_PLUGIN_ROOT</name>
-            <commit></commit>
+            <commit>78935403edd36d1b00908faccc13bd67c78c0e7a</commit>
             <created-from>plan-92-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -113,6 +113,11 @@
         <update>
             <timestamp>2026-06-26T12:08:07.838+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-26T19:11:26.203+05:30</timestamp>
+            <message>Plan complete. Published Claude SessionStart hook hardened against empty CLAUDE_PLUGIN_ROOT in remote env (verified); dev-hook version drift fixed; regression guard added. Tasks 6/7/8 closed; v1 tasks abandoned.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
