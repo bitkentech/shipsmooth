@@ -1,0 +1,34 @@
+# shipsmooth.tosd — TOML Schema for shipsmooth.toml
+#
+# shipsmooth.toml is the user-level configuration file for the shipsmooth
+# agent coding workflow tool.  It stores zero or more project entries under
+# a [[projects]] array-of-tables header.
+#
+# TOML Schema spec: https://github.com/brunoborges/toml-schema
+
+[toml-schema]
+version = "1.0.0"
+
+[toml-schema.meta]
+title = "Shipsmooth Configuration"
+description = "Schema for shipsmooth.toml — the user-level configuration file for the shipsmooth agent coding workflow tool."
+source = "https://github.com/brunoborges/toml-schema"
+
+# ── Elements ────────────────────────────────────────────────────────
+
+[elements.projects]
+type="array"
+arraytype="table"
+optional=true
+    [elements.projects.remoteUrl]
+    type="string"
+    optional=true
+    [elements.projects.localPath]
+    type="string"
+    [elements.projects.stateDir]
+    type="string"
+    optional=true
+    [elements.projects.mode]
+    type="string"
+    allowedvalues=["in-repo", "external"]
+    optional=true
