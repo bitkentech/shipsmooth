@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>92</plan>
+    <plan-version>plan-92-v1</plan-version>
+    <metadata>
+        <backlog-issue>Remote/cloud sessions install the CLI runtime matching the running plugin (no hand-maintained version literal). See plan-92.md Context.</backlog-issue>
+        <status>active</status>
+        <created>2026-06-26</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Probe installed_plugins.json availability in cloud</name>
+            <commit></commit>
+            <created-from>plan-92-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Version-resolution helper (read installed plugin, fallback to latest)</name>
+            <commit></commit>
+            <created-from>plan-92-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Wire resolver into the bootstrap + match the skill's pinned path</name>
+            <commit></commit>
+            <created-from>plan-92-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Reconcile the committed repo hook (session-start.sh)</name>
+            <commit></commit>
+            <created-from>plan-92-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Remove the dead literal, add drift guard, document</name>
+            <commit></commit>
+            <created-from>plan-92-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-26T12:08:07.838+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
