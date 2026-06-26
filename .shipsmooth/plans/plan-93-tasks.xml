@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>93</plan>
+    <plan-version>plan-93-v1</plan-version>
+    <metadata>
+        <backlog-issue>PB-365 — Rename config/CLI terms: stateStoreType + local/external; --type not --choice</backlog-issue>
+        <status>active</status>
+        <created>2026-06-26</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Map all UX surfaces, decide implications</name>
+            <commit></commit>
+            <created-from>plan-93-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Back-compat read path for old config (mode/in-repo)</name>
+            <commit></commit>
+            <created-from>plan-93-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Rename the config key/value on the write side</name>
+            <commit></commit>
+            <created-from>plan-93-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Rename the `store init` flag --choice → --type</name>
+            <commit></commit>
+            <created-from>plan-93-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Align the store-info JSON field + skill prose</name>
+            <commit></commit>
+            <created-from>plan-93-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3,4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Schema + release notes</name>
+            <commit></commit>
+            <created-from>plan-93-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-26T21:35:48.813+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
