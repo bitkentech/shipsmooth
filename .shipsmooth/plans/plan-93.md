@@ -70,16 +70,49 @@ on the next config write is sufficient to migrate users forward silently.
 Before any code: enumerate every surface the rename touches and **decide** each, producing
 a short decision record in this plan file. Inputs already gathered (see Context):
 config key/value, `--choice` flag, the `store info --json` `mode` field that the skill
-reads, schema, and skill prose. Decisions to settle:
-- **JSON `mode` field** — rename to `stateStoreType`+`local` (recommended, one vocabulary)
-  or leave as `mode` (smaller blast radius, but config/JSON disagree).
-- **Old-value alias** — accept `in-repo` as an alias on `--type` indefinitely, or only read
-  it from existing config files (not the flag).
-- **Back-compat horizon** — read old `mode`/`in-repo` forever, or plan a future drop.
-- **Migration posture** — silent upgrade-on-next-write only (no migration command), confirm.
-- **User-facing vocabulary** — confirm `local`/`external` is the final pairing across CLI
-  help, JSON, config, schema, and skill prose.
-Output is the decision record; no production code. Gates Tasks 2–6.
+reads, schema, and skill prose.
+
+**Evaluate and fix the four user-facing surfaces, in decreasing order of importance:**
+
+1. **User-facing explanations and docs** — the words a human reads about how state works:
+   release notes, `store info` human-text output, any prose that *explains* the vocabulary
+   (`local`/`external`). The terminology must be coherent and correct here first; this is
+   what users actually learn from.
+2. **Config file** (`shipsmooth.toml` on disk) — the `mode` key and `in-repo`/`external`
+   values the user (or their agent) reads and edits, plus the back-compat read of old files.
+3. **Skill file** — the rendered SKILL.md prose and example commands the agent executes
+   (`first-run-handshake`, `phase2-execute`, `commit-message-convention`), and the
+   `store info --json` `mode` field / `needs-decision` `choice` token the skill consumes.
+4. **CLI flag** — `store init --choice` → `--type`, its `paramLabel`, description, error
+   strings, and accepted values.
+
+**Decision record (settled — these gate Tasks 2–6):**
+
+- **JSON `mode` field → DECIDED: rename to `stateStoreType` + `local`.** One coherent
+  vocabulary across config, CLI, JSON, schema, docs. Cost is only keeping skill + CLI in
+  lockstep (Task 5) — they ship together, so the contract moves atomically; the JSON has no
+  on-disk back-compat burden (regenerated each run). Decisive factor: the `needs-decision`
+  `choice` token and the `--type` flag value are a closed loop the skill round-trips, so the
+  flag rename already moves a `local` string into the JSON; leaving `ready.mode` as `in-repo`
+  would emit `mode:"in-repo"` next to `choice:"local"` in the same output — incoherent. Both
+  JSON `local` strings (the `ready.mode` field and the `needs-decision.choice` token) move
+  together.
+- **Old-value alias → DECIDED: config-file read only, not the `--type` flag.** Back-compat
+  reading accepts the old `in-repo` value in existing `shipsmooth.toml` files. The new
+  `--type` flag accepts only the new values (`local | external | recreate`). The flag is
+  newly renamed, so no user depends on `in-repo` there; keeping the CLI surface clean avoids
+  carrying the old vocabulary forward where there is no back-compat obligation.
+- **Back-compat horizon → DECIDED: read the old `mode`/`in-repo` form indefinitely.** New
+  writes use `stateStoreType`/`local`; files silently upgrade on next write. No future
+  breaking drop is planned — a forgiving read mirrors the `.agents → .shipsmooth` posture
+  without stranding any user.
+- **Migration posture → CONFIRMED: silent upgrade-on-next-write only.** No migration command
+  or rewrite-everything tool; writing the new form on the next config write is sufficient to
+  migrate users forward.
+- **User-facing vocabulary → CONFIRMED: `local` / `external` is the final pairing** across
+  CLI help, JSON, config, schema, and skill prose.
+
+Output is the decision record above; no production code. Gates Tasks 2–6.
 
 ### Task 2: Back-compat read path for old config (mode/in-repo) [High]
 
