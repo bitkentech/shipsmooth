@@ -1,43 +1,42 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>93</plan>
-    <plan-version>plan-93-v1</plan-version>
+    <plan-version>plan-93-v3</plan-version>
     <metadata>
-        <backlog-issue>PB-365 — Rename config/CLI terms: stateStoreType + local/external; --type not --choice</backlog-issue>
+        <backlog-issue>PB-365 — Rename config/CLI terms: storageType + embedded/filesystem; storageRoot; --type not --choice</backlog-issue>
         <status>active</status>
-        <created>2026-06-26</created>
+        <created>2026-06-27</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>pending</status>
-            <name>Map all UX surfaces, decide implications</name>
+            <status>closed</status>
+            <name>Map all UX surfaces, decide vocabulary + implications</name>
             <commit></commit>
-            <created-from>plan-93-v1</created-from>
+            <created-from>plan-93-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
         </task>
         <task>
             <id>2</id>
-            <risk>high</risk>
+            <risk>medium</risk>
             <status>pending</status>
-            <name>Back-compat read path for old config (mode/in-repo)</name>
+            <name>Rename the config keys/values across model, writer, and resolver</name>
             <commit></commit>
-            <created-from>plan-93-v1</created-from>
+            <created-from>plan-93-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>1</depends-on>
         </task>
         <task>
             <id>3</id>
             <risk>medium</risk>
             <status>pending</status>
-            <name>Rename the config key/value on the write side</name>
+            <name>Rename the `store init` flag --choice → --type</name>
             <commit></commit>
-            <created-from>plan-93-v1</created-from>
+            <created-from>plan-93-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -47,43 +46,36 @@
             <id>4</id>
             <risk>medium</risk>
             <status>pending</status>
-            <name>Rename the `store init` flag --choice → --type</name>
+            <name>Align the store-info JSON field + skill prose</name>
             <commit></commit>
-            <created-from>plan-93-v1</created-from>
+            <created-from>plan-93-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>2</depends-on>
+            <depends-on>2,3</depends-on>
         </task>
         <task>
             <id>5</id>
-            <risk>medium</risk>
-            <status>pending</status>
-            <name>Align the store-info JSON field + skill prose</name>
-            <commit></commit>
-            <created-from>plan-93-v1</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-            <depends-on>3,4</depends-on>
-        </task>
-        <task>
-            <id>6</id>
             <risk>low</risk>
             <status>pending</status>
             <name>Schema + release notes</name>
             <commit></commit>
-            <created-from>plan-93-v1</created-from>
+            <created-from>plan-93-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>5</depends-on>
+            <depends-on>4</depends-on>
         </task>
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-06-26T21:35:48.813+05:30</timestamp>
+            <timestamp>2026-06-27T12:41:00.205+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-27T14:04:19.322+05:30</timestamp>
+            <message>v4: dropped back-compat (no users) — removed High-risk Task 2 (old-config read path). Remaining work is a mechanical 3-token rename (storageType/embedded/filesystem/storageRoot/--type). Reader reads new keys only; release notes plain (not breaking). 5 tasks; Task 1 closed.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
