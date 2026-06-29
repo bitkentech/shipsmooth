@@ -2,7 +2,7 @@
 @param PluginModel model
 ## Phase 2 — Execute
 
-**Session-resume pre-flight `[Local]`** — If you are picking up a plan that was started in a previous session, run this before doing anything else:
+**Session-resume pre-flight** — If you are picking up a plan that was started in a previous session, run this before doing anything else:
 
 ```bash
 ${model.cliBin()} plan resume --plan {N}
@@ -11,7 +11,7 @@ ${model.cliBin()} plan resume --plan {N}
 
 Only proceed once you know which tasks are done and which are next.
 
-**Where the plan files live `[Local]`** — Do not assume plan narratives are under
+**Where the plan files live** — Do not assume plan narratives are under
 `.shipsmooth/plans/` in the project repo. In **separate-dir** mode (the default) the project
 repo stays untouched and the plan files live in a separate state directory. Ask the CLI
 where to read them — it is the source of truth — rather than guessing:
@@ -44,7 +44,7 @@ All task commits go on this branch. The `t/` prefix stands for "task". Usernames
 ### Preamble: integration tests (once, before any task)
 
 1. Write 1–2 integration tests that exercise the feature end-to-end. No more than two.
-2. Commit and push them with no implementation — they must fail (red). Word the commit message per the **commit-message convention** above (in standalone mode, no `plan(N)`/`task(N)` reference — this is a project-repo commit too). `[Linear]` Reference the Linear project in the commit message.
+2. Commit and push them with no implementation — they must fail (red). Word the commit message per the **commit-message convention** above (in standalone mode, no `plan(N)`/`task(N)` reference — this is a project-repo commit too).
 3. Confirm red state:
    ```bash
    # run your project's test command, e.g.:
@@ -64,8 +64,7 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
 Core Invariant #6).
 - Implement just enough to prove the approach works. Focus on the core complexity.
 - Commit per the **commit-message convention**: `draft(N): de-risk [task name]` in same-repo storage; in standalone (separate-dir) storage a plain feature message with no `draft(N)`/`task(N)` reference.
-- `[Linear]` Post a comment on the Linear issue notifying the human the draft is ready.
-- `[Local]` Run `${model.cliBin()} task status --plan {N} --task {id} --status de-risked` and `${model.cliBin()} task comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
+- Run `${model.cliBin()} task status --plan {N} --task {id} --status de-risked` and `${model.cliBin()} task comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
 - **Wait for explicit approval of the approach.**
 
 ##### Step B: Hardening (Quality Phase)
@@ -86,7 +85,6 @@ quality conforms to its instructions):
   git push origin t/{issue-id}-{short-description}
   ```
   This creates a stable rollback point. A human reviewing the PR can check out this commit to inspect each task in isolation.
-- `[Linear]` Mark the Linear issue **Agent Coded**.
 @if(model.isCodex())
 @template.shared.workflow.codex.set-commit-hardening(model = model)
 @elseif(model.isGemini())
@@ -110,7 +108,7 @@ quality conforms to its instructions):
    git commit -m "task(N): <short description>"   # same-repo storage; standalone (separate-dir): plain feature message
    git push origin t/{issue-id}-{short-description}
    ```
-   - `[Linear]` Mark the Linear issue **Agent Coded**. No draft review needed.
+   - No draft review needed.
 @if(model.isCodex())
 @template.shared.workflow.codex.set-commit-low-risk(model = model)
 @elseif(model.isGemini())
@@ -122,11 +120,9 @@ quality conforms to its instructions):
 ---
 
 - **Minor deviation** (task split, reorder, clarification):
-  - `[Linear]` Update the Linear issue(s), add a deviation comment explaining why, continue.
-  - `[Local]` Run `${model.cliBin()} task deviation --plan {N} --task {id} --type minor --message "..."`, continue.
+  - Run `${model.cliBin()} task deviation --plan {N} --task {id} --type minor --message "..."`, continue.
 - **Major deviation** (fundamental plan problem, architecture issue, blocked): Stop immediately.
-  - `[Linear]` Post a Linear project update. Set project health to **"At Risk"**.
-  - `[Local]` Run `${model.cliBin()} plan update --plan {N} --blocked --message "..."`.
+  - Run `${model.cliBin()} plan update --plan {N} --blocked --message "..."`.
   - Wait for the human to revise the plan file, commit, push, and give a new go-ahead.
 
 Never autonomously modify the `.shipsmooth/plans/` file during execution. If a plan change is needed, surface it and wait.

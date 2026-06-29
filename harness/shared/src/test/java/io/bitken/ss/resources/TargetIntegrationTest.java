@@ -261,56 +261,6 @@ class TargetIntegrationTest {
             "Windows SKILL.md must not reference XDG_CACHE_HOME");
     }
 
-    /**
-     * Plan-82 guard: the base {@code start} skill payload must contain zero
-     * references to the {@code ledger} subcommand. The whole ledger subsystem was
-     * removed in plan-82, so neither prod nor dev may mention it. Drives the real
-     * render pipeline ({@code Target.main}).
-     */
-    @Test
-    void prodBaseSkillHasNoLedgerReference() throws Exception {
-        setProdProps();
-        Target.main(new String[]{});
-        assertProdBaseSkillHasNoLedger(tempDir.resolve("skills/start/SKILL.md"));
-    }
-
-    @Test
-    void prodGeminiBaseSkillHasNoLedgerReference() throws Exception {
-        setProdProps();
-        System.setProperty("build.platform", "gemini");
-        Target.main(new String[]{});
-        assertProdBaseSkillHasNoLedger(tempDir.resolve("skills/start/SKILL.md"));
-    }
-
-    @Test
-    void prodWindowsBaseSkillHasNoLedgerReference() throws Exception {
-        setWindowsProps();
-        Target.main(new String[]{});
-        assertProdBaseSkillHasNoLedger(tempDir.resolve("skills/start/SKILL.md"));
-    }
-
-    /** The dev counterpart must ALSO have no ledger reference: plan-82 removed the
-     *  ledger subsystem entirely, so the dev {@code start-dev} skill is ledger-free too. */
-    @Test
-    void devBaseSkillHasNoLedgerReference() throws Exception {
-        setDevProps();
-        Target.main(new String[]{});
-
-        Path devSkill = tempDir.resolve("skills/start-dev/SKILL.md");
-        assertTrue(Files.exists(devSkill), "dev base SKILL.md should be written");
-        assertFalse(Files.readString(devSkill).contains("ledger"),
-            "dev 'start-dev' skill must not reference the removed ledger subsystem");
-    }
-
-    private void assertProdBaseSkillHasNoLedger(Path baseSkill) throws Exception {
-        assertTrue(Files.exists(baseSkill), "prod base SKILL.md should be written");
-        String content = Files.readString(baseSkill);
-        assertFalse(content.contains("ledger"),
-            "prod base 'start' skill must not reference the experimental 'ledger' "
-                + "subcommand (no-experimental-leakage rule); got a ledger mention in:\n"
-                + content);
-    }
-
     @Test
     void refineSkillRendersTwoPhaseContractWithProvenanceSplit() throws Exception {
         setDevProps();

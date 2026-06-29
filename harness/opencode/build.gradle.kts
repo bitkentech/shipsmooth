@@ -22,7 +22,7 @@ plugins {
 val pluginBaseName = (findProperty("plugin.base.name") as String?) ?: "shipsmooth"
 val pluginVersion = (findProperty("plugin.version") as String?) ?: "0.3.25"
 val prodDescription = "Agent coding workflow with plan-before-implement discipline, " +
-    "TDD, vertical slices, Linear integration, and immutable git-based plan versioning."
+    "TDD, vertical slices, and immutable git-based plan versioning."
 
 // These feed ONLY the npm package.json `name` (decoupled from the in-OpenCode
 // command/skill identity, which comes from the render pipeline's pluginName via

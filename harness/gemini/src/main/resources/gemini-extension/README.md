@@ -10,7 +10,7 @@ The workflow borrows ideas from the [Spiral Model](https://en.wikipedia.org/wiki
 - **Risk-first ordering and vertical slices.** Planned tasks are ranked as High, Medium, or Low risk. High-risk tasks are tackled first so that you can validate important assumptions and fail fast. As far as possible, the tasks will represent vertical slices of functionality. Git commits are created as progress is made.
 - **Code quality and test coverage.** These are increased only after the approach is proven and a basic implementation is ready.
 - **Pause and resume.** Plan files and task state live in git, so you can stop your development session and restart from exactly where you left off.
-- **Local task tracking.** Task management is via text files checked in alongside the plan (`.agents/plans/plan-{N}-tasks.xml`). No external services required (but [Linear](https://linear.app) integration is currently available).
+- **Local task tracking.** Task management is via text files checked in alongside the plan (`.agents/plans/plan-{N}-tasks.xml`). No external services required.
 
 ## Installation
 
