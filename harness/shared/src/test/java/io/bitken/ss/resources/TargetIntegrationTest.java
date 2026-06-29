@@ -311,6 +311,48 @@ class TargetIntegrationTest {
                 + content);
     }
 
+    /**
+     * Plan-94 guard: the base {@code start} skill payload must contain zero
+     * references to Linear. Linear task-tracking was a half-baked legacy feature;
+     * plan-94 removed it and collapsed the dual {@code [Linear]}/{@code [Local]}
+     * mode design into a single unmarked workflow. Neither prod nor dev may mention
+     * it. Drives the real render pipeline ({@code Target.main}).
+     */
+    @Test
+    void prodBaseSkillHasNoLinearReference() throws Exception {
+        setProdProps();
+        Target.main(new String[]{});
+        assertProdBaseSkillHasNoLinear(tempDir.resolve("skills/start/SKILL.md"));
+    }
+
+    @Test
+    void prodGeminiBaseSkillHasNoLinearReference() throws Exception {
+        setProdProps();
+        System.setProperty("build.platform", "gemini");
+        Target.main(new String[]{});
+        assertProdBaseSkillHasNoLinear(tempDir.resolve("skills/start/SKILL.md"));
+    }
+
+    @Test
+    void devBaseSkillHasNoLinearReference() throws Exception {
+        setDevProps();
+        Target.main(new String[]{});
+
+        Path devSkill = tempDir.resolve("skills/start-dev/SKILL.md");
+        assertTrue(Files.exists(devSkill), "dev base SKILL.md should be written");
+        assertFalse(Files.readString(devSkill).contains("Linear"),
+            "dev 'start-dev' skill must not reference the removed Linear task-tracking feature");
+    }
+
+    private void assertProdBaseSkillHasNoLinear(Path baseSkill) throws Exception {
+        assertTrue(Files.exists(baseSkill), "prod base SKILL.md should be written");
+        String content = Files.readString(baseSkill);
+        assertFalse(content.contains("Linear"),
+            "prod base 'start' skill must not reference the removed Linear task-tracking "
+                + "feature (plan-94 removed it and collapsed dual-mode); got a Linear mention in:\n"
+                + content);
+    }
+
     @Test
     void refineSkillRendersTwoPhaseContractWithProvenanceSplit() throws Exception {
         setDevProps();
