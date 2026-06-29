@@ -4,16 +4,16 @@
     <plan-version>plan-95-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-29</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Replace the false Lefthook comment with the manual tagging step</name>
-            <commit></commit>
+            <commit>d9326232f7f19c7343a525afef2bdbfc81607f51</commit>
             <created-from>plan-95-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -24,6 +24,11 @@
         <update>
             <timestamp>2026-06-29T21:48:14.471+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-29T21:56:02.066+05:30</timestamp>
+            <message>Plan complete. Removed last stale Lefthook auto-tag reference from phase1-plan.jte.md; completes b3715ae's manual-tagging migration.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
