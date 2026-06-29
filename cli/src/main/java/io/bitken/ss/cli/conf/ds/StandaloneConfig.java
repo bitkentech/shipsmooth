@@ -36,8 +36,8 @@ public final class StandaloneConfig {
     public static final class ProjectEntry {
         private String remoteUrl;
         private String localPath;
-        private String stateDir;
-        private String mode;
+        private String storageRoot;
+        private String storageType;
 
         public String getRemoteUrl() { return remoteUrl; }
         public void setRemoteUrl(String remoteUrl) { this.remoteUrl = remoteUrl; }
@@ -45,16 +45,22 @@ public final class StandaloneConfig {
         public String getLocalPath() { return localPath; }
         public void setLocalPath(String localPath) { this.localPath = localPath; }
 
-        public String getStateDir() { return stateDir; }
-        public void setStateDir(String stateDir) { this.stateDir = stateDir; }
+        /**
+         * The {@code filesystem} backend's location — the root of its state tree. Absent for
+         * {@code embedded} entries (their state lives in the repo's {@code .shipsmooth/}). It
+         * is a {@code storageType}-specific key: other backends carry their own location keys.
+         */
+        public String getStorageRoot() { return storageRoot; }
+        public void setStorageRoot(String storageRoot) { this.storageRoot = storageRoot; }
 
         /**
-         * {@code "in-repo"} or {@code "external"}. In-repo entries need no {@code stateDir};
-         * external entries require one. An entry must express exactly one valid combination;
-         * anything else is treated as a malformed entry by the resolver. May be absent for
-         * back-compat with external-only entries that carry only a {@code stateDir}.
+         * Which storage backend the project uses: {@code "embedded"} (state inside the repo's
+         * {@code .shipsmooth/}) or {@code "filesystem"} (state under {@code storageRoot}).
+         * Embedded entries need no {@code storageRoot}; filesystem entries require one. An
+         * entry must express exactly one valid combination; anything else is treated as a
+         * malformed entry by the resolver.
          */
-        public String getMode() { return mode; }
-        public void setMode(String mode) { this.mode = mode; }
+        public String getStorageType() { return storageType; }
+        public void setStorageType(String storageType) { this.storageType = storageType; }
     }
 }

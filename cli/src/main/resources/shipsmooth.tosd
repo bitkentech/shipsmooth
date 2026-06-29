@@ -25,10 +25,10 @@ optional=true
     optional=true
     [elements.projects.localPath]
     type="string"
-    [elements.projects.stateDir]
+    [elements.projects.storageRoot]
     type="string"
     optional=true
-    [elements.projects.mode]
+    [elements.projects.storageType]
     type="string"
-    allowedvalues=["in-repo", "external"]
+    allowedvalues=["embedded", "filesystem"]
     optional=true

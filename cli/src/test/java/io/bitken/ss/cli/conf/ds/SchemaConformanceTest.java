@@ -33,36 +33,25 @@ class SchemaConformanceTest {
     }
 
     @Test
-    void inRepoEntry() throws IOException {
+    void embeddedEntry() throws IOException {
         StandaloneConfig config = new StandaloneConfig();
         StandaloneConfig.ProjectEntry entry = new StandaloneConfig.ProjectEntry();
         entry.setLocalPath("/home/user/repo");
-        entry.setMode("in-repo");
+        entry.setStorageType("embedded");
         config.setProjects(List.of(entry));
-        assertValid(config, "in-repo entry");
+        assertValid(config, "embedded entry");
     }
 
     @Test
-    void externalEntry() throws IOException {
+    void filesystemEntry() throws IOException {
         StandaloneConfig config = new StandaloneConfig();
         StandaloneConfig.ProjectEntry entry = new StandaloneConfig.ProjectEntry();
         entry.setLocalPath("/home/user/repo");
         entry.setRemoteUrl("git@github.com:user/repo.git");
-        entry.setStateDir("/home/user/shipsmooth-state");
-        entry.setMode("external");
+        entry.setStorageRoot("/home/user/shipsmooth-state");
+        entry.setStorageType("filesystem");
         config.setProjects(List.of(entry));
-        assertValid(config, "external entry");
-    }
-
-    @Test
-    void backCompatEntry() throws IOException {
-        StandaloneConfig config = new StandaloneConfig();
-        StandaloneConfig.ProjectEntry entry = new StandaloneConfig.ProjectEntry();
-        entry.setLocalPath("/home/user/repo");
-        entry.setStateDir("/home/user/shipsmooth-state");
-        // No mode — back-compat with old external-only entries.
-        config.setProjects(List.of(entry));
-        assertValid(config, "back-compat entry (no mode)");
+        assertValid(config, "filesystem entry");
     }
 
     @Test
@@ -70,7 +59,7 @@ class SchemaConformanceTest {
         StandaloneConfig config = new StandaloneConfig();
         StandaloneConfig.ProjectEntry entry = new StandaloneConfig.ProjectEntry();
         entry.setLocalPath("/home/user/repo");
-        // Only localPath — no remoteUrl, stateDir, or mode.
+        // Only localPath — no remoteUrl, storageRoot, or storageType.
         config.setProjects(List.of(entry));
         assertValid(config, "minimal entry (localPath only)");
     }
