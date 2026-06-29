@@ -27,9 +27,9 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Resolve Linear markers in the phase/closeout templates</name>
-            <commit></commit>
+            <commit>d5a148f28946644438d9a1b1920f1c5c48252914</commit>
             <created-from>plan-94-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -39,20 +39,26 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Scrub build descriptions and user-facing docs</name>
-            <commit></commit>
+            <commit>4a4367b949b91409ec040bcb205ffec48abcadc5</commit>
             <created-from>plan-94-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-29T17:52:11.145+05:30</timestamp>
+                    <message>Scope expanded: prodDescription Linear clause also present in gemini/opencode/codex build.gradle.kts (not just claude/shared as planned). All 5 build files now scrubbed.</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Fix the Branch.java Javadoc wording</name>
-            <commit></commit>
+            <commit>4a4367b949b91409ec040bcb205ffec48abcadc5</commit>
             <created-from>plan-94-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
