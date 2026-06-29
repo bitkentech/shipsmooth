@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>94</plan>
-    <plan-version>plan-94-v1</plan-version>
+    <plan-version>plan-94-v2</plan-version>
     <metadata>
         <backlog-issue>maintenance — remove legacy Linear feature (local backlog; no external issue)</backlog-issue>
         <status>active</status>
@@ -63,6 +63,24 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Remove the Linear and Ledger absence-guard tests</name>
+            <commit>2bbfcf07b6f7b04afe9023ae892f147e5c985cbb</commit>
+            <created-from>plan-94-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-29T18:05:00.000+05:30</timestamp>
+                    <message>Added at human request: the Linear (this plan) and Ledger (plan-82) absence-guards assert non-existence of removed features that cannot reappear by mistake; delete them along with their helper methods.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+            <depends-on>2</depends-on>
         </task>
     </tasks>
     <project-updates>

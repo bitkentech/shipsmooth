@@ -93,3 +93,19 @@ work, but ordered after it so the docs match the shipped skill.
 Reword the `Branch.java:14` Javadoc that says "In Linear mode pass `--issue`" so it no
 longer references Linear — `--issue` is a generic issue/branch identifier. Comment-only
 change; the flag and behaviour are untouched. Low risk.
+
+### Task 5: Remove the Linear and Ledger absence-guard tests [Low]
+*Depends-on: 1, 2*
+
+The three Linear-guard tests (`prodBaseSkillHasNoLinearReference`,
+`prodGeminiBaseSkillHasNoLinearReference`, `devBaseSkillHasNoLinearReference`) in
+`TargetIntegrationTest.java` were the red→green driver for this plan's template rewrite
+(Tasks 1-2). Once green they assert the *absence* of a removed feature — a regression only
+possible by someone deliberately re-adding Linear prose, which is implausible. Per human
+decision, delete them. **Also delete the analogous Ledger absence-guards** from plan-82
+(`prodBaseSkillHasNoLedgerReference`, `prodGeminiBaseSkillHasNoLedgerReference`,
+`prodWindowsBaseSkillHasNoLedgerReference`, `devBaseSkillHasNoLedgerReference`, and the
+`assertProdBaseSkillHasNoLedger` helper) for the same reason — the ledger subsystem is long
+gone and cannot reappear by mistake. Remove the now-unused helper methods and any imports
+left dangling. Low risk: test-only deletion; the positive render assertions (frontmatter,
+headings, CLI paths) remain and still exercise the full pipeline.
