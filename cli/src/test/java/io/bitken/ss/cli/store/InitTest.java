@@ -57,7 +57,7 @@ class InitTest {
                 List.of(new DataStoreResolution.Option(DataStoreResolution.Choice.EXTERNAL, external, true)));
 
         String out = runCapturingOut(boundInit(config, needs, repo),
-                "--choice", "external", "--path", external.toString(), "--json");
+                "--type", "filesystem", "--path", external.toString(), "--json");
 
         assertTrue(out.contains("\"status\":\"ready\""), out);
         assertTrue(out.contains("\"mode\":\"external\""), out);
@@ -75,7 +75,7 @@ class InitTest {
                 List.of(new DataStoreResolution.Option(DataStoreResolution.Choice.EXTERNAL, external, true),
                         new DataStoreResolution.Option(DataStoreResolution.Choice.IN_REPO, repo.resolve(".shipsmooth"), false)));
 
-        int code = run(boundInit(config, needs, repo), "--choice", "external", "--path", external.toString());
+        int code = run(boundInit(config, needs, repo), "--type", "filesystem", "--path", external.toString());
 
         assertEquals(0, code);
         assertTrue(Files.isDirectory(external.resolve(".git")), "external state repo created");
@@ -95,7 +95,7 @@ class InitTest {
                 List.of(new DataStoreResolution.Option(DataStoreResolution.Choice.EXTERNAL, tmp.resolve("ext"), true),
                         new DataStoreResolution.Option(DataStoreResolution.Choice.IN_REPO, repo.resolve(".shipsmooth"), false)));
 
-        int code = run(boundInit(config, needs, repo), "--choice", "in-repo");
+        int code = run(boundInit(config, needs, repo), "--type", "embedded");
 
         assertEquals(0, code);
         assertTrue(Files.isDirectory(repo.resolve(".shipsmooth").resolve("plans")), "in-repo folder created");
@@ -116,7 +116,7 @@ class InitTest {
                 List.of(new DataStoreResolution.Option(
                         DataStoreResolution.Choice.RECREATE_MISSING_DIR, stateDir, true)));
 
-        int code = run(boundInit(config, needs, repo), "--choice", "recreate", "--path", stateDir.toString());
+        int code = run(boundInit(config, needs, repo), "--type", "recreate", "--path", stateDir.toString());
 
         assertEquals(0, code);
         assertTrue(Files.isDirectory(stateDir.resolve(".git")), "configured dir recreated");
@@ -128,7 +128,7 @@ class InitTest {
         Path repo = Files.createDirectories(tmp.resolve("repo"));
 
         var settled = new DataStoreResolution.Settled(new ProjectDataStore.InRepo(repo));
-        int code = run(boundInit(config, settled, repo), "--choice", "in-repo");
+        int code = run(boundInit(config, settled, repo), "--type", "embedded");
 
         assertNotEquals(0, code, "must refuse when already settled");
         assertFalse(Files.exists(config), "no config should be written");
@@ -141,7 +141,7 @@ class InitTest {
 
         var bad = DataStoreResolution.Unresolvable.of(
                 DataStoreResolution.UnresolvableReason.LEGACY_AGENTS_TREE);
-        int code = run(boundInit(config, bad, repo), "--choice", "external", "--path", tmp.resolve("x").toString());
+        int code = run(boundInit(config, bad, repo), "--type", "filesystem", "--path", tmp.resolve("x").toString());
 
         assertNotEquals(0, code, "must refuse when unresolvable");
     }
@@ -157,20 +157,20 @@ class InitTest {
                 List.of(new DataStoreResolution.Option(
                         DataStoreResolution.Choice.RECREATE_MISSING_DIR, tmp.resolve("d"), true)));
 
-        int code = run(boundInit(config, needs, repo), "--choice", "external", "--path", tmp.resolve("x").toString());
+        int code = run(boundInit(config, needs, repo), "--type", "filesystem", "--path", tmp.resolve("x").toString());
 
         assertNotEquals(0, code, "must refuse an off-menu choice");
     }
 
     @Test
-    void unknownChoiceToken_refuses() throws IOException {
+    void unknownTypeToken_refuses() throws IOException {
         Path config = tmp.resolve("shipsmooth.toml");
         Path repo = Files.createDirectories(tmp.resolve("repo"));
         var needs = new DataStoreResolution.NeedsDecision(
                 DataStoreResolution.UndecidableSituation.CLEAN_FIRST_RUN,
                 List.of(new DataStoreResolution.Option(DataStoreResolution.Choice.IN_REPO, repo.resolve(".shipsmooth"), true)));
 
-        int code = run(boundInit(config, needs, repo), "--choice", "sideways");
+        int code = run(boundInit(config, needs, repo), "--type", "sideways");
         assertNotEquals(0, code);
     }
 }
