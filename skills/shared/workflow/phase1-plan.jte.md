@@ -21,7 +21,11 @@ is already rich, or after the user has fleshed out a Phase 0 stub.
    git add .shipsmooth/plans/plan-07.md
    git commit -m "plan(07): risk-calibrated plan for [short-description]"
    git push origin t/{issue-id}-{short-description}
-   # Lefthook auto-tags plan-07-v1 and pushes it
+   ```
+   Then tag this plan version manually (see Git Tagging Convention):
+   ```bash
+   ${model.cliBin()} plan tag --plan {N} --kind version
+   # prints: git push origin plan-{N}-v{K}  — run that line to push the tag
    ```
 6. **Verify Preconditions:**
    ```bash
