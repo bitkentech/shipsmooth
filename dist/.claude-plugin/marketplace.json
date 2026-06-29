@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "shipsmooth",
-      "description": "Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, Linear integration, and immutable git-based plan versioning.",
+      "description": "Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, and immutable git-based plan versioning.",
       "source": "./",
       "author": {
         "name": "Bitken Technologies",

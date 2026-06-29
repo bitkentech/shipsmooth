@@ -3,7 +3,7 @@
     "SessionStart" : [ {
       "hooks" : [ {
         "type" : "command",
-        "command" : "sh \"${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/cache/bitkentech/shipsmooth/0.3.31}/hooks/install-shipsmooth.sh\" shipsmooth 0.3.31"
+        "command" : "sh \"${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/cache/bitkentech/shipsmooth/0.3.32}/hooks/install-shipsmooth.sh\" shipsmooth 0.3.32"
       } ]
     } ]
   }

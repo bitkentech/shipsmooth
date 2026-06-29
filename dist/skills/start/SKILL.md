@@ -6,17 +6,17 @@
 Apply this skill whenever you are:
 - Starting work on a new feature or task
 - Asked to write, revise, or execute a plan
-- Picking up existing work from Linear
+- Picking up existing in-flight plan work
 - Closing out, abandoning, or handing off a plan
 
 ---
 
 ## Core Invariants — Never Violate These
 
-1. **Features vs Plans are strictly separate.** Feature issues live in the permanent backlog forever. Plan issues live in transient `[agent]` projects and are archived after completion. Never create feature issues inside an `[agent]` project.
+1. **Features vs Plans are strictly separate.** Feature definitions live in the permanent backlog forever. Plans are transient and archived after completion. Never fold a feature definition into a plan.
 2. **A committed, pushed, human-reviewed plan is the contract.** You execute against it. You do not autonomously modify it.
-3. **Every plan must reference at least one permanent backlog feature issue.** `[Linear]` Create an `[agent]` project linking to it. `[Local]` Record it in the `<backlog-issue>` metadata element of the tasks XML file. If no backlog issue exists, stop and create one before proceeding.
-4. **Task tracking is never the source of truth for plan content.** Git is. Linear (or the local tasks file) tracks task state only.
+3. **Every plan must reference at least one permanent backlog feature.** Record it in the `<backlog-issue>` metadata element of the tasks XML file. If no backlog feature exists, stop and create one before proceeding.
+4. **Task tracking is never the source of truth for plan content.** Git is. The local tasks file tracks task state only.
 5. **Tags are permanent.** Never delete a plan version tag from remote, even on abandonment or squash merge.
 6. **Tests precede implementation.** Write integration test(s) before any task code (Phase 2 preamble), then the unit test for each task before its implementation. Never implement without a failing test already committed. (Apply as far as possible — migrations and config may not be TDD-able.)
 
@@ -43,16 +43,11 @@ are kept separate.
 
 ---
 
-## Task Tracking Mode
+## Task Tracking
 
-This workflow supports two task tracking modes. Choose one at the start of each plan:
+Task state is tracked in a local XML file at `.shipsmooth/plans/plan-{N}-tasks.xml`. No external services required. This requires the plugin's SessionStart hook to have run (downloads the Java CLI runtime to `~/.cache/shipsmooth/`).
 
-- **`[Linear]`** — Uses Linear issues and projects. Requires a Linear account and the Linear MCP server configured in Claude Code.
-- **`[Local]`** — Uses a local XML file at `.shipsmooth/plans/plan-{N}-tasks.xml`. No external services required. Requires the plugin's SessionStart hook to have run (downloads the Java CLI runtime to `~/.cache/shipsmooth/`).
-
-Throughout this skill, instructions marked `[Linear]` apply only in Linear mode; instructions marked `[Local]` apply only in Local mode. Unmarked instructions apply to both.
-
-`[Local]` Script invocations use `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth <subcommand>`. All scripts read/write `.shipsmooth/plans/plan-{N}-tasks.xml` relative to the repo root.
+Script invocations use `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth <subcommand>`. All scripts read/write `.shipsmooth/plans/plan-{N}-tasks.xml` relative to the repo root.
 
 ---
 
@@ -62,7 +57,7 @@ Throughout this skill, instructions marked `[Linear]` apply only in Linear mode;
 .shipsmooth/
   plans/
     plan-07.md            # plan files live here, versioned in git
-    plan-07-tasks.xml     # [Local] task state (sibling to plan file)
+    plan-07-tasks.xml     # task state (sibling to plan file)
 ```
 
 Plans are markdown files. They contain: narrative, design decisions, architecture notes, open questions, and references. Code never goes here.
@@ -74,9 +69,9 @@ Plans are markdown files. They contain: narrative, design decisions, architectur
 | Content | Location | Reason |
 |---|---|---|
 | Plan narrative, design decisions, references | `.shipsmooth/plans/*.md` in git | Needs diffs, version history, co-evolution with code |
-| Task state (done / not done) | `[Linear]` Linear `[agent]` project · `[Local]` `.shipsmooth/plans/plan-{N}-tasks.xml` | Needs status tracking and human review |
-| Feature definitions | `[Linear]` Linear permanent backlog · `[Local]` Noted in plan file Context section | Permanent, human-curated |
-| Link between plan version and tasks | `[Linear]` Tag-based GitHub permalink in Linear issue description · `[Local]` `<created-from>` child element in XML | Immutable, survives branch lifecycle |
+| Task state (done / not done) | `.shipsmooth/plans/plan-{N}-tasks.xml` | Needs status tracking and human review |
+| Feature definitions | Noted in plan file Context section | Permanent, human-curated |
+| Link between plan version and tasks | `<created-from>` child element in XML | Immutable, survives branch lifecycle |
 | This workflow | `~/.claude/skills/start/SKILL.md` | Loaded by agent at task start |
 | Repo-specific overrides | `CLAUDE.md` in repo root | Workspace name, project conventions, etc. |
 
@@ -87,55 +82,23 @@ Plans are markdown files. They contain: narrative, design decisions, architectur
 Every time a plan file is committed, immediately create and push a version tag:
 
 ```bash
-${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan tag --plan {N} --kind version
+${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan tag --plan {N} --kind version
 # prints: git push origin plan-{N}-v{K}  — run that line to push
 ```
 
 On clean completion:
 ```bash
-${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan tag --plan {N} --kind complete
+${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan tag --plan {N} --kind complete
 # prints: git push origin plan-{N}-complete
 ```
 
 On abandonment:
 ```bash
-${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan tag --plan {N} --kind abandoned
+${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan tag --plan {N} --kind abandoned
 # prints: git push origin plan-{N}-abandoned
 ```
 
 Tag naming: `plan-{N}-v{version}` for iterations, `plan-{N}-complete` for clean closeout, `plan-{N}-abandoned` for abandonment. `plan tag --kind version` refuses to re-tag if the computed tag already exists — commit more changes first.
-
----
-
-## Linear Structure
-
-`[Linear]` only. Skip this section in Local mode.
-
-### Permanent Backlog Project
-- Named e.g. `AppName — Backlog & Roadmap`
-- Contains feature issues only
-- Human-created and human-prioritised
-- Never deleted, survives all plan lifecycles
-
-### Transient Agent Projects
-- Named: `[agent] {N} · {short-description}` e.g. `[agent] 07 · home-accounts-settings-bottom-tabs`
-- Created per plan, archived after completion
-- Project description must contain:
-  - Link to the permanent backlog feature issue(s) it delivers
-  - Permalink to the plan file using the tag-based commit hash URL (see below)
-  - Brief plan narrative / design rationale
-
-### Tag-based GitHub permalink format
-```
-https://github.com/{org}/{repo}/blob/{tag-commit-hash}/.shipsmooth/plans/plan-07.md
-```
-
-Resolve the commit hash for a tag:
-```bash
-git rev-list -n 1 plan-07-v1
-```
-
-Use this hash (not the tag name) in Linear links — it is immutable and survives branch deletion, rebases, and squash merges.
 
 ---
 
@@ -148,16 +111,16 @@ one:
 
 - find the plans directory first — in **separate-dir** mode (the default) it is not
   `.shipsmooth/plans/` but a separate state dir. Ask the CLI:
-  `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth store info --json` reports `plansDir` (when `status` is `ready`).
+  `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth store info --json` reports `plansDir` (when `status` is `ready`).
   List `plansDir`'s `plan-*-tasks.xml` (the highest plan number is the most likely
   candidate); if `status` is **not** `ready`, state is not set up yet — run the
   **first-run handshake** below before going further (there is no active plan to resume).
 - check that plan's state with
-  `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan resume --plan {N}` — a plan-level status of `active` /
+  `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan resume --plan {N}` — a plan-level status of `active` /
   `in-review` with tasks still `pending` / in-progress means work is unfinished.
 
 
-> **First-run handshake `[Local]`.** When a `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth` command reports that state is
+> **First-run handshake.** When a `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth` command reports that state is
 > not set up — `store info --json` returns a `status` other than `ready`, or a
 > state-dependent command exits with a `status:"needs-decision"` / `status:"unresolvable"`
 > JSON line (exit 10 / 11) — do **not** treat it as a normal error. Run this handshake. The
@@ -177,13 +140,13 @@ one:
 >    option:
 >    ```bash
 >    # separate-dir (recommended) — accept the proposed folder:
->    ${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth store init --type separate-dir --json
+>    ${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth store init --type separate-dir --json
 >    # separate-dir — a different folder the user named:
->    ${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth store init --type separate-dir --path <user's folder> --json
+>    ${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth store init --type separate-dir --path <user's folder> --json
 >    # keep it inside this repo:
->    ${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth store init --type same-repo --json
+>    ${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth store init --type same-repo --json
 >    # a configured separate-dir folder went missing — recreate it:
->    ${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth store init --type recreate --path <path from the option> --json
+>    ${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth store init --type recreate --path <path from the option> --json
 >    ```
 >    `store init` creates the chosen location, writes the config entry, and prints the
 >    `ready` shape — read its `plansDir` for where plan files now live.
@@ -222,7 +185,7 @@ that he will add detail later or work exploratorily. **Do not slow him down.**
 Run **one** command and hand back:
 
 ```bash
-${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan quick --desc "{short-description}"
+${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan quick --desc "{short-description}"
 # derives the next plan number, creates + checks out t/{N}-{slug},
 # and writes a stub .shipsmooth/plans/plan-{N}.md.
 # It does NOT commit — that is intentional.
@@ -256,7 +219,7 @@ fleshed out the stub.
 
 Kickoff: *"start a new plan, feature is X"* — no spec, no prior planning.
 
-- ✅ **Target:** run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan quick --desc "X"` → relay its
+- ✅ **Target:** run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan quick --desc "X"` → relay its
   output (branch + stub created, uncommitted) → **stop**.
 - ❌ **Anti-target #1:** run several rounds of repo investigation, then fire a
   multi-part questionnaire asking the user to choose the approach, before
@@ -293,38 +256,36 @@ is already rich, or after the user has fleshed out a Phase 0 stub.
    ```
 6. **Verify Preconditions:**
    ```bash
-   ${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan preflight --plan {N}
+   ${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan preflight --plan {N}
    # Exits 0 (PASS) or 1 (FAIL: dirty tree / missing version tag). Warns on unpushed branch.
    ```
 7. **Create Task Tracking Infrastructure:**
-   - `[Linear]` Create the `[agent]` Linear project. Create Linear issues from the **risk-sorted** plan tasks. Each issue description must include the **Risk Level** ($L/M/H$) and the tag-based GitHub URL of the specific plan version that generated it.
-   - `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan init --plan {N} --tasks-from .shipsmooth/plans/plan-{N}.md` to generate `.shipsmooth/plans/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI. The format uses child elements, not attributes.** The CLI requires task headings in the form `### Task N: Name [Risk]` where `N` is a positive integer — alphanumeric IDs (e.g. `01-A`) are not supported. To express a dependency between tasks, add a `*Depends-on: P[,Q...]*` line anywhere in the task body before the next heading (e.g. `*Depends-on: 1,3*`). The CLI parses this line and writes `<depends-on>` into the XML automatically.
-   - Organise tasks as **thin vertical slices** in both modes.
+   - Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan init --plan {N} --tasks-from .shipsmooth/plans/plan-{N}.md` to generate `.shipsmooth/plans/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI. The format uses child elements, not attributes.** The CLI requires task headings in the form `### Task N: Name [Risk]` where `N` is a positive integer — alphanumeric IDs (e.g. `01-A`) are not supported. To express a dependency between tasks, add a `*Depends-on: P[,Q...]*` line anywhere in the task body before the next heading (e.g. `*Depends-on: 1,3*`). The CLI parses this line and writes `<depends-on>` into the XML automatically.
+   - Organise tasks as **thin vertical slices**.
 8. **Final Review & Go-ahead:**
-   - `[Linear]` **Stop.** Post to the Linear project that the risk-sorted plan is ready for review.
-   - `[Local]` **Stop.** Tell the human the XML task file has been committed and the plan is ready for review.
+   - **Stop.** Tell the human the XML task file has been committed and the plan is ready for review.
    - **Wait for explicit human go-ahead before proceeding to Phase 2.**
 
 ---
 
 ## Phase 2 — Execute
 
-**Session-resume pre-flight `[Local]`** — If you are picking up a plan that was started in a previous session, run this before doing anything else:
+**Session-resume pre-flight** — If you are picking up a plan that was started in a previous session, run this before doing anything else:
 
 ```bash
-${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan resume --plan {N}
+${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan resume --plan {N}
 # Prints: XML file present check and task state summary.
 ```
 
 Only proceed once you know which tasks are done and which are next.
 
-**Where the plan files live `[Local]`** — Do not assume plan narratives are under
+**Where the plan files live** — Do not assume plan narratives are under
 `.shipsmooth/plans/` in the project repo. In **separate-dir** mode (the default) the project
 repo stays untouched and the plan files live in a separate state directory. Ask the CLI
 where to read them — it is the source of truth — rather than guessing:
 
 ```bash
-${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth store info --json
+${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth store info --json
 # -> {"status":"ready","storageType":"separate-dir","stateRoot":"...","plansDir":"<dir>/plans"}
 #    Read plan narratives (plan-{N}.md) and task XML from the reported `plansDir`.
 #    If status is not "ready", state is not set up yet — handle per first-run (Phase 0).
@@ -339,7 +300,7 @@ as you would for a same-repo plan — `storageType: same-repo` simply reports th
 
 Create a branch named after the primary issue for this plan:
 ```bash
-${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan branch --issue {issue-id} --desc "{short-description}"
+${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan branch --issue {issue-id} --desc "{short-description}"
 # prints: git push -u origin t/{issue-id}-{slug}  — run that line to push
 ```
 All task commits go on this branch. The `t/` prefix stands for "task". Usernames are omitted — the task identity is what matters long-term.
@@ -349,7 +310,7 @@ All task commits go on this branch. The `t/` prefix stands for "task". Usernames
 
 > **Commit-message convention (code commits in the project repo).** How you word a code
 > commit depends on the resolved storage type. Check it once per session with
-> `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth store info --json` and read `storageType`.
+> `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth store info --json` and read `storageType`.
 >
 > - **`same-repo` storage:** keep the prefixed convention — `task(N): <short description>` and
 >   `draft(N): de-risk <task name>`. The plan/task history is shipsmooth's own and lives
@@ -371,7 +332,7 @@ All task commits go on this branch. The `t/` prefix stands for "task". Usernames
 ### Preamble: integration tests (once, before any task)
 
 1. Write 1–2 integration tests that exercise the feature end-to-end. No more than two.
-2. Commit and push them with no implementation — they must fail (red). Word the commit message per the **commit-message convention** above (in standalone mode, no `plan(N)`/`task(N)` reference — this is a project-repo commit too). `[Linear]` Reference the Linear project in the commit message.
+2. Commit and push them with no implementation — they must fail (red). Word the commit message per the **commit-message convention** above (in standalone mode, no `plan(N)`/`task(N)` reference — this is a project-repo commit too).
 3. Confirm red state:
    ```bash
    # run your project's test command, e.g.:
@@ -391,8 +352,7 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
 Core Invariant #6).
 - Implement just enough to prove the approach works. Focus on the core complexity.
 - Commit per the **commit-message convention**: `draft(N): de-risk [task name]` in same-repo storage; in standalone (separate-dir) storage a plain feature message with no `draft(N)`/`task(N)` reference.
-- `[Linear]` Post a comment on the Linear issue notifying the human the draft is ready.
-- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth task status --plan {N} --task {id} --status de-risked` and `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth task comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
+- Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth task status --plan {N} --task {id} --status de-risked` and `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth task comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
 - **Wait for explicit approval of the approach.**
 
 ##### Step B: Hardening (Quality Phase)
@@ -413,10 +373,9 @@ quality conforms to its instructions):
   git push origin t/{issue-id}-{short-description}
   ```
   This creates a stable rollback point. A human reviewing the PR can check out this commit to inspect each task in isolation.
-- `[Linear]` Mark the Linear issue **Agent Coded**.
 
 
-- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth task status --plan {N} --task {id} --status agent-coded` and `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth task set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`.
+- Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth task status --plan {N} --task {id} --status agent-coded` and `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth task set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`.
 
 
 #### Low risk tasks — Single-pass (current behavior)
@@ -434,20 +393,18 @@ quality conforms to its instructions):
    git commit -m "task(N): <short description>"   # same-repo storage; standalone (separate-dir): plain feature message
    git push origin t/{issue-id}-{short-description}
    ```
-   - `[Linear]` Mark the Linear issue **Agent Coded**. No draft review needed.
+   - No draft review needed.
 
 
-   - `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth task status --plan {N} --task {id} --status agent-coded` and `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth task set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`. No draft review needed.
+   - Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth task status --plan {N} --task {id} --status agent-coded` and `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth task set-commit --plan {N} --task {id} --commit $(git rev-parse HEAD)`. No draft review needed.
 
 
 ---
 
 - **Minor deviation** (task split, reorder, clarification):
-  - `[Linear]` Update the Linear issue(s), add a deviation comment explaining why, continue.
-  - `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth task deviation --plan {N} --task {id} --type minor --message "..."`, continue.
+  - Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth task deviation --plan {N} --task {id} --type minor --message "..."`, continue.
 - **Major deviation** (fundamental plan problem, architecture issue, blocked): Stop immediately.
-  - `[Linear]` Post a Linear project update. Set project health to **"At Risk"**.
-  - `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan update --plan {N} --blocked --message "..."`.
+  - Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan update --plan {N} --blocked --message "..."`.
   - Wait for the human to revise the plan file, commit, push, and give a new go-ahead.
 
 Never autonomously modify the `.shipsmooth/plans/` file during execution. If a plan change is needed, surface it and wait.
@@ -461,12 +418,10 @@ Never autonomously modify the `.shipsmooth/plans/` file during execution. If a p
 git tag plan-07-complete
 git push origin plan-07-complete
 ```
-- `[Linear]` Close all Linear issues in the `[agent]` project. Mark `[agent]` project complete and archive it. Update the permanent backlog feature issue to reflect delivery (link to completing PR, note what was delivered).
-- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan update --plan {N} --status complete --message "Plan complete."`. Commit the final XML state. Update the permanent backlog feature issue (if tracked externally) or note delivery in the plan file.
+- Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan update --plan {N} --status complete --message "Plan complete."`. Commit the final XML state. Update the permanent backlog feature (if tracked externally) or note delivery in the plan file.
 
 ### Completion with Loose Ends
-- `[Linear]` Label unresolved issues `needs-triage`. Set `[agent]` project to **"In Review"**. Post a project update listing each open issue and why it's unresolved. Wait for human to review: they will promote worthy issues to the permanent backlog or discard them. Human marks the project complete and archives it.
-- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth task status --plan {N} --task {id} --status needs-triage` for each unresolved task. Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan update --plan {N} --status in-review --message "..."`. Commit the XML. Wait for human to review.
+- Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth task status --plan {N} --task {id} --status needs-triage` for each unresolved task. Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan update --plan {N} --status in-review --message "..."`. Commit the XML. Wait for human to review: they will promote worthy items to the permanent backlog or discard them.
 
 ### Abandonment
 - Human commits a plan file deletion with a commit message referencing the superseding plan number
@@ -476,24 +431,16 @@ git push origin plan-07-complete
   git push origin plan-07-abandoned
   ```
 - **Do not delete any earlier tags** (`plan-07-v1`, `plan-07-v2`, etc.) — they are the audit trail
-- `[Linear]` Surface all open tasks for human triage. Migrate worthy tasks to the permanent backlog with a note: "Partial delivery — see plan-07-abandoned, superseded by plan-{M}". Archive the `[agent]` project with a closing note referencing the deletion commit hash and the superseding plan.
-- `[Local]` Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.31/bin/shipsmooth plan update --plan {N} --status abandoned --message "Superseded by plan-{M}."`. Commit the final XML state.
+- Run `${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.32/bin/shipsmooth plan update --plan {N} --status abandoned --message "Superseded by plan-{M}."`. Commit the final XML state.
 
 ---
 
 ## Audit Trail
 
-`[Linear]` Record in every Linear issue:
-
-| Event | What to store in the issue |
-|---|---|
-| Task created | `github.com/.../blob/{plan-07-v1-hash}/.shipsmooth/plans/plan-07.md` |
-| Task closed / obsoleted | `github.com/.../blob/{plan-07-vN-hash}/.shipsmooth/plans/plan-07.md` + one-line reason |
-
-`[Local]` The XML file is the audit trail. `<created-from>` and `<closed-at-version>` child elements on each `<task>` serve the same role. The XML is versioned in git, so `git diff` between two plan tags shows exactly what changed.
+The XML file is the audit trail. `<created-from>` and `<closed-at-version>` child elements on each `<task>` record the plan version a task was created at and closed at. The XML is versioned in git, so `git diff` between two plan tags shows exactly what changed.
 
 If the creation version equals the closeout version, the plan never changed during execution. If they differ, the git diff between the two tag hashes shows exactly what changed and why.
 
-Feature issues in the permanent backlog should accumulate references to every plan that contributed to them — this gives a full delivery history across the feature's lifetime.
+Feature definitions in the permanent backlog should accumulate references to every plan that contributed to them — this gives a full delivery history across the feature's lifetime.
 
 ---
