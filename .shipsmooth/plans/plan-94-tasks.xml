@@ -4,14 +4,14 @@
     <plan-version>plan-94-v2</plan-version>
     <metadata>
         <backlog-issue>maintenance — remove legacy Linear feature (local backlog; no external issue)</backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-29</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Remove Linear from the dual-mode template core</name>
             <commit>bf773a8</commit>
             <created-from>plan-94-v1</created-from>
@@ -27,7 +27,7 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Resolve Linear markers in the phase/closeout templates</name>
             <commit>d5a148f28946644438d9a1b1920f1c5c48252914</commit>
             <created-from>plan-94-v1</created-from>
@@ -39,7 +39,7 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Scrub build descriptions and user-facing docs</name>
             <commit>4a4367b949b91409ec040bcb205ffec48abcadc5</commit>
             <created-from>plan-94-v1</created-from>
@@ -56,7 +56,7 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Fix the Branch.java Javadoc wording</name>
             <commit>4a4367b949b91409ec040bcb205ffec48abcadc5</commit>
             <created-from>plan-94-v1</created-from>
@@ -67,7 +67,7 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Remove the Linear and Ledger absence-guard tests</name>
             <commit>2bbfcf07b6f7b04afe9023ae892f147e5c985cbb</commit>
             <created-from>plan-94-v2</created-from>
@@ -87,6 +87,11 @@
         <update>
             <timestamp>2026-06-29T16:27:42.282+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-29T20:21:26.960+05:30</timestamp>
+            <message>Plan complete. Linear removed; dual-mode collapsed to single local workflow.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
