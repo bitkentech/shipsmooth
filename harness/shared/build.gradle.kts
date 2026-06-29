@@ -123,7 +123,7 @@ fun renderOutputDir(variantDefault: String): String =
 // host identity lives in the per-host functions. The two axes never cross.
 // ---------------------------------------------------------------------------
 val prodDescription = "Agent coding workflow with plan-before-implement discipline, " +
-    "TDD, vertical slices, Linear integration, and immutable git-based plan versioning."
+    "TDD, vertical slices, and immutable git-based plan versioning."
 
 // Host-agnostic defaults for an env. buildPlatform/outputDir/pluginHookCommand are
 // empty placeholders — each host MUST set its own. The dev variant resolves jlinkDir

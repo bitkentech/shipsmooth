@@ -11,9 +11,10 @@ import java.util.concurrent.Callable;
 /**
  * {@code plan branch --issue ID --desc S} or {@code plan branch --plan N --desc S}
  *
- * <p>In Linear mode pass {@code --issue} (e.g. {@code pb-310}); the branch is
- * {@code t/{issue}-{slug}}. In Local mode pass {@code --plan} (e.g. {@code 71});
- * the branch is {@code t/{N}-{slug}}. Exactly one of the two must be present.
+ * <p>Pass {@code --issue} (e.g. {@code pb-310}) to name the branch after an
+ * external issue id; the branch is {@code t/{issue}-{slug}}. Pass {@code --plan}
+ * (e.g. {@code 71}) to name it after the plan number; the branch is
+ * {@code t/{N}-{slug}}. Exactly one of the two must be present.
  */
 public class Branch implements Callable<Integer>, HasSpec {
 

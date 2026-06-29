@@ -17,7 +17,7 @@ plugins {
 val pluginBaseName = (findProperty("plugin.base.name") as String?) ?: "shipsmooth"
 val pluginVersion = (findProperty("plugin.version") as String?) ?: "0.3.19"
 val prodDescription = "Agent coding workflow with plan-before-implement discipline, " +
-    "TDD, vertical slices, Linear integration, and immutable git-based plan versioning."
+    "TDD, vertical slices, and immutable git-based plan versioning."
 
 // The plugin folder name = the Codex plugin name (kebab-case). Codex requires the
 // skill folder name to match its frontmatter `name` (skills/start/), but the PLUGIN
