@@ -63,15 +63,19 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Align the store-info JSON field + skill prose</name>
-            <commit></commit>
+            <commit>854530c</commit>
             <created-from>plan-93-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
                     <timestamp>2026-06-29T12:11:08.450+05:30</timestamp>
                     <message>De-risk ready (LOCKSTEP): JSON ready field mode-&gt;storageType (filesystem/embedded), choiceToken now emits filesystem/embedded/recreate (closes the loop with --type), StateReport JSON+human text. Skill prose: first-run-handshake (--type examples), phase2-execute (JSON field + mode-name prose), commit-message-convention (read storageType, embedded/filesystem storage), phase0-intake (filesystem mode). Tests ResolutionJsonTest/InfoTest/InitTest migrated; full :cli:test green; jte render stages new vocab.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-29T12:43:48.798+05:30</timestamp>
+                    <message>JSON storageType field + choiceToken + StateReport + skill prose lockstep (de-risk 854530c); values later swapped to same-repo/separate-dir in Task 6. Approved + hardening verified (full :cli:test green, render lockstep confirmed).</message>
                 </comment>
             </comments>
             <deviations/>
@@ -92,12 +96,17 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Swap value pair embedded/filesystem -&gt; same-repo/separate-dir</name>
-            <commit></commit>
+            <commit>9ece25e</commit>
             <created-from>plan-93-v5</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-29T12:43:45.996+05:30</timestamp>
+                    <message>Value swap embedded-&gt;same-repo, filesystem-&gt;separate-dir across code/schema/tests/skill prose + jlink smoke. Preserved OS-filesystem prose and 'embedded newlines'. Full :cli:test green; dev payload re-rendered clean. Commit 9ece25e.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>5</depends-on>
         </task>
