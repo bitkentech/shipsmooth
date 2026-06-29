@@ -22,12 +22,21 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Rename the config keys/values across model, writer, and resolver</name>
-            <commit></commit>
+            <commit>6b73186</commit>
             <created-from>plan-93-v3</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-29T11:04:19.472+05:30</timestamp>
+                    <message>De-risk draft ready for review: config rename (storageType/storageRoot, embedded/filesystem) across model, writer, emitter, resolver + schema. All config/ds tests green; full :cli:test green. Schema updated early (Task 6 work) so resolver/writer stay consistent.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-29T11:31:11.894+05:30</timestamp>
+                    <message>Hardened: coverage on renamed classes &gt;=97% (gate 95%); full :cli:test green. No code change beyond de-risk — a mechanical rename, the draft met the quality bar. Internal helper/store/enum names (InRepo/Standalone/Choice.IN_REPO) deliberately kept; rename is user-facing strings only. Final commit = de-risk draft 6b73186.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
