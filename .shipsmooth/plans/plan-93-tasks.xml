@@ -84,12 +84,17 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Schema + release notes</name>
             <commit></commit>
             <created-from>plan-93-v3</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-29T12:52:38.613+05:30</timestamp>
+                    <message>Schema (shipsmooth.tosd) already updated in Task 2 + value-swapped in Task 6. Release-notes draft written to .shipsmooth/tmp/release-notes-pb-365.md (gitignored scratch, per 0.3.26 precedent; feeds gh release --notes at cut time) — PLAIN, not breaking (no users). Verified: SchemaConformanceTest green, full :cli:test green, full claude-dev render green.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>4</depends-on>
         </task>
