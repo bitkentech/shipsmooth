@@ -42,12 +42,21 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Rename the `store init` flag --choice → --type</name>
-            <commit></commit>
+            <commit>d071b5d</commit>
             <created-from>plan-93-v3</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-29T11:47:37.387+05:30</timestamp>
+                    <message>De-risk draft ready: store/Init.java flag --choice-&gt;--type, paramLabel TYPE, desc embedded|filesystem|recreate, error strings, parseChoice-&gt;parseType (filesystem-&gt;EXTERNAL, embedded-&gt;IN_REPO), removed TODO. Also updated InitTest, ShipsmoothGateTest, and jlinkSmoke/store-roundtrip.sh. Full :cli:test green. JSON 'mode' field + skill prose left for Task 4.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-29T11:49:14.347+05:30</timestamp>
+                    <message>Hardened: Init line coverage 97% (gate 95%); full :cli:test green. Mechanical rename — no code change beyond de-risk; missed branches (resolution-null guard, post-act re-resolve, parseType null-guard) are pre-existing defensive paths, not new gaps. Final commit = draft d071b5d.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>2</depends-on>
         </task>
