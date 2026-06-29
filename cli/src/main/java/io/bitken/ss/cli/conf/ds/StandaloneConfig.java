@@ -46,17 +46,17 @@ public final class StandaloneConfig {
         public void setLocalPath(String localPath) { this.localPath = localPath; }
 
         /**
-         * The {@code filesystem} backend's location — the root of its state tree. Absent for
-         * {@code embedded} entries (their state lives in the repo's {@code .shipsmooth/}). It
+         * The {@code separate-dir} backend's location — the root of its state tree. Absent for
+         * {@code same-repo} entries (their state lives in the repo's {@code .shipsmooth/}). It
          * is a {@code storageType}-specific key: other backends carry their own location keys.
          */
         public String getStorageRoot() { return storageRoot; }
         public void setStorageRoot(String storageRoot) { this.storageRoot = storageRoot; }
 
         /**
-         * Which storage backend the project uses: {@code "embedded"} (state inside the repo's
-         * {@code .shipsmooth/}) or {@code "filesystem"} (state under {@code storageRoot}).
-         * Embedded entries need no {@code storageRoot}; filesystem entries require one. An
+         * Which storage backend the project uses: {@code "same-repo"} (state inside the repo's
+         * {@code .shipsmooth/}) or {@code "separate-dir"} (state under {@code storageRoot}).
+         * Same-repo entries need no {@code storageRoot}; separate-dir entries require one. An
          * entry must express exactly one valid combination; anything else is treated as a
          * malformed entry by the resolver.
          */

@@ -19,13 +19,13 @@
 > 3. **Re-invoke the CLI to act** on the choice, matching the `choice` token from the chosen
 >    option:
 >    ```bash
->    # filesystem (recommended) — accept the proposed folder:
->    ${model.cliBin()} store init --type filesystem --json
->    # filesystem — a different folder the user named:
->    ${model.cliBin()} store init --type filesystem --path <user's folder> --json
+>    # separate-dir (recommended) — accept the proposed folder:
+>    ${model.cliBin()} store init --type separate-dir --json
+>    # separate-dir — a different folder the user named:
+>    ${model.cliBin()} store init --type separate-dir --path <user's folder> --json
 >    # keep it inside this repo:
->    ${model.cliBin()} store init --type embedded --json
->    # a configured filesystem folder went missing — recreate it:
+>    ${model.cliBin()} store init --type same-repo --json
+>    # a configured separate-dir folder went missing — recreate it:
 >    ${model.cliBin()} store init --type recreate --path <path from the option> --json
 >    ```
 >    `store init` creates the chosen location, writes the config entry, and prints the

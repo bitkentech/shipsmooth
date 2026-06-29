@@ -1,7 +1,7 @@
 #!/bin/sh
 # Modular smoke test for the store first-run round-trip (plan-87 Task 1).
 #
-# Drives `store init --type filesystem` then `store info --json` through the REAL
+# Drives `store init --type separate-dir` then `store info --json` through the REAL
 # jlink/SCC modular runtime — the layer where the conf.ds JPMS-opens defect lives.
 # Classpath unit tests cannot catch it because `opens` rules are not enforced on the
 # classpath; only a genuine module run is faithful.
@@ -25,8 +25,8 @@ mkdir -p "$REPO"
 
 fail() { echo "FAIL: $1" >&2; exit 1; }
 
-# 1. Clean first run -> accept filesystem state at an explicit path.
-INIT_OUT="$(cd "$REPO" && "$LAUNCHER" store init --type filesystem --path "$STATE" --json 2>&1)" \
+# 1. Clean first run -> accept separate-dir state at an explicit path.
+INIT_OUT="$(cd "$REPO" && "$LAUNCHER" store init --type separate-dir --path "$STATE" --json 2>&1)" \
   || fail "store init exited non-zero:
 $INIT_OUT"
 

@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * End-to-end feature test for plan-93 (PB-365): the storage-vocabulary rename. The user's
  * {@code shipsmooth.toml} must be written in the new vocabulary — {@code storageType =
- * 'embedded' | 'filesystem'} with the filesystem location under {@code storageRoot} — and
+ * 'same-repo' | 'separate-dir'} with the separate-dir location under {@code storageRoot} — and
  * must round-trip back through the resolver to a settled resolution.
  *
  * <p>No back-compat: the writer emits and the resolver reads the new keys/values only (the
@@ -39,19 +39,19 @@ class StorageTypeVocabularyIntegrationTest {
         String written = Files.readString(config);
         List<String> lines = Files.readAllLines(config);
 
-        // The filesystem entry: storageType = 'filesystem' + storageRoot pointing at its dir.
-        assertTrue(lines.stream().anyMatch(l -> l.trim().equals("storageType = 'filesystem'")),
-                "filesystem entry must write storageType = 'filesystem':\n" + written);
+        // The separate-dir entry: storageType = 'separate-dir' + storageRoot pointing at its dir.
+        assertTrue(lines.stream().anyMatch(l -> l.trim().equals("storageType = 'separate-dir'")),
+                "separate-dir entry must write storageType = 'separate-dir':\n" + written);
         assertTrue(lines.stream().anyMatch(l -> l.trim().startsWith("storageRoot = ")
                         && l.contains(storageFs.toAbsolutePath().normalize().toString())),
-                "filesystem location must be written under storageRoot:\n" + written);
+                "separate-dir location must be written under storageRoot:\n" + written);
 
-        // The embedded entry: storageType = 'embedded', no storageRoot.
-        assertTrue(lines.stream().anyMatch(l -> l.trim().equals("storageType = 'embedded'")),
-                "embedded entry must write storageType = 'embedded':\n" + written);
+        // The same-repo entry: storageType = 'same-repo', no storageRoot.
+        assertTrue(lines.stream().anyMatch(l -> l.trim().equals("storageType = 'same-repo'")),
+                "same-repo entry must write storageType = 'same-repo':\n" + written);
         long storageRootLines = lines.stream().filter(l -> l.trim().startsWith("storageRoot = ")).count();
         assertEquals(1, storageRootLines,
-                "embedded entry must not emit a storageRoot key:\n" + written);
+                "same-repo entry must not emit a storageRoot key:\n" + written);
 
         // The old vocabulary must be gone from the write side entirely.
         assertFalse(written.contains("mode = "), "old 'mode' key must not be written:\n" + written);

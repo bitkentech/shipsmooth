@@ -64,18 +64,18 @@ public final class ConfigWriter {
         this.emitter = emitter;
     }
 
-    /** Upsert a {@code filesystem} entry recording the chosen {@code storageRoot}. */
+    /** Upsert a {@code separate-dir} entry recording the chosen {@code storageRoot}. */
     public void writeExternal(Path localPath, Optional<String> remoteUrl, Path storageRoot) throws IOException {
         StandaloneConfig.ProjectEntry entry = baseEntry(localPath, remoteUrl);
-        entry.setStorageType("filesystem");
+        entry.setStorageType("separate-dir");
         entry.setStorageRoot(storageRoot.toAbsolutePath().normalize().toString());
         upsert(entry);
     }
 
-    /** Upsert an {@code embedded} entry (no {@code storageRoot}). */
+    /** Upsert a {@code same-repo} entry (no {@code storageRoot}). */
     public void writeInRepo(Path localPath, Optional<String> remoteUrl) throws IOException {
         StandaloneConfig.ProjectEntry entry = baseEntry(localPath, remoteUrl);
-        entry.setStorageType("embedded");
+        entry.setStorageType("same-repo");
         upsert(entry);
     }
 

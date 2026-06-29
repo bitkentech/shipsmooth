@@ -28,26 +28,26 @@ class ArrayOfTablesTomlEmitterTest {
     void emitsBlockPerProject_omittingAbsentKeys() {
         StandaloneConfig cfg = new StandaloneConfig();
         cfg.setProjects(List.of(
-                entry("git@github.com:x/audio-gen.git", "/home/p/audio-gen", "/home/p/audio-gen-ss", "filesystem"),
-                entry("git@github.com:x/ss-toml.git", "/home/p/ss-toml", null, "embedded")));
+                entry("git@github.com:x/audio-gen.git", "/home/p/audio-gen", "/home/p/audio-gen-ss", "separate-dir"),
+                entry("git@github.com:x/ss-toml.git", "/home/p/ss-toml", null, "same-repo")));
 
         String toml = new ArrayOfTablesTomlEmitter().emit(cfg);
 
         // One header per project.
         assertEquals(2, toml.lines().filter(l -> l.equals("[[projects]]")).count(), toml);
-        // Filesystem entry emits storageRoot; embedded omits it (exactly one storageRoot line).
+        // Separate-dir entry emits storageRoot; same-repo omits it (exactly one storageRoot line).
         assertEquals(1, toml.lines().filter(l -> l.startsWith("storageRoot = ")).count(), toml);
         // Literal single-quoted strings for ordinary values.
         assertTrue(toml.contains("localPath = '/home/p/audio-gen'"), toml);
-        assertTrue(toml.contains("storageType = 'embedded'"), toml);
+        assertTrue(toml.contains("storageType = 'same-repo'"), toml);
     }
 
     @Test
     void roundTripsThroughJackson() throws IOException {
         StandaloneConfig cfg = new StandaloneConfig();
         cfg.setProjects(List.of(
-                entry("git@github.com:x/audio-gen.git", "/home/p/audio-gen", "/home/p/audio-gen-ss", "filesystem"),
-                entry(null, "/home/p/ss-toml", null, "embedded")));
+                entry("git@github.com:x/audio-gen.git", "/home/p/audio-gen", "/home/p/audio-gen-ss", "separate-dir"),
+                entry(null, "/home/p/ss-toml", null, "same-repo")));
 
         String toml = new ArrayOfTablesTomlEmitter().emit(cfg);
         StandaloneConfig back = new TomlMapper().readValue(toml, StandaloneConfig.class);
@@ -56,17 +56,17 @@ class ArrayOfTablesTomlEmitterTest {
         StandaloneConfig.ProjectEntry ext = back.getProjects().get(0);
         assertEquals("/home/p/audio-gen", ext.getLocalPath());
         assertEquals("/home/p/audio-gen-ss", ext.getStorageRoot());
-        assertEquals("filesystem", ext.getStorageType());
+        assertEquals("separate-dir", ext.getStorageType());
         StandaloneConfig.ProjectEntry in = back.getProjects().get(1);
         assertEquals("/home/p/ss-toml", in.getLocalPath());
-        assertNull(in.getStorageRoot(), "embedded entry must not round-trip a storageRoot");
+        assertNull(in.getStorageRoot(), "same-repo entry must not round-trip a storageRoot");
     }
 
     @Test
     void escapesValueContainingSingleQuote() throws IOException {
         StandaloneConfig cfg = new StandaloneConfig();
         cfg.setProjects(List.of(
-                entry(null, "/home/p/wei'rd", "/home/p/wei'rd-ss", "filesystem")));
+                entry(null, "/home/p/wei'rd", "/home/p/wei'rd-ss", "separate-dir")));
 
         String toml = new ArrayOfTablesTomlEmitter().emit(cfg);
         // A value with a single quote cannot use a literal string; round-trip proves correctness.
@@ -79,7 +79,7 @@ class ArrayOfTablesTomlEmitterTest {
         // A double-quote forces the basic-string branch; each special must escape correctly.
         String raw = "a\"b\\c\td\re\nf";
         StandaloneConfig cfg = new StandaloneConfig();
-        cfg.setProjects(List.of(entry(null, raw, null, "filesystem")));
+        cfg.setProjects(List.of(entry(null, raw, null, "separate-dir")));
 
         String toml = new ArrayOfTablesTomlEmitter().emit(cfg);
         assertTrue(toml.contains("localPath = \""), "value with a quote must use a basic string:\n" + toml);

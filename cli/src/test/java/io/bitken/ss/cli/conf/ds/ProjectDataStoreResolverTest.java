@@ -28,7 +28,7 @@ class ProjectDataStoreResolverTest {
                 remoteUrl = "https://github.com/org/repo.git"
                 localPath  = "%s"
                 storageRoot = "%s"
-                storageType = "filesystem"
+                storageType = "separate-dir"
                 """.formatted(repo, storageRoot));
 
         var r = resolve(config, Optional.of("https://github.com/org/repo.git"));
@@ -44,7 +44,7 @@ class ProjectDataStoreResolverTest {
                 [[projects]]
                 localPath = "%s"
                 storageRoot = "%s"
-                storageType = "filesystem"
+                storageType = "separate-dir"
                 """.formatted(repo, storageRoot));
 
         var r = resolve(config, Optional.empty());
@@ -59,12 +59,12 @@ class ProjectDataStoreResolverTest {
                 [[projects]]
                 localPath = "%s"
                 storageRoot = "%s"
-                storageType = "filesystem"
+                storageType = "separate-dir"
 
                 [[projects]]
                 localPath = "%s"
                 storageRoot = "%s"
-                storageType = "filesystem"
+                storageType = "separate-dir"
                 """.formatted(repo, state1, repo, state2));
 
         var r = resolve(config, Optional.empty());
@@ -93,7 +93,7 @@ class ProjectDataStoreResolverTest {
                 [[projects]]
                 localPath = "%s"
                 storageRoot = "%s"
-                storageType = "filesystem"
+                storageType = "separate-dir"
                 """.formatted(repo, storageRoot));
 
         var r = resolve(config, Optional.empty());
@@ -101,7 +101,7 @@ class ProjectDataStoreResolverTest {
         assertInstanceOf(ProjectDataStore.Standalone.class, settled.store());
     }
 
-    // ── storageType = "embedded" config entry ───────────────────────────────────
+    // ── storageType = "same-repo" config entry ───────────────────────────────────
 
     @Test
     void embeddedEntry_folderPresent_settledInRepo() throws IOException {
@@ -109,7 +109,7 @@ class ProjectDataStoreResolverTest {
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
-                storageType = "embedded"
+                storageType = "same-repo"
                 """.formatted(repo));
 
         var r = resolve(config, Optional.empty());
@@ -122,7 +122,7 @@ class ProjectDataStoreResolverTest {
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
-                storageType = "embedded"
+                storageType = "same-repo"
                 """.formatted(repo));
 
         var r = resolve(config, Optional.empty());
@@ -136,7 +136,7 @@ class ProjectDataStoreResolverTest {
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
-                storageType = "embedded"
+                storageType = "same-repo"
                 storageRoot = "/somewhere"
                 """.formatted(repo));
 
@@ -150,7 +150,7 @@ class ProjectDataStoreResolverTest {
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
-                storageType = "filesystem"
+                storageType = "separate-dir"
                 storageRoot = "%s"
                 """.formatted(repo, storageRoot));
 
@@ -197,7 +197,7 @@ class ProjectDataStoreResolverTest {
                 [[projects]]
                 localPath = "/some/other/path"
                 storageRoot = "/state"
-                storageType = "filesystem"
+                storageType = "separate-dir"
                 """);
 
         var r = resolve(config, Optional.empty());
@@ -211,7 +211,7 @@ class ProjectDataStoreResolverTest {
                 remoteUrl = "https://github.com/org/repo.git"
                 localPath  = "%s"
                 storageRoot = "/state"
-                storageType = "filesystem"
+                storageType = "separate-dir"
                 """.formatted(repo));
 
         var r = resolve(config, Optional.of("https://github.com/org/OTHER.git"));
@@ -225,7 +225,7 @@ class ProjectDataStoreResolverTest {
                 [[projects]]
                 localPath = "%s"
                 storageRoot = "%s"
-                storageType = "filesystem"
+                storageType = "separate-dir"
                 """.formatted(repo, storageRoot));
 
         var r = resolve(config, Optional.empty());

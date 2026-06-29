@@ -30,5 +30,5 @@ optional=true
     optional=true
     [elements.projects.storageType]
     type="string"
-    allowedvalues=["embedded", "filesystem"]
+    allowedvalues=["same-repo", "separate-dir"]
     optional=true

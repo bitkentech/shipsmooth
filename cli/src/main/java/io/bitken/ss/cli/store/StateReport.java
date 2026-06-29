@@ -21,8 +21,8 @@ final class StateReport {
     /** Print the ready/settled state report for {@code store} resolved at {@code repoRoot}. */
     static void printReady(Path repoRoot, ProjectDataStore store, boolean json) {
         Path stateRoot = store.stateRoot();
-        String storageType = store instanceof ProjectDataStore.InRepo ? "embedded" : "filesystem";
-        // plansDir via the locator so the embedded (.shipsmooth) vs filesystem layout difference
+        String storageType = store instanceof ProjectDataStore.InRepo ? "same-repo" : "separate-dir";
+        // plansDir via the locator so the same-repo (.shipsmooth) vs separate-dir layout difference
         // stays owned by the single source of path truth, not re-derived here.
         Path plansDir = new ShipsmoothDataLocator(repoRoot, ResolvedStateRoot.of(stateRoot)).plansDir();
 

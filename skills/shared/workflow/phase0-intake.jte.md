@@ -7,7 +7,7 @@ Before treating any message as a fresh kickoff, look for a plan that is already
 in flight. Glance at the plans on disk and their state — especially the **latest**
 one:
 
-- find the plans directory first — in **filesystem** mode (the default) it is not
+- find the plans directory first — in **separate-dir** mode (the default) it is not
   `.shipsmooth/plans/` but a separate state dir. Ask the CLI:
   `${model.cliBin()} store info --json` reports `plansDir` (when `status` is `ready`).
   List `plansDir`'s `plan-*-tasks.xml` (the highest plan number is the most likely

@@ -67,12 +67,12 @@ public final class ProjectDataStoreResolver {
         return fromFilesystem(localPath, remoteUrl);
     }
 
-    private static final String STORAGE_EMBEDDED = "embedded";
-    private static final String STORAGE_FILESYSTEM = "filesystem";
+    private static final String STORAGE_EMBEDDED = "same-repo";
+    private static final String STORAGE_FILESYSTEM = "separate-dir";
 
     /**
      * A config entry matched this project. Classify per its {@code storageType}/{@code
-     * storageRoot}: a valid embedded entry resolves in-repo; a valid filesystem entry
+     * storageRoot}: a valid same-repo entry resolves in-repo; a valid separate-dir entry
      * resolves to its root (recreate decision if missing); anything inconsistent is a
      * malformed entry.
      */
@@ -85,14 +85,14 @@ public final class ProjectDataStoreResolver {
             return hasStorageRoot ? malformed() : fromInRepoEntry(localPath);
         }
         if (STORAGE_FILESYSTEM.equals(storageType)) {
-            // filesystem storage: a storageRoot is required.
+            // separate-dir storage: a storageRoot is required.
             return hasStorageRoot ? fromExternalEntry(localPath, entry) : malformed();
         }
         // Missing or unknown storageType value.
         return malformed();
     }
 
-    /** Valid filesystem entry: settled when the root exists, else offer to recreate it. */
+    /** Valid separate-dir entry: settled when the root exists, else offer to recreate it. */
     private DataStoreResolution fromExternalEntry(Path localPath, StandaloneConfig.ProjectEntry entry) {
         Path storageRoot = Path.of(entry.getStorageRoot()).toAbsolutePath().normalize();
         if (Files.isDirectory(storageRoot)) {

@@ -33,25 +33,25 @@ class SchemaConformanceTest {
     }
 
     @Test
-    void embeddedEntry() throws IOException {
+    void sameRepoEntry() throws IOException {
         StandaloneConfig config = new StandaloneConfig();
         StandaloneConfig.ProjectEntry entry = new StandaloneConfig.ProjectEntry();
         entry.setLocalPath("/home/user/repo");
-        entry.setStorageType("embedded");
+        entry.setStorageType("same-repo");
         config.setProjects(List.of(entry));
-        assertValid(config, "embedded entry");
+        assertValid(config, "same-repo entry");
     }
 
     @Test
-    void filesystemEntry() throws IOException {
+    void separateDirEntry() throws IOException {
         StandaloneConfig config = new StandaloneConfig();
         StandaloneConfig.ProjectEntry entry = new StandaloneConfig.ProjectEntry();
         entry.setLocalPath("/home/user/repo");
         entry.setRemoteUrl("git@github.com:user/repo.git");
         entry.setStorageRoot("/home/user/shipsmooth-state");
-        entry.setStorageType("filesystem");
+        entry.setStorageType("separate-dir");
         config.setProjects(List.of(entry));
-        assertValid(config, "filesystem entry");
+        assertValid(config, "separate-dir entry");
     }
 
     @Test

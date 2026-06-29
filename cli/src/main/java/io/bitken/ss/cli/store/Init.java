@@ -44,7 +44,7 @@ public class Init implements Callable<Integer>, HasSpec {
         spec.usageMessage().description(
                 "Act on a first-run choice: create the chosen state location and record it.");
         spec.addOption(OptionSpec.builder("--type").required(true).type(String.class)
-                .paramLabel("TYPE").description("embedded | filesystem | recreate").build());
+                .paramLabel("TYPE").description("same-repo | separate-dir | recreate").build());
         spec.addOption(OptionSpec.builder("--path").type(String.class)
                 .paramLabel("PATH").description("State directory (for external/recreate)").build());
         spec.addOption(OptionSpec.builder("--json", "-j").type(boolean.class)
@@ -77,7 +77,7 @@ public class Init implements Callable<Integer>, HasSpec {
 
         DataStoreResolution.Choice choice = parseType(typeArg);
         if (choice == null) {
-            return fail("unknown --type '" + typeArg + "' (expected embedded | filesystem | recreate)");
+            return fail("unknown --type '" + typeArg + "' (expected same-repo | separate-dir | recreate)");
         }
 
         // Sealed switch (no default): adding a DataStoreResolution subtype breaks this at
@@ -144,8 +144,8 @@ public class Init implements Callable<Integer>, HasSpec {
 
     private static DataStoreResolution.Choice parseType(String arg) {
         return switch (arg == null ? "" : arg.trim()) {
-            case "filesystem" -> DataStoreResolution.Choice.EXTERNAL;
-            case "embedded" -> DataStoreResolution.Choice.IN_REPO;
+            case "separate-dir" -> DataStoreResolution.Choice.EXTERNAL;
+            case "same-repo" -> DataStoreResolution.Choice.IN_REPO;
             case "recreate" -> DataStoreResolution.Choice.RECREATE_MISSING_DIR;
             default -> null;
         };
