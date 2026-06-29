@@ -4,7 +4,7 @@
     <plan-version>plan-93-v3</plan-version>
     <metadata>
         <backlog-issue>PB-365 — Rename config/CLI terms: storageType + embedded/filesystem; storageRoot; --type not --choice</backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-06-27</created>
     </metadata>
     <tasks>
@@ -22,7 +22,7 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Rename the config keys/values across model, writer, and resolver</name>
             <commit>6b73186</commit>
             <created-from>plan-93-v3</created-from>
@@ -42,7 +42,7 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Rename the `store init` flag --choice → --type</name>
             <commit>d071b5d</commit>
             <created-from>plan-93-v3</created-from>
@@ -63,7 +63,7 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Align the store-info JSON field + skill prose</name>
             <commit>854530c</commit>
             <created-from>plan-93-v3</created-from>
@@ -101,7 +101,7 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Swap value pair embedded/filesystem -&gt; same-repo/separate-dir</name>
             <commit>9ece25e</commit>
             <created-from>plan-93-v5</created-from>
@@ -125,6 +125,11 @@
         <update>
             <timestamp>2026-06-27T14:04:19.322+05:30</timestamp>
             <message>v4: dropped back-compat (no users) — removed High-risk Task 2 (old-config read path). Remaining work is a mechanical 3-token rename (storageType/embedded/filesystem/storageRoot/--type). Reader reads new keys only; release notes plain (not breaking). 5 tasks; Task 1 closed.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-29T14:36:26.188+05:30</timestamp>
+            <message>Plan complete. PB-365 config/CLI rename: storageType + same-repo/separate-dir + storageRoot + --type. All 6 tasks closed; verified manually, build works.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
