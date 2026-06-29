@@ -69,7 +69,7 @@ class InfoTest {
         String json = runCapturingOut(infoForExternal(config, repo, stateDir), "--json");
 
         assertTrue(json.contains("\"status\":\"ready\""), json);
-        assertTrue(json.contains("\"mode\":\"external\""), json);
+        assertTrue(json.contains("\"storageType\":\"filesystem\""), json);
         assertTrue(json.contains("\"stateRoot\":\"" + stateDir + "\""), json);
         // plansDir hangs directly off the external state root (no .shipsmooth segment).
         assertTrue(json.contains("\"plansDir\":\"" + stateDir.resolve("plans") + "\""), json);
@@ -82,8 +82,8 @@ class InfoTest {
 
         String json = runCapturingOut(infoForInRepo(config, repo), "-j");
 
-        assertTrue(json.contains("\"mode\":\"in-repo\""), json);
-        // In-repo layout inserts the .shipsmooth segment between repo root and plans/.
+        assertTrue(json.contains("\"storageType\":\"embedded\""), json);
+        // Embedded layout inserts the .shipsmooth segment between repo root and plans/.
         Path expectedPlans = repo.resolve(".shipsmooth").resolve("plans");
         assertTrue(json.contains("\"plansDir\":\"" + expectedPlans + "\""), json);
     }
@@ -96,7 +96,7 @@ class InfoTest {
 
         String text = runCapturingOut(infoForExternal(config, repo, stateDir));
 
-        assertTrue(text.contains("external state at " + stateDir), text);
+        assertTrue(text.contains("filesystem storage at " + stateDir), text);
         assertTrue(text.contains("plans: " + stateDir.resolve("plans")), text);
         assertFalse(text.contains("{"), "default output is human text, not JSON: " + text);
     }

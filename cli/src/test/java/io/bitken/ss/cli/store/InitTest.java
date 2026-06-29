@@ -60,7 +60,7 @@ class InitTest {
                 "--type", "filesystem", "--path", external.toString(), "--json");
 
         assertTrue(out.contains("\"status\":\"ready\""), out);
-        assertTrue(out.contains("\"mode\":\"external\""), out);
+        assertTrue(out.contains("\"storageType\":\"filesystem\""), out);
         assertTrue(out.contains("\"plansDir\":\"" + external.resolve("plans") + "\""), out);
     }
 

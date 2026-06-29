@@ -12,19 +12,19 @@ ${model.cliBin()} plan resume --plan {N}
 Only proceed once you know which tasks are done and which are next.
 
 **Where the plan files live `[Local]`** — Do not assume plan narratives are under
-`.shipsmooth/plans/` in the project repo. In **external** mode (the default) the project
+`.shipsmooth/plans/` in the project repo. In **filesystem** mode (the default) the project
 repo stays untouched and the plan files live in a separate state directory. Ask the CLI
 where to read them — it is the source of truth — rather than guessing:
 
 ```bash
 ${model.cliBin()} store info --json
-# -> {"status":"ready","mode":"external","stateRoot":"...","plansDir":"<dir>/plans"}
+# -> {"status":"ready","storageType":"filesystem","stateRoot":"...","plansDir":"<dir>/plans"}
 #    Read plan narratives (plan-{N}.md) and task XML from the reported `plansDir`.
 #    If status is not "ready", state is not set up yet — handle per first-run (Phase 0).
 ```
 
 Load the plan narrative for `{N}` from the reported `plansDir` before executing, the same
-as you would for an in-repo plan — `mode: in-repo` simply reports the in-repo `plansDir`.
+as you would for an embedded plan — `storageType: embedded` simply reports the in-repo `plansDir`.
 
 ---
 
@@ -63,7 +63,7 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
 - Write at least one failing test (and not more than 3) that targets the core logic (preserving 
 Core Invariant #6).
 - Implement just enough to prove the approach works. Focus on the core complexity.
-- Commit per the **commit-message convention**: `draft(N): de-risk [task name]` in in-repo mode; in standalone mode a plain feature message with no `draft(N)`/`task(N)` reference.
+- Commit per the **commit-message convention**: `draft(N): de-risk [task name]` in embedded storage; in standalone (filesystem) storage a plain feature message with no `draft(N)`/`task(N)` reference.
 - `[Linear]` Post a comment on the Linear issue notifying the human the draft is ready.
 - `[Local]` Run `${model.cliBin()} task status --plan {N} --task {id} --status de-risked` and `${model.cliBin()} task comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
 - **Wait for explicit approval of the approach.**
@@ -82,7 +82,7 @@ quality conforms to its instructions):
   ```
 - Commit the completed task (tests + implementation), wording the message per the **commit-message convention** (standalone → plain feature message, no `task(N)` prefix):
   ```bash
-  git commit -m "task(N): <short description>"   # in-repo mode; standalone: plain feature message
+  git commit -m "task(N): <short description>"   # embedded storage; standalone (filesystem): plain feature message
   git push origin t/{issue-id}-{short-description}
   ```
   This creates a stable rollback point. A human reviewing the PR can check out this commit to inspect each task in isolation.
@@ -107,7 +107,7 @@ quality conforms to its instructions):
    Do not proceed until coverage passes.
 4. Commit the completed task (tests + implementation), wording the message per the **commit-message convention** (standalone → plain feature message, no `task(N)` prefix):
    ```bash
-   git commit -m "task(N): <short description>"   # in-repo mode; standalone: plain feature message
+   git commit -m "task(N): <short description>"   # embedded storage; standalone (filesystem): plain feature message
    git push origin t/{issue-id}-{short-description}
    ```
    - `[Linear]` Mark the Linear issue **Agent Coded**. No draft review needed.
