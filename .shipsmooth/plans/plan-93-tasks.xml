@@ -63,12 +63,17 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Align the store-info JSON field + skill prose</name>
             <commit></commit>
             <created-from>plan-93-v3</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-29T12:11:08.450+05:30</timestamp>
+                    <message>De-risk ready (LOCKSTEP): JSON ready field mode-&gt;storageType (filesystem/embedded), choiceToken now emits filesystem/embedded/recreate (closes the loop with --type), StateReport JSON+human text. Skill prose: first-run-handshake (--type examples), phase2-execute (JSON field + mode-name prose), commit-message-convention (read storageType, embedded/filesystem storage), phase0-intake (filesystem mode). Tests ResolutionJsonTest/InfoTest/InitTest migrated; full :cli:test green; jte render stages new vocab.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>2,3</depends-on>
         </task>
@@ -83,6 +88,18 @@
             <comments/>
             <deviations/>
             <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Swap value pair embedded/filesystem -&gt; same-repo/separate-dir</name>
+            <commit></commit>
+            <created-from>plan-93-v5</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>5</depends-on>
         </task>
     </tasks>
     <project-updates>
