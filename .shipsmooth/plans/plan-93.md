@@ -1,4 +1,4 @@
-# plan-93 — rename config/CLI terms: storageType + embedded/filesystem; storageRoot; --type not --choice
+# plan-93 — rename config/CLI terms: storageType + same-repo/separate-dir; storageRoot; --type not --choice
 
 ## Context
 
@@ -13,10 +13,13 @@ axis is *which storage backend*, not *where on disk* — a discriminated union k
 
 1. **Config key `mode` → `storageType`.** The discriminator naming which storage backend a
    project uses.
-2. **Config values `in-repo`/`external` → `embedded`/`filesystem`.** Peer *backend* names,
-   not location labels — so a future `database` backend slots in as a third value without
-   re-working the pairing. `embedded` = state inside the repo's `.shipsmooth/`; `filesystem`
-   = state in a separate directory.
+2. **Config values `in-repo`/`external` → `same-repo`/`separate-dir`** (revised at v5 from
+   the v4 `embedded`/`filesystem` — see Task 6). Peer *backend* names, chosen for plain-English
+   clarity over technical terms (`embedded` read as too technical, `external` as too vague).
+   `same-repo` = state inside the repo's `.shipsmooth/`; `separate-dir` = state in a separate
+   directory. They do not clash with future backends: `storageType` is the discriminator, so a
+   database backend takes its own value (`storageType = 'database'`) — `separate-dir` only ever
+   names the directory case, which is accurate, not a lie.
 3. **Config key `stateDir` → `storageRoot`.** The filesystem backend's location. Renamed
    because (a) `stateDir` clashed with the `storage*` vocabulary (`state` vs `storage`), and
    (b) it is **type-specific** — `storageRoot` belongs to the `filesystem` type; other types
@@ -55,10 +58,17 @@ schema rework is needed to add a backend later; just new optional keys + resolve
 | Old (today) | New | Notes |
 |---|---|---|
 | `mode` (config key) | `storageType` | the backend discriminator |
-| `in-repo` (value) | `embedded` | peer backend name |
-| `external` (value) | `filesystem` | peer backend name |
-| `stateDir` (config key) | `storageRoot` | type-specific to `filesystem`; future types carry their own keys |
+| `in-repo` (value) | `same-repo` | peer backend name (v5; was `embedded` at v4) |
+| `external` (value) | `separate-dir` | peer backend name (v5; was `filesystem` at v4) |
+| `stateDir` (config key) | `storageRoot` | type-specific to `separate-dir`; future types carry their own keys |
 | `--choice` (flag) | `--type` | flag in `store init`; context already implies "storage" |
+
+> **v5 note:** the *value* pair was changed from `embedded`/`filesystem` (implemented in
+> Tasks 2–5) to `same-repo`/`separate-dir` for plain-English clarity. Task 6 carries this
+> swap through every surface. The keys (`storageType`, `storageRoot`), the flag (`--type`),
+> and the internal enum (`DataStoreResolution.Choice`) are unchanged — only the two value
+> strings move. Tasks 1–5 below describe the `embedded`/`filesystem` work as it was actually
+> done; Task 6 is the value swap layered on top.
 
 ### Confirmed touch-points (verified against current code)
 
@@ -93,25 +103,25 @@ schema rework is needed to add a backend later; just new optional keys + resolve
 The canonical two-paragraph explanation the rename targets:
 
 > shipsmooth keeps your plan and task state in one of two **storage types**, chosen the first
-> time you set up a project. With the **embedded** type, that state lives inside the project
+> time you set up a project. With the **same-repo** type, that state lives inside the project
 > itself, in a tool-owned `.shipsmooth/` directory (plan narratives under `.shipsmooth/plans/`
 > and the per-plan task files) — convenient when the plan/task history is meant to travel
-> with the code. With the **filesystem** type, the state lives in a separate directory
+> with the code. With the **separate-dir** type, the state lives in a directory
 > *outside* the project repo — by default a sibling folder named `<repo>-shipsmooth` — so the
-> project repository stays completely untouched ("zero-trace"). Filesystem is the recommended
+> project repository stays completely untouched ("zero-trace"). Separate-dir is the recommended
 > default: the state directory is your own project content you can version and push
 > independently, while your code repo carries no trace of the tooling. (`storageType` names
 > the backend, so future types — e.g. a database — slot in alongside these.)
 >
 > The chosen storage type is recorded per-project in your user-level `shipsmooth.toml`, and
 > is selected at setup through the `store init` CLI flag. Each project is a `[[projects]]`
-> entry keyed on its local path (and remote URL, if any). An embedded project is written as
-> `storageType = 'embedded'` with no storage root; a filesystem project as
-> `storageType = 'filesystem'` plus `storageRoot = '<absolute path>'`. Keys other than
-> `storageType` are type-specific — `storageRoot` belongs to the filesystem type. You don't
+> entry keyed on its local path (and remote URL, if any). A same-repo project is written as
+> `storageType = 'same-repo'` with no storage root; a separate-dir project as
+> `storageType = 'separate-dir'` plus `storageRoot = '<absolute path>'`. Keys other than
+> `storageType` are type-specific — `storageRoot` belongs to the separate-dir type. You don't
 > normally hand-edit this file: it's written when you answer the first-run prompt, which the
-> agent drives via `shipsmooth store init --type <embedded | filesystem | recreate>` (with
-> `--path <dir>` to name or relocate a filesystem store). `shipsmooth store info` then reports
+> agent drives via `shipsmooth store init --type <same-repo | separate-dir | recreate>` (with
+> `--path <dir>` to name or relocate a separate-dir store). `shipsmooth store info` then reports
 > the resolved storage type and where your plan files live.
 
 ### Out of scope
@@ -181,3 +191,31 @@ Update `shipsmooth.tosd`: `[elements.projects.storageType]` (allowed `embedded`/
 Write a plain release-notes call-out documenting the new config vocabulary as the current
 shape — **no breaking-change / migration framing** (no users). Confirm a full render + the
 TOML schema conformance test pass.
+
+### Task 6: Swap the value pair embedded/filesystem → same-repo/separate-dir [Low]
+
+*Depends-on: 5*
+
+A late vocabulary refinement (v5): the two storage-type *values* shipped in Tasks 2–5 as
+`embedded`/`filesystem` are renamed to `same-repo`/`separate-dir` for plain-English clarity
+(`embedded` read as too technical; `external`/`filesystem` as vague). **Only the two value
+strings change** — `storageType`, `storageRoot`, `--type`, and the internal enum
+`DataStoreResolution.Choice` all stay. Mechanical string swap (`embedded`→`same-repo`,
+`filesystem`→`separate-dir`) across every surface already touched:
+
+- **Config write:** `ConfigWriter` (`setStorageType("filesystem"|"embedded")`).
+- **Resolver read:** `ProjectDataStoreResolver` (`STORAGE_EMBEDDED`/`STORAGE_FILESYSTEM`
+  constants + matched values).
+- **CLI flag:** `store/Init.java` — `parseType` value cases, description, error strings.
+- **JSON:** `ResolutionJson` (`ready` storageType values + `choiceToken`), `StateReport`
+  (JSON + human text).
+- **Schema:** `shipsmooth.tosd` `allowedvalues`.
+- **Skill prose:** `first-run-handshake`, `phase2-execute`, `commit-message-convention`,
+  `phase0-intake` (`--type` examples, JSON-field example, mode-name prose).
+- **Tests:** every assertion/fixture migrated in Tasks 2–5 (resolver, emitter,
+  schema-conformance, Init, Info, ResolutionJson, the preamble integration test, the jlink
+  smoke script).
+
+Verify: full `:cli:test` green; jte render stages the new values; `build-claude-dev` rebuilt;
+no `embedded`/`filesystem` token left anywhere except plan history. Update release notes to the
+final values.
