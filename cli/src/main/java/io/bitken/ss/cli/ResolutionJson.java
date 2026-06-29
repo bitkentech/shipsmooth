@@ -74,24 +74,28 @@ public final class ResolutionJson {
     }
 
     /**
-     * Settled state: where shipsmooth state lives. {@code mode} is {@code external} or
-     * {@code in-repo}; {@code plansDir} is the ready-to-read directory holding plan files,
+     * Settled state: where shipsmooth state lives. {@code storageType} is {@code separate-dir}
+     * or {@code same-repo}; {@code plansDir} is the ready-to-read directory holding plan files,
      * so the skill can point an agent straight at plan context.
      */
-    public static String ready(String mode, java.nio.file.Path stateRoot, java.nio.file.Path plansDir) {
+    public static String ready(String storageType, java.nio.file.Path stateRoot, java.nio.file.Path plansDir) {
         return "{"
                 + kv("status", "ready") + ","
-                + kv("mode", mode) + ","
+                + kv("storageType", storageType) + ","
                 + kv("stateRoot", stateRoot.toString()) + ","
                 + kv("plansDir", plansDir.toString())
                 + "}";
     }
 
-    /** Stable wire tokens for the skill (kebab-case), independent of enum naming. */
+    /**
+     * Stable wire tokens for the skill, independent of enum naming. These are the values the
+     * skill passes back to {@code store init --type}, so they must match that flag's accepted
+     * values exactly: {@code separate-dir} / {@code same-repo} / {@code recreate}.
+     */
     private static String choiceToken(DataStoreResolution.Choice c) {
         return switch (c) {
-            case EXTERNAL -> "external";
-            case IN_REPO -> "in-repo";
+            case EXTERNAL -> "separate-dir";
+            case IN_REPO -> "same-repo";
             case RECREATE_MISSING_DIR -> "recreate";
         };
     }

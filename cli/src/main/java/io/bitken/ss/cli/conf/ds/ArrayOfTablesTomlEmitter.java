@@ -26,8 +26,8 @@ class ArrayOfTablesTomlEmitter {
             sb.append("[[projects]]\n");
             appendKey(sb, "remoteUrl", e.getRemoteUrl());
             appendKey(sb, "localPath", e.getLocalPath());
-            appendKey(sb, "stateDir", e.getStateDir());
-            appendKey(sb, "mode", e.getMode());
+            appendKey(sb, "storageRoot", e.getStorageRoot());
+            appendKey(sb, "storageType", e.getStorageType());
             sb.append('\n');
         }
         return sb.toString();

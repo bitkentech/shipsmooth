@@ -43,15 +43,15 @@ class MultiLineTomlConfigIntegrationTest {
         assertFalse(lines.stream().anyMatch(l -> l.contains("projects = [{")),
                 "config collapsed to a single inline-array line:\n" + Files.readString(config));
 
-        // The external entry's stateDir appears on its own key line (multi-line, one key per line).
-        assertTrue(lines.stream().anyMatch(l -> l.trim().startsWith("stateDir = ")
+        // The separate-dir entry's storageRoot appears on its own key line (multi-line, one key per line).
+        assertTrue(lines.stream().anyMatch(l -> l.trim().startsWith("storageRoot = ")
                         && l.contains(stateExt.toAbsolutePath().normalize().toString())),
-                "stateDir not emitted on its own key line:\n" + Files.readString(config));
+                "storageRoot not emitted on its own key line:\n" + Files.readString(config));
 
-        // The in-repo entry omits stateDir entirely (exactly one stateDir line across the file).
-        long stateDirLines = lines.stream().filter(l -> l.trim().startsWith("stateDir = ")).count();
-        assertEquals(1, stateDirLines,
-                "in-repo entry must not emit a stateDir key:\n" + Files.readString(config));
+        // The same-repo entry omits storageRoot entirely (exactly one storageRoot line across the file).
+        long storageRootLines = lines.stream().filter(l -> l.trim().startsWith("storageRoot = ")).count();
+        assertEquals(1, storageRootLines,
+                "same-repo entry must not emit a storageRoot key:\n" + Files.readString(config));
     }
 
     @Test

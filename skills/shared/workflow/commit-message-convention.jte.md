@@ -1,13 +1,13 @@
 @param io.bitken.ss.resources.PluginModel model
 
 > **Commit-message convention (code commits in the project repo).** How you word a code
-> commit depends on the resolved storage mode. Check it once per session with
-> `${model.cliBin()} store info --json` and read `mode`.
+> commit depends on the resolved storage type. Check it once per session with
+> `${model.cliBin()} store info --json` and read `storageType`.
 >
-> - **`in-repo` mode:** keep the prefixed convention — `task(N): <short description>` and
+> - **`same-repo` storage:** keep the prefixed convention — `task(N): <short description>` and
 >   `draft(N): de-risk <task name>`. The plan/task history is shipsmooth's own and lives
 >   alongside the code, so the prefixes are welcome.
-> - **`external` (standalone) mode:** the project repo must stay **zero-trace**. Write
+> - **`separate-dir` (standalone) storage:** the project repo must stay **zero-trace**. Write
 >   plain, feature-oriented messages with **no `plan(N)`/`task(N)`/`draft(N)` prefix** and
 >   no plan or task references — e.g. `Add retry to upload client`, not
 >   `task(3): add retry`. This applies to **every** project-repo commit, including the

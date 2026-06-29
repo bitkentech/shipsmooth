@@ -67,41 +67,42 @@ public final class ProjectDataStoreResolver {
         return fromFilesystem(localPath, remoteUrl);
     }
 
-    private static final String MODE_IN_REPO = "in-repo";
-    private static final String MODE_EXTERNAL = "external";
+    private static final String STORAGE_EMBEDDED = "same-repo";
+    private static final String STORAGE_FILESYSTEM = "separate-dir";
 
     /**
-     * A config entry matched this project. Classify per its {@code mode}/{@code stateDir}:
-     * a valid in-repo entry resolves in-repo; a valid external entry resolves to its dir
-     * (recreate decision if missing); anything inconsistent is a malformed entry.
+     * A config entry matched this project. Classify per its {@code storageType}/{@code
+     * storageRoot}: a valid same-repo entry resolves in-repo; a valid separate-dir entry
+     * resolves to its root (recreate decision if missing); anything inconsistent is a
+     * malformed entry.
      */
     private DataStoreResolution fromConfigEntry(Path localPath, StandaloneConfig.ProjectEntry entry) {
-        boolean hasStateDir = entry.getStateDir() != null && !entry.getStateDir().isBlank();
-        String mode = entry.getMode() == null ? null : entry.getMode().trim();
+        boolean hasStorageRoot = entry.getStorageRoot() != null && !entry.getStorageRoot().isBlank();
+        String storageType = entry.getStorageType() == null ? null : entry.getStorageType().trim();
 
-        if (MODE_IN_REPO.equals(mode)) {
-            // In-repo entries must NOT also carry a stateDir.
-            return hasStateDir ? malformed() : fromInRepoEntry(localPath);
+        if (STORAGE_EMBEDDED.equals(storageType)) {
+            // Embedded entries must NOT also carry a storageRoot.
+            return hasStorageRoot ? malformed() : fromInRepoEntry(localPath);
         }
-        if (MODE_EXTERNAL.equals(mode) || mode == null) {
-            // external mode, or back-compat (no mode): a stateDir is required.
-            return hasStateDir ? fromExternalEntry(localPath, entry) : malformed();
+        if (STORAGE_FILESYSTEM.equals(storageType)) {
+            // separate-dir storage: a storageRoot is required.
+            return hasStorageRoot ? fromExternalEntry(localPath, entry) : malformed();
         }
-        // Unknown mode value.
+        // Missing or unknown storageType value.
         return malformed();
     }
 
-    /** Valid external entry: settled when the dir exists, else offer to recreate it. */
+    /** Valid separate-dir entry: settled when the root exists, else offer to recreate it. */
     private DataStoreResolution fromExternalEntry(Path localPath, StandaloneConfig.ProjectEntry entry) {
-        Path stateDir = Path.of(entry.getStateDir()).toAbsolutePath().normalize();
-        if (Files.isDirectory(stateDir)) {
+        Path storageRoot = Path.of(entry.getStorageRoot()).toAbsolutePath().normalize();
+        if (Files.isDirectory(storageRoot)) {
             // Config wins over any in-repo folder: we do not even inspect the repo here.
-            return new DataStoreResolution.Settled(new ProjectDataStore.Standalone(localPath, stateDir));
+            return new DataStoreResolution.Settled(new ProjectDataStore.Standalone(localPath, storageRoot));
         }
         return new DataStoreResolution.NeedsDecision(
                 DataStoreResolution.UndecidableSituation.CONFIG_DIR_MISSING,
                 List.of(new DataStoreResolution.Option(
-                        DataStoreResolution.Choice.RECREATE_MISSING_DIR, stateDir, true)));
+                        DataStoreResolution.Choice.RECREATE_MISSING_DIR, storageRoot, true)));
     }
 
     /**

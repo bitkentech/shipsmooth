@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>93</plan>
+    <plan-version>plan-93-v3</plan-version>
+    <metadata>
+        <backlog-issue>PB-365 — Rename config/CLI terms: storageType + embedded/filesystem; storageRoot; --type not --choice</backlog-issue>
+        <status>complete</status>
+        <created>2026-06-27</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Map all UX surfaces, decide vocabulary + implications</name>
+            <commit></commit>
+            <created-from>plan-93-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Rename the config keys/values across model, writer, and resolver</name>
+            <commit>6b73186</commit>
+            <created-from>plan-93-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-29T11:04:19.472+05:30</timestamp>
+                    <message>De-risk draft ready for review: config rename (storageType/storageRoot, embedded/filesystem) across model, writer, emitter, resolver + schema. All config/ds tests green; full :cli:test green. Schema updated early (Task 6 work) so resolver/writer stay consistent.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-29T11:31:11.894+05:30</timestamp>
+                    <message>Hardened: coverage on renamed classes &gt;=97% (gate 95%); full :cli:test green. No code change beyond de-risk — a mechanical rename, the draft met the quality bar. Internal helper/store/enum names (InRepo/Standalone/Choice.IN_REPO) deliberately kept; rename is user-facing strings only. Final commit = de-risk draft 6b73186.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Rename the `store init` flag --choice → --type</name>
+            <commit>d071b5d</commit>
+            <created-from>plan-93-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-29T11:47:37.387+05:30</timestamp>
+                    <message>De-risk draft ready: store/Init.java flag --choice-&gt;--type, paramLabel TYPE, desc embedded|filesystem|recreate, error strings, parseChoice-&gt;parseType (filesystem-&gt;EXTERNAL, embedded-&gt;IN_REPO), removed TODO. Also updated InitTest, ShipsmoothGateTest, and jlinkSmoke/store-roundtrip.sh. Full :cli:test green. JSON 'mode' field + skill prose left for Task 4.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-29T11:49:14.347+05:30</timestamp>
+                    <message>Hardened: Init line coverage 97% (gate 95%); full :cli:test green. Mechanical rename — no code change beyond de-risk; missed branches (resolution-null guard, post-act re-resolve, parseType null-guard) are pre-existing defensive paths, not new gaps. Final commit = draft d071b5d.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Align the store-info JSON field + skill prose</name>
+            <commit>854530c</commit>
+            <created-from>plan-93-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-29T12:11:08.450+05:30</timestamp>
+                    <message>De-risk ready (LOCKSTEP): JSON ready field mode-&gt;storageType (filesystem/embedded), choiceToken now emits filesystem/embedded/recreate (closes the loop with --type), StateReport JSON+human text. Skill prose: first-run-handshake (--type examples), phase2-execute (JSON field + mode-name prose), commit-message-convention (read storageType, embedded/filesystem storage), phase0-intake (filesystem mode). Tests ResolutionJsonTest/InfoTest/InitTest migrated; full :cli:test green; jte render stages new vocab.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-06-29T12:43:48.798+05:30</timestamp>
+                    <message>JSON storageType field + choiceToken + StateReport + skill prose lockstep (de-risk 854530c); values later swapped to same-repo/separate-dir in Task 6. Approved + hardening verified (full :cli:test green, render lockstep confirmed).</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>2,3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Schema + release notes</name>
+            <commit></commit>
+            <created-from>plan-93-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-29T12:52:38.613+05:30</timestamp>
+                    <message>Schema (shipsmooth.tosd) already updated in Task 2 + value-swapped in Task 6. Release-notes draft written to .shipsmooth/tmp/release-notes-pb-365.md (gitignored scratch, per 0.3.26 precedent; feeds gh release --notes at cut time) — PLAIN, not breaking (no users). Verified: SchemaConformanceTest green, full :cli:test green, full claude-dev render green.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Swap value pair embedded/filesystem -&gt; same-repo/separate-dir</name>
+            <commit>9ece25e</commit>
+            <created-from>plan-93-v5</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-29T12:43:45.996+05:30</timestamp>
+                    <message>Value swap embedded-&gt;same-repo, filesystem-&gt;separate-dir across code/schema/tests/skill prose + jlink smoke. Preserved OS-filesystem prose and 'embedded newlines'. Full :cli:test green; dev payload re-rendered clean. Commit 9ece25e.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>5</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-27T12:41:00.205+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-27T14:04:19.322+05:30</timestamp>
+            <message>v4: dropped back-compat (no users) — removed High-risk Task 2 (old-config read path). Remaining work is a mechanical 3-token rename (storageType/embedded/filesystem/storageRoot/--type). Reader reads new keys only; release notes plain (not breaking). 5 tasks; Task 1 closed.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-29T14:36:26.188+05:30</timestamp>
+            <message>Plan complete. PB-365 config/CLI rename: storageType + same-repo/separate-dir + storageRoot + --type. All 6 tasks closed; verified manually, build works.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

@@ -22,7 +22,7 @@ import java.util.concurrent.Callable;
  * <p>A <em>guarded</em> writer. It does not decide for itself whether to act: {@code main}
  * resolves once and injects that {@link DataStoreResolution} via {@link #bind}. This command
  * refuses to mutate unless the project is genuinely awaiting a decision and the supplied
- * {@code --choice} is one the current situation offers — an already-settled or unresolvable
+ * {@code --type} is one the current situation offers — an already-settled or unresolvable
  * project, or an off-menu choice, is rejected without touching anything. After acting it
  * re-resolves once to confirm the project actually settled.
  */
@@ -43,9 +43,8 @@ public class Init implements Callable<Integer>, HasSpec {
         spec.name("init");
         spec.usageMessage().description(
                 "Act on a first-run choice: create the chosen state location and record it.");
-        // TODO: rename --choice to --type
-        spec.addOption(OptionSpec.builder("--choice").required(true).type(String.class)
-                .paramLabel("CHOICE").description("external | in-repo | recreate").build());
+        spec.addOption(OptionSpec.builder("--type").required(true).type(String.class)
+                .paramLabel("TYPE").description("same-repo | separate-dir | recreate").build());
         spec.addOption(OptionSpec.builder("--path").type(String.class)
                 .paramLabel("PATH").description("State directory (for external/recreate)").build());
         spec.addOption(OptionSpec.builder("--json", "-j").type(boolean.class)
@@ -73,12 +72,12 @@ public class Init implements Callable<Integer>, HasSpec {
         }
 
         var pr = spec.commandLine().getParseResult();
-        String choiceArg = pr.matchedOption("choice").getValue();
+        String typeArg = pr.matchedOption("type").getValue();
         Optional<String> pathArg = Optional.ofNullable(pr.matchedOptionValue("path", null));
 
-        DataStoreResolution.Choice choice = parseChoice(choiceArg);
+        DataStoreResolution.Choice choice = parseType(typeArg);
         if (choice == null) {
-            return fail("unknown --choice '" + choiceArg + "' (expected external | in-repo | recreate)");
+            return fail("unknown --type '" + typeArg + "' (expected same-repo | separate-dir | recreate)");
         }
 
         // Sealed switch (no default): adding a DataStoreResolution subtype breaks this at
@@ -100,7 +99,7 @@ public class Init implements Callable<Integer>, HasSpec {
                 .findFirst()
                 .orElse(null);
         if (option == null) {
-            return fail("--choice " + choiceArg + " is not valid for the current situation ("
+            return fail("--type " + typeArg + " is not valid for the current situation ("
                     + needs.situation() + ")");
         }
 
@@ -143,10 +142,10 @@ public class Init implements Callable<Integer>, HasSpec {
         return pathArg.map(p -> Path.of(p).toAbsolutePath().normalize()).orElse(proposed);
     }
 
-    private static DataStoreResolution.Choice parseChoice(String arg) {
+    private static DataStoreResolution.Choice parseType(String arg) {
         return switch (arg == null ? "" : arg.trim()) {
-            case "external" -> DataStoreResolution.Choice.EXTERNAL;
-            case "in-repo" -> DataStoreResolution.Choice.IN_REPO;
+            case "separate-dir" -> DataStoreResolution.Choice.EXTERNAL;
+            case "same-repo" -> DataStoreResolution.Choice.IN_REPO;
             case "recreate" -> DataStoreResolution.Choice.RECREATE_MISSING_DIR;
             default -> null;
         };

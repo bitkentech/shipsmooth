@@ -116,7 +116,7 @@ public class ShipsmoothGateTest {
         // (bindStoreInit). An off-menu choice is rejected by Init *before* it touches the
         // filesystem, so this exercises the bind seam without mutating real state — and it is
         // NOT the gate JSON (store init runs; it is not gated).
-        int code = run(needs, "store", "init", "--choice", "sideways");
+        int code = run(needs, "store", "init", "--type", "sideways");
 
         assertNotEquals(0, code, "off-menu choice must be refused by the bound Init");
         assertFalse(out().contains("\"status\":\"needs-decision\""),

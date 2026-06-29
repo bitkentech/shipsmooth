@@ -21,29 +21,31 @@ class ProjectDataStoreResolverTest {
     // ── Settled: matched external config entry whose dir exists ──────────────────
 
     @Test
-    void configExternalDirExists_settledStandalone() throws IOException {
-        Path stateDir = Files.createDirectories(repo.resolve("state"));
+    void configFilesystemDirExists_settledStandalone() throws IOException {
+        Path storageRoot = Files.createDirectories(repo.resolve("state"));
         Path config = writeConfig("""
                 [[projects]]
                 remoteUrl = "https://github.com/org/repo.git"
                 localPath  = "%s"
-                stateDir   = "%s"
-                """.formatted(repo, stateDir));
+                storageRoot = "%s"
+                storageType = "separate-dir"
+                """.formatted(repo, storageRoot));
 
         var r = resolve(config, Optional.of("https://github.com/org/repo.git"));
         var settled = assertInstanceOf(DataStoreResolution.Settled.class, r);
         var store = assertInstanceOf(ProjectDataStore.Standalone.class, settled.store());
-        assertEquals(stateDir.toAbsolutePath().normalize(), store.stateRoot());
+        assertEquals(storageRoot.toAbsolutePath().normalize(), store.stateRoot());
     }
 
     @Test
     void noRemote_matchesOnLocalPathAlone() throws IOException {
-        Path stateDir = Files.createDirectories(repo.resolve("state"));
+        Path storageRoot = Files.createDirectories(repo.resolve("state"));
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
-                stateDir  = "%s"
-                """.formatted(repo, stateDir));
+                storageRoot = "%s"
+                storageType = "separate-dir"
+                """.formatted(repo, storageRoot));
 
         var r = resolve(config, Optional.empty());
         assertInstanceOf(DataStoreResolution.Settled.class, r);
@@ -56,11 +58,13 @@ class ProjectDataStoreResolverTest {
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
-                stateDir  = "%s"
+                storageRoot = "%s"
+                storageType = "separate-dir"
 
                 [[projects]]
                 localPath = "%s"
-                stateDir  = "%s"
+                storageRoot = "%s"
+                storageType = "separate-dir"
                 """.formatted(repo, state1, repo, state2));
 
         var r = resolve(config, Optional.empty());
@@ -84,27 +88,28 @@ class ProjectDataStoreResolverTest {
     @Test
     void bothInRepoAndConfiguredExternal_configWins() throws IOException {
         Files.createDirectories(repo.resolve(".shipsmooth").resolve("plans"));
-        Path stateDir = Files.createDirectories(repo.resolve("state"));
+        Path storageRoot = Files.createDirectories(repo.resolve("state"));
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
-                stateDir  = "%s"
-                """.formatted(repo, stateDir));
+                storageRoot = "%s"
+                storageType = "separate-dir"
+                """.formatted(repo, storageRoot));
 
         var r = resolve(config, Optional.empty());
         var settled = assertInstanceOf(DataStoreResolution.Settled.class, r);
         assertInstanceOf(ProjectDataStore.Standalone.class, settled.store());
     }
 
-    // ── mode = "in-repo" config entry (Task 10) ─────────────────────────────────
+    // ── storageType = "same-repo" config entry ───────────────────────────────────
 
     @Test
-    void inRepoEntry_folderPresent_settledInRepo() throws IOException {
+    void embeddedEntry_folderPresent_settledInRepo() throws IOException {
         Files.createDirectories(repo.resolve(".shipsmooth").resolve("plans"));
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
-                mode      = "in-repo"
+                storageType = "same-repo"
                 """.formatted(repo));
 
         var r = resolve(config, Optional.empty());
@@ -113,11 +118,11 @@ class ProjectDataStoreResolverTest {
     }
 
     @Test
-    void inRepoEntry_folderMissing_needsDecisionNotSetUp() throws IOException {
+    void embeddedEntry_folderMissing_needsDecisionNotSetUp() throws IOException {
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
-                mode      = "in-repo"
+                storageType = "same-repo"
                 """.formatted(repo));
 
         var r = resolve(config, Optional.empty());
@@ -127,12 +132,12 @@ class ProjectDataStoreResolverTest {
     }
 
     @Test
-    void inRepoEntryWithStateDir_isMalformed() throws IOException {
+    void embeddedEntryWithStorageRoot_isMalformed() throws IOException {
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
-                mode      = "in-repo"
-                stateDir  = "/somewhere"
+                storageType = "same-repo"
+                storageRoot = "/somewhere"
                 """.formatted(repo));
 
         var bad = assertInstanceOf(DataStoreResolution.Unresolvable.class, resolve(config, Optional.empty()));
@@ -140,25 +145,25 @@ class ProjectDataStoreResolverTest {
     }
 
     @Test
-    void explicitExternalMode_withStateDir_settled() throws IOException {
-        Path stateDir = Files.createDirectories(repo.resolve("state"));
+    void filesystemType_withStorageRoot_settled() throws IOException {
+        Path storageRoot = Files.createDirectories(repo.resolve("state"));
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
-                mode      = "external"
-                stateDir  = "%s"
-                """.formatted(repo, stateDir));
+                storageType = "separate-dir"
+                storageRoot = "%s"
+                """.formatted(repo, storageRoot));
 
         assertInstanceOf(DataStoreResolution.Settled.class, resolve(config, Optional.empty()));
     }
 
     @Test
-    void unknownMode_isMalformed() throws IOException {
+    void unknownStorageType_isMalformed() throws IOException {
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
-                mode      = "sideways"
-                stateDir  = "/somewhere"
+                storageType = "sideways"
+                storageRoot = "/somewhere"
                 """.formatted(repo));
 
         var bad = assertInstanceOf(DataStoreResolution.Unresolvable.class, resolve(config, Optional.empty()));
@@ -191,7 +196,8 @@ class ProjectDataStoreResolverTest {
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "/some/other/path"
-                stateDir  = "/state"
+                storageRoot = "/state"
+                storageType = "separate-dir"
                 """);
 
         var r = resolve(config, Optional.empty());
@@ -204,7 +210,8 @@ class ProjectDataStoreResolverTest {
                 [[projects]]
                 remoteUrl = "https://github.com/org/repo.git"
                 localPath  = "%s"
-                stateDir   = "/state"
+                storageRoot = "/state"
+                storageType = "separate-dir"
                 """.formatted(repo));
 
         var r = resolve(config, Optional.of("https://github.com/org/OTHER.git"));
@@ -212,19 +219,20 @@ class ProjectDataStoreResolverTest {
     }
 
     @Test
-    void configExternalDirMissing_needsDecisionRecreate() throws IOException {
-        Path stateDir = repo.resolve("gone"); // never created
+    void configFilesystemDirMissing_needsDecisionRecreate() throws IOException {
+        Path storageRoot = repo.resolve("gone"); // never created
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"
-                stateDir  = "%s"
-                """.formatted(repo, stateDir));
+                storageRoot = "%s"
+                storageType = "separate-dir"
+                """.formatted(repo, storageRoot));
 
         var r = resolve(config, Optional.empty());
         var needs = assertInstanceOf(DataStoreResolution.NeedsDecision.class, r);
         assertEquals(DataStoreResolution.UndecidableSituation.CONFIG_DIR_MISSING, needs.situation());
         assertEquals(DataStoreResolution.Choice.RECREATE_MISSING_DIR, needs.recommended().choice());
-        assertEquals(stateDir.toAbsolutePath().normalize(), needs.recommended().proposedPath());
+        assertEquals(storageRoot.toAbsolutePath().normalize(), needs.recommended().proposedPath());
     }
 
     // ── Unresolvable ──────────────────────────────────────────────────────────────
@@ -243,7 +251,7 @@ class ProjectDataStoreResolverTest {
     }
 
     @Test
-    void matchedEntryWithoutStateDir_unresolvableMalformed() throws IOException {
+    void matchedEntryWithoutStorageType_unresolvableMalformed() throws IOException {
         Path config = writeConfig("""
                 [[projects]]
                 localPath = "%s"

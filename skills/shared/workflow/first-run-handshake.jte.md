@@ -19,14 +19,14 @@
 > 3. **Re-invoke the CLI to act** on the choice, matching the `choice` token from the chosen
 >    option:
 >    ```bash
->    # external (recommended) — accept the proposed folder:
->    ${model.cliBin()} store init --choice external --json
->    # external — a different folder the user named:
->    ${model.cliBin()} store init --choice external --path <user's folder> --json
+>    # separate-dir (recommended) — accept the proposed folder:
+>    ${model.cliBin()} store init --type separate-dir --json
+>    # separate-dir — a different folder the user named:
+>    ${model.cliBin()} store init --type separate-dir --path <user's folder> --json
 >    # keep it inside this repo:
->    ${model.cliBin()} store init --choice in-repo --json
->    # a configured external folder went missing — recreate it:
->    ${model.cliBin()} store init --choice recreate --path <path from the option> --json
+>    ${model.cliBin()} store init --type same-repo --json
+>    # a configured separate-dir folder went missing — recreate it:
+>    ${model.cliBin()} store init --type recreate --path <path from the option> --json
 >    ```
 >    `store init` creates the chosen location, writes the config entry, and prints the
 >    `ready` shape — read its `plansDir` for where plan files now live.

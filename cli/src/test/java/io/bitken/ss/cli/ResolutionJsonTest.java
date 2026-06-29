@@ -22,8 +22,8 @@ class ResolutionJsonTest {
         String json = ResolutionJson.needsDecision(needs);
         assertTrue(json.contains("\"status\":\"needs-decision\""), json);
         assertTrue(json.contains("\"situation\":\"clean-first-run\""), json);
-        assertTrue(json.contains("\"choice\":\"external\""), json);
-        assertTrue(json.contains("\"choice\":\"in-repo\""), json);
+        assertTrue(json.contains("\"choice\":\"separate-dir\""), json);
+        assertTrue(json.contains("\"choice\":\"same-repo\""), json);
         assertTrue(json.contains("\"recommended\":true"), json);
         assertTrue(json.contains("\"recommended\":false"), json);
     }

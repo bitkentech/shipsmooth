@@ -64,18 +64,18 @@ public final class ConfigWriter {
         this.emitter = emitter;
     }
 
-    /** Upsert an external-mode entry recording the chosen {@code stateDir}. */
-    public void writeExternal(Path localPath, Optional<String> remoteUrl, Path stateDir) throws IOException {
+    /** Upsert a {@code separate-dir} entry recording the chosen {@code storageRoot}. */
+    public void writeExternal(Path localPath, Optional<String> remoteUrl, Path storageRoot) throws IOException {
         StandaloneConfig.ProjectEntry entry = baseEntry(localPath, remoteUrl);
-        entry.setMode("external");
-        entry.setStateDir(stateDir.toAbsolutePath().normalize().toString());
+        entry.setStorageType("separate-dir");
+        entry.setStorageRoot(storageRoot.toAbsolutePath().normalize().toString());
         upsert(entry);
     }
 
-    /** Upsert an in-repo-mode entry (no {@code stateDir}). */
+    /** Upsert a {@code same-repo} entry (no {@code storageRoot}). */
     public void writeInRepo(Path localPath, Optional<String> remoteUrl) throws IOException {
         StandaloneConfig.ProjectEntry entry = baseEntry(localPath, remoteUrl);
-        entry.setMode("in-repo");
+        entry.setStorageType("same-repo");
         upsert(entry);
     }
 
