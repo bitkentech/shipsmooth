@@ -1,13 +1,15 @@
 # plan-96 — skill file cleanups
 
-> **Stub** — quickstarted from a thin-context kickoff. Flesh this out
-> before running `plan init`. Replace the placeholders below.
-
 ## Context
 
-Feature (in the user's words): skill file cleanups
+Feature: maintenance/quality — clean up the `start` skill file so its rendered
+output is concise, internally consistent, and free of stale references, applying
+the principles in `docs/references/code-quality-1.md` (attention budget,
+deterministic-tool-owns-mechanical-rules, progressive disclosure). Local
+backlog; no external issue.
 
-_Unknowns: TODO — fill in scope, constraints, and the backlog/feature link._
+Backlog: maintenance — skill-file quality. (Permanent backlog feature for skill
+documentation upkeep; see also plan-95 which corrected the Lefthook reference.)
 
 ## Tasks
 
