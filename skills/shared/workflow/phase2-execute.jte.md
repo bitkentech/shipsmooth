@@ -73,12 +73,9 @@ Core Invariant #6).
 "experimental-refine-dev" exists, then use it to improve the design.
 - Follow Test Driven Development if possible: Write only one test at a time, then the implementing code 
 and then refactor.
-- Keep doing Step B until coverage meets the agreed threshold (and if "experimental-refine-dev" skill exists,
-quality conforms to its instructions):
-  ```bash
-  # example — adjust to your toolchain:
-  npm test -- --coverage --coverageThreshold='{"global":{"lines":95}}'
-  ```
+- Keep doing Step B until coverage meets the threshold agreed in Step 0 (and if
+"experimental-refine-dev" skill exists, quality conforms to its instructions). Use your
+project's own coverage command to check.
 - Commit the completed task (tests + implementation), wording the message per the **commit-message convention** (standalone → plain feature message, no `task(N)` prefix):
   ```bash
   git commit -m "task(N): <short description>"   # same-repo storage; standalone (separate-dir): plain feature message
@@ -97,12 +94,8 @@ quality conforms to its instructions):
 
 1. Write the unit test(s) for this task. Commit them failing (red).
 2. Implement the task. Run tests until green.
-3. Check coverage meets the agreed threshold:
-   ```bash
-   # example — adjust to your toolchain:
-   npm test -- --coverage --coverageThreshold='{"global":{"lines":95}}'
-   ```
-   Do not proceed until coverage passes.
+3. Check coverage meets the threshold agreed in Step 0, using your project's own
+   coverage command. Do not proceed until it passes.
 4. Commit the completed task (tests + implementation), wording the message per the **commit-message convention** (standalone → plain feature message, no `task(N)` prefix):
    ```bash
    git commit -m "task(N): <short description>"   # same-repo storage; standalone (separate-dir): plain feature message

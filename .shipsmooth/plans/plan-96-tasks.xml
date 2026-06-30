@@ -59,7 +59,7 @@
             <risk>low</risk>
             <status>closed</status>
             <name>Reconcile the task-status vocabulary the skill instructs against</name>
-            <commit></commit>
+            <commit>2596373a1c343e1ec7adf569a9f42ebe3e42723e</commit>
             <created-from>plan-96-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -68,7 +68,7 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Stop restating mechanically-checkable rules in the skill</name>
             <commit></commit>
             <created-from>plan-96-v1</created-from>
