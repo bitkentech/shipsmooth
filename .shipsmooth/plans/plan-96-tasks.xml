@@ -30,7 +30,7 @@
             <risk>low</risk>
             <status>closed</status>
             <name>Fix the stale "This workflow" self-reference path</name>
-            <commit></commit>
+            <commit>0311e7d1eabf60447c24fcc77c17f15074e9f8c9</commit>
             <created-from>plan-96-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -45,13 +45,19 @@
             <created-from>plan-96-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-30T15:37:22.396+05:30</timestamp>
+                    <message>Reorder: run Tasks 4,5,6 (low, content fixes) before Task 3 (medium, restructure). Task 3 moves content between partials, so applying the small textual fixes first avoids reworking relocated content. Dependency (3 depends on 1,2) is satisfied; only the Med-before-Low risk ordering is relaxed.</message>
+                </deviation>
+            </deviations>
             <depends-on>1,2</depends-on>
         </task>
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Reconcile the task-status vocabulary the skill instructs against</name>
             <commit></commit>
             <created-from>plan-96-v1</created-from>
