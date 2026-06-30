@@ -32,6 +32,27 @@ public class SkillRenderer {
 
     public void renderBase() throws IOException {
         renderSkill("start/SKILL.jte", baseModel);
+        renderReferences();
+    }
+
+    // Progressive disclosure (plan-96 Task 3): the start skill keeps a compact core in
+    // SKILL.md and defers reference-only material to sibling files under reference/. The
+    // core points to each by its relative path (reference/<name>.md), which the agent
+    // reads on demand — portable across every host's skill layout (no host-specific
+    // skill-dir variable needed).
+    private void renderReferences() throws IOException {
+        for (String ref : List.of("audit-trail")) {
+            renderReference(ref);
+        }
+    }
+
+    private void renderReference(String name) throws IOException {
+        Path refDir = outputDir.resolve(Path.of("skills", baseModel.skillName(), "reference"));
+        Files.createDirectories(refDir);
+        StringOutput out = new StringOutput();
+        engine.render("start/reference/" + name + ".jte", baseModel, out);
+        Files.writeString(refDir.resolve(name + ".md"), out.toString());
+        System.out.println("Rendered reference " + name + ".md to " + refDir.toAbsolutePath());
     }
 
     public void renderExperimental() throws IOException {

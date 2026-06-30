@@ -39,7 +39,7 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>in-progress</status>
             <name>Restructure the skill for progressive disclosure</name>
             <commit></commit>
             <created-from>plan-96-v1</created-from>
@@ -79,9 +79,9 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>in-progress</status>
+            <status>agent-coded</status>
             <name>Populate the skill's YAML frontmatter</name>
-            <commit></commit>
+            <commit>519a0597536f1079df1d23765fb3cfa2caebf263</commit>
             <created-from>plan-96-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
