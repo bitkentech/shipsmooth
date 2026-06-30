@@ -44,12 +44,22 @@
             <commit></commit>
             <created-from>plan-96-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-30T16:42:14.899+05:30</timestamp>
+                    <message>De-risk draft ready for review: sibling reference/ + relative-path pointer mechanism proven on Audit Trail across all 5 hosts. Awaiting approval to harden (extract Closeout, first-run handshake, tagging mechanics; delete orphaned partial; compact Phase 0).</message>
+                </comment>
+            </comments>
             <deviations>
                 <deviation>
                     <type>minor</type>
                     <timestamp>2026-06-30T15:37:22.396+05:30</timestamp>
                     <message>Reorder: run Tasks 4,5,6 (low, content fixes) before Task 3 (medium, restructure). Task 3 moves content between partials, so applying the small textual fixes first avoids reworking relocated content. Dependency (3 depends on 1,2) is satisfied; only the Med-before-Low risk ordering is relaxed.</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-30T17:01:47.117+05:30</timestamp>
+                    <message>Drop stale Linear-era Core Invariant #1 (features-vs-plans separation) + renumber 2-6 to 1-5; changed phase2 'Core Invariant #6' xref to reference the invariant by name (future-proof). Invariant #3 + &lt;backlog-issue&gt; code removal filed as a Linear backlog item (out of plan-96 scope).</message>
                 </deviation>
             </deviations>
             <depends-on>1,2</depends-on>

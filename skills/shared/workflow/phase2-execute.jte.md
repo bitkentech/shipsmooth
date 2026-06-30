@@ -61,7 +61,7 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
 ##### Step A: De-risking (Spiral Phase)
 - **Goal:** Validate logic and architectural direction. Ignore "Implementation Quality" rules.
 - Write at least one failing test (and not more than 3) that targets the core logic (preserving 
-Core Invariant #6).
+the "Tests precede implementation" invariant).
 - Implement just enough to prove the approach works. Focus on the core complexity.
 - Commit per the **commit-message convention**: `draft(N): de-risk [task name]` in same-repo storage; in standalone (separate-dir) storage a plain feature message with no `draft(N)`/`task(N)` reference.
 - Run `$SS task status --plan {N} --task {id} --status de-risked` and `$SS task comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
