@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>96</plan>
+    <plan-version>plan-96-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>active</status>
+        <created>2026-06-30</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Abbreviate the CLI invocation in the start skill and reuse it throughout</name>
+            <commit></commit>
+            <created-from>plan-96-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Fix the stale "This workflow" self-reference path</name>
+            <commit></commit>
+            <created-from>plan-96-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>Restructure the skill for progressive disclosure</name>
+            <commit></commit>
+            <created-from>plan-96-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Reconcile the task-status vocabulary the skill instructs against</name>
+            <commit></commit>
+            <created-from>plan-96-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Stop restating mechanically-checkable rules in the skill</name>
+            <commit></commit>
+            <created-from>plan-96-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Populate the skill's YAML frontmatter</name>
+            <commit></commit>
+            <created-from>plan-96-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-30T12:33:33.356+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
