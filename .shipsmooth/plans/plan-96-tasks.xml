@@ -70,7 +70,7 @@
             <risk>low</risk>
             <status>closed</status>
             <name>Stop restating mechanically-checkable rules in the skill</name>
-            <commit></commit>
+            <commit>e9930f006c0815fe582ee20a3503ea917013241d</commit>
             <created-from>plan-96-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -79,13 +79,19 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>in-progress</status>
             <name>Populate the skill's YAML frontmatter</name>
             <commit></commit>
             <created-from>plan-96-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-30T15:49:23.974+05:30</timestamp>
+                    <message>Scope expansion (user-approved): besides populating name+description frontmatter, add Claude-only 'disable-model-invocation: true' so /shipsmooth:start stays explicit-only (matches plan note 'invoked explicitly, not auto-discovered') and its description stays out of always-on context. Field is a Claude Code extension; gemini/codex/opencode keep the standard 3-line block.</message>
+                </deviation>
+            </deviations>
         </task>
     </tasks>
     <project-updates>

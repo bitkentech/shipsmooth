@@ -170,9 +170,31 @@ fun frontmatter(env: BuildEnv, base: String): String = if (env == BuildEnv.PROD)
         ---
     """.trimIndent()
 
+// Claude frontmatter: the standard name+description PLUS `disable-model-invocation: true`,
+// a Claude Code extension to the Agent Skills standard. The start skill is invoked
+// explicitly via /shipsmooth:start, never auto-discovered — this field keeps Claude from
+// auto-firing it and keeps its description out of always-on context (attention budget).
+// The other hosts (gemini/codex/opencode) keep the plain frontmatter() block: the field
+// is Claude-specific, so it is not shipped where it would be an unrecognized key.
+fun claudeFrontmatter(env: BuildEnv): String = if (env == BuildEnv.PROD) """
+        ---
+        name: start
+        description: Use when starting any task — applies the shipsmooth agent coding workflow.
+        disable-model-invocation: true
+        ---
+    """.trimIndent() else """
+        ---
+        name: start-dev
+        description: Use when starting any task — applies the shipsmooth agent coding workflow (dev build).
+        disable-model-invocation: true
+        ---
+    """.trimIndent()
+
 fun claudeSpec(env: BuildEnv) = baseSpec(env).copy(
     buildPlatform = "claude",
-    // Claude: no skill frontmatter; bare "start" basename (both from base).
+    // Claude: bare "start" basename (from base). Frontmatter carries name+description
+    // plus disable-model-invocation: true so /shipsmooth:start stays explicit-only.
+    skillFrontmatter = claudeFrontmatter(env),
     outputDir = variantOutputDir("claude", env),
     // PROD: Claude Code leaves ${CLAUDE_PLUGIN_ROOT} EMPTY for SessionStart hooks
     // (anthropics/claude-code #27145 et al.), so a bare ${CLAUDE_PLUGIN_ROOT} expands

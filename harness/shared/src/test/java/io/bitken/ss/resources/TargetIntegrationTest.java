@@ -36,10 +36,15 @@ class TargetIntegrationTest {
         assertTrue(Files.exists(output), "SKILL.md should be written");
 
         String content = Files.readString(output);
+        // plan-96 Task 6: Claude now ships frontmatter too (name + description +
+        // disable-model-invocation), so the head is a well-formed YAML block with no
+        // leading blank lines, and the skill stays explicit-only (/shipsmooth:start).
+        assertTrue(content.startsWith("---\nname: start-dev"),
+            "Claude dev profile should start with YAML frontmatter (no leading blanks)");
+        assertTrue(content.contains("disable-model-invocation: true"),
+            "Claude skill must disable model invocation (explicit /shipsmooth:start only)");
         assertTrue(content.contains("# start-dev — Agent Coding Workflow"),
             "Claude profile should contain heading");
-        assertFalse(content.stripLeading().startsWith("---"),
-            "Claude profile should not start with YAML frontmatter");
         assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/0.2.0/bin/shipsmooth"),
             "CLI bin path should use XDG shell expression with -dev subdir");
     }
@@ -360,6 +365,9 @@ class TargetIntegrationTest {
     }
 
     private void setProdProps() {
+        // plan-96 Task 6: Claude prod ships frontmatter with disable-model-invocation,
+        // mirroring claudeFrontmatter(PROD) in harness/shared/build.gradle.kts.
+        String frontmatter = "---\nname: start\ndescription: Use when starting any task — applies the shipsmooth agent coding workflow.\ndisable-model-invocation: true\n---\n\n";
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "prod");
         System.setProperty("build.platform", "claude");
@@ -368,7 +376,7 @@ class TargetIntegrationTest {
         System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.2.0");
         System.setProperty("plugin.description", "Agent coding workflow");
-        System.setProperty("skill.frontmatter", "");
+        System.setProperty("skill.frontmatter", frontmatter);
         System.setProperty("shipsmooth.jlink.dir", "/dev/null");
         System.setProperty("experimental.enabled", "false");
         // plan-76: prod (claude) bootstraps via the Node-free sh installer.
@@ -377,6 +385,9 @@ class TargetIntegrationTest {
     }
 
     private void setWindowsProps() {
+        // plan-96 Task 6: Windows is Claude-on-Windows, so it inherits the same
+        // claudeFrontmatter (name + description + disable-model-invocation).
+        String frontmatter = "---\nname: start\ndescription: Use when starting any task — applies the shipsmooth agent coding workflow.\ndisable-model-invocation: true\n---\n\n";
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "prod");
         System.setProperty("build.platform", "claude");
@@ -386,12 +397,15 @@ class TargetIntegrationTest {
         System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.3.10");
         System.setProperty("plugin.description", "Agent coding workflow (Windows)");
-        System.setProperty("skill.frontmatter", "");
+        System.setProperty("skill.frontmatter", frontmatter);
         System.setProperty("shipsmooth.jlink.dir", "");
         System.setProperty("experimental.enabled", "false");
     }
 
     private void setDevProps() {
+        // plan-96 Task 6: Claude ships frontmatter with disable-model-invocation, mirroring
+        // claudeFrontmatter(DEV) in harness/shared/build.gradle.kts.
+        String frontmatter = "---\nname: start-dev\ndescription: Use when starting any task — applies the shipsmooth agent coding workflow (dev build).\ndisable-model-invocation: true\n---\n\n";
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "dev");
         System.setProperty("build.platform", "claude");
@@ -400,7 +414,7 @@ class TargetIntegrationTest {
         System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.2.0");
         System.setProperty("plugin.description", "Agent coding workflow (dev build)");
-        System.setProperty("skill.frontmatter", "");
+        System.setProperty("skill.frontmatter", frontmatter);
         System.setProperty("shipsmooth.jlink.dir", "/some/jlink/path");
         System.setProperty("experimental.enabled", "true");
     }
