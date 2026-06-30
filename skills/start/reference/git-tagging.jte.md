@@ -1,6 +1,6 @@
 @import io.bitken.ss.resources.PluginModel
 @param PluginModel model
-## Git Tagging Convention
+# Git Tagging Convention (reference)
 
 Every time a plan file is committed, immediately create and push a version tag:
 
@@ -22,5 +22,3 @@ $SS plan tag --plan {N} --kind abandoned
 ```
 
 Tag naming: `plan-{N}-v{version}` for iterations, `plan-{N}-complete` for clean closeout, `plan-{N}-abandoned` for abandonment. `plan tag --kind version` refuses to re-tag if the computed tag already exists — commit more changes first.
-
----

@@ -43,8 +43,8 @@ class TargetIntegrationTest {
             "Claude dev profile should start with YAML frontmatter (no leading blanks)");
         assertTrue(content.contains("disable-model-invocation: true"),
             "Claude skill must disable model invocation (explicit /shipsmooth:start only)");
-        assertTrue(content.contains("# start-dev — Agent Coding Workflow"),
-            "Claude profile should contain heading");
+        assertTrue(content.contains("## When to apply this skill"),
+            "Body should start at the first section heading (H1 dropped in plan-96 Task 3)");
         assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/0.2.0/bin/shipsmooth"),
             "CLI bin path should use XDG shell expression with -dev subdir");
     }
@@ -119,8 +119,8 @@ class TargetIntegrationTest {
         String content = Files.readString(output);
         assertTrue(content.startsWith("---\nname: start"),
             "Gemini profile should start with YAML frontmatter");
-        assertTrue(content.contains("# start — Agent Coding Workflow"),
-            "Heading should follow frontmatter");
+        assertTrue(content.contains("## When to apply this skill"),
+            "Body should start at the first section heading (H1 dropped in plan-96 Task 3)");
     }
 
     @Test
@@ -135,8 +135,8 @@ class TargetIntegrationTest {
         String content = Files.readString(output);
         assertTrue(content.startsWith("---\nname: start"),
             "Codex profile should start with YAML frontmatter (name: start)");
-        assertTrue(content.contains("# start — Agent Coding Workflow"),
-            "Heading should follow frontmatter");
+        assertTrue(content.contains("## When to apply this skill"),
+            "Body should start at the first section heading (H1 dropped in plan-96 Task 3)");
     }
 
     @Test
@@ -328,10 +328,30 @@ class TargetIntegrationTest {
         String content = Files.readString(output);
         assertTrue(content.startsWith("---\nname: start"),
             "OpenCode profile should start with YAML frontmatter (name: start)");
-        assertTrue(content.contains("# start — Agent Coding Workflow"),
-            "Heading should follow frontmatter");
+        assertTrue(content.contains("## When to apply this skill"),
+            "Body should start at the first section heading (H1 dropped in plan-96 Task 3)");
         assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.2.0/bin/shipsmooth"),
             "OpenCode prod cliBin should use the shipsmooth subdir");
+    }
+
+    // plan-96 Task 3 (progressive disclosure): the compact SKILL.md core must point to
+    // deferred reference files, and those files must actually be emitted into the skill's
+    // reference/ dir so the pointer resolves. Guard both the pointer and the file.
+    @Test
+    void progressiveDisclosureEmitsReferenceFilesAndPointers() throws Exception {
+        setProdProps();
+        Target.main(new String[]{});
+
+        Path skillDir = tempDir.resolve("skills/start");
+        String content = Files.readString(skillDir.resolve("SKILL.md"));
+        for (String ref : new String[]{
+                "audit-trail", "git-tagging", "first-run-handshake",
+                "phase0-worked-example", "plan-closeout"}) {
+            assertTrue(content.contains("reference/" + ref + ".md"),
+                "core SKILL.md should point to reference/" + ref + ".md");
+            assertTrue(Files.exists(skillDir.resolve("reference/" + ref + ".md")),
+                "deferred reference file reference/" + ref + ".md should be emitted");
+        }
     }
 
     @Test

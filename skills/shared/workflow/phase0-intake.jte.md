@@ -17,7 +17,7 @@ one:
   `$SS plan resume --plan {N}` — a plan-level status of `active` /
   `in-review` with tasks still `pending` / in-progress means work is unfinished.
 
-@template.shared.workflow.first-run-handshake(model = model)
+> **First-run handshake.** If a `$SS` command reports state is not set up — `store info --json` returns a `status` other than `ready`, or a state-dependent command exits with a `status:"needs-decision"` / `status:"unresolvable"` JSON line (exit 10 / 11) — do **not** treat it as a normal error. Read **`reference/first-run-handshake.md`** (in this skill's directory) and follow it: present the CLI's `prompt` verbatim, wait for a real human choice, then re-invoke `store init` to act on it. The CLI never prompts on stdin, so running this handshake is the skill's job.
 
 If any plan looks active, **surface it as a question** before doing anything
 else: name the plan and ask the user whether to continue it or deliberately
@@ -77,16 +77,6 @@ fleshed out the stub.
 
 ### Worked example (target vs. anti-target)
 
-Kickoff: *"start a new plan, feature is X"* — no spec, no prior planning.
-
-- ✅ **Target:** run `$SS plan quick --desc "X"` → relay its
-  output (branch + stub created, uncommitted) → **stop**.
-- ❌ **Anti-target #1:** run several rounds of repo investigation, then fire a
-  multi-part questionnaire asking the user to choose the approach, before
-  creating anything. This interrogates the user at the moment he wanted to move
-  fast. *Do not do this.*
-- ❌ **Anti-target #2:** after `plan quick` (or instead of it), hand-write the
-  stub file and `git commit` it. The commit is unrequested git work that can
-  fail on an unconfigured identity and strand the flow. *Do not do this.*
+For a concrete target / anti-target walk-through of the thin path (the one-command quickstart vs. the "investigate-then-interrogate" and "hand-write-then-commit" anti-patterns), read **`reference/phase0-worked-example.md`**.
 
 ---

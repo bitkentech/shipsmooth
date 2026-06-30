@@ -41,7 +41,9 @@ public class SkillRenderer {
     // reads on demand — portable across every host's skill layout (no host-specific
     // skill-dir variable needed).
     private void renderReferences() throws IOException {
-        for (String ref : List.of("audit-trail")) {
+        for (String ref : List.of(
+                "audit-trail", "git-tagging", "first-run-handshake",
+                "phase0-worked-example", "plan-closeout")) {
             renderReference(ref);
         }
     }

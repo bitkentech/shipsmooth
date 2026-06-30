@@ -7,11 +7,11 @@
 @template.shared.workflow.task-tracking-mode(model = model)
 @template.shared.workflow.repo-structure(model = model)
 @template.shared.workflow.what-lives-where(model = model)
-@template.shared.workflow.git-tagging(model = model)
+@template.shared.workflow.git-tagging-pointer(model = model)
 @template.shared.workflow.phase0-intake(model = model)
 @template.shared.workflow.phase1-plan(model = model)
 @template.shared.workflow.phase2-execute(model = model)
-@template.shared.workflow.plan-closeout(model = model)
+@template.shared.workflow.plan-closeout-pointer(model = model)
 
 ## Audit Trail
 
