@@ -131,3 +131,29 @@ file head, not to enable automatic invocation.
   the top of `skills/start/SKILL.jte.md`.
 - Verify the rendered head is well-formed YAML with no stray leading blank lines
   across all hosts.
+
+### Task 7: Reconcile the hard-coded `.shipsmooth/plans/` path with separate-dir mode [Low]
+
+The skill contradicts itself about where plan files live. Phase 0 and Phase 2
+correctly state that **separate-dir is the default** — plans live in a separate
+state directory, *not* `.shipsmooth/plans/` in the repo — and instruct the agent
+to read the real `plansDir` from `$SS store info --json`. But ~8 other spots
+(Repository Structure, the What Lives Where table, Task Tracking, and several
+Phase 1 steps) hard-code `.shipsmooth/plans/...` as if same-repo were the only
+mode. The result is a skill that tells the agent "don't assume `.shipsmooth/plans/`"
+in two places while assuming exactly that in eight others — the same stale/
+contradictory-reference class as Task 2.
+
+Replace the literal `.shipsmooth/plans/` in those spots with a neutral
+`<plansDir>` placeholder (the directory `store info --json` reports), and state
+once — where the structure is first introduced — that same-repo storage resolves
+`<plansDir>` to the in-repo `.shipsmooth/plans/`. This makes the skill
+mode-agnostic and consistent with the CLI-is-source-of-truth principle already in
+Phase 2.
+
+- Touches `skills/shared/workflow/repo-structure.jte.md`,
+  `what-lives-where.jte.md`, `task-tracking-mode.jte.md`, and the
+  `.shipsmooth/plans/...` references in `phase1-plan.jte.md`.
+- Leave genuinely mode-correct mentions intact (the Phase 0/2 prose that already
+  explains the separate-dir default and the `store info` lookup).
+- Pure documentation change; re-render all hosts to confirm consistency.
