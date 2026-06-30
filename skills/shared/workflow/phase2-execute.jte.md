@@ -5,7 +5,7 @@
 **Session-resume pre-flight** — If you are picking up a plan that was started in a previous session, run this before doing anything else:
 
 ```bash
-${model.cliBin()} plan resume --plan {N}
+$SS plan resume --plan {N}
 # Prints: XML file present check and task state summary.
 ```
 
@@ -17,7 +17,7 @@ repo stays untouched and the plan files live in a separate state directory. Ask 
 where to read them — it is the source of truth — rather than guessing:
 
 ```bash
-${model.cliBin()} store info --json
+$SS store info --json
 # -> {"status":"ready","storageType":"separate-dir","stateRoot":"...","plansDir":"<dir>/plans"}
 #    Read plan narratives (plan-{N}.md) and task XML from the reported `plansDir`.
 #    If status is not "ready", state is not set up yet — handle per first-run (Phase 0).
@@ -32,7 +32,7 @@ as you would for a same-repo plan — `storageType: same-repo` simply reports th
 
 Create a branch named after the primary issue for this plan:
 ```bash
-${model.cliBin()} plan branch --issue {issue-id} --desc "{short-description}"
+$SS plan branch --issue {issue-id} --desc "{short-description}"
 # prints: git push -u origin t/{issue-id}-{slug}  — run that line to push
 ```
 All task commits go on this branch. The `t/` prefix stands for "task". Usernames are omitted — the task identity is what matters long-term.
@@ -64,7 +64,7 @@ For every task in the risk-sorted sequence, apply the appropriate sub-phases:
 Core Invariant #6).
 - Implement just enough to prove the approach works. Focus on the core complexity.
 - Commit per the **commit-message convention**: `draft(N): de-risk [task name]` in same-repo storage; in standalone (separate-dir) storage a plain feature message with no `draft(N)`/`task(N)` reference.
-- Run `${model.cliBin()} task status --plan {N} --task {id} --status de-risked` and `${model.cliBin()} task comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
+- Run `$SS task status --plan {N} --task {id} --status de-risked` and `$SS task comment --plan {N} --task {id} --message "De-risk draft ready for review"`.
 - **Wait for explicit approval of the approach.**
 
 ##### Step B: Hardening (Quality Phase)
@@ -120,9 +120,9 @@ quality conforms to its instructions):
 ---
 
 - **Minor deviation** (task split, reorder, clarification):
-  - Run `${model.cliBin()} task deviation --plan {N} --task {id} --type minor --message "..."`, continue.
+  - Run `$SS task deviation --plan {N} --task {id} --type minor --message "..."`, continue.
 - **Major deviation** (fundamental plan problem, architecture issue, blocked): Stop immediately.
-  - Run `${model.cliBin()} plan update --plan {N} --blocked --message "..."`.
+  - Run `$SS plan update --plan {N} --blocked --message "..."`.
   - Wait for the human to revise the plan file, commit, push, and give a new go-ahead.
 
 Never autonomously modify the `.shipsmooth/plans/` file during execution. If a plan change is needed, surface it and wait.

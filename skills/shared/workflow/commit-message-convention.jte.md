@@ -2,7 +2,7 @@
 
 > **Commit-message convention (code commits in the project repo).** How you word a code
 > commit depends on the resolved storage type. Check it once per session with
-> `${model.cliBin()} store info --json` and read `storageType`.
+> `$SS store info --json` and read `storageType`.
 >
 > - **`same-repo` storage:** keep the prefixed convention — `task(N): <short description>` and
 >   `draft(N): de-risk <task name>`. The plan/task history is shipsmooth's own and lives

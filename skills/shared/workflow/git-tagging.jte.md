@@ -5,19 +5,19 @@
 Every time a plan file is committed, immediately create and push a version tag:
 
 ```bash
-${model.cliBin()} plan tag --plan {N} --kind version
+$SS plan tag --plan {N} --kind version
 # prints: git push origin plan-{N}-v{K}  — run that line to push
 ```
 
 On clean completion:
 ```bash
-${model.cliBin()} plan tag --plan {N} --kind complete
+$SS plan tag --plan {N} --kind complete
 # prints: git push origin plan-{N}-complete
 ```
 
 On abandonment:
 ```bash
-${model.cliBin()} plan tag --plan {N} --kind abandoned
+$SS plan tag --plan {N} --kind abandoned
 # prints: git push origin plan-{N}-abandoned
 ```
 

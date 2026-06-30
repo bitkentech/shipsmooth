@@ -1,6 +1,6 @@
 @param io.bitken.ss.resources.PluginModel model
 
-> **First-run handshake.** When a `${model.cliBin()}` command reports that state is
+> **First-run handshake.** When a `$SS` command reports that state is
 > not set up — `store info --json` returns a `status` other than `ready`, or a
 > state-dependent command exits with a `status:"needs-decision"` / `status:"unresolvable"`
 > JSON line (exit 10 / 11) — do **not** treat it as a normal error. Run this handshake. The
@@ -20,13 +20,13 @@
 >    option:
 >    ```bash
 >    # separate-dir (recommended) — accept the proposed folder:
->    ${model.cliBin()} store init --type separate-dir --json
+>    $SS store init --type separate-dir --json
 >    # separate-dir — a different folder the user named:
->    ${model.cliBin()} store init --type separate-dir --path <user's folder> --json
+>    $SS store init --type separate-dir --path <user's folder> --json
 >    # keep it inside this repo:
->    ${model.cliBin()} store init --type same-repo --json
+>    $SS store init --type same-repo --json
 >    # a configured separate-dir folder went missing — recreate it:
->    ${model.cliBin()} store init --type recreate --path <path from the option> --json
+>    $SS store init --type recreate --path <path from the option> --json
 >    ```
 >    `store init` creates the chosen location, writes the config entry, and prints the
 >    `ready` shape — read its `plansDir` for where plan files now live.

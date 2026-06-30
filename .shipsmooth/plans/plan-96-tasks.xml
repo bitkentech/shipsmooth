@@ -11,13 +11,19 @@
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Abbreviate the CLI invocation in the start skill and reuse it throughout</name>
             <commit></commit>
             <created-from>plan-96-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-30T15:04:26.023+05:30</timestamp>
+                    <message>User overrode TDD preamble: no tests written up-front for this docs/template plan; verify via re-render, revisit coverage after a few tasks or at plan end.</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>2</id>

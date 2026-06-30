@@ -24,16 +24,16 @@ is already rich, or after the user has fleshed out a Phase 0 stub.
    ```
    Then tag this plan version manually (see Git Tagging Convention):
    ```bash
-   ${model.cliBin()} plan tag --plan {N} --kind version
+   $SS plan tag --plan {N} --kind version
    # prints: git push origin plan-{N}-v{K}  — run that line to push the tag
    ```
 6. **Verify Preconditions:**
    ```bash
-   ${model.cliBin()} plan preflight --plan {N}
+   $SS plan preflight --plan {N}
    # Exits 0 (PASS) or 1 (FAIL: dirty tree / missing version tag). Warns on unpushed branch.
    ```
 7. **Create Task Tracking Infrastructure:**
-   - Run `${model.cliBin()} plan init --plan {N} --tasks-from .shipsmooth/plans/plan-{N}.md` to generate `.shipsmooth/plans/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI. The format uses child elements, not attributes.** The CLI requires task headings in the form `### Task N: Name [Risk]` where `N` is a positive integer — alphanumeric IDs (e.g. `01-A`) are not supported. To express a dependency between tasks, add a `*Depends-on: P[,Q...]*` line anywhere in the task body before the next heading (e.g. `*Depends-on: 1,3*`). The CLI parses this line and writes `<depends-on>` into the XML automatically.
+   - Run `$SS plan init --plan {N} --tasks-from .shipsmooth/plans/plan-{N}.md` to generate `.shipsmooth/plans/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI. The format uses child elements, not attributes.** The CLI requires task headings in the form `### Task N: Name [Risk]` where `N` is a positive integer — alphanumeric IDs (e.g. `01-A`) are not supported. To express a dependency between tasks, add a `*Depends-on: P[,Q...]*` line anywhere in the task body before the next heading (e.g. `*Depends-on: 1,3*`). The CLI parses this line and writes `<depends-on>` into the XML automatically.
    - Organise tasks as **thin vertical slices**.
 8. **Final Review & Go-ahead:**
    - **Stop.** Tell the human the XML task file has been committed and the plan is ready for review.
