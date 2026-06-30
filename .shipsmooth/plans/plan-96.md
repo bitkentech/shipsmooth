@@ -50,6 +50,8 @@ plugin-cache path with a version into the rendered text) or drop the row.
 
 ### Task 3: Restructure the skill for progressive disclosure [Medium]
 
+*Depends-on: 1,2*
+
 The rendered skill is ~450 lines read in a single pass at session start. Most
 of it (Closeout, Audit Trail, tagging mechanics, first-run handshake) is
 reference material consulted occasionally, yet it competes for attention with
@@ -68,7 +70,6 @@ which partials stay inline vs. become on-demand references.
   navigation path; must preserve discoverability of the deferred content (the
   core must point to each reference file clearly enough that the agent reliably
   follows it at the right moment).
-- *Depends-on: 1,2*
 - Verify all hosts re-render and the deferred references resolve to real,
   loadable files in each host's layout.
 

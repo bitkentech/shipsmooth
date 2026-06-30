@@ -40,6 +40,7 @@
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
+            <depends-on>1,2</depends-on>
         </task>
         <task>
             <id>4</id>
@@ -77,7 +78,7 @@
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-06-30T12:33:33.356+05:30</timestamp>
+            <timestamp>2026-06-30T12:34:22.910+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
