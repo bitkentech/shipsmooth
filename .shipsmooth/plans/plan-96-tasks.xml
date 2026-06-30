@@ -13,7 +13,7 @@
             <risk>low</risk>
             <status>closed</status>
             <name>Abbreviate the CLI invocation in the start skill and reuse it throughout</name>
-            <commit></commit>
+            <commit>2b25e28ad41eed2801504ce2e4d1a4a47ac7558d</commit>
             <created-from>plan-96-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -28,7 +28,7 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Fix the stale "This workflow" self-reference path</name>
             <commit></commit>
             <created-from>plan-96-v1</created-from>

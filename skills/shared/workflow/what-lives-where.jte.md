@@ -8,7 +8,6 @@
 | Task state (done / not done) | `.shipsmooth/plans/plan-{N}-tasks.xml` | Needs status tracking and human review |
 | Feature definitions | Noted in plan file Context section | Permanent, human-curated |
 | Link between plan version and tasks | `<created-from>` child element in XML | Immutable, survives branch lifecycle |
-| This workflow | `~/.claude/skills/start/SKILL.md` | Loaded by agent at task start |
 | Repo-specific overrides | `CLAUDE.md` in repo root | Workspace name, project conventions, etc. |
 
 ---
