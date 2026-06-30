@@ -108,6 +108,22 @@ registerPayloadAssembly(
     ),
 )
 
+// devBuild: local dev-loop convenience, mirroring :harness:claude:devBuild. A bare
+// assembleGeminiDev co-deposits only this module's metadata into build-gemini-dev/ while
+// renderGeminiDev's skills/hooks/dist land in skills:pkg's default render dir (build.outputDir
+// resolves at configuration time) — a confusing split. This spawns a nested build with
+// build.outputDir set so the FULL gemini-dev payload (skills/ + hooks/ + dist/ + commands/ +
+// gemini-extension.json) lands in one dir — the dir Gemini reads the dev extension from.
+// Run: ./gradlew :harness:gemini:devBuild  (then point the gemini-dev extension at build-gemini-dev/).
+val devBuild by tasks.registering(GradleBuild::class) {
+    group = "assemble"
+    description = "Assemble the full gemini-dev payload into repo-root build-gemini-dev/ for local dev/test."
+    dir = rootProject.projectDir
+    tasks = listOf(":harness:gemini:assembleGeminiDev")
+    startParameter.projectProperties = startParameter.projectProperties +
+        mapOf("build.outputDir" to rootProject.layout.projectDirectory.dir("build-gemini-dev").asFile.absolutePath)
+}
+
 // ---------------------------------------------------------------------------
 // assembleGeminiProd (Task 24): the full gemini-prod extension payload, via the prod
 // dual-mode Sync path (mirrors claude's assembleClaudeProd). Each producer writes its

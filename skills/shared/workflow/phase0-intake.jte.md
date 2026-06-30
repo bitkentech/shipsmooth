@@ -9,15 +9,15 @@ one:
 
 - find the plans directory first — in **separate-dir** mode (the default) it is not
   `.shipsmooth/plans/` but a separate state dir. Ask the CLI:
-  `${model.cliBin()} store info --json` reports `plansDir` (when `status` is `ready`).
+  `$SS store info --json` reports `plansDir` (when `status` is `ready`).
   List `plansDir`'s `plan-*-tasks.xml` (the highest plan number is the most likely
   candidate); if `status` is **not** `ready`, state is not set up yet — run the
   **first-run handshake** below before going further (there is no active plan to resume).
 - check that plan's state with
-  `${model.cliBin()} plan resume --plan {N}` — a plan-level status of `active` /
+  `$SS plan resume --plan {N}` — a plan-level status of `active` /
   `in-review` with tasks still `pending` / in-progress means work is unfinished.
 
-@template.shared.workflow.first-run-handshake(model = model)
+> **First-run handshake.** If a `$SS` command reports state is not set up — `store info --json` returns a `status` other than `ready`, or a state-dependent command exits with a `status:"needs-decision"` / `status:"unresolvable"` JSON line (exit 10 / 11) — do **not** treat it as a normal error. Read **`reference/first-run-handshake.md`** (in this skill's directory) and follow it: present the CLI's `prompt` verbatim, wait for a real human choice, then re-invoke `store init` to act on it. The CLI never prompts on stdin, so running this handshake is the skill's job.
 
 If any plan looks active, **surface it as a question** before doing anything
 else: name the plan and ask the user whether to continue it or deliberately
@@ -45,9 +45,9 @@ that he will add detail later or work exploratorily. **Do not slow him down.**
 Run **one** command and hand back:
 
 ```bash
-${model.cliBin()} plan quick --desc "{short-description}"
+$SS plan quick --desc "{short-description}"
 # derives the next plan number, creates + checks out t/{N}-{slug},
-# and writes a stub .shipsmooth/plans/plan-{N}.md.
+# and writes a stub plan-{N}.md in the plans dir (<plansDir>).
 # It does NOT commit — that is intentional.
 ```
 
@@ -77,16 +77,6 @@ fleshed out the stub.
 
 ### Worked example (target vs. anti-target)
 
-Kickoff: *"start a new plan, feature is X"* — no spec, no prior planning.
-
-- ✅ **Target:** run `${model.cliBin()} plan quick --desc "X"` → relay its
-  output (branch + stub created, uncommitted) → **stop**.
-- ❌ **Anti-target #1:** run several rounds of repo investigation, then fire a
-  multi-part questionnaire asking the user to choose the approach, before
-  creating anything. This interrogates the user at the moment he wanted to move
-  fast. *Do not do this.*
-- ❌ **Anti-target #2:** after `plan quick` (or instead of it), hand-write the
-  stub file and `git commit` it. The commit is unrequested git work that can
-  fail on an unconfigured identity and strand the flow. *Do not do this.*
+For a concrete target / anti-target walk-through of the thin path (the one-command quickstart vs. the "investigate-then-interrogate" and "hand-write-then-commit" anti-patterns), read **`reference/phase0-worked-example.md`**.
 
 ---

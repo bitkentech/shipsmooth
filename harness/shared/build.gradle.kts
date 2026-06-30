@@ -170,9 +170,37 @@ fun frontmatter(env: BuildEnv, base: String): String = if (env == BuildEnv.PROD)
         ---
     """.trimIndent()
 
+// Claude frontmatter: description PLUS `disable-model-invocation: true`, a Claude Code
+// extension to the Agent Skills standard. The start skill is invoked explicitly via
+// /shipsmooth:start, never auto-discovered — this field keeps Claude from auto-firing it
+// and keeps its description out of always-on context (attention budget).
+//
+// NO `name:` field, deliberately. Claude Code drops the plugin namespace prefix from any
+// skill whose SKILL.md frontmatter carries `name:` (anthropics/claude-code#22063), so a
+// `name: start` would surface as bare /start instead of the namespaced /shipsmooth:start
+// we want. Omitting `name:` lets Claude derive the skill name from the directory
+// (start / start-dev), which preserves the {plugin}: prefix: /shipsmooth:start and
+// /shipsmooth-dev:start-dev. The other hosts (gemini/codex/opencode) DO namespace by
+// plugin already and DON'T strip on `name:`, so frontmatter() keeps the field for them;
+// this omission is Claude-specific. `disable-model-invocation` is also Claude-only, so it
+// is not shipped where it would be an unrecognized key.
+fun claudeFrontmatter(env: BuildEnv): String = if (env == BuildEnv.PROD) """
+        ---
+        description: Use when starting any task — applies the shipsmooth agent coding workflow.
+        disable-model-invocation: true
+        ---
+    """.trimIndent() else """
+        ---
+        description: Use when starting any task — applies the shipsmooth agent coding workflow (dev build).
+        disable-model-invocation: true
+        ---
+    """.trimIndent()
+
 fun claudeSpec(env: BuildEnv) = baseSpec(env).copy(
     buildPlatform = "claude",
-    // Claude: no skill frontmatter; bare "start" basename (both from base).
+    // Claude: bare "start" basename (from base). Frontmatter carries name+description
+    // plus disable-model-invocation: true so /shipsmooth:start stays explicit-only.
+    skillFrontmatter = claudeFrontmatter(env),
     outputDir = variantOutputDir("claude", env),
     // PROD: Claude Code leaves ${CLAUDE_PLUGIN_ROOT} EMPTY for SessionStart hooks
     // (anthropics/claude-code #27145 et al.), so a bare ${CLAUDE_PLUGIN_ROOT} expands

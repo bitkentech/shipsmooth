@@ -7,7 +7,7 @@ is already rich, or after the user has fleshed out a Phase 0 stub.
 
 **You do not write or run any implementation code during this phase.**
 
-1. **Draft Plan:** Write or update the plan file at `.shipsmooth/plans/plan-{N}.md`.
+1. **Draft Plan:** Write or update the plan file at `<plansDir>/plan-{N}.md`.
 2. **Risk Analysis:**
    - For every task in the plan, suggest a **Default Risk Level** (Low, Medium, or High) with a one-sentence justification.
 3. **Collaborative Calibration:**
@@ -18,22 +18,22 @@ is already rich, or after the user has fleshed out a Phase 0 stub.
    - *Exception:* If a Low-risk task is a hard technical dependency for a High-risk task, the dependency must come first.
 5. **Commit & Tag:**
    ```bash
-   git add .shipsmooth/plans/plan-07.md
+   git add <plansDir>/plan-07.md
    git commit -m "plan(07): risk-calibrated plan for [short-description]"
    git push origin t/{issue-id}-{short-description}
    ```
    Then tag this plan version manually (see Git Tagging Convention):
    ```bash
-   ${model.cliBin()} plan tag --plan {N} --kind version
+   $SS plan tag --plan {N} --kind version
    # prints: git push origin plan-{N}-v{K}  — run that line to push the tag
    ```
 6. **Verify Preconditions:**
    ```bash
-   ${model.cliBin()} plan preflight --plan {N}
+   $SS plan preflight --plan {N}
    # Exits 0 (PASS) or 1 (FAIL: dirty tree / missing version tag). Warns on unpushed branch.
    ```
 7. **Create Task Tracking Infrastructure:**
-   - Run `${model.cliBin()} plan init --plan {N} --tasks-from .shipsmooth/plans/plan-{N}.md` to generate `.shipsmooth/plans/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI. The format uses child elements, not attributes.** The CLI requires task headings in the form `### Task N: Name [Risk]` where `N` is a positive integer — alphanumeric IDs (e.g. `01-A`) are not supported. To express a dependency between tasks, add a `*Depends-on: P[,Q...]*` line anywhere in the task body before the next heading (e.g. `*Depends-on: 1,3*`). The CLI parses this line and writes `<depends-on>` into the XML automatically.
+   - Run `$SS plan init --plan {N} --tasks-from <plansDir>/plan-{N}.md` to generate `<plansDir>/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI.** The CLI parses your plan markdown for task headings and inter-task dependencies and validates their form — if a heading or dependency line is malformed it will tell you; fix what it reports rather than guessing the exact syntax.
    - Organise tasks as **thin vertical slices**.
 8. **Final Review & Go-ahead:**
    - **Stop.** Tell the human the XML task file has been committed and the plan is ready for review.

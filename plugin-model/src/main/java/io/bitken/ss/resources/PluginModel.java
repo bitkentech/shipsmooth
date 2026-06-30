@@ -31,6 +31,10 @@ public record PluginModel(
         return env.decorate(base);
     }
 
+    public boolean isClaude() {
+        return "claude".equals(platformId);
+    }
+
     public boolean isGemini() {
         return "gemini".equals(platformId);
     }

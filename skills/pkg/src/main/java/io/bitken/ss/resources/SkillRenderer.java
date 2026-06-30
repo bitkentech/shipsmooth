@@ -32,6 +32,29 @@ public class SkillRenderer {
 
     public void renderBase() throws IOException {
         renderSkill("start/SKILL.jte", baseModel);
+        renderReferences();
+    }
+
+    // Progressive disclosure (plan-96 Task 3): the start skill keeps a compact core in
+    // SKILL.md and defers reference-only material to sibling files under reference/. The
+    // core points to each by its relative path (reference/<name>.md), which the agent
+    // reads on demand — portable across every host's skill layout (no host-specific
+    // skill-dir variable needed).
+    private void renderReferences() throws IOException {
+        for (String ref : List.of(
+                "audit-trail", "git-tagging", "first-run-handshake",
+                "phase0-worked-example", "plan-closeout")) {
+            renderReference(ref);
+        }
+    }
+
+    private void renderReference(String name) throws IOException {
+        Path refDir = outputDir.resolve(Path.of("skills", baseModel.skillName(), "reference"));
+        Files.createDirectories(refDir);
+        StringOutput out = new StringOutput();
+        engine.render("start/reference/" + name + ".jte", baseModel, out);
+        Files.writeString(refDir.resolve(name + ".md"), out.toString());
+        System.out.println("Rendered reference " + name + ".md to " + refDir.toAbsolutePath());
     }
 
     public void renderExperimental() throws IOException {
@@ -55,6 +78,18 @@ public class SkillRenderer {
     private String frontmatter(String skillName, String description) {
         if (baseModel.skillFrontmatter().isEmpty()) {
             return "";
+        }
+        // Claude Code drops the plugin namespace prefix from any skill whose SKILL.md
+        // carries a `name:` (anthropics/claude-code#22063). To keep the experimental
+        // skills namespaced (/shipsmooth:experimental-refine, not bare /experimental-refine),
+        // omit `name:` for the claude host and let Claude derive it from the skill dir.
+        // The other hosts namespace by plugin already and don't strip on `name:`, so they
+        // keep the field — mirrors the start skill's claudeFrontmatter() in build.gradle.kts.
+        if (baseModel.isClaude()) {
+            return """
+                ---
+                description: %s
+                ---""".formatted(description);
         }
         return """
             ---

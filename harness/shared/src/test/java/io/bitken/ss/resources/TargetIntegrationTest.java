@@ -36,10 +36,18 @@ class TargetIntegrationTest {
         assertTrue(Files.exists(output), "SKILL.md should be written");
 
         String content = Files.readString(output);
-        assertTrue(content.contains("# start-dev — Agent Coding Workflow"),
-            "Claude profile should contain heading");
-        assertFalse(content.stripLeading().startsWith("---"),
-            "Claude profile should not start with YAML frontmatter");
+        // Claude ships frontmatter (description + disable-model-invocation) but NO `name:`,
+        // so the head is a well-formed YAML block opening on `description:` with no leading
+        // blank lines. Omitting `name:` preserves the plugin namespace prefix
+        // (/shipsmooth-dev:start-dev) — Claude Code drops it on `name:` (#22063).
+        assertTrue(content.startsWith("---\ndescription:"),
+            "Claude dev profile should start with YAML frontmatter (no name:, no leading blanks)");
+        assertFalse(content.contains("name:"),
+            "Claude skill must omit name: to keep the /shipsmooth-dev:start-dev namespace prefix");
+        assertTrue(content.contains("disable-model-invocation: true"),
+            "Claude skill must disable model invocation (explicit /shipsmooth-dev:start-dev only)");
+        assertTrue(content.contains("## When to apply this skill"),
+            "Body should start at the first section heading (H1 dropped in plan-96 Task 3)");
         assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/0.2.0/bin/shipsmooth"),
             "CLI bin path should use XDG shell expression with -dev subdir");
     }
@@ -114,8 +122,8 @@ class TargetIntegrationTest {
         String content = Files.readString(output);
         assertTrue(content.startsWith("---\nname: start"),
             "Gemini profile should start with YAML frontmatter");
-        assertTrue(content.contains("# start — Agent Coding Workflow"),
-            "Heading should follow frontmatter");
+        assertTrue(content.contains("## When to apply this skill"),
+            "Body should start at the first section heading (H1 dropped in plan-96 Task 3)");
     }
 
     @Test
@@ -130,8 +138,8 @@ class TargetIntegrationTest {
         String content = Files.readString(output);
         assertTrue(content.startsWith("---\nname: start"),
             "Codex profile should start with YAML frontmatter (name: start)");
-        assertTrue(content.contains("# start — Agent Coding Workflow"),
-            "Heading should follow frontmatter");
+        assertTrue(content.contains("## When to apply this skill"),
+            "Body should start at the first section heading (H1 dropped in plan-96 Task 3)");
     }
 
     @Test
@@ -271,6 +279,13 @@ class TargetIntegrationTest {
             "experimental-refine-dev/SKILL.md should be rendered");
 
         String content = Files.readString(refineSkill);
+        // On the claude host the refine skill omits `name:` from its frontmatter so it keeps
+        // the plugin namespace prefix (/shipsmooth-dev:experimental-refine-dev) — Claude Code
+        // drops the prefix when a skill declares `name:` (anthropics/claude-code#22063).
+        assertTrue(content.startsWith("---\ndescription:"),
+            "Claude refine skill should open on description: (no name:)");
+        assertFalse(content.contains("\nname:"),
+            "Claude refine skill must omit name: to keep its namespace prefix");
         assertTrue(content.contains("PHASE 1"),
             "refine skill should mandate a two-phase contract (Phase 1)");
         assertTrue(content.contains("PHASE 2"),
@@ -323,10 +338,30 @@ class TargetIntegrationTest {
         String content = Files.readString(output);
         assertTrue(content.startsWith("---\nname: start"),
             "OpenCode profile should start with YAML frontmatter (name: start)");
-        assertTrue(content.contains("# start — Agent Coding Workflow"),
-            "Heading should follow frontmatter");
+        assertTrue(content.contains("## When to apply this skill"),
+            "Body should start at the first section heading (H1 dropped in plan-96 Task 3)");
         assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.2.0/bin/shipsmooth"),
             "OpenCode prod cliBin should use the shipsmooth subdir");
+    }
+
+    // plan-96 Task 3 (progressive disclosure): the compact SKILL.md core must point to
+    // deferred reference files, and those files must actually be emitted into the skill's
+    // reference/ dir so the pointer resolves. Guard both the pointer and the file.
+    @Test
+    void progressiveDisclosureEmitsReferenceFilesAndPointers() throws Exception {
+        setProdProps();
+        Target.main(new String[]{});
+
+        Path skillDir = tempDir.resolve("skills/start");
+        String content = Files.readString(skillDir.resolve("SKILL.md"));
+        for (String ref : new String[]{
+                "audit-trail", "git-tagging", "first-run-handshake",
+                "phase0-worked-example", "plan-closeout"}) {
+            assertTrue(content.contains("reference/" + ref + ".md"),
+                "core SKILL.md should point to reference/" + ref + ".md");
+            assertTrue(Files.exists(skillDir.resolve("reference/" + ref + ".md")),
+                "deferred reference file reference/" + ref + ".md should be emitted");
+        }
     }
 
     @Test
@@ -360,6 +395,11 @@ class TargetIntegrationTest {
     }
 
     private void setProdProps() {
+        // Claude prod ships frontmatter with disable-model-invocation but NO `name:`,
+        // mirroring claudeFrontmatter(PROD) in harness/shared/build.gradle.kts. Omitting
+        // `name:` keeps the plugin namespace prefix (/shipsmooth:start) — Claude Code drops
+        // the prefix when a skill declares `name:` (anthropics/claude-code#22063).
+        String frontmatter = "---\ndescription: Use when starting any task — applies the shipsmooth agent coding workflow.\ndisable-model-invocation: true\n---\n\n";
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "prod");
         System.setProperty("build.platform", "claude");
@@ -368,7 +408,7 @@ class TargetIntegrationTest {
         System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.2.0");
         System.setProperty("plugin.description", "Agent coding workflow");
-        System.setProperty("skill.frontmatter", "");
+        System.setProperty("skill.frontmatter", frontmatter);
         System.setProperty("shipsmooth.jlink.dir", "/dev/null");
         System.setProperty("experimental.enabled", "false");
         // plan-76: prod (claude) bootstraps via the Node-free sh installer.
@@ -377,6 +417,9 @@ class TargetIntegrationTest {
     }
 
     private void setWindowsProps() {
+        // Windows is Claude-on-Windows, so it inherits the same claudeFrontmatter
+        // (description + disable-model-invocation, NO `name:` — see setProdProps).
+        String frontmatter = "---\ndescription: Use when starting any task — applies the shipsmooth agent coding workflow.\ndisable-model-invocation: true\n---\n\n";
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "prod");
         System.setProperty("build.platform", "claude");
@@ -386,12 +429,16 @@ class TargetIntegrationTest {
         System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.3.10");
         System.setProperty("plugin.description", "Agent coding workflow (Windows)");
-        System.setProperty("skill.frontmatter", "");
+        System.setProperty("skill.frontmatter", frontmatter);
         System.setProperty("shipsmooth.jlink.dir", "");
         System.setProperty("experimental.enabled", "false");
     }
 
     private void setDevProps() {
+        // Claude dev ships frontmatter with disable-model-invocation but NO `name:`,
+        // mirroring claudeFrontmatter(DEV) in harness/shared/build.gradle.kts (see
+        // setProdProps for why `name:` is omitted — keeps /shipsmooth-dev:start-dev).
+        String frontmatter = "---\ndescription: Use when starting any task — applies the shipsmooth agent coding workflow (dev build).\ndisable-model-invocation: true\n---\n\n";
         System.setProperty("build.outputDir", tempDir.toString());
         System.setProperty("build.env", "dev");
         System.setProperty("build.platform", "claude");
@@ -400,7 +447,7 @@ class TargetIntegrationTest {
         System.setProperty("plugin.skill.start.basename", "start");
         System.setProperty("plugin.version", "0.2.0");
         System.setProperty("plugin.description", "Agent coding workflow (dev build)");
-        System.setProperty("skill.frontmatter", "");
+        System.setProperty("skill.frontmatter", frontmatter);
         System.setProperty("shipsmooth.jlink.dir", "/some/jlink/path");
         System.setProperty("experimental.enabled", "true");
     }
