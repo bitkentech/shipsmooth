@@ -121,6 +121,35 @@ unproven and gets validated by doing. Success = `./gradlew :<module>:run` (or th
 Quarkus dev-mode equivalent) boots a server and a browser
 loads a page from it.
 
+### Task 8: `shipsmooth web serve` CLI subcommand [Medium]
+*Depends-on: 1*
+
+Add a `web` noun group with a `serve --port <p>` verb to the CLI command tree, so the
+web host launches via the single `shipsmooth` command surface. The subcommand starts the
+web app and blocks until interrupted — introducing shipsmooth's first *long-lived*
+(daemon) process lifecycle, distinct from the tool's usual fire-and-exit model. In dev,
+serve launches the web module directly; the packaged-launch form is Task 9. At this point
+it launches whatever the web app currently serves (the Task-1 page) — the richer UI
+(Tasks 2–6) is enriched behind `serve` later. Keep the `cli → web` dependency launch-only
+(no reach into web's presentation internals) and never let `web` depend on `cli`. Medium:
+new command wiring + a process lifecycle the CLI has never had, but bounded.
+
+### Task 9: Package web fast-jar as CLI-sibling payload + verify on devBuild [High]
+*Depends-on: 8*
+
+Wire the Quarkus fast-jar (`quarkus-app/`) into the release zip **as a sibling to the
+CLI jlink image** (Option B — a separate payload, NOT embedded in the jlink module path),
+and make `shipsmooth web serve` launch that packaged payload as a child process. This is
+the plan's real **deployment risk**, pulled forward to de-risk packaging before the UI is
+fleshed out: reconciling Quarkus's fast-jar packaging with shipsmooth's jlink+zip assembly,
+version-aligning the two payloads, and resolving the payload path at runtime from the
+installed layout. **De-risk first:** prove the fast-jar lands in the assembled bundle and
+`web serve` boots it end-to-end via the **claude devBuild** path before hardening.
+Success = a devBuild bundle contains the web payload and `shipsmooth web serve --port <p>`
+serves the browser page from the *packaged* app (not a `gradlew` invocation). High: touches
+release assembly, cross-runtime launch, and installed-layout path resolution — the aspects
+most likely to break only at packaging time.
+
 ### Task 2: Have the endpoint read the TOML config [Medium]
 *Depends-on: 1*
 
@@ -177,35 +206,8 @@ the agreed scope and the concrete demonstration that resolution *presentation* i
 host-specific while *policy* is shared. Medium: exercises the full sealed-type surface
 through a new presentation, over an API proven in Tasks 3–4.
 
-### Task 8: `shipsmooth web serve` CLI subcommand [Medium]
-*Depends-on: 6*
-
-Add a `web` noun group with a `serve --port <p>` verb to the CLI command tree, so the
-web host launches via the single `shipsmooth` command surface. The subcommand starts the
-web app and blocks until interrupted — introducing shipsmooth's first *long-lived*
-(daemon) process lifecycle, distinct from the tool's usual fire-and-exit model. In dev,
-serve launches the web module directly; the packaged-launch form is Task 9. Keep the
-`cli → web` dependency launch-only (no reach into web's presentation internals) and never
-let `web` depend on `cli`. Medium: new command wiring + a process lifecycle the CLI has
-never had, but bounded.
-
-### Task 9: Package web fast-jar as CLI-sibling payload + verify on devBuild [High]
-*Depends-on: 8*
-
-Wire the Quarkus fast-jar (`quarkus-app/`) into the release zip **as a sibling to the
-CLI jlink image** (Option B — a separate payload, NOT embedded in the jlink module path),
-and make `shipsmooth web serve` launch that packaged payload as a child process. This is
-the plan's real **deployment risk**: reconciling Quarkus's fast-jar packaging with
-shipsmooth's jlink+zip assembly, version-aligning the two payloads, and resolving the
-payload path at runtime from the installed layout. **De-risk first:** prove the fast-jar
-lands in the assembled bundle and `web serve` boots it end-to-end via the **claude
-devBuild** path before hardening. Success = a devBuild bundle contains the web payload
-and `shipsmooth web serve --port <p>` serves the browser page from the *packaged* app
-(not a `gradlew` invocation). High: touches release assembly, cross-runtime launch, and
-installed-layout path resolution — the aspects most likely to break only at packaging time.
-
 ### Task 7: Findings write-up + PB-359 outcome [Low]
-*Depends-on: 9*
+*Depends-on: 6*
 
 Write a short `docs/observations/` note capturing what the plan proved: did `core` reuse
 work cleanly (web depends on `core`, not `cli`), what the resolution API looks like
