@@ -4,16 +4,16 @@
     <plan-version>plan-97-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-07-01</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Delete the dead ledger/subcommand guards and fix stale prose</name>
-            <commit></commit>
+            <commit>f5aff54b5f1891710a5a03b2815c966ab8753dac</commit>
             <created-from>plan-97-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -22,9 +22,9 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Scrub ledger from the experimental package-structure example</name>
-            <commit></commit>
+            <commit>c2f18e15dd2f23f211a54b5a87703c32ebbd8b3a</commit>
             <created-from>plan-97-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -35,6 +35,11 @@
         <update>
             <timestamp>2026-07-01T11:24:05.316+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-01T11:42:56.785+05:30</timestamp>
+            <message>Plan complete — removed obsolete ledger references and dead subcommand guards; live experimental-flag/version guards preserved.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
