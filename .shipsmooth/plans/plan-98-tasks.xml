@@ -11,13 +11,24 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Spin up a web endpoint — decide the stack, serve a page</name>
             <commit></commit>
             <created-from>plan-98-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-01T18:05:49.081+05:30</timestamp>
+                    <message>De-risk draft ready for review (commit e53d3f9): top-level web module, Quarkus 3.33.2 LTS boots on Gradle 9.5.1 + OpenJDK 25, page serves HTTP 200.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-07-01T18:05:49.602+05:30</timestamp>
+                    <message>Corrected plan assumption: dev compile/test/run uses OpenJDK 25, not Semeru (Semeru is jlink-only). Pinned toolchain vendor=Oracle build-wide in java-conventions to make selection deterministic (was a Gradle tie-break between two JDK25 installs) — a shared-build change beyond the throwaway web module. OQ-2 resolved: module placed at top-level web/ (not exp/), per user.</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>2</id>
