@@ -62,14 +62,18 @@ type.
   plan. **Dependency direction is load-bearing:** `web` depends on `core`, never on
   `cli`; `cli` depends on `web` only to launch it. `web` must not grow a dependency back
   on `cli`, or the reuse proof collapses.
-- **Packaging topology — separate fast-jar payload (Option B):** the web app ships as
-  its own Quarkus fast-jar (`quarkus-app/`, ~17 MB, ~106 dep jars) placed **as a sibling
-  to the CLI jlink image inside the same GitHub release zip**. `shipsmooth web serve`
-  launches it as a child process. It is *not* embedded in the CLI jlink image — 106
-  mostly-non-modular jars will not sit cleanly on a JPMS module path, and keeping the two
-  runtimes decoupled contains failure (a broken/absent web payload still leaves `core`/`cli`
-  shipping and running). GraalVM native-image (a lighter separate payload) is explicitly
-  **deferred** — not this plan. Verified against the **claude devBuild** path.
+- **Packaging topology — fast-jar payload on the shared JVM (Option B):** the web app
+  ships as its own Quarkus fast-jar (`quarkus-app/`, ~17 MB, ~106 dep jars) placed **as a
+  sibling `web/` to `runtime/` inside the same GitHub release zip**. Its jars are a
+  *classpath* payload — *not* on the JPMS module path (106 mostly-non-modular jars will not
+  sit cleanly there). But it runs on the **same bundled jlink JVM** as the CLI (no second
+  JVM): `shipsmooth web serve` launches `runtime/bin/java -jar web/quarkus-run.jar`. The
+  one thing the shared image must absorb is the **set of JDK modules Quarkus needs** — the
+  image grows by those (see Task 9 for the derivation and the cli-agnostic / packaging-owns
+  -the-union composition). Keeping the *jars* a decoupled payload still contains failure (a
+  broken/absent web payload leaves `core`/`cli` shipping and running). GraalVM native-image
+  (a lighter, fully separate-JVM payload) is explicitly **deferred** — not this plan.
+  Verified against the **claude devBuild** path.
 
 ### Non-goals
 
@@ -138,16 +142,48 @@ new command wiring + a process lifecycle the CLI has never had, but bounded.
 *Depends-on: 8*
 
 Wire the Quarkus fast-jar (`quarkus-app/`) into the release zip **as a sibling to the
-CLI jlink image** (Option B — a separate payload, NOT embedded in the jlink module path),
-and make `shipsmooth web serve` launch that packaged payload as a child process. This is
-the plan's real **deployment risk**, pulled forward to de-risk packaging before the UI is
-fleshed out: reconciling Quarkus's fast-jar packaging with shipsmooth's jlink+zip assembly,
-version-aligning the two payloads, and resolving the payload path at runtime from the
-installed layout. **De-risk first:** prove the fast-jar lands in the assembled bundle and
-`web serve` boots it end-to-end via the **claude devBuild** path before hardening.
-Success = a devBuild bundle contains the web payload and `shipsmooth web serve --port <p>`
-serves the browser page from the *packaged* app (not a `gradlew` invocation). High: touches
-release assembly, cross-runtime launch, and installed-layout path resolution — the aspects
+CLI jlink image** (Option B): the ~106 fast-jar dependency jars ship as a classpath
+payload under a top-level `web/`, next to `runtime/` — they are *not* placed on the JPMS
+module path. `shipsmooth web serve` runs them on the **same bundled JVM** as the CLI:
+`runtime/bin/java -jar web/quarkus-run.jar` (one shared runtime, no second JVM shipped).
+This is the plan's real **deployment risk**, pulled forward to de-risk packaging before the
+UI is fleshed out.
+
+**Key finding (de-risk, proven):** although the fast-jar *jars* stay off the module path,
+the shared jlink image's **JDK module set must grow** to run Quarkus. The CLI's minimized
+image (23 modules) cannot boot the fast-jar — it omits `jdk.unsupported` (and others)
+that Quarkus loads reflectively, giving `NoClassDefFoundError: sun.misc.SignalHandler`.
+So "not embedded in the module path" refers to the *jars*, not the JDK modules: the image
+grows by the JDK modules the web host needs.
+
+**Module-list derivation (do not guess — published lists are wrong for our app):** jdeps
+breaks on the fast-jar (Quarkus #32034), so derive from an **uber-jar** via
+`jdeps --ignore-missing-deps --print-module-deps`. jdeps both **over-reports** (static
+refs in never-run code — `java.desktop`, `jdk.compiler`, `java.rmi`, `java.transaction.xa`
+were each proven droppable by boot-test) and **under-reports** (crypto providers load
+reflectively via service loaders, invisible to jdeps — `jdk.crypto.ec`/`cryptoki` kept as
+insurance since a non-TLS boot can't prove their need). The derived, boot-proven list lives
+in `web/build.gradle.kts` as `webJlinkModules`. A **jlinkSmoke boot test** guards it: the
+build fails loudly if a future Quarkus/dependency bump needs a module not listed.
+
+**Composition invariant (load-bearing):** `cli` never depends on `web`. The CLI's
+`image_<platform>` stays CLI-only and web-agnostic; building `:cli` or `:web` alone touches
+nothing else. The **packaging layer owns the union** — it alone depends on both, so it reads
+`web`'s `webJlinkModules` and `cli`'s runtime module path (exposed by `cli` as a shared
+provider) and runs **one** jlink with the combined `--add-modules`. jlink cannot merge two
+built images, so the union is a single build with the combined module set; the web host
+contributes only *module names* (all already in the platform jmods), not extra path jars.
+The union is computed **only** when packaging assembles a bundle containing both.
+
+**De-risk first:** prove the fast-jar lands in the assembled bundle and `web serve` boots
+it end-to-end via the **claude devBuild** path before hardening. Note that `build-claude-dev/`
+carries no runtime — the CLI runtime installs into `~/.cache/shipsmooth/<ver>/` via the
+SessionStart hook (`installRuntime`: dev copies from the local jlink dir, else downloads +
+extracts the release zip), so the `web/` payload must ride *both* the zip (extracted on
+download) and the dev-copy path (staged into the cache). Success = a bundle contains the
+`web/` payload and `shipsmooth web serve --port <p>` serves the browser page from the
+*packaged* app (not a `gradlew` invocation). High: touches release assembly, the shared
+jlink module set, cross-runtime launch, and installed-layout path resolution — the aspects
 most likely to break only at packaging time.
 
 ### Task 2: Have the endpoint read the TOML config [Medium]
