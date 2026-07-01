@@ -1,4 +1,4 @@
-# Plan 98 — Explore a basic web UI (on a core-owned resolution policy)
+# Plan 98 — A CLI-launched web UI (on a core-owned resolution policy)
 
 ## Context
 
@@ -6,14 +6,15 @@
 logic into core* — https://linear.app/pb-default/issue/PB-359 — and the roadmap item
 *"Explore building a basic web UI"* it was raised in service of.
 
-This plan is **exploratory**. Its purpose is to answer one question with running
-code: *can a non-CLI host (a browser UI) reuse shipsmooth's data + resolution
-layer from `core` without re-implementing resolution policy?* PB-359 predicted
-that a Web UI would be the first host to depend on `core` but not `cli`, and would
-otherwise be forced to re-implement the branch table, config read/write, and
-first-run handshake. Plan-98 tests that prediction by actually building a thin web
-host — but only after the policy has been lifted into `core` so the web host can
-consume it.
+This plan began as an **exploration** and, after the Task 1 spike proved out, **pivoted
+to delivery**: a shipped, CLI-launched web host (`shipsmooth web serve`). Its purpose is
+to answer one question with running code — *can a non-CLI host (a browser UI) reuse
+shipsmooth's data + resolution layer from `core` without re-implementing resolution
+policy?* — and then package that host so it ships. PB-359 predicted that a Web UI would
+be the first host to depend on `core` but not `cli`, and would otherwise be forced to
+re-implement the branch table, config read/write, and first-run handshake. Plan-98 proves
+that prediction by building the web host — after the policy has been lifted into `core`
+so the web host can consume it — and ships it as a fast-jar payload launched by the CLI.
 
 ### Current state (verified in-repo)
 
@@ -53,32 +54,53 @@ type.
   remains the leading (High-risk) task, but its de-risk is now "prove Quarkus boots
   and serves a page in *this* repo/toolchain (Gradle + IBM Semeru)", not an open
   bake-off. This is still the plan's real spiral risk, so it leads.
-- **Throwaway posture:** the web module is a spike. It is *not* a shipped host, has
-  no auth, and is not wired into any release/packaging path. Deleting it must leave
-  `core`/`cli` fully working.
+- **Shipped host (pivoted from throwaway):** the web module graduates from a spike to
+  a shipped host, launched via the CLI as `shipsmooth web serve --port <p>`. The CLI is
+  the single command surface; `web` becomes a noun group that launches the web
+  presentation over the same `core` policy (the concrete payoff of PB-359's
+  policy-in-core thesis). Still **no auth** — access control is out of scope for this
+  plan. **Dependency direction is load-bearing:** `web` depends on `core`, never on
+  `cli`; `cli` depends on `web` only to launch it. `web` must not grow a dependency back
+  on `cli`, or the reuse proof collapses.
+- **Packaging topology — separate fast-jar payload (Option B):** the web app ships as
+  its own Quarkus fast-jar (`quarkus-app/`, ~17 MB, ~106 dep jars) placed **as a sibling
+  to the CLI jlink image inside the same GitHub release zip**. `shipsmooth web serve`
+  launches it as a child process. It is *not* embedded in the CLI jlink image — 106
+  mostly-non-modular jars will not sit cleanly on a JPMS module path, and keeping the two
+  runtimes decoupled contains failure (a broken/absent web payload still leaves `core`/`cli`
+  shipping and running). GraalVM native-image (a lighter separate payload) is explicitly
+  **deferred** — not this plan. Verified against the **claude devBuild** path.
 
 ### Non-goals
 
-- No production web host, no authentication, no release/packaging/distribution wiring.
-- No new agent-harness host (this is not `harness:<name>` in the release sense).
+- No authentication / access control on the web host (deferred).
+- No GraalVM native-image packaging (deferred — fast-jar payload only for now).
+- No embedding of the web runtime *inside* the CLI jlink image — the web app is a
+  separate fast-jar payload, not jlink modules (see packaging topology above).
+- No new agent-harness host (this is not `harness:<name>` in the release sense — `web`
+  is a CLI-launched host, not an agent-plugin host).
 - No change to CLI behaviour or its `store info/init` JSON contract — the CLI keeps
-  its non-interactive JSON+exit-code presentation; only the *policy* relocates.
+  its non-interactive JSON+exit-code presentation; only the *policy* relocates. The new
+  `web serve` verb is additive.
 - No back-compat shims: there are no external consumers of `conf.ds.*`, so the lift
   is a straight move, not a deprecation.
 
 ### Open questions (to resolve during execution)
 
 - **OQ-1 (web stack): RESOLVED → Quarkus.** Rationale: designed for performance and
-  fast startup; strong developer experience; works well with **IBM Semeru** (this
-  repo's jlink JVM — see [[reference_semeru_jlink_only]]); Kubernetes-native if we
-  ever need it; actively developed with a large community; builds on Jakarta EE / Java
-  EE standards; and pairs well with GraalVM native-image should that become useful.
+  fast startup; strong developer experience; Kubernetes-native if we ever need it;
+  actively developed with a large community; builds on Jakarta EE / Java EE standards;
+  and pairs well with GraalVM native-image should that become useful (deferred).
   Chosen **over Micronaut** because Micronaut is oriented to the microservices use
-  case and is Spring-derived — not compelling for shipsmooth today. (Decision made at
-  planning time, not deferred to Task 1's de-risk.)
-- **OQ-2 (module placement):** where does the web spike module sit in the graph —
-  `harness:web`, a top-level `web`, or `exp/`? Lean `exp/` given the throwaway
-  posture; confirm in Task 1 when the module is created.
+  case and is Spring-derived — not compelling for shipsmooth today.
+  *Correction (Task 1 finding):* an earlier rationale claimed Quarkus "works well with
+  IBM Semeru." In fact dev compile/test/run resolves to **stock OpenJDK 25**, not
+  Semeru — Semeru is jlink-only (see [[reference_semeru_jlink_only]]). Quarkus was
+  validated on OpenJDK/HotSpot; Semeru/OpenJ9 validation is deferred. This does not
+  change the stack choice.
+- **OQ-2 (module placement): RESOLVED → top-level `web`.** Not `exp/` and not
+  `harness:web`: `web` is a first-class CLI-launched host, so it sits as a top-level
+  module alongside `core`/`cli`. (Confirmed in Task 1.)
 - **OQ-3 (lifted-policy home):** does the lifted resolution policy live directly in
   `core`, or in a new shared module (e.g. `core` stays framework-free and a
   `resolution` module sits above it)? Task 3 de-risk answers this; default is *into
@@ -155,11 +177,38 @@ the agreed scope and the concrete demonstration that resolution *presentation* i
 host-specific while *policy* is shared. Medium: exercises the full sealed-type surface
 through a new presentation, over an API proven in Tasks 3–4.
 
-### Task 7: Findings write-up + teardown decision [Low]
+### Task 8: `shipsmooth web serve` CLI subcommand [Medium]
 *Depends-on: 6*
 
-Write a short `docs/observations/` note capturing what the spike proved: did `core`
-reuse work cleanly, what the resolution API should look like long-term, whether the
-web host warrants its own plan, and the resolved OQ-1/OQ-2/OQ-3 answers. Decide and
-record whether the spike module is kept behind a flag or deleted (throwaway default).
-Update PB-359 with the outcome. Low: documentation + a keep/delete call.
+Add a `web` noun group with a `serve --port <p>` verb to the CLI command tree, so the
+web host launches via the single `shipsmooth` command surface. The subcommand starts the
+web app and blocks until interrupted — introducing shipsmooth's first *long-lived*
+(daemon) process lifecycle, distinct from the tool's usual fire-and-exit model. In dev,
+serve launches the web module directly; the packaged-launch form is Task 9. Keep the
+`cli → web` dependency launch-only (no reach into web's presentation internals) and never
+let `web` depend on `cli`. Medium: new command wiring + a process lifecycle the CLI has
+never had, but bounded.
+
+### Task 9: Package web fast-jar as CLI-sibling payload + verify on devBuild [High]
+*Depends-on: 8*
+
+Wire the Quarkus fast-jar (`quarkus-app/`) into the release zip **as a sibling to the
+CLI jlink image** (Option B — a separate payload, NOT embedded in the jlink module path),
+and make `shipsmooth web serve` launch that packaged payload as a child process. This is
+the plan's real **deployment risk**: reconciling Quarkus's fast-jar packaging with
+shipsmooth's jlink+zip assembly, version-aligning the two payloads, and resolving the
+payload path at runtime from the installed layout. **De-risk first:** prove the fast-jar
+lands in the assembled bundle and `web serve` boots it end-to-end via the **claude
+devBuild** path before hardening. Success = a devBuild bundle contains the web payload
+and `shipsmooth web serve --port <p>` serves the browser page from the *packaged* app
+(not a `gradlew` invocation). High: touches release assembly, cross-runtime launch, and
+installed-layout path resolution — the aspects most likely to break only at packaging time.
+
+### Task 7: Findings write-up + PB-359 outcome [Low]
+*Depends-on: 9*
+
+Write a short `docs/observations/` note capturing what the plan proved: did `core` reuse
+work cleanly (web depends on `core`, not `cli`), what the resolution API looks like
+long-term, how the separate-payload packaging (Option B) held up, and the resolved
+OQ-1/OQ-2/OQ-3 answers. Record the deferred items (auth, Semeru/OpenJ9 validation, GraalVM
+native-image). Update PB-359 with the outcome. Low: documentation + capturing decisions.
