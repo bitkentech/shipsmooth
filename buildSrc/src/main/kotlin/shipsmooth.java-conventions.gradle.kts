@@ -18,12 +18,18 @@ repositories {
 
 java {
     toolchain {
-        // Run on the JDK actually installed here (25, any vendor). Maven likewise
-        // runs javac on whatever JDK is present and cross-compiles to 21 via
-        // --release; we mirror that with options.release below rather than
-        // requiring a separate JDK 21 install. Semeru is NOT a compile toolchain —
-        // it enters only as jlink.exec.home for the jlink/jar exec steps.
+        // Compile/test on JDK 25, cross-compiling to 21 via options.release below
+        // (mirrors Maven's javac --release). Semeru is NOT a compile toolchain — it
+        // enters only as jlink.exec.home for the jlink/jar exec steps.
+        //
+        // This box has TWO JDK 25 installs: stock OpenJDK (Oracle) and Semeru/OpenJ9
+        // (IBM). With no vendor pin, both satisfy languageVersion(25) and Gradle's
+        // tie-break decides — which is non-deterministic across environments. Pin the
+        // vendor to Oracle so compile+test always run on stock OpenJDK and Semeru is
+        // reserved strictly for jlink, making the intended split explicit rather than
+        // incidental. (plan-98 finding.)
         languageVersion.set(JavaLanguageVersion.of(25))
+        vendor.set(JvmVendorSpec.ORACLE)
     }
 }
 

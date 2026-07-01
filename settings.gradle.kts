@@ -18,3 +18,6 @@ include("harness:gemini")
 include("harness:codex")
 include("harness:opencode")
 include("packaging")
+// Plan-98 spike: throwaway Quarkus web module exploring core reuse from a non-CLI
+// host. Not wired into any release/packaging path; safe to delete.
+include("web")
