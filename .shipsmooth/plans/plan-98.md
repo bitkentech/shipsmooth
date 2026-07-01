@@ -49,10 +49,10 @@ type.
   state and (b) drives an interactive first-run **resolution** flow in the browser —
   exercising `NeedsDecision` end-to-end. This is the presentation half PB-359 says
   each host should own; the *policy* it drives now lives in `core`.
-- **Web stack:** **decided in Task 1**, the plan's leading (High-risk) task — the
-  tech choice is made by building the smallest thing that serves a page (candidates:
-  JDK `com.sun.net.httpserver`, Javalin, or a JSON API + static front-end). This is
-  the real spiral risk, so it leads. See OQ-1.
+- **Web stack: Quarkus** (decided at planning time — see OQ-1 rationale). Task 1
+  remains the leading (High-risk) task, but its de-risk is now "prove Quarkus boots
+  and serves a page in *this* repo/toolchain (Gradle + IBM Semeru)", not an open
+  bake-off. This is still the plan's real spiral risk, so it leads.
 - **Throwaway posture:** the web module is a spike. It is *not* a shipped host, has
   no auth, and is not wired into any release/packaging path. Deleting it must leave
   `core`/`cli` fully working.
@@ -68,9 +68,14 @@ type.
 
 ### Open questions (to resolve during execution)
 
-- **OQ-1 (web stack):** embedded JDK `com.sun.net.httpserver` vs. Javalin vs. a
-  JSON-API + static front-end. **Decided in Task 1** by building the smallest thing
-  that serves a page; record the choice in this file via a deviation note.
+- **OQ-1 (web stack): RESOLVED → Quarkus.** Rationale: designed for performance and
+  fast startup; strong developer experience; works well with **IBM Semeru** (this
+  repo's jlink JVM — see [[reference_semeru_jlink_only]]); Kubernetes-native if we
+  ever need it; actively developed with a large community; builds on Jakarta EE / Java
+  EE standards; and pairs well with GraalVM native-image should that become useful.
+  Chosen **over Micronaut** because Micronaut is oriented to the microservices use
+  case and is Spring-derived — not compelling for shipsmooth today. (Decision made at
+  planning time, not deferred to Task 1's de-risk.)
 - **OQ-2 (module placement):** where does the web spike module sit in the graph —
   `harness:web`, a top-level `web`, or `exp/`? Lean `exp/` given the throwaway
   posture; confirm in Task 1 when the module is created.
@@ -84,13 +89,14 @@ type.
 ### Task 1: Spin up a web endpoint — decide the stack, serve a page [High]
 *Depends-on:*
 
-The leading spike: pick the web stack by *building* the smallest thing that serves a
-page in the browser, and stand up the throwaway web module to host it (OQ-2). No
-config, no `core` data, no resolution — just prove a server boots and a browser can
-hit a page. Candidates for OQ-1: JDK `com.sun.net.httpserver`, Javalin, or a JSON-API
-+ static front-end; the de-risk phase makes the call and records it here. High risk:
-this is the plan's real spiral risk — the tech choice is unproven and made by doing.
-Success = `./gradlew :<module>:run` (or equivalent) boots a server and a browser
+The leading spike: stand up a **Quarkus** web module (stack resolved — see OQ-1) and
+serve a page in the browser, proving Quarkus integrates with *this* repo's toolchain
+(Gradle build, IBM Semeru JVM, JPMS/module graph). Stand up the throwaway web module
+to host it (OQ-2). No config, no `core` data, no resolution — just prove a server
+boots and a browser can hit a page. High risk: this is the plan's real spiral risk —
+Quarkus is chosen, but its integration with the Gradle + Semeru toolchain here is
+unproven and gets validated by doing. Success = `./gradlew :<module>:run` (or the
+Quarkus dev-mode equivalent) boots a server and a browser
 loads a page from it.
 
 ### Task 2: Have the endpoint read the TOML config [Medium]
