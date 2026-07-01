@@ -45,13 +45,28 @@
         <task>
             <id>9</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>in-progress</status>
             <name>Package web fast-jar as CLI-sibling payload + verify on devBuild</name>
             <commit></commit>
             <created-from>plan-98-v3</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-01T19:20:11.076+05:30</timestamp>
+                    <message>PACKAGING RISK DE-RISKED (proven end-to-end). CLI's trimmed jlink (23 mods) can't run Quarkus (NoClassDefFoundError sun.misc.SignalHandler = jdk.unsupported missing). Per user 'let image grow, each module lists own deps, build unions'. Quarkus jlink is achievable but jdeps breaks on fast-jar (Quarkus #32034) — must derive from UBER-JAR + add reflective blind-spots (crypto via bytecode scan, per slim-jre technique). Derived OUR list from our uber-jar: jdeps --print-module-deps gave base [java.base,java.desktop,java.logging,java.management,java.naming,java.rmi,java.transaction.xa,jdk.compiler,jdk.unsupported]; +reflective [jdk.crypto.ec,jdk.crypto.cryptoki,jdk.zipfs,jdk.localedata] (crypto TRIGGERED by SSL/TLS bytecode refs). Built union jlink image (CLI base + web mods = 19 modules total) and BOOTED the fast-jar on it: started 2.267s, HTTP 200. Plan to wire: web/build.gradle.kts declares web's module list; image_&lt;platform&gt; unions with io.bitken.ss.cli; jlinkSmoke boots fast-jar on assembled image to fail-loud on future dep drift.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-07-01T19:38:03.504+05:30</timestamp>
+                    <message>SETTLED packaging design (decisions this session): (1) one SHARED jlink image, no 2nd JVM — fast-jar runs on bundled bin/java. (2) Module list DERIVED (jdeps on uber-jar + reflective crypto adds), PRUNED by boot-test: web declares 9 mods [java.logging,java.management,java.naming,jdk.unsupported,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.zipfs,jdk.localedata]+java.base. Dropped proven-dead: java.desktop,jdk.compiler,java.rmi,java.transaction.xa. (3) INVARIANT: cli never depends on web — cli image_&lt;platform&gt; stays CLI-only/web-agnostic. (4) PACKAGING owns the union: reads web's webJlinkModules + cli's module path (cli exposes it as a shared PROVIDER) and runs ONE jlink with combined --add-modules; union computed ONLY when packaging builds both; cli-alone/web-alone untouched. (5) jlinkSmoke boot-test guards drift. PROVEN: union image runs shipsmooth --version AND boots Quarkus HTTP 200. web/build.gradle.kts holds the declared list (uncommitted); cli pristine. TODO: cli module-path provider, packaging union+jlink task, PackageRuntime web/ payload, session-start dev-copy, jlinkSmoke.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-07-01T18:56:47.233+05:30</timestamp>
+                    <message>Doing Task 9 (packaging) BEFORE Task 8 per user. Split scope: the PACKAGING half (fast-jar lands in release zip + dev cache) is done now; the 'launched via web serve' half folds into Task 8. Design: web ships as SIBLING web/ of runtime/ (release zip) and &lt;cache&gt;/web/ (dev). Payload sourced from a SEPARATE dir (quarkus-app), NOT nested in the jlink image (keeps image pure). Two explicit consumers: PackageRuntime copies to zip-root web/; session-start installRuntime stages to &lt;cache&gt;/web/. web serve runs runtime/bin/java -jar web/quarkus-run.jar (reuses bundled JVM, no 2nd JVM). Also: CLI-doesnt-embed-in-build-claude-dev; runtime lives in ~/.cache/shipsmooth/&lt;ver&gt;/ installed by SessionStart hook.</message>
+                </deviation>
+            </deviations>
             <depends-on>8</depends-on>
         </task>
         <task>
