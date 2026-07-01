@@ -7,7 +7,7 @@ Pasting below an example of good and bad file structure for a codebase.
   cli/
     AddComment.java
     AddDeviation.java
-    Integrate.java
+    ShowPlan.java
   conf/
     AppComponents.java
     FeatureFlags.java
@@ -16,17 +16,17 @@ Pasting below an example of good and bad file structure for a codebase.
   gw/
     GitTags.java
     TaskStore.java
-  ledger/
-    Event.java
-    EventLedger.java
-    EventType.java
-    ObjectStore.java
+  plan/
+    Plan.java
+    PlanStatus.java
+    PlanStore.java
+    TaskState.java
   workflow/
     WorkflowService.java
     WorkflowServiceImpl.java
-    integration/
-      IntegrationDefaults.java
-      IntegrationLedger.java
+    review/
+      ReviewDefaults.java
+      ReviewPolicy.java
   module-info.java
 ```
 **Bad:**
@@ -36,18 +36,18 @@ Pasting below an example of good and bad file structure for a codebase.
   commands/
     AddCommentCommand.java
     AddDeviationCommand.java
-    IntegrateCommand.java
+    ShowPlanCommand.java
   di/
     AppComponents.java
     ServicesModule.java
-  integration/
-    IntegrationDefaults.java
-    IntegrationLedger.java
-  ledger/
-    Event.java
-    EventType.java
-    LedgerService.java
-    ObjectStore.java
+  review/
+    ReviewDefaults.java
+    ReviewPolicy.java
+  plan/
+    Plan.java
+    PlanStatus.java
+    PlanStore.java
+    TaskState.java
   stability/
     FeatureFlags.java
   workflow/

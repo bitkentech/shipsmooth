@@ -7,8 +7,8 @@ import java.lang.annotation.RetentionPolicy;
 
 /**
  * Qualifies the {@link java.nio.file.Path} that is the shipsmooth <b>state</b>
- * root — the directory that owns the data tree (plan files, ledger, object
- * store). In default (in-repo) mode this equals the {@link RepoRoot}; in
+ * root — the directory that owns the data tree (plan files and task state).
+ * In default (in-repo) mode this equals the {@link RepoRoot}; in
  * "separate repo" mode it is a distinct directory so the project working tree
  * carries no shipsmooth trace.
  *

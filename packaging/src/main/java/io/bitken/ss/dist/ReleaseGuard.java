@@ -25,7 +25,7 @@ public final class ReleaseGuard {
 
     /** Experimental surface that a prod {@code --help} must not list. */
     private static final List<String> EXPERIMENTAL_TOKENS =
-        List.of("--enable-experimental", "ledger", "worker", "claim", "integrate");
+        List.of("--enable-experimental");
 
     private static final Pattern EXPERIMENTAL_BUILD_FIELD =
         Pattern.compile("EXPERIMENTAL_BUILD\\s*=\\s*(true|false)");
