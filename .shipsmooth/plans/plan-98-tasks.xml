@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>98</plan>
-    <plan-version>plan-98-v1</plan-version>
+    <plan-version>plan-98-v2</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -14,19 +14,24 @@
             <status>de-risked</status>
             <name>Spin up a web endpoint — decide the stack, serve a page</name>
             <commit></commit>
-            <created-from>plan-98-v1</created-from>
+            <created-from>plan-98-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
-                    <timestamp>2026-07-01T18:05:49.081+05:30</timestamp>
+                    <timestamp>2026-07-01T18:41:05.349+05:30</timestamp>
                     <message>De-risk draft ready for review (commit e53d3f9): top-level web module, Quarkus 3.33.2 LTS boots on Gradle 9.5.1 + OpenJDK 25, page serves HTTP 200.</message>
                 </comment>
             </comments>
             <deviations>
                 <deviation>
                     <type>minor</type>
-                    <timestamp>2026-07-01T18:05:49.602+05:30</timestamp>
-                    <message>Corrected plan assumption: dev compile/test/run uses OpenJDK 25, not Semeru (Semeru is jlink-only). Pinned toolchain vendor=Oracle build-wide in java-conventions to make selection deterministic (was a Gradle tie-break between two JDK25 installs) — a shared-build change beyond the throwaway web module. OQ-2 resolved: module placed at top-level web/ (not exp/), per user.</message>
+                    <timestamp>2026-07-01T18:41:06.008+05:30</timestamp>
+                    <message>Corrected plan assumption: dev compile/test/run uses OpenJDK 25, not Semeru (Semeru is jlink-only). Pinned toolchain vendor=Oracle build-wide. OQ-2 resolved: top-level web/ (not exp/).</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-07-01T18:41:06.673+05:30</timestamp>
+                    <message>Plan pivoted at v3: web graduates from throwaway spike to shipped CLI-launched host (shipsmooth web serve); packaging = separate fast-jar payload sibling to CLI (Option B). Added Task 8 (serve subcommand) + Task 9 (packaging/devBuild, High).</message>
                 </deviation>
             </deviations>
         </task>
@@ -36,7 +41,7 @@
             <status>pending</status>
             <name>Have the endpoint read the TOML config</name>
             <commit></commit>
-            <created-from>plan-98-v1</created-from>
+            <created-from>plan-98-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -48,7 +53,7 @@
             <status>pending</status>
             <name>Lift the resolution policy into core</name>
             <commit></commit>
-            <created-from>plan-98-v1</created-from>
+            <created-from>plan-98-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -60,7 +65,7 @@
             <status>pending</status>
             <name>core-side resolution API surface for non-CLI hosts</name>
             <commit></commit>
-            <created-from>plan-98-v1</created-from>
+            <created-from>plan-98-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -72,7 +77,7 @@
             <status>pending</status>
             <name>Read-only plan/task view over core</name>
             <commit></commit>
-            <created-from>plan-98-v1</created-from>
+            <created-from>plan-98-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -84,28 +89,52 @@
             <status>pending</status>
             <name>Interactive first-run resolution in the browser</name>
             <commit></commit>
-            <created-from>plan-98-v1</created-from>
+            <created-from>plan-98-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
             <depends-on>5</depends-on>
         </task>
         <task>
-            <id>7</id>
-            <risk>low</risk>
+            <id>8</id>
+            <risk>medium</risk>
             <status>pending</status>
-            <name>Findings write-up + teardown decision</name>
+            <name>`shipsmooth web serve` CLI subcommand</name>
             <commit></commit>
-            <created-from>plan-98-v1</created-from>
+            <created-from>plan-98-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
             <depends-on>6</depends-on>
         </task>
+        <task>
+            <id>9</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Package web fast-jar as CLI-sibling payload + verify on devBuild</name>
+            <commit></commit>
+            <created-from>plan-98-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>8</depends-on>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Findings write-up + PB-359 outcome</name>
+            <commit></commit>
+            <created-from>plan-98-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>9</depends-on>
+        </task>
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-07-01T14:46:20.410+05:30</timestamp>
+            <timestamp>2026-07-01T18:40:46.965+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
