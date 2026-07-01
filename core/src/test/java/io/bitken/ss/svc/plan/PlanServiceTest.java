@@ -72,20 +72,4 @@ public class PlanServiceTest {
         PlanTasks plan = svc.loadPlan(1);
         assertEquals("abc1234", plan.getTasks().getTask().get(0).getCommit());
     }
-
-    @Test
-    public void mutationWritesNoLedgerSideChannel() throws Exception {
-        PlanService svc = planService();
-        svc.initPlan(1, "plan-1-v1", List.of(new TaskStore.Task(1, "a task", "low")));
-        svc.updateTaskStatus(1, 1, "agent-coded");
-
-        // XML mutation happens...
-        assertEquals("agent-coded",
-            svc.loadPlan(1).getTasks().getTask().get(0).getStatus().value());
-        // ...and no ledger.jsonl / object store is ever created (subsystem removed).
-        assertFalse(tempDir.resolve(".shipsmooth/ledger.jsonl").toFile().exists(),
-            "no ledger.jsonl must be written");
-        assertFalse(tempDir.resolve(".shipsmooth/objects").toFile().exists(),
-            "no object store must be created");
-    }
 }

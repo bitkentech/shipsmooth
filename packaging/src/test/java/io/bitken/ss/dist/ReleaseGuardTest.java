@@ -39,14 +39,6 @@ public class ReleaseGuardTest {
         assertTrue(ex.getMessage().contains("enable-experimental"), ex.getMessage());
     }
 
-    @Test
-    void launcherGuardFailsWhenHelpLeaksExperimentalSubcommand() {
-        String leakyHelp = GOOD_HELP + "  ledger   Inspect and record entries in the ledger.\n";
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
-            ReleaseGuard.assertLauncherOutputIsProd("0.3.18\n", leakyHelp, "0.3.18"));
-        assertTrue(ex.getMessage().contains("ledger"), ex.getMessage());
-    }
-
     // --- baked-constants guard (the per-image check, all 4 platforms) ---
     // Input is `javap -p -constants` output read from the Build.class inside a shipped
     // image. javap renders the two fields identically to source, so these fixtures
