@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>100</plan>
+    <plan-version>plan-100-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-07-15</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>agent-coded</status>
+            <name>Add OpenCode installation section to README</name>
+            <commit>593d1339ddb6441528f25e9fb44e9a9b8c355dae</commit>
+            <created-from>plan-100-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-07-15T12:26:01.371+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-15T12:27:34.982+05:30</timestamp>
+            <message></message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

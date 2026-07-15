@@ -76,6 +76,23 @@ script (`install-shipsmooth.sh`) that uses only tools present on a stock system
 (`sh`, `curl`, `unzip`), and on Windows it is a `.bat`. The downloaded runtime is a
 jlink image, so there is nothing else to install.
 
+### OpenCode
+
+Add the plugin to your `opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["@bitkentech/shipsmooth-opencode"]
+}
+```
+
+Restart OpenCode. In the new session, type:
+
+```
+/shipsmooth:start
+```
+
 ## Uninstall
 
 To remove all traces of shipsmooth from a system:
