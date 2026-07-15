@@ -4,27 +4,36 @@
     <plan-version>plan-101-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-07-15</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Regenerate demo cast and GIF with .shipsmooth paths</name>
-            <commit></commit>
+            <commit>12f76e5</commit>
             <created-from>plan-101-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-15T18:18:14.091+05:30</timestamp>
+                    <message>De-risk draft ready for review (commit f8203ec): demo.cast rewritten .agents-&gt;.shipsmooth (4 occurrences), demo-small.gif re-rendered with agg --rows 15 at identical 1027x358 dimensions; changed frames visually verified clean (no wrap/misalignment).</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-07-15T21:15:48.829+05:30</timestamp>
+                    <message>Theme fix (commit 12f76e5): original GIF used a custom light palette, not a builtin agg theme. Exact render command: agg --theme eceff4,171b21,171b21,bf5a64,7abf7a,bf8f57,608bbf,b48ead,1f6feb,eceff4 --rows 15 docs/demo.cast docs/demo-small.gif</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Restructure README and fix stale content</name>
-            <commit></commit>
+            <commit>a722a7d5efa4d295d2d67f3dce9bfde9423e1f19</commit>
             <created-from>plan-101-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -33,12 +42,17 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Add website-derived content</name>
-            <commit></commit>
+            <commit>d3eb7370b1144f132295de1dfc68898a20211d9c</commit>
             <created-from>plan-101-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-15T21:40:46.242+05:30</timestamp>
+                    <message>De-risk draft ready for review: tagline+site link+definition in intro, concept links in Features, CLI docs link after workflow steps, About section (maturity/stack/license/FAQ). Zero-trace + storage-choice items were already covered by user's own Task-2 tweaks.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
     </tasks>
@@ -46,6 +60,11 @@
         <update>
             <timestamp>2026-07-15T18:03:38.603+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-15T21:44:16.432+05:30</timestamp>
+            <message>Plan complete.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
