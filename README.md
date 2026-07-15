@@ -116,7 +116,7 @@ It is recommended to retain your plan history (the `.shipsmooth/` directory with
 
 ## About
 
-shipsmooth is in its early stages and is developed by Pramod Biligiri. The tech stack is mostly Java (a mini-runtime is bundled with the install), with a little bit of TypeScript and shell. Licensed under [Apache 2.0](LICENSE). More questions? See the [FAQ](https://www.shipsmooth.net/faq/).
+shipsmooth is in its early stages and is developed by [Pramod Biligiri](https://www.pramodb.com). The tech stack is mostly Java (a mini-runtime is bundled with the install), with a little bit of TypeScript and shell. Licensed under [Apache 2.0](LICENSE). More questions? See the [FAQ](https://www.shipsmooth.net/faq/).
 
 ## Development  
 See [DEVELOPMENT.md](DEVELOPMENT.md) for build instructions, repo structure, and dev setup.
