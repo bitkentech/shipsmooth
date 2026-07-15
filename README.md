@@ -1,13 +1,15 @@
 ## shipsmooth - a simple, powerful coding workflow.
 
-An AI assistant plugin that enables a plan-driven, risk-prioritised, checkpoint based, agentic coding workflow.
+> Make plans, but with the freedom to change them. Tackle risky bits first. Build vertical slices.
+
+An AI assistant plugin that enables a plan-driven, risk-prioritised, checkpoint based, agentic coding workflow. Technically, it is a skill file and a CLI tool, packaged as a plugin for Claude Code, Codex, Gemini CLI and OpenCode. Learn more at [shipsmooth.net](https://www.shipsmooth.net).
 
 The below demo shows one example flow: **Plan ➔ Generate tasks ➔ Execute ➔ Something went wrong! ➔ Pause execution ➔ Update plan (and tasks) ➔ Resume execution ➔ Stop session ➔ Resume next day!**
 ![shipsmooth demo](docs/demo-small.gif)
 
 ## Features of the workflow
 
-The [workflow spec](https://github.com/bitkentech/shipsmooth/blob/releases/dist/skills/start/SKILL.md) borrows ideas from the [Spiral Model](https://en.wikipedia.org/wiki/Spiral_model) and [Agile](https://en.wikipedia.org/wiki/Agile_software_development) principles. You first de-risk any feature work by tackling the unknown parts - sometimes that's the end-user experience, at other times it could be technical components. Only after the approach has been validated by implementing the risky parts, you pick up the low risk tasks and focus on code quality, test coverage.
+The [workflow spec](https://github.com/bitkentech/shipsmooth/blob/releases/dist/skills/start/SKILL.md) borrows ideas from the [Spiral Model](https://en.wikipedia.org/wiki/Spiral_model) and [Agile](https://en.wikipedia.org/wiki/Agile_software_development) principles. You first de-risk any feature work by tackling the unknown parts - sometimes that's the end-user experience, at other times it could be technical components. Only after the approach has been validated by implementing the risky parts, you pick up the low risk tasks and focus on code quality, test coverage. The website explores the three core concepts in depth: [Iterate](https://www.shipsmooth.net/concepts/iterate/), [Risky bits](https://www.shipsmooth.net/concepts/risky-bits/) and [Vertical slices](https://www.shipsmooth.net/concepts/vertical-slices/).
 
 - **Plan-driven execution:** Every feature has a plan file checked into version control ([an example plan file](.shipsmooth/plans/plan-17.md)), and the agent executes against this plan. The plan is broken down into tasks ([an example tasks file](.shipsmooth/plans/plan-17-tasks.xml)). You can pause the execution any time, modify the plan and resume.
 - **Risk-first ordering and vertical slices:** Planned tasks are ranked as High, Medium, or Low risk. High-risk tasks are tackled first so that you can validate important assumptions and fail fast. As far as possible, the tasks will represent vertical slices of functionality. Git commits are created as progress is made.
@@ -23,6 +25,8 @@ First install shipsmooth (see **Installation** section below). Launch [the skill
 2. **Calibrate:** You can override the default risk level (High/Medium/Low) for each task. The riskiest work will be executed first.
 3. **Execute:** The agent works through tasks in order. High-risk tasks go through a de-risk/harden cycle (prove the approach first, then polish). Low-risk tasks are single-pass.
 4. **Close out:** Tag the plan complete, archive the task state, and squash merge to main.
+
+Plan and task state is managed by a bundled CLI, documented at [shipsmooth.net/docs/cli](https://www.shipsmooth.net/docs/cli/).
 
 ## Current Limitations
 - Support for concurrent "plans" doesn't exist. Each new plan relies on generating an incrementing serial number right now. That can be an issue if you choose to create multiple plans at one time.
@@ -109,6 +113,10 @@ rm -rf ~/.config/shipsmooth
 ```
 
 It is recommended to retain your plan history (the `.shipsmooth/` directory within your codebase, or in a separate state directory if you have chosen that option) since that serves as documentation of the project.
+
+## About
+
+shipsmooth is in its early stages and is developed by Pramod Biligiri. The tech stack is mostly Java (a mini-runtime is bundled with the install), with a little bit of TypeScript and shell. Licensed under [Apache 2.0](LICENSE). More questions? See the [FAQ](https://www.shipsmooth.net/faq/).
 
 ## Development  
 See [DEVELOPMENT.md](DEVELOPMENT.md) for build instructions, repo structure, and dev setup.
