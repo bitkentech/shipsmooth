@@ -9,13 +9,17 @@ The below demo shows one example flow: **Plan ➔ Generate tasks ➔ Execute ➔
 
 ## Features of the workflow
 
-The [workflow spec](https://github.com/bitkentech/shipsmooth/blob/releases/dist/skills/start/SKILL.md) borrows ideas from the [Spiral Model](https://en.wikipedia.org/wiki/Spiral_model) and [Agile](https://en.wikipedia.org/wiki/Agile_software_development) principles. You first de-risk any feature work by tackling the unknown parts - sometimes that's the end-user experience, at other times it could be technical components. Only after the approach has been validated by implementing the risky parts, you pick up the low risk tasks and focus on code quality, test coverage. The website explores the three core concepts in depth: [Iterate](https://www.shipsmooth.net/concepts/iterate/), [Risky bits](https://www.shipsmooth.net/concepts/risky-bits/) and [Vertical slices](https://www.shipsmooth.net/concepts/vertical-slices/).
+The [workflow spec](https://github.com/bitkentech/shipsmooth/blob/releases/dist/skills/start/SKILL.md) borrows ideas from the [Spiral Model](https://en.wikipedia.org/wiki/Spiral_model) and [Agile](https://en.wikipedia.org/wiki/Agile_software_development) principles. You first de-risk any feature work by tackling the unknown parts - sometimes that's the end-user experience, at other times it could be technical components. Only after the approach has been validated by implementing the risky parts, you pick up the low risk tasks and focus on code quality, test coverage. More details below.
 
-- **Plan-driven execution:** Every feature has a plan file checked into version control ([an example plan file](.shipsmooth/plans/plan-17.md)), and the agent executes against this plan. The plan is broken down into tasks ([an example tasks file](.shipsmooth/plans/plan-17-tasks.xml)). You can pause the execution any time, modify the plan and resume.
-- **Risk-first ordering and vertical slices:** Planned tasks are ranked as High, Medium, or Low risk. High-risk tasks are tackled first so that you can validate important assumptions and fail fast. As far as possible, the tasks will represent vertical slices of functionality. Git commits are created as progress is made.
-- **Code quality and test coverage:** These are increased only after the approach is proven and a basic implementation is ready.
-- **Pause and resume:** Plan files and task state live in git, so you can stop your development session anytime and restart from exactly where you left off.
-- **Non Intrusive:** By default, plans and tasks sit in a separate git folder/repository from your codebase and don't affect your codebase. But you can choose to keep them in a  `.shipsmooth` directory within your codebase.
+**Plan-driven execution:** Every feature has a plan file checked into version control ([an example plan file](.shipsmooth/plans/plan-17.md)), and the agent executes against this plan. The plan is broken down into tasks ([an example tasks file](.shipsmooth/plans/plan-17-tasks.xml)). You can pause the execution any time, modify the plan and resume. More importantly, the plan and task can be iterated over, as their versions are explicitly managed. For more, see [iterative development](https://www.shipsmooth.net/concepts/iterate/).
+
+**Risk-first ordering and vertical slices:** Planned tasks are ranked as High, Medium, or Low risk. High-risk tasks are [tackled first](https://www.shipsmooth.net/concepts/risky-bits/) so that you can validate important assumptions and fail fast. As far as possible, the tasks will represent [vertical slices](https://www.shipsmooth.net/concepts/vertical-slices/) of functionality. Git commits are created as progress is made.
+
+**Code quality and test coverage:** These are increased only after the approach is proven and a basic implementation is ready.
+
+**Pause and resume:** Plan files and task state live in git, so you can stop your development session anytime and restart from exactly where you left off.
+
+**Non Intrusive:** By default, plans and tasks sit in a separate git folder/repository from your codebase and don't affect your codebase. But you can choose to keep them in a  `.shipsmooth` directory within your codebase.
 
 ## How to start using the workflow
 
