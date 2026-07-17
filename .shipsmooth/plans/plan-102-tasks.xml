@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>102</plan>
+    <plan-version>plan-102-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>active</status>
+        <created>2026-07-17</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Golden fixture corpus + CLI transcripts from the Java CLI</name>
+            <commit></commit>
+            <created-from>plan-102-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Cargo workspace walking skeleton</name>
+            <commit></commit>
+            <created-from>plan-102-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Risk spike — XML model + golden round-trip</name>
+            <commit></commit>
+            <created-from>plan-102-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Warm-up port — pure plan logic with ported tests</name>
+            <commit></commit>
+            <created-from>plan-102-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Findings write-back into docs/rust-migration</name>
+            <commit></commit>
+            <created-from>plan-102-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-07-17T13:35:38.026+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
