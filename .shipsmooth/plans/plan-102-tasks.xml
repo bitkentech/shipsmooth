@@ -40,9 +40,9 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Risk spike — XML model + golden round-trip</name>
-            <commit></commit>
+            <commit>7107a409965c8fff1757164308e64687011a6567</commit>
             <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments>
@@ -57,9 +57,9 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Warm-up port — pure plan logic with ported tests</name>
-            <commit></commit>
+            <commit>7ef473b6ab6183a29ec95c4855579071e73788d8</commit>
             <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -69,9 +69,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Findings write-back into docs/rust-migration</name>
-            <commit></commit>
+            <commit>8ffbb5df3ea23403636152808f7d86a8d02d330a</commit>
             <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -88,6 +88,11 @@
         <update>
             <timestamp>2026-07-17T14:09:26.999+05:30</timestamp>
             <message>Coverage agreement: parity with Java for ported packages, 95 percent for net-new code. Execution started.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-17T14:59:41.323+05:30</timestamp>
+            <message>All 5 tasks agent-coded. Spike verdict GO: event-API model round-trips golden corpus byte-identically; coverage 95.5 percent total. Ready for review/closeout.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
