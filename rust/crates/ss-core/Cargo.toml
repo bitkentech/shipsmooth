@@ -1,0 +1,20 @@
+[package]
+name = "ss-core"
+version.workspace = true
+edition.workspace = true
+
+[features]
+# Replaces Build.EXPERIMENTAL_BUILD (baked per build variant via build.env in
+# the Gradle world). Features are part of cargo's build fingerprint, so the
+# stale-constant defect class (plan-75) cannot occur.
+experimental = []
+
+[dependencies]
+serde.workspace = true
+quick-xml.workspace = true
+time.workspace = true
+thiserror.workspace = true
+regex.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
