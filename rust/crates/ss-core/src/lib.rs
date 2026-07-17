@@ -5,6 +5,7 @@
 //! `gw` ← `io.bitken.ss.gw`, `conf` ← `io.bitken.ss.conf`.
 
 pub mod error;
+pub mod model;
 
 pub use error::Error;
 
