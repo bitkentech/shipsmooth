@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>102</plan>
-    <plan-version>plan-102-v1</plan-version>
+    <plan-version>plan-102-v2</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -14,10 +14,16 @@
             <status>pending</status>
             <name>Golden fixture corpus + CLI transcripts from the Java CLI</name>
             <commit></commit>
-            <created-from>plan-102-v1</created-from>
+            <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-07-17T14:09:26.183+05:30</timestamp>
+                    <message>Depends-on syntax in plan markdown was wrong (*Depends-on:* 1 vs *Depends-on: 1*); fixed in plan-102-v2 and re-ran plan init to restore dependency links</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>2</id>
@@ -25,10 +31,11 @@
             <status>pending</status>
             <name>Cargo workspace walking skeleton</name>
             <commit></commit>
-            <created-from>plan-102-v1</created-from>
+            <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
+            <depends-on>1</depends-on>
         </task>
         <task>
             <id>3</id>
@@ -36,10 +43,11 @@
             <status>pending</status>
             <name>Risk spike — XML model + golden round-trip</name>
             <commit></commit>
-            <created-from>plan-102-v1</created-from>
+            <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
+            <depends-on>1,2</depends-on>
         </task>
         <task>
             <id>4</id>
@@ -47,10 +55,11 @@
             <status>pending</status>
             <name>Warm-up port — pure plan logic with ported tests</name>
             <commit></commit>
-            <created-from>plan-102-v1</created-from>
+            <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
+            <depends-on>2</depends-on>
         </task>
         <task>
             <id>5</id>
@@ -58,16 +67,22 @@
             <status>pending</status>
             <name>Findings write-back into docs/rust-migration</name>
             <commit></commit>
-            <created-from>plan-102-v1</created-from>
+            <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
+            <depends-on>3,4</depends-on>
         </task>
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-07-17T13:35:38.026+05:30</timestamp>
+            <timestamp>2026-07-17T14:09:25.424+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-17T14:09:26.999+05:30</timestamp>
+            <message>Coverage agreement: parity with Java for ported packages, 95 percent for net-new code. Execution started.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
