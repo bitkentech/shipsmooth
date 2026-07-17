@@ -26,6 +26,28 @@ fn every_fixture_round_trips_byte_identical() {
         let parsed = ss_core::model::read_plan_tasks_str(&input)
             .unwrap_or_else(|e| panic!("parse failed for {}: {e}", path.display()));
         let written = ss_core::model::write_plan_tasks_str(&parsed);
+
+        // 06 is the one HAND-edited fixture (single-line unknown-element
+        // insert). Java doesn't round-trip it byte-identically either — JAXB
+        // re-indents it, which is what fixture 07 records. The agreed
+        // normalization: unknown elements are preserved and re-emitted in the
+        // standard pretty layout, and the writer is idempotent about it.
+        if path.file_name().is_some_and(|n| n == "06-unknown-ext-input.xml") {
+            assert!(written.contains("<meta-ext scope=\"fixture\">"), "unknown metadata ext lost");
+            assert!(
+                written.contains("<future-field attr=\"x\">unknown extension text</future-field>"),
+                "unknown task ext lost"
+            );
+            let reparsed = ss_core::model::read_plan_tasks_str(&written).unwrap();
+            assert_eq!(
+                ss_core::model::write_plan_tasks_str(&reparsed),
+                written,
+                "normalization not idempotent for {}",
+                path.display()
+            );
+            continue;
+        }
+
         assert_eq!(written, input, "round-trip mismatch for {}", path.display());
     }
 }
