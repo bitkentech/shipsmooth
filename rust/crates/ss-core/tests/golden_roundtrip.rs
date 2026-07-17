@@ -4,6 +4,7 @@
 //! must be byte-identical to the input. This is the go/no-go gate for the
 //! whole Rust migration (docs/rust-migration/00-overview.md §risks).
 
+use ss_core::model::{PlanTasks, Risk, TaskStatus};
 use std::fs;
 use std::path::PathBuf;
 
@@ -23,9 +24,9 @@ fn every_fixture_round_trips_byte_identical() {
 
     for path in paths {
         let input = fs::read_to_string(&path).unwrap();
-        let parsed = ss_core::model::read_plan_tasks_str(&input)
+        let parsed = PlanTasks::parse(&input)
             .unwrap_or_else(|e| panic!("parse failed for {}: {e}", path.display()));
-        let written = ss_core::model::write_plan_tasks_str(&parsed);
+        let written = parsed.to_xml();
 
         // 06 is the one HAND-edited fixture (single-line unknown-element
         // insert). Java doesn't round-trip it byte-identically either — JAXB
@@ -38,9 +39,9 @@ fn every_fixture_round_trips_byte_identical() {
                 written.contains("<future-field attr=\"x\">unknown extension text</future-field>"),
                 "unknown task ext lost"
             );
-            let reparsed = ss_core::model::read_plan_tasks_str(&written).unwrap();
+            let reparsed = PlanTasks::parse(&written).unwrap();
             assert_eq!(
-                ss_core::model::write_plan_tasks_str(&reparsed),
+                reparsed.to_xml(),
                 written,
                 "normalization not idempotent for {}",
                 path.display()
@@ -50,4 +51,29 @@ fn every_fixture_round_trips_byte_identical() {
 
         assert_eq!(written, input, "round-trip mismatch for {}", path.display());
     }
+}
+
+#[test]
+fn typed_accessors_read_the_rich_fixture() {
+    let input = fs::read_to_string(fixture_dir().join("02-rich.xml")).unwrap();
+    let plan = PlanTasks::parse(&input).unwrap();
+
+    assert_eq!(plan.plan_number().unwrap(), 103);
+    assert_eq!(plan.tasks.len(), 7);
+
+    let t1 = &plan.tasks[0];
+    assert_eq!(t1.id_number().unwrap(), 1);
+    assert_eq!(t1.status().unwrap(), TaskStatus::DeRisked);
+    assert_eq!(t1.risk_level().unwrap(), Risk::High);
+    assert_eq!(t1.depends_on(), "");
+
+    // Task 4 has the empty risk value; task 7 was added via `task add`.
+    assert_eq!(plan.tasks[3].risk_level().unwrap(), Risk::Unspecified);
+    assert_eq!(plan.tasks[6].depends_on(), "2,3");
+
+    // Comment text with escapables came back unescaped exactly once.
+    assert_eq!(
+        t1.comments[0].message,
+        "Special chars: & < > \" ' and unicode: héllo 🚀"
+    );
 }
