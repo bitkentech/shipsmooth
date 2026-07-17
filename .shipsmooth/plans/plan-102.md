@@ -66,7 +66,7 @@ Java build is still the daily driver.
 
 ### Task 2: Cargo workspace walking skeleton [Low]
 
-*Depends-on:* 1
+*Depends-on: 1*
 
 `rust/` workspace per `03-dependencies.md`: `crates/ss-core` (lib) and
 `crates/ss-cli` (bin `shipsmooth`), workspace-pinned deps, the `ss_core::Error`
@@ -79,7 +79,7 @@ spike (depends on Task 1 only for the parity-script fixture paths).
 
 ### Task 3: Risk spike — XML model + golden round-trip [High]
 
-*Depends-on:* 1, 2
+*Depends-on: 1, 2*
 
 The go/no-go question. In `ss_core::model`: hand-written structs for
 `plan-tasks.xsd` (per `01-core.md` §1), with `xs:any` extension elements
@@ -96,7 +96,7 @@ can restructure `01-core.md` §1.
 
 ### Task 4: Warm-up port — pure plan logic with ported tests [Low]
 
-*Depends-on:* 2
+*Depends-on: 2*
 
 Port `io.bitken.ss.svc.plan`'s pure classes to `ss_core::plan`: `Slugs`,
 `PlanMarkdownParser`, `PlanNumbers`, `Stub`, `PlanSummaryFormatter` — with
@@ -111,7 +111,7 @@ verbatim format strings) the full migration will copy.
 
 ### Task 5: Findings write-back into docs/rust-migration [Low]
 
-*Depends-on:* 3, 4
+*Depends-on: 3, 4*
 
 Update the migration docs with what the exploration proved: the go/no-go
 verdict, the chosen XML approach (serde derive vs event API) and its
