@@ -83,9 +83,18 @@ predicates.workspace = true
 
 ### core (main)
 
+**Corrections from the plan-102 exploration:** the model uses quick-xml's
+*event API only* — the `serialize` feature and serde are not needed in
+ss-core's XML layer (serde stays for ss-cli's JSON/TOML). `unicode-normalization`
+was missing from the original map: `Slugs` needs NFD + combining-mark
+stripping (Java `java.text.Normalizer`). `time` is not yet exercised —
+timestamps stay lexical strings in the model; `time` enters when commands
+mint new timestamps.
+
 | Java dependency (version) | Used for | Rust replacement | Notes |
 |---|---|---|---|
-| `jakarta.xml.bind:jakarta.xml.bind-api` 4.0.2 (api) | JAXB API: `JAXBContext`, `Marshaller`/`Unmarshaller` in TaskStore; `JAXBException` in core's public API | **`quick-xml` + `serde`** | The whole marshal/unmarshal layer becomes `quick_xml::se`/`de` over hand-written structs. `JAXBException` in signatures → `ss_core::Error::Xml` variant |
+| `jakarta.xml.bind:jakarta.xml.bind-api` 4.0.2 (api) | JAXB API: `JAXBContext`, `Marshaller`/`Unmarshaller` in TaskStore; `JAXBException` in core's public API | **`quick-xml`** (event API) | The whole marshal/unmarshal layer becomes a generic tree parse + hand-rolled JAXB-layout writer over hand-written structs (settled by plan-102). `JAXBException` in signatures → `ss_core::Error::Xml` variant |
+| JDK `java.text.Normalizer` (in `Slugs`) | NFD fold for slugification | **`unicode-normalization`** | Missed in the original map; found during the plan-102 warm-up port |
 | `org.glassfish.jaxb:jaxb-runtime` 4.0.5 | JAXB implementation at runtime | — (covered by quick-xml) | |
 | xjc plugin (`com.github.bjornvester.xjc`) generating `io.bitken.ss.jaxb` from plan-tasks.xsd | The XML data model | **nothing — hand-written structs** in `ss_core::model` | Deliberate: the XSD is ~130 lines; explicit structs beat generated code (see 01-core.md §1). The XSD file is retained as documentation/spec + parity-test input |
 | `jakarta.inject:jakarta.inject-api` 2.0.1 (api) | `Provider<T>` lazy service handles, `@Singleton` | **nothing** | Laziness existed for picocli tree construction on unsettled projects; clap parses before services are built (see 02-cli.md) |

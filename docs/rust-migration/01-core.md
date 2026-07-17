@@ -38,10 +38,17 @@ pub struct PlanTasks {
   `<depends-on>` lives (see TaskStore.getDependsOn/setDependsOn, which walk DOM
   `Element`s). Model as `extensions: Vec<RawElement>` where `RawElement`
   preserves name + raw inner XML untouched, so unknown future fields survive a
-  read-modify-write cycle. This is the one structurally tricky part of the
-  whole migration — if quick-xml/serde fights it, drop to quick-xml's event
-  API for just the task element (a hand-written reader/writer for one struct
-  is ~100 lines and fully controllable).
+  read-modify-write cycle.
+- **SETTLED (plan-102 spike):** the model is implemented on the quick-xml
+  **event API** end-to-end — generic tree parse (`raw.rs`) → typed mapping,
+  plus a hand-rolled `layout.rs` writer reproducing JAXB's formatted output
+  byte-for-byte. Values are stored as **lexical strings** (leniency parity
+  with JAXB) with typed accessors (`enums.rs`) validating on demand. serde
+  derive is ruled out: no ordered `xs:any` capture, no `<x></x>` vs `<x/>`
+  distinction, and the JAXB layout needs a custom writer regardless. The
+  golden corpus (`rust/fixtures/`) round-trips byte-identically; the
+  hand-edited unknown-extension fixture normalizes idempotently, matching
+  JAXB's own re-indent (fixtures 06 → 07).
 - Writer must reproduce JAXB formatted output closely (XML decl, indentation)
   to avoid mass-reformatting existing user files — golden round-trip test:
   read a Java-written fixture, write it back, diff must be empty (or a single

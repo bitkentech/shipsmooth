@@ -37,6 +37,29 @@ hooks, and existing user state on disk):
 3. The resolution-gate JSON on stdout + exit codes 10/11 — the SKILL.md contract.
 4. stdout/stderr discipline (info → stdout, errors → stderr) and all exit codes.
 
+## Exploration findings (plan-102, 2026-07-17) — verdict: GO
+
+The starting sequence through the risk spike ran as plan-102 on
+`t/102-rust-migration-explore`; the go/no-go question is answered **GO**:
+
+- The XML model (quick-xml **event API**, `rust/crates/ss-core/src/model/`)
+  round-trips all 8 Java-written golden fixtures **byte-identically** —
+  including two real plans (96/97), every enum value, escaped/unicode text,
+  and unknown `xs:any` elements. The one hand-edited fixture normalizes
+  idempotently, exactly matching JAXB's own re-indent behaviour.
+- serde derive was confirmed unsuitable for the model (ordered `xs:any`
+  capture, `<x></x>` vs `<x/>`, exact JAXB layout) — settled design in
+  01-core.md §1.
+- The warm-up port (`ss_core::plan`) validated the ported-tests approach; the
+  Java `plan resume` transcript doubles as a byte-exact golden for the
+  summary formatter.
+- Fixtures + transcripts live in `rust/fixtures/` (regenerable via
+  `generate.sh`); coverage measured with `cargo llvm-cov` at 95.5% total
+  (ported plan code 97–100%, net-new model ~95–96%).
+- Recommended follow-up plan: port `gw` (GitState/GitTags/TaskStore — now a
+  thin façade over the proven model) and `conf`, then the cli packages per
+  02-cli.md.
+
 ## Target layout
 
 Cargo workspace mirroring the Gradle module split:
