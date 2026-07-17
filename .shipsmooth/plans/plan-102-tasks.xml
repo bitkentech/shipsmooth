@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Golden fixture corpus + CLI transcripts from the Java CLI</name>
-            <commit></commit>
+            <commit>468a603af054332e8d67fda8841865d12f8bf4e6</commit>
             <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -28,9 +28,9 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Cargo workspace walking skeleton</name>
-            <commit></commit>
+            <commit>fdf93b013d0aa3cb1c6d0059d0c6e20a5126e41c</commit>
             <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -40,12 +40,17 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Risk spike — XML model + golden round-trip</name>
             <commit></commit>
             <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-17T14:26:33.905+05:30</timestamp>
+                    <message>De-risk draft ready for review: quick-xml event API round-trips all 8 Java-written fixtures byte-identically (incl. real plans 96/97 and the JAXB-rewritten unknown-ext file); hand-edited fixture 06 normalizes idempotently, matching JAXB. serde derive ruled out (ordered xs:any capture, empty-string vs self-closing distinction, exact layout). GO verdict for the migration approach.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1,2</depends-on>
         </task>
