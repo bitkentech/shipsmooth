@@ -6,6 +6,7 @@
 
 pub mod error;
 pub mod model;
+pub mod plan;
 
 pub use error::Error;
 

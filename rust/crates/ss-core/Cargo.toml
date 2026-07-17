@@ -15,6 +15,7 @@ quick-xml.workspace = true
 time.workspace = true
 thiserror.workspace = true
 regex.workspace = true
+unicode-normalization.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
