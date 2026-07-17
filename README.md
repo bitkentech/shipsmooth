@@ -1,8 +1,6 @@
-## shipsmooth - a simple, powerful coding workflow.
+## shipsmooth - a simple, powerful coding workflow
 
-> Make plans, but with the freedom to change them. Tackle risky bits first. Build vertical slices.
-
-An AI assistant plugin that enables a plan-driven, risk-prioritised, checkpoint based, agentic coding workflow. Technically, it is a skill file and a CLI tool, packaged as a plugin for Claude Code, Codex, Gemini CLI and OpenCode. Learn more at [shipsmooth.net](https://www.shipsmooth.net).
+An AI assistant plugin that enables a plan-driven, risk-prioritised, checkpoint based, agentic coding workflow. If you're just looking to _use_ shipsmooth, head over to [shipsmooth.net](https://www.shipsmooth.net). This Github page contains a more technical description.
 
 The below demo shows one example flow: **Plan ➔ Generate tasks ➔ Execute ➔ Something went wrong! ➔ Pause execution ➔ Update plan (and tasks) ➔ Resume execution ➔ Stop session ➔ Resume next day!**
 ![shipsmooth demo](docs/demo-small.gif)
