@@ -440,4 +440,78 @@ mod tests {
         assert_eq!(plan.plan_number().unwrap(), 1);
         assert_eq!(plan.metadata.status().unwrap(), PlanStatus::Active);
     }
+
+    #[test]
+    fn lenient_storage_reports_invalid_lexicals_through_accessors() {
+        let mut plan = minimal();
+        plan.plan = "not-a-number".into();
+        assert_eq!(plan.plan_number().unwrap_err().to_string(), "invalid plan number 'not-a-number'");
+
+        let deviation = Deviation {
+            kind: "sideways".into(),
+            timestamp: String::new(),
+            message: String::new(),
+        };
+        assert_eq!(deviation.kind_enum().unwrap_err().to_string(), "invalid deviation type 'sideways'");
+    }
+
+    #[test]
+    fn parse_skips_comments_and_merges_cdata_with_text() {
+        let xml = "<?xml version=\"1.0\"?>\n<!-- header comment -->\n<plan-tasks>\
+                   <plan>1<![CDATA[2]]>3</plan><plan-version>plan-123-v1</plan-version>\
+                   <metadata><backlog-issue></backlog-issue><status>active</status>\
+                   <created>2026-07-17</created></metadata><tasks/><project-updates/>\
+                   </plan-tasks>";
+        let plan = PlanTasks::parse(xml).unwrap();
+        assert_eq!(plan.plan, "123");
+        assert!(plan.tasks.is_empty());
+    }
+
+    #[test]
+    fn parse_reports_malformed_documents() {
+        assert_eq!(PlanTasks::parse("").unwrap_err().to_string(), "empty document");
+        assert_eq!(
+            PlanTasks::parse("stray<plan-tasks/>").unwrap_err().to_string(),
+            "unexpected text before root element"
+        );
+        assert_eq!(
+            PlanTasks::parse("<plan-tasks><tasks>").unwrap_err().to_string(),
+            "unclosed element <tasks>"
+        );
+        assert_eq!(
+            PlanTasks::parse("<plan-tasks><wat/></plan-tasks>").unwrap_err().to_string(),
+            "unexpected element <wat> in <plan-tasks>"
+        );
+        let bad_task = "<plan-tasks><tasks><nope/></tasks></plan-tasks>";
+        assert_eq!(
+            PlanTasks::parse(bad_task).unwrap_err().to_string(),
+            "unexpected element <nope> in <tasks>"
+        );
+        let bad_update = "<plan-tasks><project-updates><nope/></project-updates></plan-tasks>";
+        assert_eq!(
+            PlanTasks::parse(bad_update).unwrap_err().to_string(),
+            "unexpected element <nope> in <project-updates>"
+        );
+    }
+
+    #[test]
+    fn self_closed_root_parses_as_empty_and_fails_on_missing_children() {
+        let err = PlanTasks::parse("<plan-tasks/>").unwrap_err();
+        assert_eq!(err.to_string(), "missing <plan> in <plan-tasks>");
+    }
+
+    #[test]
+    fn raw_extension_with_no_children_self_closes_on_write() {
+        let mut plan = minimal();
+        plan.metadata.extensions.push(RawElement {
+            name: "marker".into(),
+            attrs: vec![("value".into(), "a\"b".into())],
+            children: Vec::new(),
+        });
+        let xml = plan.to_xml();
+        assert!(xml.contains("        <marker value=\"a&quot;b\"/>\n"), "got: {xml}");
+        // And it survives a round trip.
+        let reparsed = PlanTasks::parse(&xml).unwrap();
+        assert_eq!(reparsed.to_xml(), xml);
+    }
 }
