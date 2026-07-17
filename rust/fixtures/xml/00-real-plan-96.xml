@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>96</plan>
+    <plan-version>plan-96-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-06-30</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Abbreviate the CLI invocation in the start skill and reuse it throughout</name>
+            <commit>2b25e28ad41eed2801504ce2e4d1a4a47ac7558d</commit>
+            <created-from>plan-96-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-30T15:04:26.023+05:30</timestamp>
+                    <message>User overrode TDD preamble: no tests written up-front for this docs/template plan; verify via re-render, revisit coverage after a few tasks or at plan end.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Fix the stale "This workflow" self-reference path</name>
+            <commit>0311e7d1eabf60447c24fcc77c17f15074e9f8c9</commit>
+            <created-from>plan-96-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Restructure the skill for progressive disclosure</name>
+            <commit>6641734f84f2427d4480d78808e4d8811e20693e</commit>
+            <created-from>plan-96-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-06-30T16:42:14.899+05:30</timestamp>
+                    <message>De-risk draft ready for review: sibling reference/ + relative-path pointer mechanism proven on Audit Trail across all 5 hosts. Awaiting approval to harden (extract Closeout, first-run handshake, tagging mechanics; delete orphaned partial; compact Phase 0).</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-30T15:37:22.396+05:30</timestamp>
+                    <message>Reorder: run Tasks 4,5,6 (low, content fixes) before Task 3 (medium, restructure). Task 3 moves content between partials, so applying the small textual fixes first avoids reworking relocated content. Dependency (3 depends on 1,2) is satisfied; only the Med-before-Low risk ordering is relaxed.</message>
+                </deviation>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-30T17:01:47.117+05:30</timestamp>
+                    <message>Drop stale Linear-era Core Invariant #1 (features-vs-plans separation) + renumber 2-6 to 1-5; changed phase2 'Core Invariant #6' xref to reference the invariant by name (future-proof). Invariant #3 + &lt;backlog-issue&gt; code removal filed as a Linear backlog item (out of plan-96 scope).</message>
+                </deviation>
+            </deviations>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Reconcile the task-status vocabulary the skill instructs against</name>
+            <commit>2596373a1c343e1ec7adf569a9f42ebe3e42723e</commit>
+            <created-from>plan-96-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Stop restating mechanically-checkable rules in the skill</name>
+            <commit>e9930f006c0815fe582ee20a3503ea917013241d</commit>
+            <created-from>plan-96-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Populate the skill's YAML frontmatter</name>
+            <commit>a9c2c4a18506df2425b7aea8438dbfab34583655</commit>
+            <created-from>plan-96-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-06-30T15:49:23.974+05:30</timestamp>
+                    <message>Scope expansion (user-approved): besides populating name+description frontmatter, add Claude-only 'disable-model-invocation: true' so /shipsmooth:start stays explicit-only (matches plan note 'invoked explicitly, not auto-discovered') and its description stays out of always-on context. Field is a Claude Code extension; gemini/codex/opencode keep the standard 3-line block.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Reconcile the hard-coded .shipsmooth/plans path with separate-dir mode</name>
+            <commit>0aabc89f832159d4d5bc7b05978247b34efc4142</commit>
+            <created-from>plan-96-v2</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-06-30T12:34:22.910+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-06-30T22:09:26.549+05:30</timestamp>
+            <message>Plan complete — skill file cleanups (progressive disclosure, vocab reconciliation, frontmatter namespace fix).</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

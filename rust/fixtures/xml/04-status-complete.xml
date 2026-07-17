@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>103</plan>
+    <plan-version>plan-103-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-07-17</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>de-risked</status>
+            <name>Parse the input file</name>
+            <commit>0123456789abcdef0123456789abcdef01234567</commit>
+            <created-from>plan-103-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-17T14:08:09.798+05:30</timestamp>
+                    <message>Special chars: &amp; &lt; &gt; " ' and unicode: héllo 🚀</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-07-17T14:08:11.906+05:30</timestamp>
+                    <message>Split parsing into two passes</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>agent-coded</status>
+            <name>Write the output file</name>
+            <commit>fedcba9876543210fedcba9876543210fedcba98</commit>
+            <created-from>plan-103-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Wire the end-to-end flow</name>
+            <commit></commit>
+            <created-from>plan-103-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk></risk>
+            <status>needs-triage</status>
+            <name>Document the format</name>
+            <commit></commit>
+            <created-from>plan-103-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-07-17T14:08:15.307+05:30</timestamp>
+                    <message>Format spec contradicts implementation</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>abandoned</status>
+            <name>Abandoned experiment</name>
+            <commit></commit>
+            <created-from>plan-103-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Untouched task</name>
+            <commit></commit>
+            <created-from>plan-103-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Added after init</name>
+            <commit></commit>
+            <created-from>plan-103-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2,3</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-07-17T14:08:08.435+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-17T14:08:17.344+05:30</timestamp>
+            <message>Mid-plan checkpoint</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-17T14:08:18.033+05:30</timestamp>
+            <message>Blocked on format decision</message>
+            <blocked>true</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-17T14:08:19.385+05:30</timestamp>
+            <message>Ready for review</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-17T14:08:20.066+05:30</timestamp>
+            <message>Done</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

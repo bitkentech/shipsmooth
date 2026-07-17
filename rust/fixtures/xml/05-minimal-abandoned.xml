@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>104</plan>
+    <plan-version>plan-104-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>abandoned</status>
+        <created>2026-07-17</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Single task</name>
+            <commit></commit>
+            <created-from>plan-104-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-07-17T14:08:20.736+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-17T14:08:21.415+05:30</timestamp>
+            <message>Superseded</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
