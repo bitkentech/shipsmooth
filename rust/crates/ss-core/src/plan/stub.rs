@@ -3,8 +3,25 @@
 //! a notional Tasks section, clearly marked as a stub to flesh out before
 //! `plan init`.
 
-pub fn stub_markdown(_plan_id: u32, _desc: &str) -> String {
-    todo!("plan-102 Task 4")
+pub fn stub_markdown(plan_id: u32, desc: &str) -> String {
+    format!(
+        "\
+# plan-{plan_id} — {desc}
+
+> **Stub** — quickstarted from a thin-context kickoff. Flesh this out
+> before running `plan init`. Replace the placeholders below.
+
+## Context
+
+Feature (in the user's words): {desc}
+
+_Unknowns: TODO — fill in scope, constraints, and the backlog/feature link._
+
+## Tasks
+
+_TODO — notional placeholder. Add `### Task N: Name [Risk]` headings here._
+"
+    )
 }
 
 #[cfg(test)]

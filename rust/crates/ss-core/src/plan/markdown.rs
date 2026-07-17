@@ -14,8 +14,58 @@ pub struct ParsedTask {
     pub depends_on: String,
 }
 
-pub fn parse_tasks(_markdown: &str) -> Vec<ParsedTask> {
-    todo!("plan-102 Task 4")
+use std::sync::LazyLock;
+
+use regex::Regex;
+
+static HEADING: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?im)^###\s+Task\s+(\d+):\s+(.+?)(?:\s+\[(High|Medium|Low)\])?\s*$").unwrap()
+});
+
+/// Matches an optional `*Depends-on: 1,2,3*` line anywhere after the heading.
+static DEPENDS_ON: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?im)^\*Depends-on:\s*([\d,\s]+)\*\s*$").unwrap());
+
+/// The Java parser caps each task's search region at heading end + 500 —
+/// a depends-on line beyond the window is silently dropped (PB-352).
+const REGION_CAP: usize = 500;
+
+pub fn parse_tasks(markdown: &str) -> Vec<ParsedTask> {
+    let mut tasks = Vec::new();
+    for caps in HEADING.captures_iter(markdown) {
+        let heading_end = caps.get(0).unwrap().end();
+        let region = task_region(markdown, heading_end);
+        tasks.push(ParsedTask {
+            // Java parses with Integer.parseInt and lets overflow throw
+            // unchecked; the panic here is the same contract.
+            id: caps[1].parse().expect("task id out of range"),
+            name: caps[2].trim().to_owned(),
+            risk: caps.get(3).map(|r| r.as_str().to_lowercase()).unwrap_or_default(),
+            depends_on: depends_on_in(region),
+        });
+    }
+    tasks
+}
+
+/// The slice after a heading in which its depends-on line may appear: capped
+/// at [`REGION_CAP`] and at the next task heading, whichever comes first.
+fn task_region(markdown: &str, heading_end: usize) -> &str {
+    let mut cap = usize::min(heading_end + REGION_CAP, markdown.len());
+    while !markdown.is_char_boundary(cap) {
+        cap -= 1;
+    }
+    let capped = &markdown[heading_end..cap];
+    match HEADING.find(capped) {
+        Some(next) => &capped[..next.start()],
+        None => capped,
+    }
+}
+
+fn depends_on_in(region: &str) -> String {
+    DEPENDS_ON
+        .captures(region)
+        .map(|c| c[1].chars().filter(|ch| !ch.is_whitespace()).collect())
+        .unwrap_or_default()
 }
 
 // No dedicated Java unit test file exists for the parser; these pin the

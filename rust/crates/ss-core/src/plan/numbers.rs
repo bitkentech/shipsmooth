@@ -16,13 +16,31 @@ pub struct PlanNumbers {
 
 impl PlanNumbers {
     pub fn new(plans_dir: PathBuf) -> Self {
-        let _ = plans_dir;
-        todo!("plan-102 Task 4")
+        PlanNumbers {
+            plans_dir,
+            // Java: Pattern.quote("plan-") + "(\\d+)" + Pattern.quote(".md"),
+            // used with Matcher.matches() — i.e. a full-name match.
+            plan_file: Regex::new(r"^plan-(\d+)\.md$").unwrap(),
+        }
     }
 
     /// The next plan id: highest existing `plan-N.md` + 1, or 1 if none.
     pub fn next(&self) -> Result<u32> {
-        todo!("plan-102 Task 4")
+        Ok(self.highest_existing()? + 1)
+    }
+
+    fn highest_existing(&self) -> Result<u32> {
+        if !self.plans_dir.is_dir() {
+            return Ok(0);
+        }
+        let mut highest = 0;
+        for entry in std::fs::read_dir(&self.plans_dir)? {
+            let name = entry?.file_name();
+            if let Some(caps) = self.plan_file.captures(&name.to_string_lossy()) {
+                highest = highest.max(caps[1].parse().unwrap_or(0));
+            }
+        }
+        Ok(highest)
     }
 }
 

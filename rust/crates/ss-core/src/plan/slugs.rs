@@ -5,14 +5,39 @@
 //! the lossy `caf-d-j`. No external slug crate — these are short
 //! dev-authored phrases.
 
-pub fn slugify(_text: &str) -> String {
-    todo!("plan-102 Task 4")
+use unicode_normalization::char::is_combining_mark;
+use unicode_normalization::UnicodeNormalization;
+
+pub fn slugify(text: &str) -> String {
+    let folded: String = text.nfd().filter(|c| !is_combining_mark(*c)).collect();
+    let lower = folded.to_lowercase();
+
+    // [^a-z0-9]+ → single hyphen, then trim leading/trailing hyphens.
+    let mut slug = String::with_capacity(lower.len());
+    let mut hyphen_pending = false;
+    for ch in lower.chars() {
+        if ch.is_ascii_lowercase() || ch.is_ascii_digit() {
+            if hyphen_pending && !slug.is_empty() {
+                slug.push('-');
+            }
+            hyphen_pending = false;
+            slug.push(ch);
+        } else {
+            hyphen_pending = true;
+        }
+    }
+    slug
 }
 
 /// The `t/{prefix}-{slug}` task-branch name, omitting the trailing hyphen
 /// when the description slugs to nothing.
-pub fn branch_name(_prefix: &str, _desc: &str) -> String {
-    todo!("plan-102 Task 4")
+pub fn branch_name(prefix: &str, desc: &str) -> String {
+    let slug = slugify(desc);
+    if slug.is_empty() {
+        format!("t/{prefix}")
+    } else {
+        format!("t/{prefix}-{slug}")
+    }
 }
 
 // Tests ported verbatim from SlugsTest.java.
