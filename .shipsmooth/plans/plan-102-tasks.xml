@@ -4,16 +4,16 @@
     <plan-version>plan-102-v2</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-07-17</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Golden fixture corpus + CLI transcripts from the Java CLI</name>
-            <commit>468a603af054332e8d67fda8841865d12f8bf4e6</commit>
+            <commit>31e2d7115965275ac9bac10eb3d49f5c0a8e1a40</commit>
             <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -28,9 +28,9 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Cargo workspace walking skeleton</name>
-            <commit>fdf93b013d0aa3cb1c6d0059d0c6e20a5126e41c</commit>
+            <commit>209692636c5f7f2dd10ec68e260c20ac6851bf7f</commit>
             <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -40,9 +40,9 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Risk spike — XML model + golden round-trip</name>
-            <commit>7107a409965c8fff1757164308e64687011a6567</commit>
+            <commit>1b85c9b8998280534f5f6e214b42266b7dd3c0d2</commit>
             <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments>
@@ -57,9 +57,9 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Warm-up port — pure plan logic with ported tests</name>
-            <commit>7ef473b6ab6183a29ec95c4855579071e73788d8</commit>
+            <commit>ae6b5f61a1e99802d7d54b9c44431f19bce44f4e</commit>
             <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -69,9 +69,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Findings write-back into docs/rust-migration</name>
-            <commit>8ffbb5df3ea23403636152808f7d86a8d02d330a</commit>
+            <commit>ad99f7501aa7e46a0f8f360597dbf28ca1af9278</commit>
             <created-from>plan-102-v2</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -93,6 +93,11 @@
         <update>
             <timestamp>2026-07-17T14:59:41.323+05:30</timestamp>
             <message>All 5 tasks agent-coded. Spike verdict GO: event-API model round-trips golden corpus byte-identically; coverage 95.5 percent total. Ready for review/closeout.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-18T14:48:20.683+05:30</timestamp>
+            <message>Plan complete. Exploration verdict GO: event-API XML model round-trips golden corpus byte-identically; pure plan logic ported; findings written back to docs. Follow-up: port gw + conf, then cli.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
