@@ -119,3 +119,26 @@ consequences for `01-core.md` §1, any dependency-map corrections
 (`03-dependencies.md`), measured fixture round-trip caveats, and the concrete
 scope recommendation for the follow-up plan (gw + conf next). Docs-only task;
 it is the exploration's deliverable.
+
+### Task 6: Dependency-complete binary footprint spike [Low]
+
+*Depends-on: 2*
+
+Answer the sizing question before the bulk port: with **every** runtime crate
+from `03-dependencies.md` linked (serde, quick-xml, time, regex, thiserror,
+clap, serde_json, toml_edit, unicode-normalization) and genuinely exercised
+(so the linker cannot dead-strip them), what do the release binary's size and
+memory footprint look like versus the Java jlink runtime?
+
+Deliverables, written back into `03-dependencies.md`:
+
+- Release binary size, default profile and a size-tuned profile
+  (`opt-level="z"`, LTO, strip, `panic="abort"`).
+- Peak RSS and wall time for representative invocations (`--version`, an XML
+  round-trip over the golden corpus), measured with `/usr/bin/time -v`.
+- The same measurements for the installed Java CLI (jlink image, 103 MB on
+  disk) on equivalent commands, as the comparison baseline.
+
+Low risk: additive dependency wiring + measurement; no behaviour changes to
+ported code. (Added at plan v3 after the initial closeout; tasks 1–5 remain
+closed.)
