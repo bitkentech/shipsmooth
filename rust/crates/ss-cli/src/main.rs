@@ -5,6 +5,8 @@
 //! emitted by dispatch, not by panicking handlers). Subcommands land with
 //! their packages in the follow-up plan.
 
+mod probe;
+
 use clap::Parser;
 
 /// Exit codes the skill branches on when startup cannot settle the store.
@@ -21,10 +23,21 @@ struct Cli {
     /// Enable experimental subcommands.
     #[arg(long = "enable-experimental", global = true, hide = !cfg!(feature = "experimental"))]
     enable_experimental: bool,
+
+    #[command(subcommand)]
+    command: Option<Command>,
+}
+
+#[derive(clap::Subcommand)]
+enum Command {
+    /// Footprint probe (plan-102 Task 6) — not part of the CLI surface.
+    #[command(hide = true)]
+    Probe(probe::ProbeArgs),
 }
 
 fn run(args: impl IntoIterator<Item = String>) -> i32 {
     match Cli::try_parse_from(args) {
+        Ok(Cli { command: Some(Command::Probe(args)), .. }) => probe::run(&args),
         Ok(_cli) => 0,
         Err(e) => {
             // clap renders --help/--version through the Err path with exit 0.

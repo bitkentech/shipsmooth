@@ -137,6 +137,33 @@ mint new timestamps.
 | `anyhow` | The error surface is small and typed end-to-end (`thiserror`); the bin maps `Error` → exit code + message explicitly, which the gate contract requires anyway |
 | `clap` builder-only alternatives (`argh`, `pico-args`, `lexopt`) | Need subcommand trees, hidden options, and auto help/version parity with picocli — clap derive is the 1:1 fit |
 
+## Footprint measurements (plan-102 Task 6, 2026-07-18)
+
+Measured on Linux x86_64 with **every runtime crate linked and genuinely
+exercised** — the hidden `probe` subcommand (`ss-cli/src/probe.rs`) round-trips
+the golden XML corpus and touches regex, unicode-normalization, time,
+toml_edit, serde/serde_json and clap, so the linker cannot dead-strip
+anything the full port will need. Java baseline is the installed production
+CLI (`~/.cache/shipsmooth/0.3.34/`: jlink image + launcher).
+
+| Metric | Rust (dependency-complete) | Java (jlink CLI) | Ratio |
+|---|---|---|---|
+| Install size on disk | **2.0 MB** (`release-small`) / 3.0 MB (release, stripped) / 3.9 MB (release, unstripped) | 103 MB (87 MB runtime image) | **~50×** |
+| Peak RSS, `--version` | 2.9 MB | 64 MB | ~22× |
+| Peak RSS, real work (9-fixture XML round-trip vs `plan resume`) | 3.8 MB | 69 MB | ~18× |
+| Wall time, cold command | < 10 ms | 370–490 ms | ~50× |
+
+`release-small` = `opt-level="z"` + fat LTO + `codegen-units=1` + `strip` +
+`panic="abort"` (profile in the workspace `Cargo.toml`). Tuning is worth ~2×
+over default release but even the untuned binary is ~26× smaller than the
+Java install; single-file, no runtime directory, no launcher script.
+
+Caveats: the binary contains only the ported slice's *code* (model + pure
+plan logic + probe), so the full port's text section will grow — but the
+dependency cost, which dominates, is now fully priced in; expect the finished
+CLI well under 5 MB. RSS measured via `/usr/bin/time -v` maximum resident
+set; JVM numbers are with default heap sizing on a warm file cache.
+
 ## Supply-chain note
 
 Runtime tree stays shallow: serde, quick-xml, time, regex, thiserror, clap,

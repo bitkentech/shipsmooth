@@ -15,6 +15,7 @@ ss-core = { path = "../ss-core" }
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+time.workspace = true
 toml_edit.workspace = true
 thiserror.workspace = true
 

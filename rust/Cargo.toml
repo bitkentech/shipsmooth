@@ -8,6 +8,16 @@ resolver = "2"
 version = "0.3.34"
 edition = "2021"
 
+# Size-tuned variant measured by the plan-102 footprint spike (Task 6); the
+# release profile stays default so the numbers show what tuning buys.
+[profile.release-small]
+inherits = "release"
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 quick-xml = { version = "0.37", features = ["serialize"] }
