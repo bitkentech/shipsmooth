@@ -364,6 +364,23 @@ class TargetIntegrationTest {
         }
     }
 
+    // plan-103: the canonical task-heading grammar must be stated inline in the
+    // always-loaded skill core. On the rich-context path it is the only place an
+    // agent authoring a plan file can learn the format — a fresh install has no
+    // example plans, no plan-quick stub, and (pre-plan-103) no CLI feedback on a
+    // zero-task parse.
+    @Test
+    void skillMdStatesCanonicalTaskGrammarInline() throws Exception {
+        setProdProps();
+        Target.main(new String[]{});
+
+        String content = Files.readString(tempDir.resolve("skills/start/SKILL.md"));
+        assertTrue(content.contains("### Task N: Short task name [High|Medium|Low]"),
+            "skill core must state the canonical task-heading grammar inline");
+        assertTrue(content.contains("*Depends-on: 1,2*"),
+            "skill core must state the dependency-line grammar inline");
+    }
+
     @Test
     void opencodeRendersInstallerButNoHooksJson() throws Exception {
         setOpencodeProdProps();
