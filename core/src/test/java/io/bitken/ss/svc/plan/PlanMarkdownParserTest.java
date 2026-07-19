@@ -82,12 +82,26 @@ public class PlanMarkdownParserTest {
     // without a tasks XML predate local tracking and may legitimately trigger
     // diagnostics (e.g. plan-11's dropped "### Task 6 (future): …" heading).
     //
-    // Accepted flags (calibration 2026-07-19: dash and em-dash after the task
-    // id are separator evidence alike): two notes headings appended to plan
-    // bodies during execution, which would legitimately warn at init time.
+    // Accepted flags fall in two groups.
+    //
+    // Notes headings appended to plan bodies during execution (calibration
+    // 2026-07-19: dash and em-dash after the task id are separator evidence
+    // alike), which would legitimately warn at init time:
+    //   plan-84.md:299  "### Task 7 — follow-up research (2026-06-16): …"
+    //   plan-86.md:244  "#### Task 1 — Findings (de-risk run, OpenCode 1.17.9)"
+    //
+    // Genuine historical silent drops the diagnostics would have caught —
+    // dependency lines whose ids never reached the task XML ("*Depends-on:* N"
+    // ids outside the asterisks, "*Depends on: N*" missing hyphen,
+    // "*Depends-on: Task 2*" non-numeric). Kept as testimony:
     private static final java.util.Set<String> ACCEPTED_HISTORICAL_FLAGS = java.util.Set.of(
-            "plan-84.md:299",   // "### Task 7 — follow-up research (2026-06-16): …"
-            "plan-86.md:244");  // "#### Task 1 — Findings (de-risk run, OpenCode 1.17.9)"
+            "plan-84.md:299", "plan-86.md:244",
+            "plan-101.md:80",
+            "plan-42.md:107", "plan-42.md:135", "plan-42.md:151",
+            "plan-76.md:145", "plan-76.md:157", "plan-76.md:169", "plan-76.md:180",
+            "plan-77.md:281", "plan-77.md:294", "plan-77.md:308", "plan-77.md:324",
+            "plan-77.md:341", "plan-77.md:358", "plan-77.md:381", "plan-77.md:425",
+            "plan-77.md:437", "plan-77.md:451");
 
     @Test
     public void historicalPlansWithParsedTasksProduceNoDiagnostics() throws Exception {
@@ -121,16 +135,44 @@ public class PlanMarkdownParserTest {
                 ### Task 3: Third [Low]
 
                 *Depends-on: Task 2*
+
+                ### Task 4: Fourth [Low]
+
+                *Depends-on:* 3
                 """;
 
         PlanMarkdownParser.ParseResult result = parser.parseWithDiagnostics(markdown);
 
-        assertEquals(3, result.tasks().size(), "tasks still parse; only the dependencies are dropped");
-        assertEquals(2, result.diagnostics().size());
+        assertEquals(4, result.tasks().size(), "tasks still parse; only the dependencies are dropped");
+        assertEquals(3, result.diagnostics().size());
         assertEquals(5, result.diagnostics().get(0).line());
         assertTrue(result.diagnostics().get(0).reason().contains("*Depends-on: 1,2*"),
                 "reason should state the dependency grammar, got: " + result.diagnostics().get(0).reason());
         assertEquals(9, result.diagnostics().get(1).line());
+        assertEquals(13, result.diagnostics().get(2).line(),
+                "ids outside the closing asterisk are silently dropped and must be flagged");
+    }
+
+    @Test
+    public void deliberateNoDependencyMarkersAndProseAreNotFlagged() {
+        String markdown = """
+                ### Task 1: First [Low]
+
+                *Depends-on:*
+
+                ### Task 2: Second [Low]
+
+                *Depends-on: none (must land before Task 1 though)*
+
+                The lazy wiring is what the whole build
+                depends on; an eager-resolution regression would break it.
+                """;
+
+        PlanMarkdownParser.ParseResult result = parser.parseWithDiagnostics(markdown);
+
+        assertEquals(2, result.tasks().size());
+        assertTrue(result.diagnostics().isEmpty(),
+                "empty/none markers and wrapped prose must not be flagged, got: " + result.diagnostics());
     }
 
     private Path siblingTasksXml(Path planMd) {

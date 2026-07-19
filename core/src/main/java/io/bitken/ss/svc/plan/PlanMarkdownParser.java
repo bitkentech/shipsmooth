@@ -40,6 +40,18 @@ public class PlanMarkdownParser {
     // A valid heading whose name swallowed a trailing [tag] because the tag is
     // not a recognised risk level.
     private static final Pattern TRAILING_TAG = Pattern.compile(".*\\[([A-Za-z]+)\\]$");
+    // A line that attempts a depends-on marker but misses the strict grammar
+    // (missing asterisks, non-numeric ids, ids outside the closing asterisk,
+    // "Depends on" without hyphen, …). The colon is required so wrapped prose
+    // beginning "depends on; …" is not mistaken for an attempt.
+    private static final Pattern DEPENDS_ON_ATTEMPT = Pattern.compile(
+            "^\\*?\\s*Depends[-\\s]?on\\s*:.*$", Pattern.CASE_INSENSITIVE);
+    // Deliberate no-dependency markers, historically widespread: "*Depends-on:*"
+    // and "*Depends-on: none …*". Valid no-ops, never flagged.
+    private static final Pattern EMPTY_DEPENDS_ON = Pattern.compile(
+            "^\\*Depends[-\\s]?on:\\s*\\*\\s*$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern NONE_DEPENDS_ON = Pattern.compile(
+            "^\\*?\\s*Depends[-\\s]?on\\s*:\\s*none\\b.*$", Pattern.CASE_INSENSITIVE);
 
     /** One skipped or suspicious line: where it is, what it says, why it was flagged. */
     public record Diagnostic(int line, String text, String reason) {}
@@ -106,6 +118,14 @@ public class PlanMarkdownParser {
         if (BOLD_TASK_HEADING.matcher(line).matches()) {
             return Optional.of(new Diagnostic(lineNo, line,
                     "task heading must be an h3 (### …), not bold text: " + GRAMMAR));
+        }
+        if (DEPENDS_ON_ATTEMPT.matcher(line).matches()
+                && !DEPENDS_ON.matcher(line).matches()
+                && !EMPTY_DEPENDS_ON.matcher(line).matches()
+                && !NONE_DEPENDS_ON.matcher(line).matches()) {
+            return Optional.of(new Diagnostic(lineNo, line,
+                    "malformed depends-on line — expected *Depends-on: 1,2* "
+                            + "(first body line after its task heading)"));
         }
         return Optional.empty();
     }
