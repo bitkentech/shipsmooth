@@ -109,6 +109,30 @@ public class PlanMarkdownParserTest {
                 "reviewed plans must produce no diagnostics, got:\n" + String.join("\n", violations));
     }
 
+    @Test
+    public void malformedDependsOnLinesAreDiagnosed() {
+        String markdown = """
+                ### Task 1: First [Low]
+
+                ### Task 2: Second [Low]
+
+                Depends-on: 1
+
+                ### Task 3: Third [Low]
+
+                *Depends-on: Task 2*
+                """;
+
+        PlanMarkdownParser.ParseResult result = parser.parseWithDiagnostics(markdown);
+
+        assertEquals(3, result.tasks().size(), "tasks still parse; only the dependencies are dropped");
+        assertEquals(2, result.diagnostics().size());
+        assertEquals(5, result.diagnostics().get(0).line());
+        assertTrue(result.diagnostics().get(0).reason().contains("*Depends-on: 1,2*"),
+                "reason should state the dependency grammar, got: " + result.diagnostics().get(0).reason());
+        assertEquals(9, result.diagnostics().get(1).line());
+    }
+
     private Path siblingTasksXml(Path planMd) {
         return planMd.resolveSibling(
                 planMd.getFileName().toString().replace(".md", "-tasks.xml"));
