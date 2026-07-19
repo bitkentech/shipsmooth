@@ -51,7 +51,7 @@ Script invocations use the shipsmooth CLI. Throughout this skill it is abbreviat
 as **`$SS`**, defined once here:
 
 ```bash
-SS="${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.34/bin/shipsmooth"
+SS="${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.35/bin/shipsmooth"
 ```
 
 Every `$SS <subcommand>` below means that path — expand it when you actually run the
@@ -210,7 +210,7 @@ is already rich, or after the user has fleshed out a Phase 0 stub.
    # Exits 0 (PASS) or 1 (FAIL: dirty tree / missing version tag). Warns on unpushed branch.
    ```
 7. **Create Task Tracking Infrastructure:**
-   - Run `$SS plan init --plan {N} --tasks-from <plansDir>/plan-{N}.md` to generate `<plansDir>/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI.** The CLI parses your plan markdown for task headings and inter-task dependencies and validates their form — if a heading or dependency line is malformed it will tell you; fix what it reports rather than guessing the exact syntax.
+   - Run `$SS plan init --plan {N} --tasks-from <plansDir>/plan-{N}.md` to generate `<plansDir>/plan-{N}-tasks.xml`. Commit the XML file immediately after creation. **Never hand-write this XML file — always generate it via the CLI.** Each task in the plan file must use exactly this grammar — an h3 heading `### Task N: Short task name [High|Medium|Low]` (numeric `N`, colon after it, risk tag in square brackets), optionally followed by `*Depends-on: 1,2*` as the first body line after the heading. The CLI validates what it parsed: if no heading matches, `plan init` fails with an error stating the expected grammar, and it lists any near-miss heading or depends-on lines it skipped, with line numbers — fix what it reports rather than guessing the exact syntax.
    - Organise tasks as **thin vertical slices**.
 8. **Final Review & Go-ahead:**
    - **Stop.** Tell the human the XML task file has been committed and the plan is ready for review.
