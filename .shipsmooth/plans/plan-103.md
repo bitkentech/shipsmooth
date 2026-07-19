@@ -74,7 +74,23 @@ skill prose deliberately omits the grammar).
 
 ## Tasks
 
-### Task 1: Parser near-miss diagnostics in PlanMarkdownParser [High]
+### Task 1: Document the canonical grammar inline in the start skill [Low]
+
+Ordered first by explicit human calibration (2026-07-19): the single
+highest-leverage mitigation for fresh installs, pure docs, no code
+dependency — overrides the default risk-sort ordering.
+
+Add the canonical grammar to the **always-loaded SKILL.md core** — in
+`skills/shared/workflow/phase1-plan.jte.md`, directly in the Phase-1
+`plan init` bullet, not in a `reference/*.md` file (progressive disclosure
+is the mechanism that failed): task headings are
+`### Task N: Short name [High|Medium|Low]` and dependencies are a
+`*Depends-on: 1,2*` line placed as the first body line after the heading.
+Leave the "it will tell you" sentence untouched for now — Task 5 aligns it
+once the CLI feedback actually exists. Verify the rendered SKILL.md for all
+four hosts picks it up.
+
+### Task 2: Parser near-miss diagnostics in PlanMarkdownParser [High]
 
 Core logic. Extend `PlanMarkdownParser` to return, alongside the parsed
 tasks, a list of diagnostics: line number, offending line, and reason.
@@ -87,9 +103,9 @@ non-numeric id, invalid risk tag). Must produce zero diagnostics on all
 existing valid plan files in `.shipsmooth/plans/` (regression sweep) and on
 prose paragraphs mentioning "task".
 
-### Task 2: `plan init` fails on zero tasks with grammar + diagnostics [Low]
+### Task 3: `plan init` fails on zero tasks with grammar + diagnostics [Low]
 
-*Depends-on: 1*
+*Depends-on: 2*
 
 Wire the parse report into `cli/.../plan/Init.java`: zero tasks → exit 1,
 no XML written, stderr message stating the canonical grammar and listing the
@@ -97,9 +113,9 @@ near-miss diagnostics. Non-zero tasks with diagnostics → still exit 0, print
 the near-miss report to stdout. Existing tests (`CommandsTest`) only cover
 valid input and a missing file, so no collisions expected.
 
-### Task 3: Depends-on near-miss diagnostics [Low]
+### Task 4: Depends-on near-miss diagnostics [Low]
 
-*Depends-on: 1*
+*Depends-on: 2*
 
 Same treatment for dependency lines: within a task's region, a line matching
 a relaxed `depends-on` pattern that fails the strict
@@ -107,16 +123,16 @@ a relaxed `depends-on` pattern that fails the strict
 channel as Task 2's output). Guards against silently dropped dependency
 ordering.
 
-### Task 4: Align skill prose with the now-true promise [Low]
+### Task 5: Align the "it will tell you" promise with real CLI behavior [Low]
 
-*Depends-on: 2*
+*Depends-on: 3*
 
 Update `skills/shared/workflow/phase1-plan.jte.md`: keep the "it will tell
-you" sentence (now true) and add the one-line canonical grammar as an inline
-hint so an agent authoring the plan file can get it right on the first try.
-Verify rendered SKILL.md output for all four hosts picks it up.
+you" sentence — true once Task 3 lands — and make its wording consistent
+with what the CLI actually prints (the grammar hint itself is Task 1's
+scope). Verify rendered SKILL.md output for all four hosts picks it up.
 
-### Task 5: Reproduce the field failure in Claude Code Desktop for Linux [Low]
+### Task 6: Reproduce the field failure in Claude Code Desktop for Linux [Low]
 
 Independent of the code tasks; can run before or alongside them. The field
 failure occurred in Claude Code Desktop on macOS. Repeat the scenario in
@@ -124,7 +140,7 @@ Claude Code Desktop for **Linux** with shipsmooth 0.3.34: have the agent
 author a wrong-format plan (h2 `## Task N:` headings, as in the report) and
 run `plan init` on it. Expected: the same `Written 0 tasks` with exit 0 —
 confirming in the real harness that the failure is platform-independent and
-matches the parser-level reproduction above. After Task 2 lands, re-run once
+matches the parser-level reproduction above. After Task 3 lands, re-run once
 against the fixed build to confirm the new error output steers the agent to
 the canonical grammar instead of driving it to abandon the workflow.
 (User-driven verification; agent assists.)
