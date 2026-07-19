@@ -4,16 +4,16 @@
     <plan-version>plan-103-v3</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-07-19</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Document the canonical grammar inline in the start skill</name>
-            <commit></commit>
+            <commit>e827dc11e30af94fa6ac2df512d43d7d06dbe69d</commit>
             <created-from>plan-103-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -22,20 +22,25 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Parser near-miss diagnostics in PlanMarkdownParser</name>
-            <commit></commit>
+            <commit>c51f3eeefcc9365a93052fdd101f38f9883bb510</commit>
             <created-from>plan-103-v3</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-19T16:47:24.408+05:30</timestamp>
+                    <message>De-risk draft ready for review. ParseResult(tasks+diagnostics); evidence-based near-miss heuristic (wrong level / missing colon / word id / bold / bad risk tag). Sweep over all reviewed historical plans = zero false positives after 3 tightenings: prose headings (## Task ordering note), bold prose (**Task 1 de-risk**), em-dash notes headings (### Task 7 — follow-up) all unflagged. Judgment calls for approval: (a) em-dash excluded as separator evidence, (b) attempted-heading requires strong evidence (:/hyphen after id, word-id colon, or trailing [Tag]) so some exotic near-misses (e.g. plan-11's '### Task 6 (future):') are no longer individually listed — zero-task case still errors with grammar regardless.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>`plan init` fails on zero tasks with grammar + diagnostics</name>
-            <commit></commit>
+            <commit>68bea4a55d7335e6fed6bb3bb921a73cedf45933</commit>
             <created-from>plan-103-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -45,9 +50,9 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Depends-on near-miss diagnostics</name>
-            <commit></commit>
+            <commit>c79e5300413933790c7204cdea95bf8a23641439</commit>
             <created-from>plan-103-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -57,9 +62,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Align the "it will tell you" promise with real CLI behavior</name>
-            <commit></commit>
+            <commit>c56bbd0665c53933c5f52cf6ca64f54b50a2b135</commit>
             <created-from>plan-103-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -69,7 +74,7 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>needs-triage</status>
             <name>Reproduce the field failure in Claude Code Desktop for Linux</name>
             <commit></commit>
             <created-from>plan-103-v3</created-from>
@@ -79,6 +84,10 @@
                     <timestamp>2026-07-19T13:14:52.863+05:30</timestamp>
                     <message>Pre-fix half DONE (2026-07-19): reproduced in Claude Code Desktop for Linux, 0.3.34 — bad-plan.md (h2/dash/bold headings) -&gt; 'Written 0 tasks', exit 0, no warning. ALSO confirmed destructive: re-init overwrote the previously good plan-1-tasks.xml (task state + backlog-issue wiped). Remaining: post-fix re-run after Task 3.</message>
                 </comment>
+                <comment>
+                    <timestamp>2026-07-19T17:18:22.056+05:30</timestamp>
+                    <message>Pre-fix repro DONE (Desktop Linux, 2026-07-19). Post-fix re-run deferred to post-release field verification by user decision 2026-07-19 — too costly to point Claude Desktop at a dev build; real users (esp. macOS) will confirm.</message>
+                </comment>
             </comments>
             <deviations/>
         </task>
@@ -87,6 +96,11 @@
         <update>
             <timestamp>2026-07-19T13:14:52.217+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-19T17:18:22.574+05:30</timestamp>
+            <message>Plan complete. Tasks 1-5 closed; Task 6 post-fix verification deferred to post-release (needs-triage).</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
