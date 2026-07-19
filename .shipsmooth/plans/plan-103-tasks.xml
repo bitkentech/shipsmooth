@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
     <plan>103</plan>
-    <plan-version>plan-103-v2</plan-version>
+    <plan-version>plan-103-v3</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -10,46 +10,45 @@
     <tasks>
         <task>
             <id>1</id>
-            <risk>high</risk>
+            <risk>low</risk>
             <status>pending</status>
-            <name>Parser near-miss diagnostics in PlanMarkdownParser</name>
+            <name>Document the canonical grammar inline in the start skill</name>
             <commit></commit>
-            <created-from>plan-103-v2</created-from>
+            <created-from>plan-103-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
         </task>
         <task>
             <id>2</id>
-            <risk>low</risk>
+            <risk>high</risk>
             <status>pending</status>
-            <name>`plan init` fails on zero tasks with grammar + diagnostics</name>
+            <name>Parser near-miss diagnostics in PlanMarkdownParser</name>
             <commit></commit>
-            <created-from>plan-103-v2</created-from>
+            <created-from>plan-103-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>1</depends-on>
         </task>
         <task>
             <id>3</id>
             <risk>low</risk>
             <status>pending</status>
-            <name>Depends-on near-miss diagnostics</name>
+            <name>`plan init` fails on zero tasks with grammar + diagnostics</name>
             <commit></commit>
-            <created-from>plan-103-v2</created-from>
+            <created-from>plan-103-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>1</depends-on>
+            <depends-on>2</depends-on>
         </task>
         <task>
             <id>4</id>
             <risk>low</risk>
             <status>pending</status>
-            <name>Align skill prose with the now-true promise</name>
+            <name>Depends-on near-miss diagnostics</name>
             <commit></commit>
-            <created-from>plan-103-v2</created-from>
+            <created-from>plan-103-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -59,17 +58,34 @@
             <id>5</id>
             <risk>low</risk>
             <status>pending</status>
-            <name>Reproduce the field failure in Claude Code Desktop for Linux</name>
+            <name>Align the "it will tell you" promise with real CLI behavior</name>
             <commit></commit>
-            <created-from>plan-103-v2</created-from>
+            <created-from>plan-103-v3</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
+            <deviations/>
+            <depends-on>3</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Reproduce the field failure in Claude Code Desktop for Linux</name>
+            <commit></commit>
+            <created-from>plan-103-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-19T13:14:52.863+05:30</timestamp>
+                    <message>Pre-fix half DONE (2026-07-19): reproduced in Claude Code Desktop for Linux, 0.3.34 — bad-plan.md (h2/dash/bold headings) -&gt; 'Written 0 tasks', exit 0, no warning. ALSO confirmed destructive: re-init overwrote the previously good plan-1-tasks.xml (task state + backlog-issue wiped). Remaining: post-fix re-run after Task 3.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-07-19T12:22:39.829+05:30</timestamp>
+            <timestamp>2026-07-19T13:14:52.217+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
