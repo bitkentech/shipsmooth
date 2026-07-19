@@ -81,9 +81,18 @@ public class PlanMarkdownParserTest {
     // is known-good input the near-miss heuristic must stay silent on. Plans
     // without a tasks XML predate local tracking and may legitimately trigger
     // diagnostics (e.g. plan-11's dropped "### Task 6 (future): …" heading).
+    //
+    // Accepted flags (calibration 2026-07-19: dash and em-dash after the task
+    // id are separator evidence alike): two notes headings appended to plan
+    // bodies during execution, which would legitimately warn at init time.
+    private static final java.util.Set<String> ACCEPTED_HISTORICAL_FLAGS = java.util.Set.of(
+            "plan-84.md:299",   // "### Task 7 — follow-up research (2026-06-16): …"
+            "plan-86.md:244");  // "#### Task 1 — Findings (de-risk run, OpenCode 1.17.9)"
+
     @Test
     public void historicalPlansWithParsedTasksProduceNoDiagnostics() throws Exception {
         Path plansDir = Paths.get("../.shipsmooth/plans");
+        var violations = new java.util.ArrayList<String>();
         try (var files = Files.list(plansDir)) {
             for (Path p : files
                     .filter(f -> f.getFileName().toString().matches("plan-\\d+\\.md"))
@@ -91,15 +100,30 @@ public class PlanMarkdownParserTest {
                     .sorted().toList()) {
                 var result = parser.parseWithDiagnostics(Files.readString(p));
                 assertFalse(result.tasks().isEmpty(), p + " should parse to tasks");
-                assertTrue(result.diagnostics().isEmpty(),
-                        p + " must produce no diagnostics, got: " + result.diagnostics());
+                result.diagnostics().stream()
+                        .filter(d -> !ACCEPTED_HISTORICAL_FLAGS.contains(p.getFileName() + ":" + d.line()))
+                        .forEach(d -> violations.add(p.getFileName() + ": " + d));
             }
         }
+        assertTrue(violations.isEmpty(),
+                "reviewed plans must produce no diagnostics, got:\n" + String.join("\n", violations));
     }
 
     private Path siblingTasksXml(Path planMd) {
         return planMd.resolveSibling(
                 planMd.getFileName().toString().replace(".md", "-tasks.xml"));
+    }
+
+    @Test
+    public void wordTaskIdIsDiagnosedAsNonNumeric() {
+        String markdown = "### Task One: do the thing [Low]\n";
+
+        PlanMarkdownParser.ParseResult result = parser.parseWithDiagnostics(markdown);
+
+        assertEquals(0, result.tasks().size());
+        assertEquals(1, result.diagnostics().size());
+        assertTrue(result.diagnostics().get(0).reason().contains("number"),
+                "word-id reason should require a numeric id, got: " + result.diagnostics().get(0).reason());
     }
 
     @Test

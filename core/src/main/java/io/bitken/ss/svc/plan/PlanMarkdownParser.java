@@ -8,7 +8,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Parses plan-{N}.md narrative markdown into {@link TaskStore.Task} records.
+ * Parses plan-{N}.md narrative markdown into {@link TaskStore.Task} records,
+ * and diagnoses near-miss lines the strict grammar skipped (wrong heading
+ * level, missing colon, word ids, bold pseudo-headings, unrecognised risk
+ * tags) so a mis-formatted plan can never fail silently.
  *
  * <p>Split out from {@code TaskStore} because Markdown parsing has nothing to do
  * with XML marshalling — and the regex patterns are stable while the JAXB schema
@@ -30,10 +33,10 @@ public class PlanMarkdownParser {
     // A line that structurally attempts a task heading but misses the grammar.
     private static final Pattern ANY_LEVEL_TASK_HEADING = Pattern.compile(
             "^(#{1,6})\\s+Task\\s+(.*)$", Pattern.CASE_INSENSITIVE);
-    // Requires ':' or '-' after the number: bold prose mentioning a task
+    // Requires ':' or a dash after the number: bold prose mentioning a task
     // ("**Task 1 de-risk** built …") is not an attempted heading.
     private static final Pattern BOLD_TASK_HEADING = Pattern.compile(
-            "^\\*\\*\\s*Task\\s+\\d+\\s*[:\\-].*$", Pattern.CASE_INSENSITIVE);
+            "^\\*\\*\\s*Task\\s+\\d+\\s*[:\\-—].*$", Pattern.CASE_INSENSITIVE);
     // A valid heading whose name swallowed a trailing [tag] because the tag is
     // not a recognised risk level.
     private static final Pattern TRAILING_TAG = Pattern.compile(".*\\[([A-Za-z]+)\\]$");
@@ -77,13 +80,12 @@ public class PlanMarkdownParser {
         Matcher heading = ANY_LEVEL_TASK_HEADING.matcher(line);
         if (heading.matches()) {
             String afterTask = heading.group(2);
-            // Attempted task heading only on strong evidence: a ':' or hyphen
-            // right after the id, a word id with colon, or a trailing risk-style
-            // tag. Plain prose headings ("## Task ordering note") and em-dash
-            // notes headings ("### Task 7 — follow-up research …") stay
-            // unflagged — em-dash is deliberate prose punctuation, hyphen is the
-            // classic wrong-guess heading separator.
-            boolean idWithSeparator = afterTask.matches("\\d+\\s*[:\\-].*");
+            // Attempted task heading only on strong evidence: a separator (':',
+            // hyphen, or em-dash — calibrated 2026-07-19: dashes are treated
+            // alike) right after the id, a word id with colon, or a trailing
+            // risk-style tag. Plain prose headings ("## Task ordering note")
+            // stay unflagged.
+            boolean idWithSeparator = afterTask.matches("\\d+\\s*[:\\-—].*");
             boolean wordIdWithColon = afterTask.matches("[A-Za-z]+\\s*:.*");
             boolean idWithRiskTag = afterTask.matches("\\d.*")
                     && TRAILING_TAG.matcher(afterTask).matches();
