@@ -2,7 +2,8 @@
 
 ## Context
 
-**Field report (2026-07-19, fresh macOS install, 0.3.34):** an agent ran
+**Field report (2026-07-19, fresh macOS install, 0.3.34, Claude Code
+Desktop):** an agent ran
 `plan init --plan 999 --tasks-from /tmp/test_plan_v4.md` and got
 `Written 0 tasks to .../plan-999-tasks.xml` with exit 0. It retried "various
 Markdown formats", still got 0 tasks, concluded the parser was broken in its
@@ -114,3 +115,16 @@ Update `skills/shared/workflow/phase1-plan.jte.md`: keep the "it will tell
 you" sentence (now true) and add the one-line canonical grammar as an inline
 hint so an agent authoring the plan file can get it right on the first try.
 Verify rendered SKILL.md output for all four hosts picks it up.
+
+### Task 5: Reproduce the field failure in Claude Code Desktop for Linux [Low]
+
+Independent of the code tasks; can run before or alongside them. The field
+failure occurred in Claude Code Desktop on macOS. Repeat the scenario in
+Claude Code Desktop for **Linux** with shipsmooth 0.3.34: have the agent
+author a wrong-format plan (h2 `## Task N:` headings, as in the report) and
+run `plan init` on it. Expected: the same `Written 0 tasks` with exit 0 —
+confirming in the real harness that the failure is platform-independent and
+matches the parser-level reproduction above. After Task 2 lands, re-run once
+against the fixed build to confirm the new error output steers the agent to
+the canonical grammar instead of driving it to abandon the workflow.
+(User-driven verification; agent assists.)
