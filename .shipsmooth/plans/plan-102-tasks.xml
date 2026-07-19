@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>102</plan>
+    <plan-version>plan-102-v3</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-07-18</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Golden fixture corpus + CLI transcripts from the Java CLI</name>
+            <commit>31e2d7115965275ac9bac10eb3d49f5c0a8e1a40</commit>
+            <created-from>plan-102-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Cargo workspace walking skeleton</name>
+            <commit>209692636c5f7f2dd10ec68e260c20ac6851bf7f</commit>
+            <created-from>plan-102-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Risk spike — XML model + golden round-trip</name>
+            <commit>1b85c9b8998280534f5f6e214b42266b7dd3c0d2</commit>
+            <created-from>plan-102-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Warm-up port — pure plan logic with ported tests</name>
+            <commit>ae6b5f61a1e99802d7d54b9c44431f19bce44f4e</commit>
+            <created-from>plan-102-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Findings write-back into docs/rust-migration</name>
+            <commit>ad99f7501aa7e46a0f8f360597dbf28ca1af9278</commit>
+            <created-from>plan-102-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3,4</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Dependency-complete binary footprint spike</name>
+            <commit>1a08a71a4cb6eb28ee15398f428ed5e2d06370d7</commit>
+            <created-from>plan-102-v3</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-07-18T14:58:18.007+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-18T14:59:02.783+05:30</timestamp>
+            <message>Reopened at v3 with Task 6 (footprint spike). Tasks 1-5 closed at plan-102-complete; their original comments/deviations/updates were wiped by plan init re-run and live in git history (commit 1faeb07 and earlier).</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-19T11:31:58.489+05:30</timestamp>
+            <message>Plan complete (second closeout, v3). Task 6 footprint spike: dependency-complete binary 2.0 MB release-small / 3.9 MB default, peak RSS 2.9-3.8 MB, &lt;10 ms startup vs Java 103 MB / 64-69 MB / 370-490 ms. Measurements in 03-dependencies.md.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

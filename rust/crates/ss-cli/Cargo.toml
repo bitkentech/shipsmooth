@@ -1,0 +1,25 @@
+[package]
+name = "ss-cli"
+version.workspace = true
+edition.workspace = true
+
+[features]
+experimental = ["ss-core/experimental"]
+
+[[bin]]
+name = "shipsmooth"
+path = "src/main.rs"
+
+[dependencies]
+ss-core = { path = "../ss-core" }
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+time.workspace = true
+toml_edit.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+assert_cmd.workspace = true
+predicates.workspace = true

@@ -1,0 +1,17 @@
+=== Task state ===
+Plan 103 (plan-103-v1)  status: active  backlog: —
+
+ID   RISK    STATUS        NAME                                      COMMIT
+---------------------------------------------------------------------------
+1    high    de-risked     Parse the input file                      0123456789abcdef0123456789abcdef01234567
+2    medium  agent-coded   Write the output file                     fedcba9876543210fedcba9876543210fedcba98
+3    low     closed        Wire the end-to-end flow                  —
+4            needs-triage  Document the format                       —
+5    low     abandoned     Abandoned experiment                      —
+6    low     pending       Untouched task                            —
+7    low     pending       Added after init                          —
+
+Project updates:
+  2026-07-17T14:08:08.435+05:30  Plan initialised.
+  2026-07-17T14:08:17.344+05:30  Mid-plan checkpoint
+  2026-07-17T14:08:18.033+05:30 [BLOCKED]  Blocked on format decision
