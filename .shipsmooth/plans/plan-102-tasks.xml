@@ -4,7 +4,7 @@
     <plan-version>plan-102-v3</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-07-18</created>
     </metadata>
     <tasks>
@@ -70,7 +70,7 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Dependency-complete binary footprint spike</name>
             <commit>1a08a71a4cb6eb28ee15398f428ed5e2d06370d7</commit>
             <created-from>plan-102-v3</created-from>
@@ -89,6 +89,11 @@
         <update>
             <timestamp>2026-07-18T14:59:02.783+05:30</timestamp>
             <message>Reopened at v3 with Task 6 (footprint spike). Tasks 1-5 closed at plan-102-complete; their original comments/deviations/updates were wiped by plan init re-run and live in git history (commit 1faeb07 and earlier).</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-19T11:31:58.489+05:30</timestamp>
+            <message>Plan complete (second closeout, v3). Task 6 footprint spike: dependency-complete binary 2.0 MB release-small / 3.9 MB default, peak RSS 2.9-3.8 MB, &lt;10 ms startup vs Java 103 MB / 64-69 MB / 370-490 ms. Measurements in 03-dependencies.md.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
