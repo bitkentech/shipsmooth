@@ -18,3 +18,6 @@ include("harness:gemini")
 include("harness:codex")
 include("harness:opencode")
 include("packaging")
+// Experimental Rust port (exp/rust): opt-in cargo convenience tasks only —
+// never attached to build/check/assemble. See EXPERIMENTAL.md.
+include("exp:rust")
