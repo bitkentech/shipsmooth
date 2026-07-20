@@ -46,7 +46,7 @@ pub struct PlanTasks {
   with JAXB) with typed accessors (`enums.rs`) validating on demand. serde
   derive is ruled out: no ordered `xs:any` capture, no `<x></x>` vs `<x/>`
   distinction, and the JAXB layout needs a custom writer regardless. The
-  golden corpus (`rust/fixtures/`) round-trips byte-identically; the
+  golden corpus (`exp/rust/fixtures/`) round-trips byte-identically; the
   hand-edited unknown-extension fixture normalizes idempotently, matching
   JAXB's own re-indent (fixtures 06 → 07).
 - Writer must reproduce JAXB formatted output closely (XML decl, indentation)

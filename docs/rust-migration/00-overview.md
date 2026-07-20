@@ -42,7 +42,7 @@ hooks, and existing user state on disk):
 The starting sequence through the risk spike ran as plan-102 on
 `t/102-rust-migration-explore`; the go/no-go question is answered **GO**:
 
-- The XML model (quick-xml **event API**, `rust/crates/ss-core/src/model/`)
+- The XML model (quick-xml **event API**, `exp/rust/crates/ss-core/src/model/`)
   round-trips all 8 Java-written golden fixtures **byte-identically** —
   including two real plans (96/97), every enum value, escaped/unicode text,
   and unknown `xs:any` elements. The one hand-edited fixture normalizes
@@ -53,7 +53,7 @@ The starting sequence through the risk spike ran as plan-102 on
 - The warm-up port (`ss_core::plan`) validated the ported-tests approach; the
   Java `plan resume` transcript doubles as a byte-exact golden for the
   summary formatter.
-- Fixtures + transcripts live in `rust/fixtures/` (regenerable via
+- Fixtures + transcripts live in `exp/rust/fixtures/` (regenerable via
   `generate.sh`); coverage measured with `cargo llvm-cov` at 95.5% total
   (ported plan code 97–100%, net-new model ~95–96%).
 - Recommended follow-up plan: port `gw` (GitState/GitTags/TaskStore — now a

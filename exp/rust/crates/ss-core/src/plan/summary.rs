@@ -1,6 +1,6 @@
 //! Port of `PlanSummaryFormatter`: renders a [`PlanTasks`] as the
 //! human-readable table the `show`/`resume` commands print. The golden
-//! transcript rust/fixtures/transcripts/plan-resume-rich.txt pins the output.
+//! transcript fixtures/transcripts/plan-resume-rich.txt pins the output.
 
 use crate::model::PlanTasks;
 

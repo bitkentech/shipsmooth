@@ -1,5 +1,5 @@
 //! Byte-exact emitter for JAXB's formatted output — the single source of
-//! truth for the layout rules the golden corpus pins (rust/fixtures/README.md):
+//! truth for the layout rules the golden corpus pins (fixtures/README.md):
 //! `standalone="yes"` declaration, 4-space indent, string leaves always
 //! paired (`<commit></commit>`), empty containers self-closed (`<comments/>`),
 //! `& < >` escaped in text (quotes not), `& < > "` escaped in attributes,
