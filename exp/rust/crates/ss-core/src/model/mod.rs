@@ -4,7 +4,7 @@
 //! Design (plan-102 Task 3): every value is stored as the **lexical string**
 //! from the file and written back verbatim, so parse → [`PlanTasks::to_xml`]
 //! reproduces a Java-written file byte-for-byte (golden corpus in
-//! rust/fixtures/). Reading is as lenient as JAXB unmarshalling — no enum or
+//! fixtures/). Reading is as lenient as JAXB unmarshalling — no enum or
 //! pattern validation; the typed accessors ([`Task::status`], …) validate on
 //! demand. Elements the schema doesn't know (`xs:any` slots on metadata and
 //! task: `<depends-on>`, future fields) are preserved as [`RawElement`]

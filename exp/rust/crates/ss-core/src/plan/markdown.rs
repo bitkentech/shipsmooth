@@ -70,7 +70,7 @@ fn depends_on_in(region: &str) -> String {
 
 // No dedicated Java unit test file exists for the parser; these pin the
 // behaviours the Java regexes define and the fixture corpus exercises
-// (rust/fixtures/xml/01-fresh-init.xml is `plan init` over this same syntax).
+// (fixtures/xml/01-fresh-init.xml is `plan init` over this same syntax).
 #[cfg(test)]
 mod tests {
     use super::*;

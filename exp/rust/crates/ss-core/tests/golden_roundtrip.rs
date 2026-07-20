@@ -15,7 +15,7 @@ fn fixture_dir() -> PathBuf {
 #[test]
 fn every_fixture_round_trips_byte_identical() {
     let mut paths: Vec<_> = fs::read_dir(fixture_dir())
-        .expect("fixture dir missing — run rust/fixtures/generate.sh")
+        .expect("fixture dir missing — run fixtures/generate.sh")
         .map(|e| e.unwrap().path())
         .filter(|p| p.extension().is_some_and(|e| e == "xml"))
         .collect();
