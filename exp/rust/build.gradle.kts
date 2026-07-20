@@ -1,47 +1,63 @@
 // Opt-in convenience wrappers around cargo for the experimental Rust port.
 // Deliberately NOT attached to build/check/assemble: the default Gradle build
 // must stay green on machines without a Rust toolchain (exp/README.md).
-//
-// Cargo lookup order: -Pcargo.home=<dir> → $CARGO_HOME → PATH. When rustup
-// manages the toolchain, its shims need RUSTUP_HOME; pass -Prustup.home=<dir>
-// (or have it exported) so the exec'd cargo can resolve the toolchain.
 
 import java.io.File
 
-val cargoExe: String? by lazy {
-    val fromProperty = (findProperty("cargo.home") as String?)?.let { File(it, "bin/cargo") }
-    val fromEnv = System.getenv("CARGO_HOME")?.let { File(it, "bin/cargo") }
-    val fromPath = System.getenv("PATH").orEmpty()
-        .split(File.pathSeparator)
-        .map { File(it, "cargo") }
-    (listOfNotNull(fromProperty, fromEnv) + fromPath)
-        .firstOrNull { it.canExecute() }
-        ?.absolutePath
+/**
+ * The Rust toolchain this machine offers, resolved once at configuration time.
+ * Lookup order for cargo: explicit home dir (-Pcargo.home / $CARGO_HOME), then
+ * PATH. An absent toolchain is a valid state — tasks skip instead of failing.
+ * CARGO_HOME/RUSTUP_HOME are exported to the exec'd cargo only when explicitly
+ * known; a PATH-found cargo must not have a home dir guessed from its location.
+ */
+class RustToolchain(cargoHomeDir: File?, rustupHomeDir: File?, pathEntries: List<File>) {
+    private val cargoHome: File?
+    private val rustupHome: File?
+    private val cargo: File?
+
+    init {
+        cargoHome = cargoHomeDir?.takeIf { File(it, "bin/cargo").canExecute() }
+        rustupHome = rustupHomeDir
+        cargo = cargoHome?.let { File(it, "bin/cargo") }
+            ?: pathEntries.map { File(it, "cargo") }.firstOrNull { it.canExecute() }
+    }
+
+    fun found(): Boolean = cargo != null
+
+    fun command(args: List<String>): List<String> = listOf(cargo!!.absolutePath) + args
+
+    fun environment(): Map<String, String> = buildMap {
+        cargoHome?.let { put("CARGO_HOME", it.absolutePath) }
+        rustupHome?.let { put("RUSTUP_HOME", it.absolutePath) }
+    }
 }
 
-val rustupHome: String? =
-    (findProperty("rustup.home") as String?) ?: System.getenv("RUSTUP_HOME")
+val toolchain = RustToolchain(
+    cargoHomeDir = (findProperty("cargo.home") as String? ?: System.getenv("CARGO_HOME"))?.let(::File),
+    rustupHomeDir = (findProperty("rustup.home") as String? ?: System.getenv("RUSTUP_HOME"))?.let(::File),
+    pathEntries = System.getenv("PATH").orEmpty().split(File.pathSeparator).map(::File),
+)
 
-fun registerCargoTask(name: String, vararg cargoArgs: String) =
+fun cargoTask(name: String, vararg cargoArgs: String) =
     tasks.register<Exec>(name) {
         group = "rust (experimental)"
-        description = "Runs `cargo ${cargoArgs.joinToString(" ")}` in exp/rust (skips if cargo is absent)"
+        description = "Runs `cargo ${cargoArgs.joinToString(" ")}` in exp/rust (skips when no Rust toolchain is found)"
         workingDir = projectDir
         onlyIf {
-            if (cargoExe == null) {
+            if (!toolchain.found()) {
                 logger.lifecycle(
                     "Skipping $name: cargo not found (set -Pcargo.home=<dir>, \$CARGO_HOME, or PATH)"
                 )
             }
-            cargoExe != null
+            toolchain.found()
         }
-        doFirst {
-            commandLine(listOf(cargoExe!!) + cargoArgs)
-            rustupHome?.let { environment("RUSTUP_HOME", it) }
-            environment("CARGO_HOME", File(cargoExe!!).parentFile.parent)
+        if (toolchain.found()) {
+            commandLine(toolchain.command(cargoArgs.toList()))
+            environment(toolchain.environment())
         }
     }
 
-registerCargoTask("cargoBuild", "build")
-registerCargoTask("cargoTest", "test")
-registerCargoTask("cargoClean", "clean")
+cargoTask("cargoBuild", "build")
+cargoTask("cargoTest", "test")
+cargoTask("cargoClean", "clean")
