@@ -4,51 +4,67 @@
     <plan-version>plan-104-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-07-20</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Move rust/ to exp/rust/ and fix path references</name>
-            <commit></commit>
+            <commit>2a2ba66ecd4e0dbf5c52db67acd0ba20cfc32a3a</commit>
             <created-from>plan-104-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-07-20T11:46:48.922+05:30</timestamp>
+                    <message>Per user: in-tree Rust doc-comment paths made workspace-relative (fixtures/..., crates/...) instead of exp/rust/... — only docs/rust-migration uses full exp/rust paths</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Gradle cargo tasks via exp/rust/build.gradle.kts</name>
-            <commit></commit>
+            <commit>ad07382c6881c84dce59aa6fe4ca3e492019ca67</commit>
             <created-from>plan-104-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-20T11:57:03.371+05:30</timestamp>
+                    <message>De-risk draft ready for review</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Verify Rust build output is gitignored at the new path</name>
-            <commit></commit>
+            <commit>ad07382c6881c84dce59aa6fe4ca3e492019ca67</commit>
             <created-from>plan-104-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-20T12:06:12.839+05:30</timestamp>
+                    <message>Verification-only: exp/rust/.gitignore (target/) moved with tree; root **/target/ also covers. Real cargo build left git status clean — no change required.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>closed</status>
             <name>Document in EXPERIMENTAL.md and reconcile exp/README.md</name>
-            <commit></commit>
+            <commit>1e452b59bf7dea63495b25fc86e16e282102aabe</commit>
             <created-from>plan-104-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -60,6 +76,11 @@
         <update>
             <timestamp>2026-07-20T11:24:03.308+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-20T12:31:12.457+05:30</timestamp>
+            <message>Plan complete. All 4 tasks closed: rust/ moved to exp/rust, opt-in Gradle cargo wiring, gitignore verified, EXPERIMENTAL.md + exp/README.md documented.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
