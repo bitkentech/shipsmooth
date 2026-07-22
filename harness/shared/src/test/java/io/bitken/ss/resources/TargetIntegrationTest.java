@@ -48,7 +48,7 @@ class TargetIntegrationTest {
             "Claude skill must disable model invocation (explicit /shipsmooth-dev:start-dev only)");
         assertTrue(content.contains("## When to apply this skill"),
             "Body should start at the first section heading (H1 dropped in plan-96 Task 3)");
-        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/0.2.0/bin/shipsmooth"),
+        assertTrue(content.contains("${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth-dev/0.2.0/bin/shipsmooth"),
             "CLI bin path should use XDG shell expression with -dev subdir");
     }
 
@@ -220,7 +220,7 @@ class TargetIntegrationTest {
         Target.main(new String[]{});
 
         String content = Files.readString(tempDir.resolve("skills/start/SKILL.md"));
-        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.2.0/bin/shipsmooth"),
+        assertTrue(content.contains("${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth/0.2.0/bin/shipsmooth"),
             "prod cliBin should use shipsmooth subdir");
         assertFalse(content.contains("shipsmooth-dev"),
             "prod cliBin must not reference shipsmooth-dev");
@@ -232,7 +232,7 @@ class TargetIntegrationTest {
         Target.main(new String[]{});
 
         String content = Files.readString(tempDir.resolve("skills/start-dev/SKILL.md"));
-        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/0.2.0/bin/shipsmooth"),
+        assertTrue(content.contains("${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth-dev/0.2.0/bin/shipsmooth"),
             "dev cliBin should use shipsmooth-dev subdir");
     }
 
@@ -267,6 +267,37 @@ class TargetIntegrationTest {
             "Windows SKILL.md must reference LOCALAPPDATA stable path with .cmd launcher");
         assertFalse(content.contains("XDG_CACHE_HOME"),
             "Windows SKILL.md must not reference XDG_CACHE_HOME");
+    }
+
+    // plan-105 regression guard. The assertions above pin exact cliBin paths, so they go
+    // stale on every version bump and would miss a tilde reintroduced elsewhere in the line.
+    // This guards the *pattern* instead: no rendered POSIX SKILL.md may contain a ~ inside a
+    // ${VAR:-...} default, where bash never expands it (tilde expansion precedes parameter
+    // expansion). Such a path is emitted literally and resolves to nothing whenever the var
+    // is unset — effectively always on macOS. Regression from 9c107fb; see plan-105.
+    private static final java.util.regex.Pattern UNEXPANDABLE_TILDE =
+        java.util.regex.Pattern.compile("\\$\\{[A-Za-z_][A-Za-z0-9_]*:-[^}]*~");
+
+    @Test
+    void posixSkillMdHasNoUnexpandableTildeInShellDefault() throws Exception {
+        for (String profile : new String[]{"prod", "dev", "opencode", "codex"}) {
+            switch (profile) {
+                case "prod" -> setProdProps();
+                case "dev" -> setDevProps();
+                case "opencode" -> setOpencodeProdProps();
+                default -> setCodexProdProps();
+            }
+            Target.main(new String[]{});
+
+            try (var paths = Files.walk(tempDir)) {
+                for (Path p : paths.filter(f -> f.getFileName().toString().equals("SKILL.md")).toList()) {
+                    String content = Files.readString(p);
+                    assertFalse(UNEXPANDABLE_TILDE.matcher(content).find(),
+                        "[" + profile + "] " + tempDir.relativize(p)
+                            + " contains ~ inside a ${VAR:-...} default; bash will not expand it. Use $HOME.");
+                }
+            }
+        }
     }
 
     @Test
@@ -340,7 +371,7 @@ class TargetIntegrationTest {
             "OpenCode profile should start with YAML frontmatter (name: start)");
         assertTrue(content.contains("## When to apply this skill"),
             "Body should start at the first section heading (H1 dropped in plan-96 Task 3)");
-        assertTrue(content.contains("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.2.0/bin/shipsmooth"),
+        assertTrue(content.contains("${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth/0.2.0/bin/shipsmooth"),
             "OpenCode prod cliBin should use the shipsmooth subdir");
     }
 

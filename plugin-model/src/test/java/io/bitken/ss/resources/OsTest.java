@@ -33,13 +33,27 @@ class OsTest {
     @Test
     void posix_cliBinPath_usesXdgCacheHome() {
         String result = Os.POSIX.cliBinPath("shipsmooth", "0.3.3", "shipsmooth");
-        assertEquals("${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.3/bin/shipsmooth", result);
+        assertEquals("${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth/0.3.3/bin/shipsmooth", result);
     }
 
     @Test
     void posix_cliBinPath_devSubdirVariant() {
         String result = Os.POSIX.cliBinPath("shipsmooth", "0.3.3", "shipsmooth-dev");
-        assertEquals("${XDG_CACHE_HOME:-~/.cache}/shipsmooth-dev/0.3.3/bin/shipsmooth", result);
+        assertEquals("${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth-dev/0.3.3/bin/shipsmooth", result);
+    }
+
+    // plan-105: the fallback must use $HOME, not ~. Bash performs tilde expansion at parse
+    // time, before parameter expansion, so a ~ inside ${VAR:-...} inside double quotes is
+    // never expanded — the skill's SS="..." assignment would hold a literal ~/.cache path.
+    // Triggers wherever XDG_CACHE_HOME is unset, which is effectively always on macOS.
+    // Regression from 9c107fb (plan-45 task 4); see .shipsmooth/plans/plan-105.md.
+    @Test
+    void posix_cliBinPath_fallbackIsShellExpandable() {
+        String result = Os.POSIX.cliBinPath("shipsmooth", "0.3.3", "shipsmooth");
+        assertFalse(result.contains("~"),
+            "POSIX cliBinPath must not contain ~ — it does not expand inside ${VAR:-...} in double quotes");
+        assertTrue(result.contains("$HOME"),
+            "POSIX cliBinPath fallback must use $HOME, which does expand in that position");
     }
 
     @Test

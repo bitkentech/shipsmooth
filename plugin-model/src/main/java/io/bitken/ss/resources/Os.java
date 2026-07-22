@@ -40,9 +40,17 @@ public sealed interface Os permits Os.Posix, Os.Windows {
             return "java";
         }
 
+        /**
+         * The fallback uses {@code $HOME}, never {@code ~}: bash performs tilde expansion at
+         * parse time, before parameter expansion, so a {@code ~} inside {@code ${VAR:-...}}
+         * within double quotes is emitted literally and never resolves (plan-105).
+         * Keep in sync with resolveCache in harness/shared/scripts/tasks/session-start.ts
+         * and CACHE_DIR in harness/shared/src/main/resources/install-shipsmooth.sh — those
+         * write the runtime to the path this expression reads back.
+         */
         @Override
         public String cliBinPath(String pluginName, String version, String cacheSubdir) {
-            return "${XDG_CACHE_HOME:-~/.cache}/" + cacheSubdir + "/" + version + "/bin/" + launcherFileName();
+            return "${XDG_CACHE_HOME:-$HOME/.cache}/" + cacheSubdir + "/" + version + "/bin/" + launcherFileName();
         }
     }
 

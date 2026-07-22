@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>105</plan>
+    <plan-version>plan-105-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-07-22</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Fix the POSIX `cliBinPath` fallback and repoint pinning assertions</name>
+            <commit>d394c4e665822a5b4872a262151d88a0e9b67f95</commit>
+            <created-from>plan-105-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Regression guard against an unexpandable tilde in rendered skills</name>
+            <commit>d394c4e665822a5b4872a262151d88a0e9b67f95</commit>
+            <created-from>plan-105-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-07-22T12:35:20.272+05:30</timestamp>
+                    <message>Guard committed in the same commit as Task 1 (d394c4e) rather than separately; both touch TargetIntegrationTest. Red-state verified before commit by temporarily reverting Os.java.</message>
+                </deviation>
+            </deviations>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Verify the fix end-to-end with `XDG_CACHE_HOME` unset</name>
+            <commit>d394c4e665822a5b4872a262151d88a0e9b67f95</commit>
+            <created-from>plan-105-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-22T12:39:22.022+05:30</timestamp>
+                    <message>Verified E2E: devBuild renders SS="${XDG_CACHE_HOME:-$HOME/.cache}/..."; with env -u XDG_CACHE_HOME the emitted line resolves to an absolute path and executes the CLI (--version -&gt; 0.3.35). Old tilde form fails with 'No such file or directory' on the same binary.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-07-22T12:28:08.548+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-22T12:42:05.841+05:30</timestamp>
+            <message>Plan complete. POSIX cliBinPath fallback now uses $HOME; regression guard added; verified E2E with XDG_CACHE_HOME unset.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

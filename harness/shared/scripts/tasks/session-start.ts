@@ -161,7 +161,10 @@ function sendGet(url: string): Promise<http.IncomingMessage> {
   });
 }
 
-// If you change this logic, update the cliBin expression in plugin-skill/src/main/jte-src/skills/_partials/base-workflow.jte.md
+// If you change this logic, update Os.Posix.cliBinPath in
+// plugin-model/src/main/java/io/bitken/ss/resources/Os.java — it emits the shell expression
+// the skill uses to read back what this function writes. (Also mirrored by CACHE_DIR in
+// harness/shared/src/main/resources/install-shipsmooth.sh.)
 export function resolveCache(config: { name?: string }): string {
   const subdir = config.name ?? 'shipsmooth';
   if (process.platform === 'win32') {
