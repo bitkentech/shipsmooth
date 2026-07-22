@@ -1,6 +1,6 @@
 {
   "name": "shipsmooth",
-  "version": "0.3.35",
+  "version": "0.3.36",
   "description": "Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, and immutable git-based plan versioning.",
   "author": {
     "name": "Pramod Biligiri"

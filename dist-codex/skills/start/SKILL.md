@@ -51,7 +51,7 @@ Script invocations use the shipsmooth CLI. Throughout this skill it is abbreviat
 as **`$SS`**, defined once here:
 
 ```bash
-SS="${XDG_CACHE_HOME:-~/.cache}/shipsmooth/0.3.35/bin/shipsmooth"
+SS="${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth/0.3.36/bin/shipsmooth"
 ```
 
 Every `$SS <subcommand>` below means that path — expand it when you actually run the
