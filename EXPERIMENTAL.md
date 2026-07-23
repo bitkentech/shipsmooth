@@ -23,9 +23,20 @@ footprint: ~2 MB binary, ~3.8 MB RSS, <10 ms startup, versus ~103 MB runtime, ~6
 RSS, ~450 ms for the jlink-packaged Java CLI. See `docs/rust-migration/` for the
 migration notes.
 
-The port has no shipping path yet and is not part of the default build. For
-convenience, opt-in Gradle wrappers exist as `:exp:rust:cargoBuild`,
-`:exp:rust:cargoTest`, and `:exp:rust:cargoClean` — they locate cargo via
-`-Pcargo.home=<dir>`, `$CARGO_HOME`, or `PATH` (plus `-Prustup.home`/`$RUSTUP_HOME`
-for rustup-managed toolchains) and skip with a message when no Rust toolchain is
-installed. `./gradlew build` never invokes cargo.
+The port has no shipping path yet and is **not part of the main Gradle build** — the
+root `settings.gradle.kts` does not include it, so `./gradlew build` at the repo root
+cannot see this project or invoke cargo.
+
+`exp/rust/` is instead a self-contained Gradle build with its own settings file and
+wrapper, driven from that directory:
+
+```bash
+cd exp/rust
+./gradlew cargoBuild    # or cargoTest / cargoClean
+```
+
+The tasks locate cargo via `-Pcargo.home=<dir>`, `$CARGO_HOME`, or `PATH` (plus
+`-Prustup.home`/`$RUSTUP_HOME` for rustup-managed toolchains) and skip with a message
+when no Rust toolchain is installed. Plain `cargo build` / `cargo test` from
+`exp/rust/` works equally well. The wrapper here is a copy of the root one — bump both
+together on a Gradle upgrade.
