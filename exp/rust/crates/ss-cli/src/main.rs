@@ -5,7 +5,12 @@
 //! emitted by dispatch, not by panicking handlers). Subcommands land with
 //! their packages in the follow-up plan.
 
+// dead_code allowed until the store command wires these in (plan-106 Tasks 6/7).
+#[allow(dead_code)]
+mod ds;
 mod probe;
+#[allow(dead_code)]
+mod resolution_json;
 
 use clap::Parser;
 
