@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Extend the golden fixture corpus for store resolution</name>
-            <commit></commit>
+            <commit>705785054fce56ba79404eee2d1c1c9895c68080</commit>
             <created-from>plan-106-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
