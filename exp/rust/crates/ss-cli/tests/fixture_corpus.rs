@@ -8,7 +8,7 @@
 //! shipsmooth.toml that produced the classification. It is regeneration-proof:
 //! it asserts structure and stable tokens, never absolute paths.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// One branch of the resolution table: directory name, the `status` the JSON
 /// transcript must report, the situation/reason token pinning the exact branch,
@@ -21,74 +21,129 @@ struct Scenario {
     has_toml: bool,
 }
 
-const fn scenario(
-    name: &'static str,
-    status: &'static str,
-    token: Option<(&'static str, &'static str)>,
-    has_toml: bool,
-) -> Scenario {
-    Scenario { name, status, token, has_toml }
+impl Scenario {
+    /// Assert this branch was captured correctly under `corpus`.
+    fn assert_captured(&self, corpus: &Path) {
+        let dir = corpus.join(self.name);
+        assert!(dir.is_dir(), "missing corpus scenario directory: {}", dir.display());
+
+        // `store info` always exits 0 — settled, undecided, and unresolvable
+        // are all valid things to report.
+        assert_eq!(read(&dir, "info.exit").trim(), "exit=0", "scenario {}", self.name);
+        assert_eq!(read(&dir, "info-json.exit").trim(), "exit=0", "scenario {}", self.name);
+
+        // stdout/stderr discipline: informational output only, stderr empty.
+        assert_eq!(read(&dir, "info.err"), "", "scenario {}: stderr must be empty", self.name);
+        assert_eq!(read(&dir, "info-json.err"), "", "scenario {}: stderr must be empty", self.name);
+        assert!(!read(&dir, "info.out").is_empty(), "scenario {}: text transcript empty", self.name);
+
+        // The JSON transcript is one line and classifies as this branch expects.
+        let json = self.parsed_json_transcript(&dir);
+        assert_eq!(json["status"], self.status, "scenario {}", self.name);
+        if let Some((field, value)) = self.token {
+            assert_eq!(json[field], value, "scenario {}", self.name);
+        }
+
+        // The config that produced the classification is part of the spec.
+        assert_eq!(
+            dir.join("shipsmooth.toml").is_file(),
+            self.has_toml,
+            "scenario {}: shipsmooth.toml capture mismatch",
+            self.name
+        );
+    }
+
+    fn parsed_json_transcript(&self, dir: &Path) -> serde_json::Value {
+        let line = read(dir, "info-json.out");
+        assert!(
+            line.ends_with('\n') && line.lines().count() == 1,
+            "scenario {}: expected a single JSON line",
+            self.name
+        );
+        serde_json::from_str(&line)
+            .unwrap_or_else(|e| panic!("scenario {}: unparseable JSON transcript: {e}", self.name))
+    }
 }
 
 /// The plan-85 branch table, as listed in plan-106 Task 1.
 const SCENARIOS: &[Scenario] = &[
-    scenario("clean-first-run", "needs-decision", Some(("situation", "clean-first-run")), false),
+    Scenario {
+        name: "clean-first-run",
+        status: "needs-decision",
+        token: Some(("situation", "clean-first-run")),
+        has_toml: false,
+    },
     // plan-87 leniency: a 0-byte config is "no usable config", never a wedge.
-    scenario("empty-config", "needs-decision", Some(("situation", "clean-first-run")), true),
-    scenario("settled-same-repo", "ready", Some(("storageType", "same-repo")), true),
-    scenario("settled-separate-dir", "ready", Some(("storageType", "separate-dir")), true),
-    scenario("in-repo-not-set-up", "needs-decision", Some(("situation", "in-repo-not-set-up")), true),
-    scenario("config-dir-missing", "needs-decision", Some(("situation", "config-dir-missing")), true),
-    scenario("malformed-missing-type", "unresolvable", Some(("reason", "MALFORMED_CONFIG_ENTRY")), true),
-    scenario("malformed-bad-type", "unresolvable", Some(("reason", "MALFORMED_CONFIG_ENTRY")), true),
-    scenario(
-        "malformed-same-repo-with-root",
-        "unresolvable",
-        Some(("reason", "MALFORMED_CONFIG_ENTRY")),
-        true,
-    ),
-    scenario("legacy-agents-tree", "unresolvable", Some(("reason", "LEGACY_AGENTS_TREE")), false),
+    Scenario {
+        name: "empty-config",
+        status: "needs-decision",
+        token: Some(("situation", "clean-first-run")),
+        has_toml: true,
+    },
+    Scenario {
+        name: "settled-same-repo",
+        status: "ready",
+        token: Some(("storageType", "same-repo")),
+        has_toml: true,
+    },
+    Scenario {
+        name: "settled-separate-dir",
+        status: "ready",
+        token: Some(("storageType", "separate-dir")),
+        has_toml: true,
+    },
+    Scenario {
+        name: "in-repo-not-set-up",
+        status: "needs-decision",
+        token: Some(("situation", "in-repo-not-set-up")),
+        has_toml: true,
+    },
+    Scenario {
+        name: "config-dir-missing",
+        status: "needs-decision",
+        token: Some(("situation", "config-dir-missing")),
+        has_toml: true,
+    },
+    Scenario {
+        name: "malformed-missing-type",
+        status: "unresolvable",
+        token: Some(("reason", "MALFORMED_CONFIG_ENTRY")),
+        has_toml: true,
+    },
+    Scenario {
+        name: "malformed-bad-type",
+        status: "unresolvable",
+        token: Some(("reason", "MALFORMED_CONFIG_ENTRY")),
+        has_toml: true,
+    },
+    Scenario {
+        name: "malformed-same-repo-with-root",
+        status: "unresolvable",
+        token: Some(("reason", "MALFORMED_CONFIG_ENTRY")),
+        has_toml: true,
+    },
+    Scenario {
+        name: "legacy-agents-tree",
+        status: "unresolvable",
+        token: Some(("reason", "LEGACY_AGENTS_TREE")),
+        has_toml: false,
+    },
 ];
 
 fn store_corpus_dir() -> PathBuf {
-    std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/transcripts/store")
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/transcripts/store")
 }
 
-fn read(dir: &PathBuf, file: &str) -> String {
+fn read(dir: &Path, file: &str) -> String {
     std::fs::read_to_string(dir.join(file))
         .unwrap_or_else(|e| panic!("missing corpus file {}/{file}: {e}", dir.display()))
 }
 
 #[test]
 fn store_resolution_corpus_covers_the_branch_table() {
-    for s in SCENARIOS {
-        let dir = store_corpus_dir().join(s.name);
-        assert!(dir.is_dir(), "missing corpus scenario directory: {}", dir.display());
-
-        // `store info` always exits 0 — settled, undecided, and unresolvable
-        // are all valid things to report.
-        assert_eq!(read(&dir, "info.exit").trim(), "exit=0", "scenario {}", s.name);
-        assert_eq!(read(&dir, "info-json.exit").trim(), "exit=0", "scenario {}", s.name);
-
-        // stdout/stderr discipline: informational output only, stderr empty.
-        assert_eq!(read(&dir, "info.err"), "", "scenario {}: stderr must be empty", s.name);
-        assert_eq!(read(&dir, "info-json.err"), "", "scenario {}: stderr must be empty", s.name);
-        assert!(!read(&dir, "info.out").is_empty(), "scenario {}: text transcript empty", s.name);
-
-        // The JSON transcript is one line and classifies as this branch expects.
-        let json_line = read(&dir, "info-json.out");
-        assert!(json_line.ends_with('\n') && json_line.lines().count() == 1,
-            "scenario {}: expected a single JSON line", s.name);
-        let json: serde_json::Value = serde_json::from_str(&json_line)
-            .unwrap_or_else(|e| panic!("scenario {}: unparseable JSON transcript: {e}", s.name));
-        assert_eq!(json["status"], s.status, "scenario {}", s.name);
-        if let Some((field, value)) = s.token {
-            assert_eq!(json[field], value, "scenario {}", s.name);
-        }
-
-        // The config that produced the classification is part of the spec.
-        assert_eq!(dir.join("shipsmooth.toml").is_file(), s.has_toml,
-            "scenario {}: shipsmooth.toml capture mismatch", s.name);
+    let corpus = store_corpus_dir();
+    for scenario in SCENARIOS {
+        scenario.assert_captured(&corpus);
     }
 }
 
