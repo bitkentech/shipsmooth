@@ -5,7 +5,7 @@
     <metadata>
         <backlog-issue></backlog-issue>
         <status>complete</status>
-        <created>2026-07-17</created>
+        <created>2026-07-23</created>
         <meta-ext scope="fixture">
             <nested>deep value</nested>
         </meta-ext>
@@ -21,14 +21,14 @@
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
-                    <timestamp>2026-07-17T14:08:09.798+05:30</timestamp>
+                    <timestamp>2026-07-23T12:18:47.695+05:30</timestamp>
                     <message>Special chars: &amp; &lt; &gt; " ' and unicode: héllo 🚀</message>
                 </comment>
             </comments>
             <deviations>
                 <deviation>
                     <type>minor</type>
-                    <timestamp>2026-07-17T14:08:11.906+05:30</timestamp>
+                    <timestamp>2026-07-23T12:18:49.771+05:30</timestamp>
                     <message>Split parsing into two passes</message>
                 </deviation>
             </deviations>
@@ -69,7 +69,7 @@
             <deviations>
                 <deviation>
                     <type>major</type>
-                    <timestamp>2026-07-17T14:08:15.307+05:30</timestamp>
+                    <timestamp>2026-07-23T12:18:53.216+05:30</timestamp>
                     <message>Format spec contradicts implementation</message>
                 </deviation>
             </deviations>
@@ -95,7 +95,7 @@
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
-                    <timestamp>2026-07-17T14:08:22.116+05:30</timestamp>
+                    <timestamp>2026-07-23T12:19:00.549+05:30</timestamp>
                     <message>Rewrite after unknown-element insertion</message>
                 </comment>
             </comments>
@@ -117,27 +117,27 @@
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-07-17T14:08:08.435+05:30</timestamp>
+            <timestamp>2026-07-23T12:18:46.267+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
         <update>
-            <timestamp>2026-07-17T14:08:17.344+05:30</timestamp>
+            <timestamp>2026-07-23T12:18:55.430+05:30</timestamp>
             <message>Mid-plan checkpoint</message>
             <blocked>false</blocked>
         </update>
         <update>
-            <timestamp>2026-07-17T14:08:18.033+05:30</timestamp>
+            <timestamp>2026-07-23T12:18:56.196+05:30</timestamp>
             <message>Blocked on format decision</message>
             <blocked>true</blocked>
         </update>
         <update>
-            <timestamp>2026-07-17T14:08:19.385+05:30</timestamp>
+            <timestamp>2026-07-23T12:18:57.638+05:30</timestamp>
             <message>Ready for review</message>
             <blocked>false</blocked>
         </update>
         <update>
-            <timestamp>2026-07-17T14:08:20.066+05:30</timestamp>
+            <timestamp>2026-07-23T12:18:58.394+05:30</timestamp>
             <message>Done</message>
             <blocked>false</blocked>
         </update>

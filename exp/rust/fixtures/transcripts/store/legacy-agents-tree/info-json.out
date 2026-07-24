@@ -1,0 +1,1 @@
+{"status":"unresolvable","reason":"LEGACY_AGENTS_TREE","message":"A legacy .agents/shipsmooth data tree was found; rename it to .shipsmooth/ by hand."}
