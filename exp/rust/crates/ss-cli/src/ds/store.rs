@@ -22,3 +22,26 @@ impl ProjectDataStore {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    //! The state-root half of the Java `ProjectDataStoreTest`; the `init()`
+    //! tests port with the init leaf (Task 7).
+
+    use super::*;
+
+    #[test]
+    fn in_repo_state_root_is_repo_root() {
+        let store = ProjectDataStore::InRepo { repo_root: PathBuf::from("/proj") };
+        assert_eq!(store.state_root(), Path::new("/proj"));
+    }
+
+    #[test]
+    fn standalone_state_root_is_state_dir() {
+        let store = ProjectDataStore::Standalone {
+            repo_root: PathBuf::from("/proj"),
+            state_dir: PathBuf::from("/proj-shipsmooth"),
+        };
+        assert_eq!(store.state_root(), Path::new("/proj-shipsmooth"));
+    }
+}

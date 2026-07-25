@@ -23,9 +23,43 @@ pub struct NeedsDecision {
     pub options: Vec<DecisionOption>,
 }
 
-/// The CLI cannot proceed; the user must fix the situation by hand.
+impl NeedsDecision {
+    /// The single option to present as the default/recommended choice.
+    ///
+    /// Panics if no option is marked: a `NeedsDecision` without a recommended
+    /// option is a programming error, not a user-facing condition.
+    pub fn recommended(&self) -> &DecisionOption {
+        self.options
+            .iter()
+            .find(|o| o.recommended)
+            .expect("NeedsDecision must mark exactly one option recommended")
+    }
+}
+
+/// The CLI cannot proceed; the user must fix the situation by hand. The
+/// human-facing text comes from the reason; `cause` carries the underlying
+/// error for diagnostics when present (e.g. an unexpected I/O failure) — the
+/// anticipated reasons carry no cause.
 pub struct Unresolvable {
     pub reason: UnresolvableReason,
+    pub cause: Option<Box<dyn std::error::Error + Send + Sync>>,
+}
+
+impl Unresolvable {
+    /// An anticipated failure described entirely by its reason; no underlying error.
+    pub fn of(reason: UnresolvableReason) -> Self {
+        Unresolvable { reason, cause: None }
+    }
+
+    /// An unexpected failure, with its cause retained for diagnostics.
+    pub fn unknown(cause: impl Into<Box<dyn std::error::Error + Send + Sync>>) -> Self {
+        Unresolvable { reason: UnresolvableReason::Unknown, cause: Some(cause.into()) }
+    }
+
+    /// The human-readable description of why state is unresolvable.
+    pub fn message(&self) -> &'static str {
+        self.reason.message()
+    }
 }
 
 /// One choice the user can take, with the path the CLI proposes for it.
@@ -36,7 +70,7 @@ pub struct DecisionOption {
 }
 
 /// Why a decision is needed — lets the skill layer word the prompt.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum UndecidableSituation {
     /// Nothing configured and no state anywhere: offer external (recommended) or in-repo.
     CleanFirstRun,
@@ -47,6 +81,13 @@ pub enum UndecidableSituation {
 }
 
 impl UndecidableSituation {
+    /// Every situation, for exhaustive checks (Java gets `values()` for free).
+    pub const ALL: [Self; 3] = [
+        UndecidableSituation::CleanFirstRun,
+        UndecidableSituation::ConfigDirMissing,
+        UndecidableSituation::InRepoNotSetUp,
+    ];
+
     /// A generic, human-readable description of this situation.
     pub fn message(&self) -> &'static str {
         match self {
@@ -73,7 +114,7 @@ impl UndecidableSituation {
 }
 
 /// The kinds of choice offered in a `NeedsDecision`.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Choice {
     External,
     InRepo,
@@ -103,7 +144,7 @@ impl Choice {
 
 /// Why state is unresolvable. `Unknown` is the catch-all for anticipated but
 /// unenumerated failures; keeping the enum closed keeps matches exhaustive.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum UnresolvableReason {
     LegacyAgentsTree,
     MalformedConfigEntry,
@@ -112,6 +153,14 @@ pub enum UnresolvableReason {
 }
 
 impl UnresolvableReason {
+    /// Every reason, for exhaustive checks (Java gets `values()` for free).
+    pub const ALL: [Self; 4] = [
+        UnresolvableReason::LegacyAgentsTree,
+        UnresolvableReason::MalformedConfigEntry,
+        UnresolvableReason::AmbiguousState,
+        UnresolvableReason::Unknown,
+    ];
+
     /// The wire token: the raw Java enum name (SCREAMING_SNAKE_CASE).
     pub fn name(&self) -> &'static str {
         match self {
@@ -137,6 +186,65 @@ impl UnresolvableReason {
             UnresolvableReason::Unknown => {
                 "An unexpected error occurred while determining where state lives."
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    //! Port of the Java `DataStoreResolutionTest`: behaviour of the model itself.
+
+    use super::*;
+
+    fn clean_first_run(options: Vec<DecisionOption>) -> NeedsDecision {
+        NeedsDecision { situation: UndecidableSituation::CleanFirstRun, options }
+    }
+
+    fn option(choice: Choice, path: &str, recommended: bool) -> DecisionOption {
+        DecisionOption { choice, proposed_path: PathBuf::from(path), recommended }
+    }
+
+    #[test]
+    fn recommended_returns_the_marked_option() {
+        let needs = clean_first_run(vec![
+            option(Choice::External, "/ext", true),
+            option(Choice::InRepo, "/in", false),
+        ]);
+
+        assert_eq!(needs.recommended().choice, Choice::External);
+    }
+
+    #[test]
+    #[should_panic(expected = "NeedsDecision must mark exactly one option recommended")]
+    fn recommended_panics_when_no_option_marked() {
+        let needs = clean_first_run(vec![option(Choice::InRepo, "/in", false)]);
+        needs.recommended();
+    }
+
+    #[test]
+    fn unknown_factory_sets_unknown_reason_and_retains_cause() {
+        let cause = std::io::Error::other("boom");
+        let bad = Unresolvable::unknown(cause);
+
+        assert_eq!(bad.reason, UnresolvableReason::Unknown);
+        assert_eq!(bad.cause.as_ref().map(|c| c.to_string()), Some("boom".to_string()));
+        assert_eq!(bad.message(), UnresolvableReason::Unknown.message());
+    }
+
+    #[test]
+    fn of_factory_carries_no_cause() {
+        let bad = Unresolvable::of(UnresolvableReason::LegacyAgentsTree);
+        assert!(bad.cause.is_none());
+        assert_eq!(bad.message(), UnresolvableReason::LegacyAgentsTree.message());
+    }
+
+    #[test]
+    fn every_situation_and_reason_has_a_non_blank_message() {
+        for s in UndecidableSituation::ALL {
+            assert!(!s.message().trim().is_empty(), "{}", s.token());
+        }
+        for r in UnresolvableReason::ALL {
+            assert!(!r.message().trim().is_empty(), "{}", r.name());
         }
     }
 }
