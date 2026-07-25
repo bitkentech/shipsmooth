@@ -44,12 +44,17 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Config read path — StandaloneConfig on toml_edit</name>
             <commit></commit>
             <created-from>plan-106-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-25T12:34:12.764+05:30</timestamp>
+                    <message>De-risk draft ready for review</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
