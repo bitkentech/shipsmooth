@@ -27,9 +27,9 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Resolution model and JSON contract</name>
-            <commit></commit>
+            <commit>1cf140752c95e43a703e32cda61e6db11f5ddb86</commit>
             <created-from>plan-106-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
