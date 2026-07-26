@@ -101,6 +101,10 @@ mod tests {
 
         let schema = config.toml_schema.as_ref().expect("[toml-schema] table");
         assert_eq!(schema.version.as_deref(), Some("1.0.0"));
+        assert!(
+            schema.location.as_deref().unwrap().ends_with("/shipsmooth.tosd"),
+            "[toml-schema] location must reference the schema file"
+        );
 
         assert_eq!(config.projects.len(), 1);
         let entry = &config.projects[0];
@@ -161,5 +165,53 @@ storageType = 'separate-dir'
 
         // Query without a remote matches on path alone.
         assert!(config.matching_entry(Path::new("/repos/proj"), None).is_some());
+    }
+
+    #[test]
+    fn java_written_multi_line_config_round_trips_through_matching() {
+        // Read-side half of Java's MultiLineTomlConfigIntegrationTest: a config
+        // the Java ConfigWriter wrote as multi-line [[projects]] blocks must
+        // read back and match by its own localPath. The write side lands with
+        // ConfigWriter in Task 7.
+        let config = StandaloneConfig::parse(&fixture("settled-same-repo"))
+            .expect("Java-written fixture config must parse");
+        let configured_path = config.projects[0].local_path.clone().unwrap();
+
+        let entry = config
+            .matching_entry(Path::new(&configured_path), None)
+            .expect("Java-written entry must match its own localPath");
+        assert_eq!(entry.storage_type.as_deref(), Some("same-repo"));
+        assert_eq!(entry.storage_root, None, "same-repo entries carry no storageRoot");
+    }
+
+    #[test]
+    fn malformed_entries_still_parse_classification_is_the_resolvers_job() {
+        // Leniency covers *unparseable* files only. A well-formed file whose
+        // entry is semantically malformed (bad or missing storageType, a
+        // same-repo entry carrying a storageRoot) must parse and hand the
+        // entry through — classifying it is ProjectDataStoreResolver's job.
+        for scenario in [
+            "malformed-bad-type",
+            "malformed-missing-type",
+            "malformed-same-repo-with-root",
+        ] {
+            let config = StandaloneConfig::parse(&fixture(scenario))
+                .unwrap_or_else(|| panic!("{scenario} must parse"));
+            assert_eq!(config.projects.len(), 1, "{scenario} must keep its entry");
+        }
+
+        let bad_type = StandaloneConfig::parse(&fixture("malformed-bad-type")).unwrap();
+        assert_eq!(bad_type.projects[0].storage_type.as_deref(), Some("cloud"));
+    }
+
+    #[test]
+    fn unknown_keys_make_the_config_unusable_matching_jackson() {
+        // Jackson's default FAIL_ON_UNKNOWN_PROPERTIES makes the Java read
+        // path treat a config with unknown keys as unusable (caught, then
+        // "no usable config"); deny_unknown_fields pins the same behaviour.
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("future.toml");
+        std::fs::write(&file, "[[projects]]\nlocalPath = '/x'\nfutureKey = 'y'\n").unwrap();
+        assert!(StandaloneConfig::parse(&file).is_none());
     }
 }
