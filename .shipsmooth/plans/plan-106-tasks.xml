@@ -44,9 +44,9 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Config read path — StandaloneConfig on toml_edit</name>
-            <commit></commit>
+            <commit>b9aef21eb8fd8a24bfab643e9a1e29cd847851f0</commit>
             <created-from>plan-106-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
