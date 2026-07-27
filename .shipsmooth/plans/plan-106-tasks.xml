@@ -4,14 +4,14 @@
     <plan-version>plan-106-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-07-23</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Extend the golden fixture corpus for store resolution</name>
             <commit>705785054fce56ba79404eee2d1c1c9895c68080</commit>
             <created-from>plan-106-v1</created-from>
@@ -27,7 +27,7 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Resolution model and JSON contract</name>
             <commit>1cf140752c95e43a703e32cda61e6db11f5ddb86</commit>
             <created-from>plan-106-v1</created-from>
@@ -44,7 +44,7 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Config read path — StandaloneConfig on toml_edit</name>
             <commit>b9aef21eb8fd8a24bfab643e9a1e29cd847851f0</commit>
             <created-from>plan-106-v1</created-from>
@@ -61,7 +61,7 @@
         <task>
             <id>4</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>ProjectDataStoreResolver branch table</name>
             <commit>236af3f7d309a8331f307fc28a784b3800ca0305</commit>
             <created-from>plan-106-v1</created-from>
@@ -78,7 +78,7 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>ShipsmoothDataLocator and ResolvedStateRoot</name>
             <commit>e025e5aac35b768336a1796268e59912dac26605</commit>
             <created-from>plan-106-v1</created-from>
@@ -95,7 +95,7 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>store info leaf</name>
             <commit>86eb07f5aea5d15d53a799c9746abe5bea80747a</commit>
             <created-from>plan-106-v1</created-from>
@@ -112,7 +112,7 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>ConfigWriter and the store init leaf</name>
             <commit>1a94be97544a4e0ff11944cffb5ecc914dfd78eb</commit>
             <created-from>plan-106-v1</created-from>
@@ -129,7 +129,7 @@
         <task>
             <id>8</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>store parity harness</name>
             <commit>e0b6af09eee69b67955d153c73a9c467250f5956</commit>
             <created-from>plan-106-v1</created-from>
@@ -146,7 +146,7 @@
         <task>
             <id>9</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Migration notes write-back</name>
             <commit>d55046008b6781b02d53f37c1778bbd04bc494d8</commit>
             <created-from>plan-106-v1</created-from>
@@ -160,6 +160,11 @@
         <update>
             <timestamp>2026-07-23T11:42:43.972+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-07-27T17:44:38.779+05:30</timestamp>
+            <message>Plan complete.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
