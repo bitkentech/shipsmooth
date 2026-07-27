@@ -5,6 +5,12 @@ on `ss-core`. Conversion order: ds → conf → commands (store, then plan/task)
 wiring/main. The picocli→clap shift is the one *architectural* change in the
 whole migration, so it is described first.
 
+> **Status (plan-106, 2026-07-27):** `ds/`, `conf` (ConfigFileLocator),
+> `resolution_json.rs`, RepoRoot/RemoteUrl, and the full `store` group are
+> **ported and parity-verified** (see 00-overview.md §store-slice findings).
+> Remaining: `commands/plan/`, `commands/task/`, the gate wiring for
+> state-dependent commands in `main.rs`, and `ss-core::gw` beneath them.
+
 ## Architecture shift: picocli command objects → clap + dispatch
 
 Today each leaf (`plan init`, `task add-comment`, …) is a `Callable<Integer>`
@@ -82,9 +88,13 @@ enum Cmd { Plan(PlanCmd), Task(TaskCmd), Store(StoreCmd) }
   before clap runs (it is needed to decide tree shape/gating, same as Java
   parses it pre-picocli).
 
-### `io.bitken.ss.cli.conf.ds` (9 files) → `ds/`
+### `io.bitken.ss.cli.conf.ds` (9 files) → `ds/` — PORTED (plan-106)
 
 The richest package; port with its full test suite (branch table from plan-85).
+Ported as planned; notable deltas: `resolver` has no `IOException → UNKNOWN`
+branch (no fallible ops remain after the lenient parse), and `ConfigWriter`
+preserves other projects' entries verbatim via a `toml_edit::DocumentMut`
+read-modify-write rather than re-emitting.
 
 - `StandaloneConfig` + `ProjectEntry` + `TomlSchemaRef` → serde structs. Keep
   key names exactly: `remoteUrl`, `localPath`, `storageRoot`, `storageType`,
@@ -118,7 +128,7 @@ check whether any *product* behaviour depends on it; if it is test scaffolding
 for config fixtures, port only what the surviving tests need — or replace with
 `taplo`/plain asserts.
 
-### `io.bitken.ss.cli.store` (Store, Init, Info, StateReport) → `commands/store/`
+### `io.bitken.ss.cli.store` (Store, Init, Info, StateReport) → `commands/store/` — PORTED (plan-106, as `src/store/`)
 
 - `store` group parent → clap subcommand enum.
 - `Init` (158 lines, the biggest command): consumes the pre-computed
