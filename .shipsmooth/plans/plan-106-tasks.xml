@@ -61,9 +61,9 @@
         <task>
             <id>4</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>ProjectDataStoreResolver branch table</name>
-            <commit></commit>
+            <commit>236af3f7d309a8331f307fc28a784b3800ca0305</commit>
             <created-from>plan-106-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
