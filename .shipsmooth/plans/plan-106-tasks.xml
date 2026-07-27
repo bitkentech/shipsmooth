@@ -95,12 +95,17 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>store info leaf</name>
             <commit></commit>
             <created-from>plan-106-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-27T12:09:56.542+05:30</timestamp>
+                    <message>De-risk draft ready for review</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>4,5</depends-on>
         </task>
