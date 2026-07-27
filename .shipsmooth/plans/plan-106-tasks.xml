@@ -78,12 +78,17 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>ShipsmoothDataLocator and ResolvedStateRoot</name>
             <commit></commit>
             <created-from>plan-106-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-27T11:37:51.890+05:30</timestamp>
+                    <message>De-risk draft ready for review</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>2</depends-on>
         </task>
