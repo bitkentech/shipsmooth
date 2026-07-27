@@ -112,9 +112,9 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>ConfigWriter and the store init leaf</name>
-            <commit></commit>
+            <commit>1a94be97544a4e0ff11944cffb5ecc914dfd78eb</commit>
             <created-from>plan-106-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
