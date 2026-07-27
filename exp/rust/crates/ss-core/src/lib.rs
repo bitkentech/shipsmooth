@@ -4,6 +4,7 @@
 //! `model` ← generated `io.bitken.ss.jaxb`, `plan` ← `io.bitken.ss.svc.plan`,
 //! `gw` ← `io.bitken.ss.gw`, `conf` ← `io.bitken.ss.conf`.
 
+pub mod conf;
 pub mod error;
 pub mod model;
 pub mod plan;

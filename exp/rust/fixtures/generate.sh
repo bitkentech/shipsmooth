@@ -13,6 +13,13 @@ OUT="$(cd "$(dirname "$0")" && pwd)"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
+# Redirect the per-user config for the WHOLE run: fixture generation must never
+# read the user's real ~/.config/shipsmooth/shipsmooth.toml (its entries could
+# change classification) nor write fixture /tmp entries into it (store init
+# records the chosen storage in config).
+export XDG_CONFIG_HOME="$WORK/confighome"
+mkdir -p "$XDG_CONFIG_HOME"
+
 rm -rf "$OUT/xml" "$OUT/transcripts"
 mkdir -p "$OUT/xml" "$OUT/transcripts"
 
@@ -39,7 +46,8 @@ set -e
 # --- authentic fixtures: real recent plans from this repo --------------------
 # Genuine files written by the current Java CLI during real work (post-plan-90
 # format). The synthetic plans below add full enum/feature coverage on top.
-REPO_PLANS="$OUT/../../.shipsmooth/plans"
+# Repo root is three levels up from fixtures/ (exp/rust/fixtures since plan-104).
+REPO_PLANS="$OUT/../../../.shipsmooth/plans"
 cp "$REPO_PLANS/plan-96-tasks.xml" "$OUT/xml/00-real-plan-96.xml"
 cp "$REPO_PLANS/plan-97-tasks.xml" "$OUT/xml/00-real-plan-97.xml"
 
@@ -144,5 +152,110 @@ set +e
 "$SS" task status --plan 103 --task 1 --status bogus >"$OUT/transcripts/error-invalid-status.out" 2>"$OUT/transcripts/error-invalid-status.err"
 echo "exit=$?" >"$OUT/transcripts/error-invalid-status.exit"
 set -e
+
+# --- plan-106: store-resolution branch table (plan-85) ------------------------
+# One scenario directory per branch, each with its own throwaway project repo
+# AND its own config home, so scenarios cannot contaminate each other. For each:
+# `store info` and `store info --json` with stdout/stderr/exit captured
+# separately (stderr discipline is part of the contract), plus the
+# shipsmooth.toml that produced the classification.
+
+SPROJ=""; SCFG=""
+store_project() { # store_project <scenario>  -> sets SPROJ (repo) and SCFG (config home)
+    local base="$WORK/store/$1"
+    SPROJ="$base/proj"
+    SCFG="$base/confighome"
+    mkdir -p "$SPROJ" "$SCFG"
+    git -C "$SPROJ" init -q .
+    git -C "$SPROJ" -c user.email=fixture@example.com -c user.name=Fixture \
+        commit -q --allow-empty -m "seed"
+}
+
+store_run() { # store_run <scenario> <capture-name> <cli args...>
+    local name="$1" cap="$2"; shift 2
+    local dir="$OUT/transcripts/store/$name"
+    mkdir -p "$dir"
+    set +e
+    (cd "$SPROJ" && XDG_CONFIG_HOME="$SCFG" "$SS" "$@" \
+        >"$dir/$cap.out" 2>"$dir/$cap.err"; echo "exit=$?" >"$dir/$cap.exit")
+    set -e
+}
+
+store_capture() { # store_capture <scenario> — both info renderings + the config file
+    local name="$1"
+    store_run "$name" info      store info
+    store_run "$name" info-json store info --json
+    if [ -f "$SCFG/shipsmooth/shipsmooth.toml" ]; then
+        cp "$SCFG/shipsmooth/shipsmooth.toml" "$OUT/transcripts/store/$name/shipsmooth.toml"
+    fi
+}
+
+store_toml() { # store_toml — hand-written config for the malformed branches; reads stdin
+    mkdir -p "$SCFG/shipsmooth"
+    cat >"$SCFG/shipsmooth/shipsmooth.toml"
+}
+
+# No config, no state anywhere -> needs-decision / clean-first-run.
+store_project clean-first-run
+store_capture clean-first-run
+
+# plan-87 leniency: a 0-byte config (e.g. left by a failed init write) is "no
+# usable config" and falls through to clean-first-run — never Unresolvable.
+store_project empty-config
+mkdir -p "$SCFG/shipsmooth"
+: >"$SCFG/shipsmooth/shipsmooth.toml"
+store_capture empty-config
+
+# Settled branches, driven through the real init leaf; the init transcript is
+# captured too — it is the spec for the init leaf's own output.
+store_project settled-same-repo
+store_run settled-same-repo init store init --type same-repo --json
+store_capture settled-same-repo
+
+store_project settled-separate-dir
+store_run settled-separate-dir init store init --type separate-dir --json
+store_capture settled-separate-dir
+
+# Valid same-repo entry but the in-repo folder is gone -> in-repo-not-set-up.
+store_project in-repo-not-set-up
+store_run in-repo-not-set-up init store init --type same-repo --json
+rm -rf "$SPROJ/.shipsmooth"
+store_capture in-repo-not-set-up
+
+# Valid separate-dir entry whose storageRoot vanished -> config-dir-missing.
+store_project config-dir-missing
+store_run config-dir-missing init store init --type separate-dir --json
+rm -rf "$WORK/store/config-dir-missing/proj-shipsmooth"
+store_capture config-dir-missing
+
+# Malformed entries -> unresolvable / MALFORMED_CONFIG_ENTRY.
+store_project malformed-missing-type
+store_toml <<EOF
+[[projects]]
+localPath = "$SPROJ"
+EOF
+store_capture malformed-missing-type
+
+store_project malformed-bad-type
+store_toml <<EOF
+[[projects]]
+localPath = "$SPROJ"
+storageType = "cloud"
+EOF
+store_capture malformed-bad-type
+
+store_project malformed-same-repo-with-root
+store_toml <<EOF
+[[projects]]
+localPath = "$SPROJ"
+storageType = "same-repo"
+storageRoot = "$WORK/store/malformed-same-repo-with-root/proj-shipsmooth"
+EOF
+store_capture malformed-same-repo-with-root
+
+# Legacy .agents/plans tree, no config -> unresolvable / LEGACY_AGENTS_TREE.
+store_project legacy-agents-tree
+mkdir -p "$SPROJ/.agents/plans"
+store_capture legacy-agents-tree
 
 echo "Fixture corpus written to $OUT/xml and $OUT/transcripts"

@@ -60,6 +60,56 @@ The starting sequence through the risk spike ran as plan-102 on
   thin façade over the proven model) and `conf`, then the cli packages per
   02-cli.md.
 
+## Store slice findings (plan-106, 2026-07-27) — first full command port
+
+The `store` noun group, both leaves end to end, plus its whole dependency chain
+(`ss-cli::ds`, `ss-cli::store`, `resolution_json`, `project`, `ss-core::conf`)
+is ported and verified byte-identical to the Java CLI.
+
+- **Cost.** ~1,320 lines of Java main source + ~1,100 lines of JUnit became
+  ~3,180 lines of Rust (implementation plus the ported tests, which live inline
+  as `#[cfg(test)]` modules in the same files) across 9 tasks over four days
+  (2026-07-24 → 2026-07-27) — in line with the one-package-per-session
+  estimate. Coverage 97–100% per file (`cargo llvm-cov`).
+- **Parity.** `parity/run.sh` rebuilds all 10 plan-85 resolution branches at
+  identical paths for each implementation and byte-diffs stdout, stderr, exit
+  code, and the resulting `shipsmooth.toml`; all 10 pass. The two end-to-end
+  tests written before any task code (`tests/store.rs`) assert byte-exact
+  transcripts.
+- **Divergences found (all resolved):**
+  - `schema.location` in `shipsmooth.toml` embeds the *writing* CLI's own
+    version, so the two implementations legitimately differ there. Decided:
+    the Cargo workspace version is **not** synced to Java releases; the parity
+    harness normalises the token to `v<VERSION>` and byte-checks the rest.
+  - The Java resolver's `IOException → Unresolvable(UNKNOWN)` branch has no
+    Rust equivalent: after the lenient config parse, no fallible operation
+    remains (`is_dir` cannot error). The `UNKNOWN` reason stays in the enum
+    for the wire contract.
+  - `ConfigWriter::render` is infallible in Rust, so Java's exploding-emitter
+    atomicity test became an unwritable-directory test (unix-gated).
+  - Locator quirk preserved as-is: in-repo mode with a missing repo reports
+    role "state" (a Java argument-evaluation-order artifact).
+- **Decisions that outlived the plan:**
+  - `toml_edit` replaces `ArrayOfTablesTomlEmitter` (deleted, not ported);
+    multi-line `[[projects]]` is its default, and other projects' entries are
+    preserved verbatim via a `DocumentMut` read-modify-write.
+  - Lexical path normalisation (`ds::paths`) confirmed necessary —
+    `canonicalize` would have broken config-entry matching in the fixture
+    scenarios.
+  - Dagger's `Provider<T>` indirection evaporated as predicted: a plain
+    `ProjectContext { repo_root, remote_url }` passed at dispatch replaced the
+    `bindStoreInit` reflection dance.
+  - Jackson `FAIL_ON_UNKNOWN_PROPERTIES` parity = serde
+    `deny_unknown_fields`; the plan-87 leniency (0-byte/unparseable config ==
+    absent) is ported with the tests that pin it.
+  - git shelling stays on `std::process::Command` with
+    `redirectErrorStream(true)` semantics (stderr merged into stdout), for
+    both `RemoteUrl` and the tiered `initStateRepoIfAbsent`.
+- **Recommended next slice:** `ss-core::gw` (GitState, GitTags, TaskStore — a
+  façade over the proven XML model), then the plan/task command leaves per
+  02-cli.md. The store slice already exercises the resolve-gate shape, so the
+  remaining `main.rs` wiring is incremental.
+
 ## Target layout
 
 Cargo workspace mirroring the Gradle module split:
