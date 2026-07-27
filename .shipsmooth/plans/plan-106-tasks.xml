@@ -95,9 +95,9 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>store info leaf</name>
-            <commit></commit>
+            <commit>86eb07f5aea5d15d53a799c9746abe5bea80747a</commit>
             <created-from>plan-106-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
