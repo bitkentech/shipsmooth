@@ -78,9 +78,9 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>ShipsmoothDataLocator and ResolvedStateRoot</name>
-            <commit></commit>
+            <commit>e025e5aac35b768336a1796268e59912dac26605</commit>
             <created-from>plan-106-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
