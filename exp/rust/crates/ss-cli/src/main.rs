@@ -5,12 +5,15 @@
 //! emitted by dispatch, not by panicking handlers). Subcommands land with
 //! their packages in the follow-up plan.
 
-// dead_code allowed until the store command wires these in (plan-106 Tasks 6/7).
+// dead_code allowed on ds: parts of the ported model (error causes, enum
+// tables, schema fields) are Java-parity surface consumed only by tests or by
+// the init leaf still to land (plan-106 Task 7).
 #[allow(dead_code)]
 mod ds;
 mod probe;
-#[allow(dead_code)]
+mod project;
 mod resolution_json;
+mod store;
 
 use clap::Parser;
 
@@ -38,11 +41,17 @@ enum Command {
     /// Footprint probe (plan-102 Task 6) — not part of the CLI surface.
     #[command(hide = true)]
     Probe(probe::ProbeArgs),
+    /// Manage where this project's shipsmooth state lives.
+    Store {
+        #[command(subcommand)]
+        command: store::StoreCommand,
+    },
 }
 
 fn run(args: impl IntoIterator<Item = String>) -> i32 {
     match Cli::try_parse_from(args) {
         Ok(Cli { command: Some(Command::Probe(args)), .. }) => probe::run(&args),
+        Ok(Cli { command: Some(Command::Store { command }), .. }) => store::run(&command),
         Ok(_cli) => 0,
         Err(e) => {
             // clap renders --help/--version through the Err path with exit 0.
