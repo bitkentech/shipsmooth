@@ -1,0 +1,283 @@
+//! Writes (upserts) a project entry into the user's `shipsmooth.toml`.
+//!
+//! Port of the Java `ConfigWriter`, rebuilt on `toml_edit` (the Java
+//! `ArrayOfTablesTomlEmitter` — a hand-rolled workaround for Jackson's
+//! single-line array serialisation, plan-90 — is deleted, not transliterated:
+//! `toml_edit` emits multi-line `[[projects]]` blocks natively). The emitted
+//! bytes match the Java emitter: stable key order, single-quoted literal
+//! strings where possible, one blank line after each block.
+//!
+//! The counterpart to `ProjectDataStoreResolver`'s read path. Records a
+//! project's chosen state location keyed on `(localPath, remoteUrl)`: a
+//! matching entry is replaced (idempotent), otherwise a new one is appended.
+//! The config file and its parent directory are created if absent. Paths are
+//! written verbatim — never hash-derived.
+
+use std::path::{Path, PathBuf};
+
+use crate::ds::paths::normalize_lexical;
+use crate::ds::schema_config;
+
+pub struct ConfigWriter {
+    /// Injected config-file location, as for the resolver.
+    config_file: PathBuf,
+    /// The `[toml-schema] location` to emit; `None` means version only
+    /// (spec-valid: `location` is optional).
+    schema_location: Option<String>,
+}
+
+impl ConfigWriter {
+    /// Production shape: emits the build's baked schema location.
+    pub fn new(config_file: PathBuf) -> ConfigWriter {
+        ConfigWriter { config_file, schema_location: Some(schema_config::SCHEMA_LOCATION.to_string()) }
+    }
+
+    /// Inject the schema `location` to emit (tests only).
+    #[cfg(test)]
+    pub fn with_schema_location(config_file: PathBuf, schema_location: Option<String>) -> ConfigWriter {
+        ConfigWriter { config_file, schema_location }
+    }
+
+    /// Upsert a `separate-dir` entry recording the chosen `storageRoot`.
+    pub fn write_external(
+        &self,
+        local_path: &Path,
+        remote_url: Option<&str>,
+        storage_root: &Path,
+    ) -> std::io::Result<()> {
+        self.upsert(
+            local_path,
+            remote_url,
+            Some(&normalize_lexical(storage_root).to_string_lossy()),
+            "separate-dir",
+        )
+    }
+
+    /// Upsert a `same-repo` entry (no `storageRoot`).
+    pub fn write_in_repo(&self, local_path: &Path, remote_url: Option<&str>) -> std::io::Result<()> {
+        self.upsert(local_path, remote_url, None, "same-repo")
+    }
+
+    fn upsert(
+        &self,
+        local_path: &Path,
+        remote_url: Option<&str>,
+        storage_root: Option<&str>,
+        storage_type: &str,
+    ) -> std::io::Result<()> {
+        let local = normalize_lexical(local_path).to_string_lossy().into_owned();
+        let mut doc = self.read_or_empty()?;
+
+        ensure_schema_ref(&mut doc, self.schema_location.as_deref());
+        let projects = projects_tables(&mut doc);
+        remove_same_project(projects, &local, remote_url);
+
+        let mut entry = toml_edit::Table::new();
+        if let Some(url) = remote_url {
+            entry["remoteUrl"] = literal(url);
+        }
+        entry["localPath"] = literal(&local);
+        if let Some(root) = storage_root {
+            entry["storageRoot"] = literal(root);
+        }
+        entry["storageType"] = literal(storage_type);
+        projects.push(entry);
+
+        self.write_atomically(&render(&doc))
+    }
+
+    /// Serialize to a sibling temp file first, then atomically rename it into
+    /// place. A failed write leaves only the discarded temp file behind —
+    /// never a truncated 0-byte `shipsmooth.toml` that would wedge every
+    /// subsequent resolve (plan-87).
+    fn write_atomically(&self, content: &str) -> std::io::Result<()> {
+        let dir = match self.config_file.parent() {
+            Some(parent) => {
+                std::fs::create_dir_all(parent)?;
+                parent
+            }
+            None => Path::new("."),
+        };
+        let mut tmp = tempfile::NamedTempFile::new_in(dir)?;
+        std::io::Write::write_all(&mut tmp, content.as_bytes())?;
+        tmp.persist(&self.config_file).map_err(|e| e.error)?;
+        Ok(())
+    }
+
+    /// Read the existing config document, or start empty when the file does
+    /// not exist. Unlike the resolver's lenient read path, the write path is
+    /// strict: an unparseable existing config is an error, not something to
+    /// silently overwrite. Parsing as a `DocumentMut` (not into the model)
+    /// preserves unknown-but-valid content verbatim across the upsert.
+    fn read_or_empty(&self) -> std::io::Result<toml_edit::DocumentMut> {
+        if !self.config_file.exists() {
+            return Ok(toml_edit::DocumentMut::new());
+        }
+        std::fs::read_to_string(&self.config_file)?
+            .parse::<toml_edit::DocumentMut>()
+            .map_err(std::io::Error::other)
+    }
+}
+
+/// Add the `[toml-schema]` table if absent: `version` always, `location` only
+/// when this build has one.
+fn ensure_schema_ref(doc: &mut toml_edit::DocumentMut, schema_location: Option<&str>) {
+    if doc.contains_key("toml-schema") {
+        return;
+    }
+    let mut schema = toml_edit::Table::new();
+    schema["version"] = literal(schema_config::SCHEMA_VERSION);
+    if let Some(location) = schema_location {
+        schema["location"] = literal(location);
+    }
+    doc.insert("toml-schema", toml_edit::Item::Table(schema));
+}
+
+/// The `[[projects]]` array of tables, created if absent.
+fn projects_tables(doc: &mut toml_edit::DocumentMut) -> &mut toml_edit::ArrayOfTables {
+    if !doc.contains_key("projects") {
+        doc.insert("projects", toml_edit::Item::ArrayOfTables(toml_edit::ArrayOfTables::new()));
+    }
+    doc["projects"].as_array_of_tables_mut().expect("projects is an array of tables")
+}
+
+/// Drop any entry describing the same project — `(localPath, remoteUrl)`
+/// match, remote compared blank-insensitively because TOML round-tripping
+/// turns an absent value into an empty string.
+fn remove_same_project(projects: &mut toml_edit::ArrayOfTables, local: &str, remote_url: Option<&str>) {
+    let target_remote = remote_url.unwrap_or("").trim().to_string();
+    projects.retain(|t| {
+        let entry_local = t.get("localPath").and_then(|v| v.as_str()).unwrap_or("");
+        let entry_remote = t.get("remoteUrl").and_then(|v| v.as_str()).unwrap_or("").trim();
+        !(normalize_str_path(entry_local) == local && entry_remote == target_remote)
+    });
+}
+
+fn normalize_str_path(raw: &str) -> String {
+    if raw.is_empty() {
+        return String::new();
+    }
+    normalize_lexical(Path::new(raw)).to_string_lossy().into_owned()
+}
+
+/// A TOML value in the Java emitter's quoting style: a literal single-quoted
+/// string when the value has no single quote or control character (matching
+/// Jackson's prior style for our paths and `git@…` URLs), else a basic
+/// double-quoted string with toml_edit's standard escapes.
+fn literal(value: &str) -> toml_edit::Item {
+    let has_control = value.chars().any(|c| c < '\u{20}');
+    let v = if !value.contains('\'') && !has_control {
+        format!("'{value}'").parse::<toml_edit::Value>().expect("literal string is valid TOML")
+    } else {
+        toml_edit::Value::from(value)
+    };
+    toml_edit::Item::Value(v)
+}
+
+/// Render with the Java emitter's block layout: one blank line after each
+/// block, including the last.
+fn render(doc: &toml_edit::DocumentMut) -> String {
+    let mut out = String::new();
+    for block in doc.to_string().split("\n\n") {
+        let block = block.trim_end_matches('\n');
+        if block.is_empty() {
+            continue;
+        }
+        out.push_str(block);
+        out.push_str("\n\n");
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    //! plan-106 Task 7 de-risk: write→resolve round trip, byte parity with
+    //! the Java-written fixture layout, and idempotent upsert. Full
+    //! `ConfigWriterTest` port lands in hardening.
+
+    use super::*;
+    use crate::ds::resolution::DataStoreResolution;
+    use crate::ds::resolver::ProjectDataStoreResolver;
+    use crate::ds::store::ProjectDataStore;
+
+    #[test]
+    fn write_external_then_resolver_reads_standalone() {
+        let tmp = tempfile::tempdir().unwrap();
+        let config = tmp.path().join("shipsmooth.toml");
+        let repo = tmp.path().join("repo");
+        let state = tmp.path().join("state");
+        std::fs::create_dir(&repo).unwrap();
+        std::fs::create_dir(&state).unwrap();
+
+        ConfigWriter::new(config.clone()).write_external(&repo, None, &state).unwrap();
+
+        assert!(config.exists(), "config file must be created");
+        match ProjectDataStoreResolver::new(config).resolve(&repo, None) {
+            DataStoreResolution::Settled(ProjectDataStore::Standalone { state_dir, .. }) => {
+                assert_eq!(state_dir, normalize_lexical(&state));
+            }
+            _ => panic!("expected Settled(Standalone)"),
+        }
+    }
+
+    #[test]
+    fn written_bytes_match_the_java_emitter_layout() {
+        let tmp = tempfile::tempdir().unwrap();
+        let config = tmp.path().join("shipsmooth.toml");
+        let repo = tmp.path().join("proj");
+        let state = tmp.path().join("proj-shipsmooth");
+        std::fs::create_dir(&repo).unwrap();
+
+        ConfigWriter::with_schema_location(
+            config.clone(),
+            Some("https://example.test/shipsmooth.tosd".to_string()),
+        )
+        .write_external(&repo, Some("git@github.com:org/proj.git"), &state)
+        .unwrap();
+
+        // The exact block layout the Java ArrayOfTablesTomlEmitter produced:
+        // stable key order, single-quoted literals, blank line after each block.
+        let expected = format!(
+            "[toml-schema]\n\
+             version = '1.0.0'\n\
+             location = 'https://example.test/shipsmooth.tosd'\n\
+             \n\
+             [[projects]]\n\
+             remoteUrl = 'git@github.com:org/proj.git'\n\
+             localPath = '{}'\n\
+             storageRoot = '{}'\n\
+             storageType = 'separate-dir'\n\
+             \n",
+            repo.display(),
+            state.display()
+        );
+        assert_eq!(std::fs::read_to_string(&config).unwrap(), expected);
+    }
+
+    #[test]
+    fn upsert_is_idempotent_replaces_matching_entry() {
+        let tmp = tempfile::tempdir().unwrap();
+        let config = tmp.path().join("shipsmooth.toml");
+        let repo = tmp.path().join("repo");
+        let state_a = tmp.path().join("stateA");
+        let state_b = tmp.path().join("stateB");
+        std::fs::create_dir(&repo).unwrap();
+        std::fs::create_dir(&state_a).unwrap();
+        std::fs::create_dir(&state_b).unwrap();
+
+        let writer = ConfigWriter::new(config.clone());
+        writer.write_external(&repo, None, &state_a).unwrap();
+        writer.write_external(&repo, None, &state_b).unwrap(); // same project, new dir
+
+        match ProjectDataStoreResolver::new(config).resolve(&repo, None) {
+            DataStoreResolution::Settled(ProjectDataStore::Standalone { state_dir, .. }) => {
+                assert_eq!(
+                    state_dir,
+                    normalize_lexical(&state_b),
+                    "second upsert for the same project must replace, not duplicate"
+                );
+            }
+            _ => panic!("expected Settled(Standalone)"),
+        }
+    }
+}

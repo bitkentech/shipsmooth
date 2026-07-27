@@ -1,8 +1,7 @@
 //! Where this project's shipsmooth state lives.
 //!
 //! Port of the Java `ProjectDataStore`: `InRepo` keeps state under the project
-//! repo; `Standalone` keeps it in a separate directory. `init()` (one-time
-//! setup for the standalone state repo) lands with the init leaf task.
+//! repo; `Standalone` keeps it in a separate directory.
 
 use std::path::{Path, PathBuf};
 
@@ -11,7 +10,7 @@ pub enum ProjectDataStore {
     InRepo { repo_root: PathBuf },
     /// State lives in a separate directory, leaving the project repo untouched.
     Standalone {
-        // Java-record parity; its consumer (the init leaf) lands with Task 7.
+        // Java-record parity; unread because init() only provisions state_dir.
         #[allow(dead_code)]
         repo_root: PathBuf,
         state_dir: PathBuf,
@@ -26,6 +25,44 @@ impl ProjectDataStore {
             ProjectDataStore::Standalone { state_dir, .. } => state_dir,
         }
     }
+
+    /// One-time provisioning of this store. In-repo stores need none here (the
+    /// init leaf creates `.shipsmooth/plans/` itself); a standalone store's
+    /// state dir is created and git-inited if absent.
+    ///
+    /// No in-repo-state guard: `ProjectDataStoreResolver` is the single
+    /// decision point and already implements "config wins" when both a
+    /// configured external store and an in-repo `.shipsmooth/` exist —
+    /// `init()` just provisions the chosen store.
+    pub fn init(&self) -> std::io::Result<()> {
+        match self {
+            ProjectDataStore::InRepo { .. } => Ok(()),
+            ProjectDataStore::Standalone { state_dir, .. } => init_state_repo_if_absent(state_dir),
+        }
+    }
+}
+
+/// Tiered check (plan-84): return early when `<stateDir>/.git` is a directory
+/// (no subprocess at all); else create the dir only if absent, then `git init`
+/// either way — the dir may exist without being a repo after an interrupted
+/// earlier init.
+fn init_state_repo_if_absent(state_dir: &Path) -> std::io::Result<()> {
+    if state_dir.join(".git").is_dir() {
+        return Ok(());
+    }
+    if !state_dir.is_dir() {
+        std::fs::create_dir_all(state_dir)?;
+    }
+    // output() swallows stdout+stderr, as Java's redirectErrorStream pipe does;
+    // only the exit code matters.
+    let output = std::process::Command::new("git")
+        .arg("init")
+        .arg(state_dir.as_os_str())
+        .output()?;
+    if !output.status.success() {
+        return Err(std::io::Error::other(format!("git init failed for {}", state_dir.display())));
+    }
+    Ok(())
 }
 
 #[cfg(test)]
