@@ -5,10 +5,6 @@
 //! emitted by dispatch, not by panicking handlers). Subcommands land with
 //! their packages in the follow-up plan.
 
-// dead_code allowed on ds: parts of the ported model (error causes, enum
-// tables, schema fields) are Java-parity surface consumed only by tests or by
-// the init leaf still to land (plan-106 Task 7).
-#[allow(dead_code)]
 mod ds;
 mod probe;
 mod project;
@@ -82,5 +78,16 @@ mod tests {
     #[test]
     fn bare_invocation_parses() {
         assert_eq!(run(["shipsmooth".to_string()]), 0);
+    }
+
+    #[test]
+    fn store_info_accepts_the_short_json_flag() {
+        // Java's InfoTest exercises "-j" through picocli; here the flag is
+        // declared in clap, so pin the short alias at parse level.
+        let cli = Cli::try_parse_from(["shipsmooth", "store", "info", "-j"]).unwrap();
+        match cli.command {
+            Some(Command::Store { command: store::StoreCommand::Info { json } }) => assert!(json),
+            _ => panic!("expected store info"),
+        }
     }
 }

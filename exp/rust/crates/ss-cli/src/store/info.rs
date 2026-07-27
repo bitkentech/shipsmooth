@@ -43,35 +43,65 @@ pub fn report(
 
 #[cfg(test)]
 mod tests {
-    //! plan-106 Task 6 de-risk: the settled-external ready shape (plansDir via
-    //! the ss-core locator) and the unsettled human text. Full `InfoTest` port
-    //! lands in hardening.
+    //! Full port of the Java `InfoTest`. The Java helpers settle a project via
+    //! `ConfigWriter`; until it ports (Task 7) these hand-write the equivalent
+    //! config TOML.
 
     use super::*;
+    use std::path::PathBuf;
 
-    fn resolver_for(config: &Path) -> ProjectDataStoreResolver {
-        ProjectDataStoreResolver::new(config.to_path_buf())
+    struct Dirs {
+        _tmp: tempfile::TempDir,
+        config: PathBuf,
+        repo: PathBuf,
+    }
+
+    fn dirs() -> Dirs {
+        let tmp = tempfile::tempdir().unwrap();
+        let config = tmp.path().join("shipsmooth.toml");
+        let repo = tmp.path().join("repo");
+        std::fs::create_dir(&repo).unwrap();
+        Dirs { _tmp: tmp, config, repo }
+    }
+
+    /// Java `infoForExternal`: write config + provision the state dir.
+    fn settle_external(d: &Dirs, state_dir: &Path) {
+        std::fs::create_dir_all(state_dir.join("plans")).unwrap();
+        std::fs::write(
+            &d.config,
+            format!(
+                "[[projects]]\nlocalPath = '{}'\nstorageRoot = '{}'\nstorageType = 'separate-dir'\n",
+                d.repo.display(),
+                state_dir.display()
+            ),
+        )
+        .unwrap();
+    }
+
+    /// Java `infoForInRepo`: write config + provision .shipsmooth/plans.
+    fn settle_in_repo(d: &Dirs) {
+        std::fs::create_dir_all(d.repo.join(".shipsmooth/plans")).unwrap();
+        std::fs::write(
+            &d.config,
+            format!(
+                "[[projects]]\nlocalPath = '{}'\nstorageType = 'same-repo'\n",
+                d.repo.display()
+            ),
+        )
+        .unwrap();
+    }
+
+    fn run(d: &Dirs, json: bool) -> String {
+        report(&ProjectDataStoreResolver::new(d.config.clone()), &d.repo, None, json)
     }
 
     #[test]
     fn json_settled_external_reports_ready_mode_and_plans_dir() {
-        let tmp = tempfile::tempdir().unwrap();
-        let repo = tmp.path().join("repo");
-        let state = tmp.path().join("state");
-        std::fs::create_dir(&repo).unwrap();
-        std::fs::create_dir_all(state.join("plans")).unwrap();
-        let config = tmp.path().join("shipsmooth.toml");
-        std::fs::write(
-            &config,
-            format!(
-                "[[projects]]\nlocalPath = '{}'\nstorageRoot = '{}'\nstorageType = 'separate-dir'\n",
-                repo.display(),
-                state.display()
-            ),
-        )
-        .unwrap();
+        let d = dirs();
+        let state = d.repo.parent().unwrap().join("state");
+        settle_external(&d, &state);
 
-        let json = report(&resolver_for(&config), &repo, None, true);
+        let json = run(&d, true);
 
         assert!(json.contains("\"status\":\"ready\""), "{json}");
         assert!(json.contains("\"storageType\":\"separate-dir\""), "{json}");
@@ -84,15 +114,64 @@ mod tests {
     }
 
     #[test]
-    fn no_flag_unsettled_prints_human_not_set_up_message() {
-        let tmp = tempfile::tempdir().unwrap();
-        let repo = tmp.path().join("repo");
-        std::fs::create_dir(&repo).unwrap();
-        let config = tmp.path().join("shipsmooth.toml"); // never written: clean first run
+    fn json_settled_in_repo_plans_dir_includes_shipsmooth_segment() {
+        let d = dirs();
+        settle_in_repo(&d);
 
-        let text = report(&resolver_for(&config), &repo, None, false);
+        let json = run(&d, true);
+
+        assert!(json.contains("\"storageType\":\"same-repo\""), "{json}");
+        // Same-repo layout inserts the .shipsmooth segment between repo root and plans/.
+        let expected_plans = d.repo.join(".shipsmooth/plans");
+        assert!(
+            json.contains(&format!("\"plansDir\":\"{}\"", expected_plans.display())),
+            "{json}"
+        );
+    }
+
+    #[test]
+    fn no_flag_settled_external_prints_human_text_with_plans_path() {
+        let d = dirs();
+        let state = d.repo.parent().unwrap().join("state");
+        settle_external(&d, &state);
+
+        let text = run(&d, false);
+
+        assert!(text.contains(&format!("separate-dir storage at {}", state.display())), "{text}");
+        assert!(text.contains(&format!("plans: {}", state.join("plans").display())), "{text}");
+        assert!(!text.contains('{'), "default output is human text, not JSON: {text}");
+    }
+
+    #[test]
+    fn json_unsettled_emits_resolution_shape_not_ready() {
+        let d = dirs(); // no config written: clean first run
+
+        let json = run(&d, true);
+
+        assert!(!json.contains("\"status\":\"ready\""), "{json}");
+        assert!(json.contains("\"status\":\"needs-decision\""), "{json}");
+    }
+
+    #[test]
+    fn no_flag_unsettled_prints_human_not_set_up_message() {
+        let d = dirs();
+
+        let text = run(&d, false);
 
         assert!(text.contains("not set up yet"), "{text}");
         assert!(!text.contains('{'), "default output is human text, not JSON: {text}");
+    }
+
+    #[test]
+    fn unresolvable_legacy_tree_is_reported() {
+        let d = dirs();
+        // A legacy .agents/plans/ tree makes the project unresolvable.
+        std::fs::create_dir_all(d.repo.join(".agents/plans")).unwrap();
+
+        let json = run(&d, true);
+        assert!(json.contains("\"status\":\"unresolvable\""), "{json}");
+
+        let text = run(&d, false);
+        assert!(text.contains("unresolvable"), "{text}");
     }
 }

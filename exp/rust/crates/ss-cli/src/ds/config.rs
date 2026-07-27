@@ -17,7 +17,10 @@ use crate::ds::paths::normalize_lexical;
 #[serde(deny_unknown_fields)]
 pub struct StandaloneConfig {
     /// The `[toml-schema]` table — a reference to the TOML Schema definition.
+    /// Modeled (not just skipped) so `deny_unknown_fields` still accepts real
+    /// configs; only the writer and tests consume it.
     #[serde(rename = "toml-schema")]
+    #[allow(dead_code)]
     pub toml_schema: Option<TomlSchemaRef>,
     #[serde(default)]
     pub projects: Vec<ProjectEntry>,
@@ -26,7 +29,9 @@ pub struct StandaloneConfig {
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TomlSchemaRef {
+    #[allow(dead_code)]
     pub version: Option<String>,
+    #[allow(dead_code)]
     pub location: Option<String>,
 }
 

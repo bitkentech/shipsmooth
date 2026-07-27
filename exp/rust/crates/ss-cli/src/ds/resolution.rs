@@ -28,6 +28,8 @@ impl NeedsDecision {
     ///
     /// Panics if no option is marked: a `NeedsDecision` without a recommended
     /// option is a programming error, not a user-facing condition.
+    // Java-parity model accessor; production renders all options, tests use this.
+    #[allow(dead_code)]
     pub fn recommended(&self) -> &DecisionOption {
         self.options
             .iter()
@@ -42,6 +44,8 @@ impl NeedsDecision {
 /// anticipated reasons carry no cause.
 pub struct Unresolvable {
     pub reason: UnresolvableReason,
+    // Diagnostics only, per the Java contract; nothing in production reads it back.
+    #[allow(dead_code)]
     pub cause: Option<Box<dyn std::error::Error + Send + Sync>>,
 }
 
@@ -52,6 +56,9 @@ impl Unresolvable {
     }
 
     /// An unexpected failure, with its cause retained for diagnostics.
+    // No production caller: the Java resolver's IOException path has no Rust
+    // equivalent (parse is lenient, is_dir doesn't error); kept for parity.
+    #[allow(dead_code)]
     pub fn unknown(cause: impl Into<Box<dyn std::error::Error + Send + Sync>>) -> Self {
         Unresolvable { reason: UnresolvableReason::Unknown, cause: Some(cause.into()) }
     }
@@ -82,6 +89,7 @@ pub enum UndecidableSituation {
 
 impl UndecidableSituation {
     /// Every situation, for exhaustive checks (Java gets `values()` for free).
+    #[allow(dead_code)] // test-only exhaustiveness table
     pub const ALL: [Self; 3] = [
         UndecidableSituation::CleanFirstRun,
         UndecidableSituation::ConfigDirMissing,
@@ -148,12 +156,17 @@ impl Choice {
 pub enum UnresolvableReason {
     LegacyAgentsTree,
     MalformedConfigEntry,
+    // The closed Java enum in full; these two have no Rust producer yet
+    // (AMBIGUOUS_STATE is unproduced in Java too; UNKNOWN only via unknown()).
+    #[allow(dead_code)]
     AmbiguousState,
+    #[allow(dead_code)]
     Unknown,
 }
 
 impl UnresolvableReason {
     /// Every reason, for exhaustive checks (Java gets `values()` for free).
+    #[allow(dead_code)] // test-only exhaustiveness table
     pub const ALL: [Self; 4] = [
         UnresolvableReason::LegacyAgentsTree,
         UnresolvableReason::MalformedConfigEntry,

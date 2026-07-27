@@ -28,3 +28,54 @@ fn config_file_for(xdg_config_home: Option<&str>, app_data: Option<&str>, user_h
 fn blank_to_none(value: Option<&str>) -> Option<&str> {
     value.filter(|v| !v.trim().is_empty())
 }
+
+#[cfg(test)]
+mod tests {
+    //! Port of the Java `DefaultConfigFileLocatorTest`.
+
+    use super::*;
+
+    // XDG_CONFIG_HOME wins on any platform when set.
+    #[test]
+    fn xdg_config_home_takes_precedence() {
+        let result =
+            config_file_for(Some("/xdg/config"), Some(r"C:\Users\me\AppData\Roaming"), "/home/me");
+        assert_eq!(result, PathBuf::from("/xdg/config/shipsmooth/shipsmooth.toml"));
+    }
+
+    // Windows: no XDG, %APPDATA% set → roaming app data.
+    #[test]
+    fn app_data_used_when_no_xdg() {
+        let result = config_file_for(None, Some(r"C:\Users\me\AppData\Roaming"), r"C:\Users\me");
+        assert_eq!(
+            result,
+            PathBuf::from(r"C:\Users\me\AppData\Roaming").join("shipsmooth/shipsmooth.toml")
+        );
+    }
+
+    // POSIX: no XDG, no %APPDATA% → ~/.config.
+    #[test]
+    fn posix_default_when_no_xdg_or_app_data() {
+        let result = config_file_for(None, None, "/home/me");
+        assert_eq!(result, PathBuf::from("/home/me/.config/shipsmooth/shipsmooth.toml"));
+    }
+
+    // Blank env values are treated as unset.
+    #[test]
+    fn blank_env_values_fall_through() {
+        let result = config_file_for(Some("  "), Some(""), "/home/me");
+        assert_eq!(result, PathBuf::from("/home/me/.config/shipsmooth/shipsmooth.toml"));
+    }
+
+    // locate() reads the real environment; whatever config home it picks, the
+    // file is always shipsmooth/shipsmooth.toml.
+    #[test]
+    fn locate_always_ends_with_shipsmooth_toml() {
+        let result = locate();
+        assert!(
+            result.ends_with("shipsmooth/shipsmooth.toml"),
+            "locate() must resolve to shipsmooth/shipsmooth.toml; was: {}",
+            result.display()
+        );
+    }
+}

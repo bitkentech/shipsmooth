@@ -10,7 +10,12 @@ pub enum ProjectDataStore {
     /// State lives in the project repo (default).
     InRepo { repo_root: PathBuf },
     /// State lives in a separate directory, leaving the project repo untouched.
-    Standalone { repo_root: PathBuf, state_dir: PathBuf },
+    Standalone {
+        // Java-record parity; its consumer (the init leaf) lands with Task 7.
+        #[allow(dead_code)]
+        repo_root: PathBuf,
+        state_dir: PathBuf,
+    },
 }
 
 impl ProjectDataStore {
