@@ -191,14 +191,30 @@ fn render(doc: &toml_edit::DocumentMut) -> String {
 
 #[cfg(test)]
 mod tests {
-    //! plan-106 Task 7 de-risk: write→resolve round trip, byte parity with
-    //! the Java-written fixture layout, and idempotent upsert. Full
-    //! `ConfigWriterTest` port lands in hardening.
+    //! Full port of the Java `ConfigWriterTest` (round trips, schema table,
+    //! idempotent upsert, atomic write) plus the byte-parity layout test. The
+    //! Java atomicity test injects an exploding emitter; Rust's render cannot
+    //! fail, so the same guarantee — a failed write never truncates the
+    //! existing config, no temp litter — is pinned via an unwritable config
+    //! dir and the strict-read failure instead.
 
     use super::*;
-    use crate::ds::resolution::DataStoreResolution;
+    use crate::ds::resolution::{DataStoreResolution, UndecidableSituation};
     use crate::ds::resolver::ProjectDataStoreResolver;
     use crate::ds::store::ProjectDataStore;
+
+    fn resolve(config: &Path, repo: &Path) -> DataStoreResolution {
+        ProjectDataStoreResolver::new(config.to_path_buf()).resolve(repo, None)
+    }
+
+    fn settled_standalone_root(r: DataStoreResolution) -> PathBuf {
+        match r {
+            DataStoreResolution::Settled(ProjectDataStore::Standalone { state_dir, .. }) => {
+                state_dir
+            }
+            _ => panic!("expected Settled(Standalone)"),
+        }
+    }
 
     #[test]
     fn write_external_then_resolver_reads_standalone() {
@@ -212,11 +228,69 @@ mod tests {
         ConfigWriter::new(config.clone()).write_external(&repo, None, &state).unwrap();
 
         assert!(config.exists(), "config file must be created");
-        match ProjectDataStoreResolver::new(config).resolve(&repo, None) {
-            DataStoreResolution::Settled(ProjectDataStore::Standalone { state_dir, .. }) => {
-                assert_eq!(state_dir, normalize_lexical(&state));
+        assert_eq!(
+            settled_standalone_root(resolve(&config, &repo)),
+            normalize_lexical(&state)
+        );
+    }
+
+    #[test]
+    fn emits_injected_schema_location() {
+        let tmp = tempfile::tempdir().unwrap();
+        let config = tmp.path().join("shipsmooth.toml");
+        let repo = tmp.path().join("repo");
+        std::fs::create_dir(&repo).unwrap();
+
+        let loc = "https://example.test/shipsmooth.tosd";
+        ConfigWriter::with_schema_location(config.clone(), Some(loc.to_string()))
+            .write_in_repo(&repo, None)
+            .unwrap();
+
+        let written = std::fs::read_to_string(&config).unwrap();
+        assert!(written.contains("[toml-schema]"), "{written}");
+        assert!(written.contains(&format!("location = '{loc}'")), "{written}");
+    }
+
+    #[test]
+    fn omits_location_when_not_injected() {
+        let tmp = tempfile::tempdir().unwrap();
+        let config = tmp.path().join("shipsmooth.toml");
+        let repo = tmp.path().join("repo");
+        std::fs::create_dir(&repo).unwrap();
+
+        // No schema location → [toml-schema] carries version only, no location key.
+        ConfigWriter::with_schema_location(config.clone(), None)
+            .write_in_repo(&repo, None)
+            .unwrap();
+
+        let written = std::fs::read_to_string(&config).unwrap();
+        assert!(written.contains("[toml-schema]"), "{written}");
+        assert!(written.contains("version = "), "{written}");
+        assert!(!written.contains("location"), "no location key when none injected:\n{written}");
+    }
+
+    #[test]
+    fn write_in_repo_then_resolver_sees_in_repo_entry() {
+        let tmp = tempfile::tempdir().unwrap();
+        let config = tmp.path().join("shipsmooth.toml");
+        let repo = tmp.path().join("repo");
+        std::fs::create_dir(&repo).unwrap();
+
+        ConfigWriter::new(config.clone()).write_in_repo(&repo, None).unwrap();
+
+        // No .shipsmooth/plans yet → an in-repo entry is recognised but not yet set up.
+        match resolve(&config, &repo) {
+            DataStoreResolution::NeedsDecision(needs) => {
+                assert_eq!(needs.situation, UndecidableSituation::InRepoNotSetUp)
             }
-            _ => panic!("expected Settled(Standalone)"),
+            _ => panic!("expected NeedsDecision"),
+        }
+
+        // Once the folder exists, the same entry resolves settled in-repo.
+        std::fs::create_dir_all(repo.join(".shipsmooth/plans")).unwrap();
+        match resolve(&config, &repo) {
+            DataStoreResolution::Settled(ProjectDataStore::InRepo { .. }) => {}
+            _ => panic!("expected Settled(InRepo)"),
         }
     }
 
@@ -269,15 +343,116 @@ mod tests {
         writer.write_external(&repo, None, &state_a).unwrap();
         writer.write_external(&repo, None, &state_b).unwrap(); // same project, new dir
 
-        match ProjectDataStoreResolver::new(config).resolve(&repo, None) {
-            DataStoreResolution::Settled(ProjectDataStore::Standalone { state_dir, .. }) => {
-                assert_eq!(
-                    state_dir,
-                    normalize_lexical(&state_b),
-                    "second upsert for the same project must replace, not duplicate"
-                );
-            }
-            _ => panic!("expected Settled(Standalone)"),
+        assert_eq!(
+            settled_standalone_root(resolve(&config, &repo)),
+            normalize_lexical(&state_b),
+            "second upsert for the same project must replace, not duplicate"
+        );
+    }
+
+    #[test]
+    fn distinct_projects_coexist() {
+        let tmp = tempfile::tempdir().unwrap();
+        let config = tmp.path().join("shipsmooth.toml");
+        let repo1 = tmp.path().join("repo1");
+        let repo2 = tmp.path().join("repo2");
+        let state1 = tmp.path().join("s1");
+        let state2 = tmp.path().join("s2");
+        for d in [&repo1, &repo2, &state1, &state2] {
+            std::fs::create_dir(d).unwrap();
         }
+
+        let writer = ConfigWriter::new(config.clone());
+        writer.write_external(&repo1, None, &state1).unwrap();
+        writer.write_external(&repo2, None, &state2).unwrap();
+
+        assert_eq!(settled_standalone_root(resolve(&config, &repo1)), normalize_lexical(&state1));
+        assert_eq!(settled_standalone_root(resolve(&config, &repo2)), normalize_lexical(&state2));
+    }
+
+    // ── Atomic write: a failed write never truncates the config (plan-87) ────
+
+    #[cfg(unix)]
+    #[test]
+    fn failed_write_leaves_existing_config_intact_and_no_temp_litter() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let tmp = tempfile::tempdir().unwrap();
+        let config_dir = tmp.path().join("conf");
+        std::fs::create_dir(&config_dir).unwrap();
+        let config = config_dir.join("shipsmooth.toml");
+        let repo = tmp.path().join("repo");
+        let good = tmp.path().join("good");
+        std::fs::create_dir(&repo).unwrap();
+        std::fs::create_dir(&good).unwrap();
+
+        // First write a valid config the normal way.
+        ConfigWriter::new(config.clone()).write_external(&repo, None, &good).unwrap();
+        let before = std::fs::read_to_string(&config).unwrap();
+        assert!(!before.trim().is_empty(), "precondition: a valid non-empty config exists");
+
+        // Now make the write fail mid-flight: the config dir refuses new files,
+        // so the temp-file creation blows up before the rename can happen.
+        std::fs::set_permissions(&config_dir, std::fs::Permissions::from_mode(0o555)).unwrap();
+        let repo2 = tmp.path().join("repo2");
+        let other = tmp.path().join("other");
+        std::fs::create_dir(&repo2).unwrap();
+        std::fs::create_dir(&other).unwrap();
+        let result = ConfigWriter::new(config.clone()).write_external(&repo2, None, &other);
+        std::fs::set_permissions(&config_dir, std::fs::Permissions::from_mode(0o755)).unwrap();
+
+        assert!(result.is_err(), "write into an unwritable dir must fail");
+        // The original config must survive byte-for-byte — never a truncated 0-byte file.
+        assert_eq!(
+            std::fs::read_to_string(&config).unwrap(),
+            before,
+            "a failed write must not corrupt the existing config"
+        );
+        // And no temp file may be left behind in the config directory.
+        let litter: Vec<_> = std::fs::read_dir(&config_dir)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .filter(|name| name != "shipsmooth.toml")
+            .collect();
+        assert!(litter.is_empty(), "failed write left temp litter: {litter:?}");
+    }
+
+    #[test]
+    fn unparseable_existing_config_fails_the_write_and_is_preserved() {
+        // The write path is strict where the read path is lenient: silently
+        // replacing a corrupt config would destroy entries for every other
+        // project recorded in it.
+        let tmp = tempfile::tempdir().unwrap();
+        let config = tmp.path().join("shipsmooth.toml");
+        let repo = tmp.path().join("repo");
+        std::fs::create_dir(&repo).unwrap();
+        std::fs::write(&config, "this is = = not valid toml [[[").unwrap();
+
+        let result = ConfigWriter::new(config.clone()).write_external(&repo, None, &repo);
+
+        assert!(result.is_err(), "upsert over an unparseable config must fail");
+        assert_eq!(
+            std::fs::read_to_string(&config).unwrap(),
+            "this is = = not valid toml [[[",
+            "the corrupt config must be left for the user to inspect, not overwritten"
+        );
+    }
+
+    #[test]
+    fn upsert_preserves_other_entries_verbatim() {
+        // DocumentMut round-trips the existing file, so entries for other
+        // projects keep their exact bytes across an upsert.
+        let tmp = tempfile::tempdir().unwrap();
+        let config = tmp.path().join("shipsmooth.toml");
+        let repo = tmp.path().join("repo");
+        std::fs::create_dir(&repo).unwrap();
+        let existing = "[[projects]]\nlocalPath = '/somewhere/else'\nstorageType = 'same-repo'\n";
+        std::fs::write(&config, existing).unwrap();
+
+        ConfigWriter::new(config.clone()).write_in_repo(&repo, None).unwrap();
+
+        let written = std::fs::read_to_string(&config).unwrap();
+        assert!(written.contains("localPath = '/somewhere/else'"), "{written}");
+        assert!(written.contains(&format!("localPath = '{}'", repo.display())), "{written}");
     }
 }

@@ -8,22 +8,18 @@
 //! state is settled, and always exits 0: a settled project reports `ready`; an
 //! unsettled one reports the same needs-decision/unresolvable shape as startup.
 
-use std::path::Path;
-
 use crate::ds::resolution::DataStoreResolution;
 use crate::ds::resolver::ProjectDataStoreResolver;
+use crate::project::ProjectContext;
 use crate::resolution_json;
 use crate::store::state_report;
 
 /// The report `store info` prints for this project (the caller prints it).
-pub fn report(
-    resolver: &ProjectDataStoreResolver,
-    repo_root: &Path,
-    remote_url: Option<&str>,
-    json: bool,
-) -> String {
-    match resolver.resolve(repo_root, remote_url) {
-        DataStoreResolution::Settled(store) => state_report::ready(repo_root, &store, json),
+pub fn report(resolver: &ProjectDataStoreResolver, project: &ProjectContext, json: bool) -> String {
+    match resolver.resolve(&project.repo_root, project.remote_url()) {
+        DataStoreResolution::Settled(store) => {
+            state_report::ready(&project.repo_root, &store, json)
+        }
         DataStoreResolution::NeedsDecision(needs) => {
             if json {
                 resolution_json::needs_decision(&needs)
@@ -48,7 +44,7 @@ mod tests {
     //! config TOML.
 
     use super::*;
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
 
     struct Dirs {
         _tmp: tempfile::TempDir,
@@ -92,7 +88,11 @@ mod tests {
     }
 
     fn run(d: &Dirs, json: bool) -> String {
-        report(&ProjectDataStoreResolver::new(d.config.clone()), &d.repo, None, json)
+        report(
+            &ProjectDataStoreResolver::new(d.config.clone()),
+            &crate::project::ProjectContext::without_remote(&d.repo),
+            json,
+        )
     }
 
     #[test]

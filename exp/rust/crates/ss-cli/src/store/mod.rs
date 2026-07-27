@@ -10,9 +10,10 @@ mod state_report;
 
 use std::path::Path;
 
+use crate::ds;
 use crate::ds::config_writer::ConfigWriter;
 use crate::ds::resolver::ProjectDataStoreResolver;
-use crate::{ds, project};
+use crate::project::ProjectContext;
 
 #[derive(clap::Subcommand)]
 pub enum StoreCommand {
@@ -42,25 +43,23 @@ pub enum StoreCommand {
 /// `main` binding — repo root via git, origin URL if present), resolve, print.
 pub fn run(command: &StoreCommand) -> i32 {
     let cwd = std::env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf());
-    let repo_root = project::repo_root(&cwd);
-    let remote_url = project::remote_url(&repo_root);
+    let project = ProjectContext::from_dir(&cwd);
     let config_file = ds::config_file::locate();
     let resolver = ProjectDataStoreResolver::new(config_file.clone());
 
     match command {
         StoreCommand::Info { json } => {
-            println!("{}", info::report(&resolver, &repo_root, remote_url.as_deref(), *json));
+            println!("{}", info::report(&resolver, &project, *json));
             0
         }
         StoreCommand::Init { type_arg, path, json } => {
             // Single resolution per invocation — the one source of truth for
             // this run (the Java main computes it once and binds it).
-            let resolution = resolver.resolve(&repo_root, remote_url.as_deref());
+            let resolution = resolver.resolve(&project.repo_root, project.remote_url());
             let outcome = init::run(
                 &resolver,
                 &ConfigWriter::new(config_file),
-                &repo_root,
-                remote_url.as_deref(),
+                &project,
                 resolution,
                 type_arg,
                 path.as_deref(),

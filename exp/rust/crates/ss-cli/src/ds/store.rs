@@ -67,8 +67,8 @@ fn init_state_repo_if_absent(state_dir: &Path) -> std::io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    //! The state-root half of the Java `ProjectDataStoreTest`; the `init()`
-    //! tests port with the init leaf (Task 7).
+    //! Port of the Java `ProjectDataStoreTest`: state roots and the tiered
+    //! `initStateRepoIfAbsent` behaviour.
 
     use super::*;
 
@@ -85,5 +85,50 @@ mod tests {
             state_dir: PathBuf::from("/proj-shipsmooth"),
         };
         assert_eq!(store.state_root(), Path::new("/proj-shipsmooth"));
+    }
+
+    fn standalone_at(tmp: &Path) -> ProjectDataStore {
+        ProjectDataStore::Standalone {
+            repo_root: tmp.join("proj"),
+            state_dir: tmp.join("proj-shipsmooth"),
+        }
+    }
+
+    #[test]
+    fn init_creates_and_git_inits_an_absent_state_dir_and_is_idempotent() {
+        let tmp = tempfile::tempdir().unwrap();
+        let store = standalone_at(tmp.path());
+        let state = tmp.path().join("proj-shipsmooth");
+
+        store.init().unwrap();
+        assert!(state.join(".git").is_dir(), "state dir must be created and git-inited");
+
+        // Second init takes the fast path (.git present): no error, repo intact.
+        let head_before = std::fs::read(state.join(".git/HEAD")).unwrap();
+        store.init().unwrap();
+        assert_eq!(std::fs::read(state.join(".git/HEAD")).unwrap(), head_before);
+    }
+
+    #[test]
+    fn init_git_inits_a_dir_that_exists_without_being_a_repo() {
+        // The middle tier: the dir may exist without being a repo after an
+        // interrupted earlier init — git-init it rather than assuming.
+        let tmp = tempfile::tempdir().unwrap();
+        let state = tmp.path().join("proj-shipsmooth");
+        std::fs::create_dir(&state).unwrap();
+
+        standalone_at(tmp.path()).init().unwrap();
+
+        assert!(state.join(".git").is_dir());
+    }
+
+    #[test]
+    fn in_repo_init_is_a_no_op() {
+        let tmp = tempfile::tempdir().unwrap();
+        let store = ProjectDataStore::InRepo { repo_root: tmp.path().to_path_buf() };
+
+        store.init().unwrap();
+
+        assert!(!tmp.path().join(".git").exists(), "in-repo init must not touch anything");
     }
 }

@@ -8,6 +8,31 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+/// The project this invocation runs against: the repo root and its origin URL
+/// travel together through every store command (the Java `bind` pair).
+pub struct ProjectContext {
+    pub repo_root: PathBuf,
+    pub remote_url: Option<String>,
+}
+
+impl ProjectContext {
+    /// Derive the context from `start_dir`, as the Java `main` does from CWD.
+    pub fn from_dir(start_dir: &Path) -> ProjectContext {
+        let repo_root = repo_root(start_dir);
+        let remote_url = remote_url(&repo_root);
+        ProjectContext { repo_root, remote_url }
+    }
+
+    #[cfg(test)]
+    pub fn without_remote(repo_root: &Path) -> ProjectContext {
+        ProjectContext { repo_root: repo_root.to_path_buf(), remote_url: None }
+    }
+
+    pub fn remote_url(&self) -> Option<&str> {
+        self.remote_url.as_deref()
+    }
+}
+
 /// The root directory of the git repository containing `start_dir`; falls
 /// back to `start_dir` itself when git is unavailable or not in a repo.
 pub fn repo_root(start_dir: &Path) -> PathBuf {
@@ -92,5 +117,22 @@ mod tests {
 
         git(&repo, &["remote", "add", "origin", "git@github.com:org/proj.git"]);
         assert_eq!(remote_url(&repo), Some("git@github.com:org/proj.git".to_string()));
+    }
+
+    #[test]
+    fn context_from_dir_carries_the_repo_root_and_its_remote() {
+        let tmp = tempfile::tempdir().unwrap();
+        let repo = init_repo(tmp.path());
+        git(&repo, &["remote", "add", "origin", "git@github.com:org/proj.git"]);
+        let subdir = repo.join("sub");
+        std::fs::create_dir(&subdir).unwrap();
+
+        let context = ProjectContext::from_dir(&subdir);
+
+        assert_eq!(
+            context.repo_root.canonicalize().unwrap(),
+            repo.canonicalize().unwrap()
+        );
+        assert_eq!(context.remote_url(), Some("git@github.com:org/proj.git"));
     }
 }
