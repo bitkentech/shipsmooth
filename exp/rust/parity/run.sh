@@ -14,10 +14,10 @@ SS_RUST="${SS_RUST:-$HERE/../target/debug/shipsmooth}"
 [ -x "$SS_JAVA" ] || { echo "Java CLI not found at $SS_JAVA (override via SS_JAVA=)" >&2; exit 1; }
 [ -x "$SS_RUST" ] || { echo "Rust binary not built — run: cargo build" >&2; exit 1; }
 
-WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
-
 FAILED=0
+WORK="$(mktemp -d)"
+# On failure the work dir is kept so the diffed captures can be inspected.
+trap '[ "$FAILED" = 0 ] && rm -rf "$WORK" || echo "captures kept at $WORK" >&2' EXIT
 
 # --- scenario machinery -------------------------------------------------------
 # One fixed base dir per scenario, wiped and rebuilt identically before each
@@ -125,12 +125,14 @@ malformed-missing-type malformed-bad-type malformed-same-repo-with-root
 legacy-agents-tree"
 
 mkdir -p "$WORK/cap"
+COUNT=0
 for s in $STORE_SCENARIOS; do
     compare_store_scenario "$s"
+    COUNT=$((COUNT + 1))
 done
 
 if [ "$FAILED" != 0 ]; then
     echo "parity: FAILURES above" >&2
     exit 1
 fi
-echo "parity: all store scenarios byte-identical (java vs rust)"
+echo "parity: all $COUNT store scenarios byte-identical (java vs rust)"
