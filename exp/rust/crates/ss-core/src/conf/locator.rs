@@ -85,20 +85,27 @@ impl ShipsmoothDataLocator {
 
 #[cfg(test)]
 mod tests {
-    //! plan-106 Task 5 de-risk: the layout difference (the single place the
-    //! same-repo vs separate-dir path shapes diverge), token validation, and
-    //! the locator's eager project-root check. Full test port lands in
-    //! hardening.
+    //! Ports of the Java `ShipsmoothDataLocatorValidationTest`, the locator
+    //! half of `ResolvedStateRootTest`, and the locator half of
+    //! `ShipsmoothDataLocatorIntegrationTest` (its TaskStore-wiring half ports
+    //! with the `gw` module). Java's null-root test has no Rust equivalent.
 
     use super::*;
 
-    #[test]
-    fn plans_dir_is_dotfolder_in_repo_but_bare_in_standalone() {
+    fn two_dirs() -> (tempfile::TempDir, PathBuf, PathBuf) {
         let tmp = tempfile::tempdir().unwrap();
         let repo = tmp.path().join("proj");
         let state = tmp.path().join("proj-shipsmooth");
         std::fs::create_dir(&repo).unwrap();
         std::fs::create_dir(&state).unwrap();
+        (tmp, repo, state)
+    }
+
+    // ── the layout fork: the single place the two storage shapes diverge ─────
+
+    #[test]
+    fn plans_dir_is_dotfolder_in_repo_but_bare_in_standalone() {
+        let (_tmp, repo, state) = two_dirs();
 
         let in_repo = ShipsmoothDataLocator::in_repo(&repo).unwrap();
         assert_eq!(in_repo.plans_dir(), repo.join(".shipsmooth/plans"));
@@ -108,34 +115,74 @@ mod tests {
         assert_eq!(standalone.plans_dir(), state.join("plans"));
     }
 
+    // ── ShipsmoothDataLocatorValidationTest ──────────────────────────────────
+
     #[test]
-    fn state_root_token_rejects_missing_and_non_directory_paths() {
-        let tmp = tempfile::tempdir().unwrap();
+    fn accepts_accessible_repo_root_and_token() {
+        let (_tmp, repo, state) = two_dirs();
+        let token = ResolvedStateRoot::of(&state).unwrap();
 
-        let missing = tmp.path().join("nope");
-        let err = ResolvedStateRoot::of(&missing).unwrap_err();
-        assert_eq!(
-            err.to_string(),
-            format!("state root {} is not accessible: does not exist", missing.display())
-        );
-
-        let file = tmp.path().join("file");
-        std::fs::write(&file, "x").unwrap();
-        let err = ResolvedStateRoot::of(&file).unwrap_err();
-        assert_eq!(
-            err.to_string(),
-            format!("state root {} is not accessible: is not a directory", file.display())
-        );
+        assert!(ShipsmoothDataLocator::new(&repo, token).is_ok());
     }
 
     #[test]
-    fn locator_validates_the_project_root_eagerly() {
-        let tmp = tempfile::tempdir().unwrap();
-        let missing = tmp.path().join("gone");
+    fn rejects_non_existent_repo_root() {
+        let (tmp, _repo, state) = two_dirs();
+        let missing = tmp.path().join("nope");
+        let token = ResolvedStateRoot::of(&state).unwrap();
 
-        let err =
-            ShipsmoothDataLocator::new(&missing, ResolvedStateRoot::of(tmp.path()).unwrap())
-                .unwrap_err();
-        assert!(err.to_string().starts_with(&format!("project root {}", missing.display())));
+        let err = ShipsmoothDataLocator::new(&missing, token).unwrap_err();
+        assert!(
+            err.to_string().contains(&missing.display().to_string()),
+            "error must name the offending path: {err}"
+        );
+        assert!(err.to_string().starts_with("project root"));
+    }
+
+    // ── ResolvedStateRootTest.locator_acceptsTheToken_andResolvesPathsUnderIt ─
+
+    #[test]
+    fn locator_accepts_the_token_and_resolves_paths_under_it() {
+        // The locator demands the token (not a bare path) for the state root;
+        // it does not re-validate. With a distinct repo root this is
+        // standalone mode: plans/ hangs directly off the token's state root.
+        let (_tmp, repo, state) = two_dirs();
+        let token = ResolvedStateRoot::of(&state).unwrap();
+        let locator = ShipsmoothDataLocator::new(&repo, token).unwrap();
+
+        assert_eq!(
+            locator.plan_tasks_file(7).parent().unwrap(),
+            state.join("plans")
+        );
+    }
+
+    // ── ShipsmoothDataLocatorIntegrationTest (locator half) ──────────────────
+
+    #[test]
+    fn resolves_under_the_injected_repo_root_not_the_process_cwd() {
+        let (_tmp, repo, _state) = two_dirs();
+        let locator = ShipsmoothDataLocator::in_repo(&repo).unwrap();
+
+        assert_eq!(
+            locator.plan_tasks_file(42),
+            repo.join(".shipsmooth/plans/plan-42-tasks.xml")
+        );
+    }
+
+    // ── the remaining path derivations share the plans-dir source of truth ───
+
+    #[test]
+    fn plan_markdown_file_and_pattern_agree_on_the_filename_shape() {
+        let (_tmp, repo, _state) = two_dirs();
+        let locator = ShipsmoothDataLocator::in_repo(&repo).unwrap();
+
+        let markdown = locator.plan_markdown_file(12);
+        assert_eq!(markdown, repo.join(".shipsmooth/plans/plan-12.md"));
+
+        let pattern = locator.plan_markdown_pattern();
+        let name = markdown.file_name().unwrap().to_string_lossy().into_owned();
+        let captures = pattern.captures(&name).expect("pattern must match its own filename");
+        assert_eq!(&captures[1], "12");
+        assert!(!pattern.is_match("plan-12-tasks.xml"));
     }
 }
