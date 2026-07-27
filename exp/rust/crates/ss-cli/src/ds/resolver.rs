@@ -92,19 +92,27 @@ fn from_external_entry(local_path: &Path, entry: &ProjectEntry) -> DataStoreReso
 /// on-disk folder, so an unprovisioned repo is offered the in-repo setup
 /// rather than re-asked from scratch.
 fn from_in_repo_entry(local_path: &Path) -> DataStoreResolution {
-    if local_path.join(DATA_DIR).join(PLANS_SUBDIR).is_dir() {
-        return DataStoreResolution::Settled(ProjectDataStore::InRepo {
-            repo_root: local_path.to_path_buf(),
-        });
-    }
-    DataStoreResolution::NeedsDecision(NeedsDecision {
-        situation: UndecidableSituation::InRepoNotSetUp,
-        options: vec![DecisionOption {
-            choice: Choice::InRepo,
-            proposed_path: local_path.join(DATA_DIR),
-            recommended: true,
-        }],
+    settled_in_repo(local_path).unwrap_or_else(|| {
+        DataStoreResolution::NeedsDecision(NeedsDecision {
+            situation: UndecidableSituation::InRepoNotSetUp,
+            options: vec![DecisionOption {
+                choice: Choice::InRepo,
+                proposed_path: local_path.join(DATA_DIR),
+                recommended: true,
+            }],
+        })
     })
+}
+
+/// Settled in-repo iff the tool-owned `.shipsmooth/plans/` subtree exists —
+/// the single definition of what "in-repo state is set up" means.
+fn settled_in_repo(local_path: &Path) -> Option<DataStoreResolution> {
+    if !local_path.join(DATA_DIR).join(PLANS_SUBDIR).is_dir() {
+        return None;
+    }
+    Some(DataStoreResolution::Settled(ProjectDataStore::InRepo {
+        repo_root: local_path.to_path_buf(),
+    }))
 }
 
 fn malformed() -> DataStoreResolution {
@@ -118,12 +126,7 @@ fn from_filesystem(local_path: &Path) -> DataStoreResolution {
             UnresolvableReason::LegacyAgentsTree,
         ));
     }
-    if local_path.join(DATA_DIR).join(PLANS_SUBDIR).is_dir() {
-        return DataStoreResolution::Settled(ProjectDataStore::InRepo {
-            repo_root: local_path.to_path_buf(),
-        });
-    }
-    clean_first_run(local_path)
+    settled_in_repo(local_path).unwrap_or_else(|| clean_first_run(local_path))
 }
 
 /// Nothing configured and no state anywhere: offer external (recommended) or in-repo.
@@ -166,15 +169,35 @@ fn proposed_external_path(local_path: &Path) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    //! plan-106 Task 4 de-risk: the branch table's core paths — clean first
-    //! run with the sibling proposal, the separate-dir config branches, and
-    //! the unresolvable cases. The full `ProjectDataStoreResolverTest` port
-    //! lands in hardening.
+    //! Full port of the Java `ProjectDataStoreResolverTest` — one test per row
+    //! of the plan-85 branch table, asserting the returned
+    //! `DataStoreResolution` variant. Sections mirror the Java file.
 
     use super::*;
+    use tempfile::TempDir;
 
-    fn resolver_for(dir: &Path) -> ProjectDataStoreResolver {
-        ProjectDataStoreResolver::new(dir.join("shipsmooth.toml"))
+    fn repo() -> TempDir {
+        tempfile::tempdir().unwrap()
+    }
+
+    /// Java's `writeConfig`: the config file lives inside the repo tempdir.
+    fn write_config(repo: &Path, toml: &str) -> PathBuf {
+        let file = repo.join("shipsmooth.toml");
+        std::fs::write(&file, toml).unwrap();
+        file
+    }
+
+    /// Java's `resolve` helper: resolver over an injected config file, with
+    /// the tempdir as the project's local path.
+    fn resolve(config: PathBuf, repo: &Path, remote_url: Option<&str>) -> DataStoreResolution {
+        ProjectDataStoreResolver::new(config).resolve(repo, remote_url)
+    }
+
+    fn settled(r: DataStoreResolution) -> ProjectDataStore {
+        match r {
+            DataStoreResolution::Settled(store) => store,
+            _ => panic!("expected Settled"),
+        }
     }
 
     fn needs_decision(r: DataStoreResolution) -> NeedsDecision {
@@ -184,93 +207,357 @@ mod tests {
         }
     }
 
+    fn unresolvable(r: DataStoreResolution) -> Unresolvable {
+        match r {
+            DataStoreResolution::Unresolvable(u) => u,
+            _ => panic!("expected Unresolvable"),
+        }
+    }
+
+    fn standalone_state_dir(store: ProjectDataStore) -> PathBuf {
+        match store {
+            ProjectDataStore::Standalone { state_dir, .. } => state_dir,
+            _ => panic!("expected Standalone store"),
+        }
+    }
+
+    // ── Settled: matched external config entry whose dir exists ──────────────
+
     #[test]
-    fn clean_first_run_offers_external_sibling_recommended_then_in_repo() {
-        let tmp = tempfile::tempdir().unwrap();
-        let repo = tmp.path().join("proj");
-        std::fs::create_dir(&repo).unwrap();
+    fn config_filesystem_dir_exists_settled_standalone() {
+        let repo = repo();
+        let storage_root = repo.path().join("state");
+        std::fs::create_dir_all(&storage_root).unwrap();
+        let config = write_config(
+            repo.path(),
+            &format!(
+                "[[projects]]\n\
+                 remoteUrl = 'https://github.com/org/repo.git'\n\
+                 localPath = '{}'\n\
+                 storageRoot = '{}'\n\
+                 storageType = 'separate-dir'\n",
+                repo.path().display(),
+                storage_root.display()
+            ),
+        );
 
-        let needs = needs_decision(resolver_for(tmp.path()).resolve(&repo, None));
-
-        assert_eq!(needs.situation, UndecidableSituation::CleanFirstRun);
-        assert_eq!(needs.options.len(), 2);
-        let external = needs.recommended();
-        assert_eq!(external.choice, Choice::External);
-        assert_eq!(external.proposed_path, tmp.path().join("proj-shipsmooth"));
-        let in_repo = &needs.options[1];
-        assert_eq!(in_repo.choice, Choice::InRepo);
-        assert_eq!(in_repo.proposed_path, repo.join(".shipsmooth"));
-        assert!(!in_repo.recommended);
+        let store = settled(resolve(config, repo.path(), Some("https://github.com/org/repo.git")));
+        assert_eq!(standalone_state_dir(store), normalize_lexical(&storage_root));
     }
 
     #[test]
-    fn separate_dir_entry_settles_on_existing_root_and_offers_recreate_on_missing() {
-        let tmp = tempfile::tempdir().unwrap();
-        let repo = tmp.path().join("proj");
-        std::fs::create_dir(&repo).unwrap();
-        let state = tmp.path().join("proj-shipsmooth");
-        let config = tmp.path().join("shipsmooth.toml");
-        std::fs::write(
-            &config,
-            format!(
-                "[[projects]]\nlocalPath = '{}'\nstorageRoot = '{}'\nstorageType = 'separate-dir'\n",
-                repo.display(),
-                state.display()
+    fn no_remote_matches_on_local_path_alone() {
+        let repo = repo();
+        let storage_root = repo.path().join("state");
+        std::fs::create_dir_all(&storage_root).unwrap();
+        let config = write_config(
+            repo.path(),
+            &format!(
+                "[[projects]]\n\
+                 localPath = '{}'\n\
+                 storageRoot = '{}'\n\
+                 storageType = 'separate-dir'\n",
+                repo.path().display(),
+                storage_root.display()
             ),
-        )
-        .unwrap();
-        let resolver = resolver_for(tmp.path());
+        );
 
-        // Root missing → offer to recreate exactly the configured path.
-        let needs = needs_decision(resolver.resolve(&repo, None));
+        settled(resolve(config, repo.path(), None));
+    }
+
+    #[test]
+    fn first_matching_entry_wins() {
+        let repo = repo();
+        let state1 = repo.path().join("state1");
+        let state2 = repo.path().join("state2");
+        std::fs::create_dir_all(&state1).unwrap();
+        std::fs::create_dir_all(&state2).unwrap();
+        let config = write_config(
+            repo.path(),
+            &format!(
+                "[[projects]]\n\
+                 localPath = '{repo}'\n\
+                 storageRoot = '{state1}'\n\
+                 storageType = 'separate-dir'\n\
+                 \n\
+                 [[projects]]\n\
+                 localPath = '{repo}'\n\
+                 storageRoot = '{state2}'\n\
+                 storageType = 'separate-dir'\n",
+                repo = repo.path().display(),
+                state1 = state1.display(),
+                state2 = state2.display()
+            ),
+        );
+
+        let store = settled(resolve(config, repo.path(), None));
+        assert_eq!(standalone_state_dir(store), normalize_lexical(&state1));
+    }
+
+    // ── Settled: in-repo .shipsmooth/plans present, no matching config ───────
+
+    #[test]
+    fn in_repo_shipsmooth_present_no_config_settled_in_repo() {
+        let repo = repo();
+        std::fs::create_dir_all(repo.path().join(".shipsmooth/plans")).unwrap();
+        let absent = repo.path().join("shipsmooth.toml");
+
+        let store = settled(resolve(absent, repo.path(), None));
+        assert!(matches!(store, ProjectDataStore::InRepo { .. }));
+    }
+
+    #[test]
+    fn both_in_repo_and_configured_external_config_wins() {
+        let repo = repo();
+        std::fs::create_dir_all(repo.path().join(".shipsmooth/plans")).unwrap();
+        let storage_root = repo.path().join("state");
+        std::fs::create_dir_all(&storage_root).unwrap();
+        let config = write_config(
+            repo.path(),
+            &format!(
+                "[[projects]]\n\
+                 localPath = '{}'\n\
+                 storageRoot = '{}'\n\
+                 storageType = 'separate-dir'\n",
+                repo.path().display(),
+                storage_root.display()
+            ),
+        );
+
+        let store = settled(resolve(config, repo.path(), None));
+        assert!(matches!(store, ProjectDataStore::Standalone { .. }));
+    }
+
+    // ── storageType = "same-repo" config entry ───────────────────────────────
+
+    #[test]
+    fn embedded_entry_folder_present_settled_in_repo() {
+        let repo = repo();
+        std::fs::create_dir_all(repo.path().join(".shipsmooth/plans")).unwrap();
+        let config = write_config(
+            repo.path(),
+            &format!(
+                "[[projects]]\nlocalPath = '{}'\nstorageType = 'same-repo'\n",
+                repo.path().display()
+            ),
+        );
+
+        let store = settled(resolve(config, repo.path(), None));
+        assert!(matches!(store, ProjectDataStore::InRepo { .. }));
+    }
+
+    #[test]
+    fn embedded_entry_folder_missing_needs_decision_not_set_up() {
+        let repo = repo();
+        let config = write_config(
+            repo.path(),
+            &format!(
+                "[[projects]]\nlocalPath = '{}'\nstorageType = 'same-repo'\n",
+                repo.path().display()
+            ),
+        );
+
+        let needs = needs_decision(resolve(config, repo.path(), None));
+        assert_eq!(needs.situation, UndecidableSituation::InRepoNotSetUp);
+        assert_eq!(needs.recommended().choice, Choice::InRepo);
+    }
+
+    #[test]
+    fn embedded_entry_with_storage_root_is_malformed() {
+        let repo = repo();
+        let config = write_config(
+            repo.path(),
+            &format!(
+                "[[projects]]\n\
+                 localPath = '{}'\n\
+                 storageType = 'same-repo'\n\
+                 storageRoot = '/somewhere'\n",
+                repo.path().display()
+            ),
+        );
+
+        let bad = unresolvable(resolve(config, repo.path(), None));
+        assert_eq!(bad.reason, UnresolvableReason::MalformedConfigEntry);
+    }
+
+    #[test]
+    fn filesystem_type_with_storage_root_settled() {
+        let repo = repo();
+        let storage_root = repo.path().join("state");
+        std::fs::create_dir_all(&storage_root).unwrap();
+        let config = write_config(
+            repo.path(),
+            &format!(
+                "[[projects]]\n\
+                 localPath = '{}'\n\
+                 storageType = 'separate-dir'\n\
+                 storageRoot = '{}'\n",
+                repo.path().display(),
+                storage_root.display()
+            ),
+        );
+
+        settled(resolve(config, repo.path(), None));
+    }
+
+    #[test]
+    fn unknown_storage_type_is_malformed() {
+        let repo = repo();
+        let config = write_config(
+            repo.path(),
+            &format!(
+                "[[projects]]\n\
+                 localPath = '{}'\n\
+                 storageType = 'sideways'\n\
+                 storageRoot = '/somewhere'\n",
+                repo.path().display()
+            ),
+        );
+
+        let bad = unresolvable(resolve(config, repo.path(), None));
+        assert_eq!(bad.reason, UnresolvableReason::MalformedConfigEntry);
+    }
+
+    // ── NeedsDecision ────────────────────────────────────────────────────────
+
+    #[test]
+    fn clean_first_run_needs_decision_external_recommended() {
+        let repo = repo();
+        let absent = repo.path().join("shipsmooth.toml");
+
+        let needs = needs_decision(resolve(absent, repo.path(), None));
+        assert_eq!(needs.situation, UndecidableSituation::CleanFirstRun);
+        assert_eq!(needs.recommended().choice, Choice::External);
+        // The recommended external path is a SIBLING of the repo
+        // (<parent>/<repo>-shipsmooth), not a hidden ~/.local/state path — it
+        // is the user's project content, pushable to its own git remote, so it
+        // must be discoverable next to the repo.
+        let repo_abs = normalize_lexical(repo.path());
+        let expected_sibling = repo_abs.parent().unwrap().join(format!(
+            "{}-shipsmooth",
+            repo_abs.file_name().unwrap().to_string_lossy()
+        ));
+        assert_eq!(needs.recommended().proposed_path, expected_sibling);
+        // in-repo is offered too, but not recommended
+        assert!(needs
+            .options
+            .iter()
+            .any(|o| o.choice == Choice::InRepo && !o.recommended));
+    }
+
+    #[test]
+    fn no_matching_entry_clean_repo_needs_decision() {
+        let repo = repo();
+        let config = write_config(
+            repo.path(),
+            "[[projects]]\n\
+             localPath = '/some/other/path'\n\
+             storageRoot = '/state'\n\
+             storageType = 'separate-dir'\n",
+        );
+
+        needs_decision(resolve(config, repo.path(), None));
+    }
+
+    #[test]
+    fn remote_url_mismatch_treated_as_no_match() {
+        let repo = repo();
+        let config = write_config(
+            repo.path(),
+            &format!(
+                "[[projects]]\n\
+                 remoteUrl = 'https://github.com/org/repo.git'\n\
+                 localPath = '{}'\n\
+                 storageRoot = '/state'\n\
+                 storageType = 'separate-dir'\n",
+                repo.path().display()
+            ),
+        );
+
+        needs_decision(resolve(config, repo.path(), Some("https://github.com/org/OTHER.git")));
+    }
+
+    #[test]
+    fn config_filesystem_dir_missing_needs_decision_recreate() {
+        let repo = repo();
+        let storage_root = repo.path().join("gone"); // never created
+        let config = write_config(
+            repo.path(),
+            &format!(
+                "[[projects]]\n\
+                 localPath = '{}'\n\
+                 storageRoot = '{}'\n\
+                 storageType = 'separate-dir'\n",
+                repo.path().display(),
+                storage_root.display()
+            ),
+        );
+
+        let needs = needs_decision(resolve(config, repo.path(), None));
         assert_eq!(needs.situation, UndecidableSituation::ConfigDirMissing);
         assert_eq!(needs.recommended().choice, Choice::RecreateMissingDir);
-        assert_eq!(needs.recommended().proposed_path, state);
+        assert_eq!(needs.recommended().proposed_path, normalize_lexical(&storage_root));
+    }
 
-        // Root present → settled standalone on that root.
-        std::fs::create_dir(&state).unwrap();
-        match resolver.resolve(&repo, None) {
-            DataStoreResolution::Settled(ProjectDataStore::Standalone {
-                repo_root,
-                state_dir,
-            }) => {
-                assert_eq!(repo_root, repo);
-                assert_eq!(state_dir, state);
-            }
-            _ => panic!("expected Settled(Standalone)"),
-        }
+    // ── Unresolvable ─────────────────────────────────────────────────────────
+
+    #[test]
+    fn legacy_agents_tree_unresolvable() {
+        let repo = repo();
+        std::fs::create_dir_all(repo.path().join(".agents/plans")).unwrap();
+        let absent = repo.path().join("shipsmooth.toml");
+
+        let bad = unresolvable(resolve(absent, repo.path(), None));
+        assert_eq!(bad.reason, UnresolvableReason::LegacyAgentsTree);
+        // message (sourced from the reason) names both folders so the user can rename by hand
+        assert!(bad.message().contains(".agents") && bad.message().contains(".shipsmooth"));
+        assert!(bad.cause.is_none(), "an anticipated reason carries no throwable cause");
     }
 
     #[test]
-    fn legacy_tree_and_malformed_entry_are_unresolvable() {
-        let tmp = tempfile::tempdir().unwrap();
+    fn matched_entry_without_storage_type_unresolvable_malformed() {
+        let repo = repo();
+        let config = write_config(
+            repo.path(),
+            &format!("[[projects]]\nlocalPath = '{}'\n", repo.path().display()),
+        );
 
-        // Legacy .agents/plans/ tree, no config → LEGACY_AGENTS_TREE.
-        let legacy = tmp.path().join("legacy");
-        std::fs::create_dir_all(legacy.join(".agents/plans")).unwrap();
-        match resolver_for(tmp.path()).resolve(&legacy, None) {
-            DataStoreResolution::Unresolvable(u) => {
-                assert_eq!(u.reason, UnresolvableReason::LegacyAgentsTree)
-            }
-            _ => panic!("expected Unresolvable"),
-        }
+        let bad = unresolvable(resolve(config, repo.path(), None));
+        assert_eq!(bad.reason, UnresolvableReason::MalformedConfigEntry);
+    }
 
-        // A same-repo entry carrying a storageRoot → MALFORMED_CONFIG_ENTRY.
-        let repo = tmp.path().join("proj");
-        std::fs::create_dir(&repo).unwrap();
-        std::fs::write(
-            tmp.path().join("shipsmooth.toml"),
-            format!(
-                "[[projects]]\nlocalPath = '{}'\nstorageRoot = '/somewhere'\nstorageType = 'same-repo'\n",
-                repo.display()
-            ),
-        )
-        .unwrap();
-        match resolver_for(tmp.path()).resolve(&repo, None) {
-            DataStoreResolution::Unresolvable(u) => {
-                assert_eq!(u.reason, UnresolvableReason::MalformedConfigEntry)
-            }
-            _ => panic!("expected Unresolvable"),
-        }
+    // ── Bad config file is tolerated, not fatal (plan-87) ────────────────────
+    // A failed `store init` write can leave a 0-byte / garbage shipsmooth.toml
+    // behind. A stray or truncated global config must NOT wedge resolution: it
+    // is treated as "no usable config" and resolution falls through to the
+    // filesystem.
+
+    #[test]
+    fn unparseable_config_falls_through_to_filesystem() {
+        let repo = repo();
+        let config = write_config(repo.path(), "this is = = not valid toml [[[");
+
+        // Clean repo (no .shipsmooth/plans) => first-run decision, not Unresolvable.
+        let needs = needs_decision(resolve(config, repo.path(), None));
+        assert_eq!(needs.situation, UndecidableSituation::CleanFirstRun);
+    }
+
+    #[test]
+    fn empty_config_file_falls_through_to_filesystem() {
+        let repo = repo();
+        let config = write_config(repo.path(), ""); // the 0-byte file the defect leaves behind
+
+        needs_decision(resolve(config, repo.path(), None));
+    }
+
+    #[test]
+    fn empty_config_with_in_repo_state_stays_settled() {
+        // The repo already has valid in-repo state; a poisoned global config must not break it.
+        let repo = repo();
+        std::fs::create_dir_all(repo.path().join(".shipsmooth/plans")).unwrap();
+        let config = write_config(repo.path(), "");
+
+        let store = settled(resolve(config, repo.path(), None));
+        assert!(matches!(store, ProjectDataStore::InRepo { .. }));
     }
 }
