@@ -129,21 +129,26 @@
         <task>
             <id>8</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>store parity harness</name>
-            <commit></commit>
+            <commit>e0b6af09eee69b67955d153c73a9c467250f5956</commit>
             <created-from>plan-106-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-07-27T17:11:33.436+05:30</timestamp>
+                    <message>De-risk draft ready for review: parity/run.sh rebuilds each of the 10 Task-1 branch scenarios at identical paths for Java (0.3.36) and Rust, diffs stdout/stderr/exit/shipsmooth.toml byte-wise. All 10 pass. One real divergence found and normalised: schema.location embeds the writing CLI's own version (rust workspace still 0.3.34) — harness maps it to v&lt;VERSION&gt;; alternative is bumping the Cargo workspace version.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>6,7</depends-on>
         </task>
         <task>
             <id>9</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Migration notes write-back</name>
-            <commit></commit>
+            <commit>d55046008b6781b02d53f37c1778bbd04bc494d8</commit>
             <created-from>plan-106-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
