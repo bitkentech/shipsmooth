@@ -6,6 +6,7 @@
 
 pub mod conf;
 pub mod error;
+pub mod gw;
 pub mod model;
 pub mod plan;
 
