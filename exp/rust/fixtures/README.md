@@ -1,6 +1,6 @@
-# Golden fixture corpus (plan-102 Task 1)
+# Golden fixture corpus (plan-102 Task 1, gw sequence added in plan-107)
 
-Reference artifacts produced by the **Java** shipsmooth CLI (0.3.34), against
+Reference artifacts produced by the **Java** shipsmooth CLI (0.3.36), against
 which the Rust port is verified. `xml/` holds `plan-{N}-tasks.xml` snapshots;
 `transcripts/` holds stdout captures with exit codes for the machine contracts.
 
@@ -19,6 +19,7 @@ structurally, not byte-wise. The committed corpus is the reference.
 | `05-minimal-abandoned.xml` | Smallest valid file + `abandoned` plan status |
 | `06-unknown-ext-input.xml` | **Hand-extended** (see generate.sh): unknown `xs:any` elements (`<meta-ext>` with attribute + nested child in metadata, `<future-field>` with attribute in a task) inserted into 04 |
 | `07-unknown-ext-after-java-rewrite.xml` | 06 after a Java CLI read-modify-write (`task comment`) — pins that JAXB PRESERVES unknown lax elements and how it reformats them |
+| `gw/step-00…17-*.xml` | plan-107: one snapshot **after every TaskStore mutation** (statuses, comments, deviations, set-commit, task add, project updates); the filename encodes the operation. The gw golden-replay harness re-applies the same sequence through the Rust TaskStore and byte-diffs each step (timestamps normalised). depends-on replace/remove has no CLI command — pinned by the ported TaskStoreTest instead |
 
 ## transcripts/
 

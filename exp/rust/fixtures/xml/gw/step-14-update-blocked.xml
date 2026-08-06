@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <plan-tasks>
-    <plan>103</plan>
-    <plan-version>plan-103-v1</plan-version>
+    <plan>42</plan>
+    <plan-version>plan-42-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
         <status>active</status>
@@ -11,21 +11,25 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>de-risked</status>
-            <name>Parse the input file</name>
+            <status>agent-coded</status>
+            <name>Parse the input</name>
             <commit>0123456789abcdef0123456789abcdef01234567</commit>
-            <created-from>plan-103-v1</created-from>
+            <created-from>plan-42-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
-                    <timestamp>2026-08-06T18:14:59.944+05:30</timestamp>
+                    <timestamp>2026-08-06T18:15:27.968+05:30</timestamp>
                     <message>Special chars: &amp; &lt; &gt; " ' and unicode: héllo 🚀</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-08-06T18:15:34.797+05:30</timestamp>
+                    <message>Second comment appends</message>
                 </comment>
             </comments>
             <deviations>
                 <deviation>
                     <type>minor</type>
-                    <timestamp>2026-08-06T18:15:01.916+05:30</timestamp>
+                    <timestamp>2026-08-06T18:15:30.060+05:30</timestamp>
                     <message>Split parsing into two passes</message>
                 </deviation>
             </deviations>
@@ -33,22 +37,28 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
-            <name>Write the output file</name>
-            <commit>fedcba9876543210fedcba9876543210fedcba98</commit>
-            <created-from>plan-103-v1</created-from>
+            <status>needs-triage</status>
+            <name>Write the output</name>
+            <commit></commit>
+            <created-from>plan-42-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-08-06T18:15:31.339+05:30</timestamp>
+                    <message>Format spec contradicts implementation</message>
+                </deviation>
+            </deviations>
             <depends-on>1</depends-on>
         </task>
         <task>
             <id>3</id>
-            <risk>low</risk>
-            <status>closed</status>
-            <name>Wire the end-to-end flow</name>
+            <risk></risk>
+            <status>abandoned</status>
+            <name>Wire the flow</name>
             <commit></commit>
-            <created-from>plan-103-v1</created-from>
+            <created-from>plan-42-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
@@ -56,69 +66,41 @@
         </task>
         <task>
             <id>4</id>
-            <risk></risk>
-            <status>needs-triage</status>
-            <name>Document the format</name>
-            <commit></commit>
-            <created-from>plan-103-v1</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations>
-                <deviation>
-                    <type>major</type>
-                    <timestamp>2026-08-06T18:15:06.082+05:30</timestamp>
-                    <message>Format spec contradicts implementation</message>
-                </deviation>
-            </deviations>
-        </task>
-        <task>
-            <id>5</id>
-            <risk>low</risk>
-            <status>abandoned</status>
-            <name>Abandoned experiment</name>
-            <commit></commit>
-            <created-from>plan-103-v1</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>6</id>
-            <risk>low</risk>
-            <status>pending</status>
-            <name>Untouched task</name>
-            <commit></commit>
-            <created-from>plan-103-v1</created-from>
-            <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
-        </task>
-        <task>
-            <id>7</id>
             <risk>low</risk>
             <status>pending</status>
             <name>Added after init</name>
             <commit></commit>
-            <created-from>plan-103-v1</created-from>
+            <created-from>plan-42-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
             <deviations/>
-            <depends-on>2,3</depends-on>
+            <depends-on>1,3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk></risk>
+            <status>pending</status>
+            <name>Bare addition</name>
+            <commit></commit>
+            <created-from>plan-42-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
         </task>
     </tasks>
     <project-updates>
         <update>
-            <timestamp>2026-08-06T18:14:58.619+05:30</timestamp>
+            <timestamp>2026-08-06T18:15:26.599+05:30</timestamp>
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
         <update>
-            <timestamp>2026-08-06T18:15:08.212+05:30</timestamp>
+            <timestamp>2026-08-06T18:15:35.490+05:30</timestamp>
             <message>Mid-plan checkpoint</message>
             <blocked>false</blocked>
         </update>
         <update>
-            <timestamp>2026-08-06T18:15:08.858+05:30</timestamp>
+            <timestamp>2026-08-06T18:15:36.202+05:30</timestamp>
             <message>Blocked on format decision</message>
             <blocked>true</blocked>
         </update>
