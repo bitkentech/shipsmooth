@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>107</plan>
+    <plan-version>plan-107-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>active</status>
+        <created>2026-08-06</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>Golden mutation-fixture corpus for gw</name>
+            <commit></commit>
+            <created-from>plan-107-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>TaskStore read/write path</name>
+            <commit></commit>
+            <created-from>plan-107-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>XSD timestamp lexical forms and injectable clock</name>
+            <commit></commit>
+            <created-from>plan-107-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>high</risk>
+            <status>pending</status>
+            <name>TaskStore mutations and depends-on extension</name>
+            <commit></commit>
+            <created-from>plan-107-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2,3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>GitState</name>
+            <commit></commit>
+            <created-from>plan-107-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>GitTags</name>
+            <commit></commit>
+            <created-from>plan-107-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>PlanMarkdown slicing and TaskStore façade methods</name>
+            <commit></commit>
+            <created-from>plan-107-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>medium</risk>
+            <status>pending</status>
+            <name>gw golden-replay harness</name>
+            <commit></commit>
+            <created-from>plan-107-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>4,7</depends-on>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Migration notes write-back</name>
+            <commit></commit>
+            <created-from>plan-107-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>8</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-08-06T17:59:42.252+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
