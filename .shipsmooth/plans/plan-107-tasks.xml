@@ -33,12 +33,17 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>TaskStore read/write path</name>
-            <commit></commit>
+            <commit>6b69633</commit>
             <created-from>plan-107-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-06T18:31:08.901+05:30</timestamp>
+                    <message>De-risk draft ready for review: TaskStore facade delegates file I/O to PlanTasks::load/save (retry + atomic write already in model); byte-identity through store path pinned; gw corpus wired into golden round-trip gate (27 files); 100% coverage, clippy clean</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
