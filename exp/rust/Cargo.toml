@@ -21,7 +21,7 @@ panic = "abort"
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 quick-xml = { version = "0.37", features = ["serialize"] }
-time = { version = "0.3", features = ["formatting", "parsing", "macros"] }
+time = { version = "0.3", features = ["formatting", "parsing", "macros", "local-offset"] }
 thiserror = "2"
 regex = "1"
 unicode-normalization = "0.1"

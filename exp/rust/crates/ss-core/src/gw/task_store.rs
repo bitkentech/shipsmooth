@@ -6,17 +6,41 @@
 
 use std::path::PathBuf;
 
+use time::OffsetDateTime;
+
 use crate::conf::ShipsmoothDataLocator;
+use crate::gw::xml_time;
+use crate::gw::xml_time::Clock;
 use crate::model::PlanTasks;
 use crate::Result;
 
 pub struct TaskStore {
     locator: ShipsmoothDataLocator,
+    // dead_code: no mutation consumes the clock until the Task 4 port lands.
+    #[allow(dead_code)]
+    clock: Clock,
 }
 
 impl TaskStore {
     pub fn new(locator: ShipsmoothDataLocator) -> TaskStore {
-        TaskStore { locator }
+        TaskStore::with_clock(locator, xml_time::system_now)
+    }
+
+    /// Injectable-clock constructor (plan-107 design decision): mutation
+    /// timestamps come from `clock` instead of the system clock, so tests
+    /// and the golden-replay harness can pin exact lexical values.
+    pub fn with_clock(
+        locator: ShipsmoothDataLocator,
+        clock: impl Fn() -> OffsetDateTime + 'static,
+    ) -> TaskStore {
+        let clock: Clock = Box::new(clock);
+        TaskStore { locator, clock }
+    }
+
+    /// The `xs:dateTime` stamp mutations record, drawn from the clock seam.
+    #[allow(dead_code)] // first mutation caller arrives with the Task 4 port
+    fn now_xml_date_time(&self) -> String {
+        xml_time::xml_date_time((self.clock)())
     }
 
     /// Canonical XML task file for this plan, under the resolved layout.
@@ -88,5 +112,23 @@ mod tests {
     fn load_plan_reports_a_missing_file() {
         let repo = tempfile::tempdir().unwrap();
         assert!(store_in(repo.path()).load_plan(7).is_err());
+    }
+
+    #[test]
+    fn with_clock_pins_the_mutation_timestamp() {
+        let repo = tempfile::tempdir().unwrap();
+        let locator = ShipsmoothDataLocator::in_repo(repo.path()).unwrap();
+        let store = TaskStore::with_clock(locator, || {
+            time::macros::datetime!(2026-08-06 12:00:00.123 +05:30)
+        });
+        assert_eq!(store.now_xml_date_time(), "2026-08-06T12:00:00.123+05:30");
+    }
+
+    #[test]
+    fn default_clock_is_the_system_clock() {
+        let repo = tempfile::tempdir().unwrap();
+        let store = store_in(repo.path());
+        // Shape only — the value is the current instant.
+        assert!(store.now_xml_date_time().contains('T'));
     }
 }

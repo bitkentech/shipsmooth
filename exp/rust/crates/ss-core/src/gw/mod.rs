@@ -2,5 +2,6 @@
 //! to the outside world — git subprocesses and the XML task-file store.
 
 mod task_store;
+pub mod xml_time;
 
 pub use task_store::TaskStore;
