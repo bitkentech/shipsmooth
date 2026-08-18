@@ -50,12 +50,17 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>XSD timestamp lexical forms and injectable clock</name>
             <commit></commit>
             <created-from>plan-107-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-13T13:03:17.695+05:30</timestamp>
+                    <message>De-risk draft ready for review</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1</depends-on>
         </task>
