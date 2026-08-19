@@ -110,6 +110,75 @@ is ported and verified byte-identical to the Java CLI.
   02-cli.md. The store slice already exercises the resolve-gate shape, so the
   remaining `main.rs` wiring is incremental.
 
+## gw slice findings (plan-107, 2026-08-19) — the XML gateway
+
+`ss_core::gw` (`TaskStore`, `GitState`, `GitTags`) plus `gw::xml_time` and
+`PlanMarkdown.sliceTaskSection` is ported and verified byte-identical to XML
+the Java CLI wrote.
+
+- **Cost.** ~540 lines of Java main source + ~360 lines of JUnit became ~1,850
+  lines of Rust (implementation, inline `#[cfg(test)]` tests, and two
+  integration tests) across 9 tasks. Elapsed 2026-08-06 → 2026-08-19, but the
+  working time was four sessions, not two weeks. Coverage 99.35–99.75% region
+  and 98–100% line per file (`cargo llvm-cov`), against a 95% target.
+- **Parity.** `tests/gw_golden_replay.rs` replays `plan init` plus all
+  seventeen mutations from `fixtures/generate.sh` through the Rust `TaskStore`
+  and byte-diffs every intermediate file against what the Java binary wrote,
+  persisting through the real write path. Timestamps are not normalised away:
+  the clock is pinned per step to the value the Java run recorded, and steps
+  that should record no timestamp run under a 1999 sentinel clock so a leak
+  fails the diff. The harness was checked non-vacuous by perturbation — a
+  one-millisecond timestamp change and a wrong `depends-on` each fail, naming
+  the diverging step.
+- **Divergences found (all resolved, all commented at the call site):**
+  - `GitTags.versionNumber` throws `NumberFormatException` on a tag like
+    `plan-7-v1-rc`, which its own `plan-{N}-v*` glob can match. The port
+    returns `None` and derives `v1`, consistent with GitTags' everything-
+    degrades contract.
+  - `runExitCode`'s `redirectErrorStream(true)` interleaves stdout and stderr
+    live; Rust's `output()` captures them separately and the port
+    concatenates, so ordering can differ for a command writing to both.
+  - `getDependsOn`/`addComment` return `Result` in Rust because Java's
+    `findTask` throws for an unknown id; `getTaskName` stays total because
+    Java's resolves through a stream default to the stringified id.
+  - The preamble end-to-end test, written before any task code, assumed
+    `generatePlanTasks` assigned task ids positionally. Java writes the
+    parsed heading's id through verbatim; the test was corrected, not the
+    implementation. **Lesson: a preamble test is a hypothesis about the port,
+    not a specification of it** — when it disagrees with the Java source, the
+    Java source wins.
+  - `is_branch_pushed_and_not_ahead` is the one read query that emits a
+    diagnostic, because Java probes the upstream with `runExitCode` rather
+    than `runLines`. Faithful, and now pinned by a test.
+- **Decisions that outlived the plan:**
+  - **Injectable clock** (`Clock = Box<dyn Fn() -> OffsetDateTime>`, default
+    `system_now`) as planned — it is what makes the golden replay byte-exact
+    rather than timestamp-normalised.
+  - **Injectable diagnostics sink** for `GitState`
+    (`Diagnostics = Box<dyn Fn(&str)>`, default `eprintln!`) — *not* in the
+    plan. git's exact stderr strings are contract here, and `eprintln!` cannot
+    be asserted on in a Rust unit test. Expect to reuse this seam wherever a
+    ported class writes diagnostics rather than returning them.
+  - **Hand-rolled XSD lexical rendering** (`gw::xml_time`): no `time` format
+    description produces `XMLGregorianCalendar`'s `Z`-for-zero-offset rule, so
+    the writer is manual and the tests parse its output back with a crate
+    format description as an independent check.
+  - `system_now`'s UTC fallback is split into a `local_or_utc` seam, because
+    `time` refuses to read the platform offset once the process is
+    multi-threaded — so the fallback is reachable in production and was
+    silently unexercised by tests until split out.
+  - `parseTasksFromPlan` dropped as planned; callers use `plan::parse_tasks`.
+- **Recommended next slice:** the `task` command leaves first (6 thin files
+  straight over the `TaskStore` just ported), then `plan`. Note that `plan`'s
+  leaves are *not* pure wiring: `NewPlan`, `PlanService`, `ScaffoldResult` and
+  `ScaffoldException` are still unported (§2 of 01-core.md covers 6 of the
+  package's 10 classes), and `NewPlan` is the scaffolding the `plan init` and
+  `plan quick` leaves sit on. `gw` unblocked it — `NewPlan` needs `GitState`,
+  which now exists — but it is core work to schedule, not command wiring.
+  02-cli.md also flags a defect to port as-is rather than fix:
+  `plan tag --kind version` derives the version from the XML field, not git
+  tags.
+
 ## Target layout
 
 Cargo workspace mirroring the Gradle module split:

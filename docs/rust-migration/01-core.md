@@ -114,6 +114,43 @@ Three classes.
   - The deprecated `parseTasksFromPlan` pass-through: drop it; callers use the
     parser directly (verify no cli caller first).
 
+- **PORTED (plan-107, 2026-08-19).** All three classes plus
+  `PlanMarkdown.sliceTaskSection` are ported and verified against XML the real
+  Java binary wrote. `parseTasksFromPlan` was dropped as planned (no cli
+  caller). Coverage 99.35–99.75% region, 98–100% line per file.
+  - **Timestamps are their own module** (`gw::xml_time`), not inline helpers:
+    reproducing `XMLGregorianCalendar`'s lexical output needed a hand-rolled
+    writer, because no `time` format description produces Java's
+    `Z`-for-zero-offset rule. The contract — always three fractional digits,
+    `Z` never `+00:00`, sub-millisecond floor-truncated, minute-granular
+    offset — is pinned against the fixture corpus.
+  - **Two injectable seams** carry the parts that would otherwise be
+    untestable: `TaskStore`'s clock (`Clock = Box<dyn Fn() -> OffsetDateTime>`,
+    default `system_now`) and `GitState`'s diagnostics sink
+    (`Diagnostics = Box<dyn Fn(&str)>`, default `eprintln!`). The second is not
+    in the Java shape at all; it exists because plan-107 makes git's exact
+    stderr strings contract and `eprintln!` cannot be asserted on in a Rust
+    unit test.
+  - **`PlanMarkdown` split by layer**: the slicing is a pure function in
+    `plan::markdown` taking the markdown text, and `TaskStore` owns the file
+    read. Java's class did both. Behaviour is identical — a missing or
+    unreadable plan file still slices to `""`.
+  - **Divergences from Java, all deliberate and commented at the call site:**
+    - `GitTags::version_number` returns `None` for a tag like `plan-7-v1-rc`
+      and derives `v1`; Java parses the suffix after the last `-v` and throws
+      `NumberFormatException`. Degrading fits GitTags' everything-degrades
+      contract.
+    - `run_exit_code` concatenates stdout and stderr, where Java's
+      `redirectErrorStream(true)` interleaves them live, so ordering can differ
+      for a command writing to both. Nothing in the corpus depends on it.
+    - `get_depends_on` and `add_comment` return `Result` because Java's
+      `findTask` throws for an unknown id; `get_task_name` stays total because
+      Java's resolves through a stream default to the stringified id.
+  - **Fidelity finding worth keeping:** `is_branch_pushed_and_not_ahead` is the
+    one *read* query that emits a diagnostic, because Java probes for the
+    upstream with `runExitCode` rather than `runLines`. Every other read query
+    degrades silently.
+
 ## 4. `io.bitken.ss.conf` → `ss_core::conf`
 
 Ten files, but half are Dagger/JPMS scaffolding that does not port:

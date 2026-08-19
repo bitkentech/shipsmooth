@@ -1,9 +1,9 @@
 [toml-schema]
 version = '1.0.0'
-location = 'https://raw.githubusercontent.com/bitkentech/shipsmooth/v0.3.34/dist/schemas/shipsmooth.tosd'
+location = 'https://raw.githubusercontent.com/bitkentech/shipsmooth/v0.3.36/dist/schemas/shipsmooth.tosd'
 
 [[projects]]
-localPath = '/tmp/tmp.WghXEGyXJ2/store/settled-separate-dir/proj'
-storageRoot = '/tmp/tmp.WghXEGyXJ2/store/settled-separate-dir/proj-shipsmooth'
+localPath = '/tmp/tmp.vbRwuYmEr8/store/settled-separate-dir/proj'
+storageRoot = '/tmp/tmp.vbRwuYmEr8/store/settled-separate-dir/proj-shipsmooth'
 storageType = 'separate-dir'
 

@@ -71,9 +71,78 @@ fn depends_on_in(region: &str) -> String {
 // No dedicated Java unit test file exists for the parser; these pin the
 // behaviours the Java regexes define and the fixture corpus exercises
 // (fixtures/xml/01-fresh-init.xml is `plan init` over this same syntax).
+/// Port of `PlanMarkdown.sliceTaskSection`: the `### Task {id}:` section of a
+/// plan narrative, up to the next task heading, or `""` when absent.
+///
+/// Java reads the file here; the port takes the text so this module stays
+/// pure, and [`crate::gw::TaskStore::slice_task_markdown`] owns the read.
+/// The trailing colon in the marker is what stops task 1 from matching the
+/// `### Task 10:` heading.
+pub fn slice_task_section(markdown: &str, task_id: u32) -> String {
+    let marker = format!("### Task {task_id}:");
+    let Some(start) = markdown.find(&marker) else {
+        return String::new();
+    };
+    let body = &markdown[start..];
+    match body[marker.len()..].find("### Task ") {
+        Some(next) => body[..marker.len() + next].trim().to_string(),
+        None => body.trim().to_string(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ---- slice_task_section ----
+
+    const THREE_TASKS: &str = "\
+## Tasks
+
+### Task 1: Parse the input [High]
+
+*Depends-on: none*
+
+Body of one.
+
+### Task 2: Write the output [Medium]
+
+Body of two.
+
+### Task 10: Wire it up [Low]
+
+Body of ten.
+";
+
+    #[test]
+    fn slices_from_the_heading_to_the_next_task_heading() {
+        let section = slice_task_section(THREE_TASKS, 1);
+        assert!(section.starts_with("### Task 1: Parse the input [High]"));
+        assert!(section.ends_with("Body of one."), "trailing blank lines are trimmed: {section:?}");
+        assert!(!section.contains("Task 2"));
+    }
+
+    #[test]
+    fn slices_the_last_task_to_the_end_of_the_file() {
+        let section = slice_task_section(THREE_TASKS, 10);
+        assert!(section.starts_with("### Task 10: Wire it up [Low]"));
+        assert!(section.ends_with("Body of ten."));
+    }
+
+    #[test]
+    fn a_task_id_is_matched_whole_not_as_a_prefix() {
+        // "### Task 1:" must not match the "### Task 10:" heading — the colon
+        // is what anchors it.
+        let only_ten = "### Task 10: Wire it up [Low]\n\nBody of ten.\n";
+        assert_eq!(slice_task_section(only_ten, 1), "");
+    }
+
+    #[test]
+    fn an_absent_task_slices_to_nothing() {
+        assert_eq!(slice_task_section(THREE_TASKS, 99), "");
+        assert_eq!(slice_task_section("", 1), "");
+    }
+
 
     #[test]
     fn parses_heading_with_risk_and_lowercases_it() {

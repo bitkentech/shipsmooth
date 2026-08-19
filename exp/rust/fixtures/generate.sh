@@ -5,10 +5,10 @@
 # different timestamps/commit hashes/absolute paths — diff structurally, not
 # byte-wise, after a regeneration.
 #
-# Usage: SS=/path/to/shipsmooth ./generate.sh   (SS defaults to the 0.3.34 runtime)
+# Usage: SS=/path/to/shipsmooth ./generate.sh   (SS defaults to the 0.3.36 runtime)
 set -euo pipefail
 
-SS="${SS:-$HOME/.cache/shipsmooth/0.3.34/bin/shipsmooth}"
+SS="${SS:-$HOME/.cache/shipsmooth/0.3.36/bin/shipsmooth}"
 OUT="$(cd "$(dirname "$0")" && pwd)"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -257,5 +257,63 @@ store_capture malformed-same-repo-with-root
 store_project legacy-agents-tree
 mkdir -p "$SPROJ/.agents/plans"
 store_capture legacy-agents-tree
+
+# --- plan-107: gw mutation sequence, one capture per TaskStore write ----------
+# The Rust gw golden-replay harness re-applies this exact operation sequence
+# through the Rust TaskStore and byte-diffs every intermediate file (timestamps
+# normalised); the step filename encodes the operation. Keep the harness and
+# this list in sync.
+# Note: depends-on replace/remove has no CLI command (task add only SETS it),
+# so those setDependsOn paths are pinned by the ported TaskStoreTest instead.
+cd "$PROJ"
+mkdir -p "$OUT/xml/gw"
+
+cat >"$PLANS/plan-42.md" <<'EOF'
+# Plan 42 — gw mutation fixture
+
+## Tasks
+
+### Task 1: Parse the input [High]
+
+Core slice.
+
+### Task 2: Write the output [Medium]
+
+*Depends-on: 1*
+
+Serialisation slice.
+
+### Task 3: Wire the flow
+
+*Depends-on: 1, 2*
+
+No risk tag (empty risk value), multi-id depends-on.
+EOF
+
+gw_step() { # gw_step <capture-name> <cli args...>
+    local cap="$1"; shift
+    "$SS" "$@" >/dev/null
+    cp "$PLANS/plan-42-tasks.xml" "$OUT/xml/gw/$cap.xml"
+}
+
+"$SS" plan init --plan 42 --tasks-from "$PLANS/plan-42.md" >/dev/null
+cp "$PLANS/plan-42-tasks.xml" "$OUT/xml/gw/step-00-init.xml"
+gw_step step-01-status-in-progress  task status     --plan 42 --task 1 --status in-progress
+gw_step step-02-comment-escapables  task comment    --plan 42 --task 1 --message "Special chars: & < > \" ' and unicode: héllo 🚀"
+gw_step step-03-set-commit          task set-commit --plan 42 --task 1 --commit 0123456789abcdef0123456789abcdef01234567
+gw_step step-04-status-de-risked    task status     --plan 42 --task 1 --status de-risked
+gw_step step-05-deviation-minor     task deviation  --plan 42 --task 1 --type minor --message "Split parsing into two passes"
+gw_step step-06-status-agent-coded  task status     --plan 42 --task 1 --status agent-coded
+gw_step step-07-deviation-major     task deviation  --plan 42 --task 2 --type major --message "Format spec contradicts implementation"
+gw_step step-08-status-needs-triage task status     --plan 42 --task 2 --status needs-triage
+gw_step step-09-add-task-with-deps  task add        --plan 42 --name "Added after init" --risk low --depends-on 1,3
+gw_step step-10-add-task-minimal    task add        --plan 42 --name "Bare addition"
+gw_step step-11-status-abandoned    task status     --plan 42 --task 3 --status abandoned
+gw_step step-12-comment-appends     task comment    --plan 42 --task 1 --message "Second comment appends"
+gw_step step-13-update-message      plan update     --plan 42 --message "Mid-plan checkpoint"
+gw_step step-14-update-blocked      plan update     --plan 42 --blocked --message "Blocked on format decision"
+gw_step step-15-update-in-review    plan update     --plan 42 --status in-review --message "Ready for review"
+gw_step step-16-status-closed       task status     --plan 42 --task 1 --status closed
+gw_step step-17-update-complete     plan update     --plan 42 --status complete --message "Done"
 
 echo "Fixture corpus written to $OUT/xml and $OUT/transcripts"

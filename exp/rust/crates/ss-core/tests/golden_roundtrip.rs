@@ -14,13 +14,18 @@ fn fixture_dir() -> PathBuf {
 
 #[test]
 fn every_fixture_round_trips_byte_identical() {
-    let mut paths: Vec<_> = fs::read_dir(fixture_dir())
-        .expect("fixture dir missing — run fixtures/generate.sh")
-        .map(|e| e.unwrap().path())
-        .filter(|p| p.extension().is_some_and(|e| e == "xml"))
+    // Top-level corpus (plan-102) plus the gw per-mutation snapshots (plan-107).
+    let mut paths: Vec<_> = [fixture_dir(), fixture_dir().join("gw")]
+        .iter()
+        .flat_map(|dir| {
+            fs::read_dir(dir)
+                .expect("fixture dir missing — run fixtures/generate.sh")
+                .map(|e| e.unwrap().path())
+                .filter(|p| p.extension().is_some_and(|e| e == "xml"))
+        })
         .collect();
     paths.sort();
-    assert_eq!(paths.len(), 9, "fixture corpus size changed — revisit this test");
+    assert_eq!(paths.len(), 27, "fixture corpus size changed — revisit this test");
 
     for path in paths {
         let input = fs::read_to_string(&path).unwrap();

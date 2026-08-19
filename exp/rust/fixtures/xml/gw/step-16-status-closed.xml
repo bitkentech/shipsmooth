@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>42</plan>
+    <plan-version>plan-42-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>in-review</status>
+        <created>2026-08-06</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Parse the input</name>
+            <commit>0123456789abcdef0123456789abcdef01234567</commit>
+            <created-from>plan-42-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-06T18:15:27.968+05:30</timestamp>
+                    <message>Special chars: &amp; &lt; &gt; " ' and unicode: héllo 🚀</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-08-06T18:15:34.797+05:30</timestamp>
+                    <message>Second comment appends</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-08-06T18:15:30.060+05:30</timestamp>
+                    <message>Split parsing into two passes</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>needs-triage</status>
+            <name>Write the output</name>
+            <commit></commit>
+            <created-from>plan-42-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>major</type>
+                    <timestamp>2026-08-06T18:15:31.339+05:30</timestamp>
+                    <message>Format spec contradicts implementation</message>
+                </deviation>
+            </deviations>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk></risk>
+            <status>abandoned</status>
+            <name>Wire the flow</name>
+            <commit></commit>
+            <created-from>plan-42-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Added after init</name>
+            <commit></commit>
+            <created-from>plan-42-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1,3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk></risk>
+            <status>pending</status>
+            <name>Bare addition</name>
+            <commit></commit>
+            <created-from>plan-42-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-08-06T18:15:26.599+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-08-06T18:15:35.490+05:30</timestamp>
+            <message>Mid-plan checkpoint</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-08-06T18:15:36.202+05:30</timestamp>
+            <message>Blocked on format decision</message>
+            <blocked>true</blocked>
+        </update>
+        <update>
+            <timestamp>2026-08-06T18:15:36.867+05:30</timestamp>
+            <message>Ready for review</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
