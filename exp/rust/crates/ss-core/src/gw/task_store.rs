@@ -114,6 +114,83 @@ mod tests {
         assert!(store_in(repo.path()).load_plan(7).is_err());
     }
 
+    // ---- plan-107 Task 4 de-risk: fresh-element construction ----
+
+    /// The instant the Task 1 fixture corpus was generated under.
+    fn pinned_store(repo: &std::path::Path) -> TaskStore {
+        let locator = ShipsmoothDataLocator::in_repo(repo).unwrap();
+        TaskStore::with_clock(locator, || time::macros::datetime!(2026-08-06 18:15:26.599 +05:30))
+    }
+
+    fn spec(id: u32, name: &str, risk: &str, depends_on: &str) -> ParsedTask {
+        ParsedTask {
+            id,
+            name: name.into(),
+            risk: risk.into(),
+            depends_on: depends_on.into(),
+        }
+    }
+
+    #[test]
+    fn generate_plan_tasks_renders_byte_identical_to_the_java_fixture() {
+        let repo = tempfile::tempdir().unwrap();
+        let store = pinned_store(repo.path());
+
+        let plan = store
+            .generate_plan_tasks(
+                42,
+                "plan-42-v1",
+                &[
+                    spec(1, "Parse the input", "high", ""),
+                    spec(2, "Write the output", "medium", "1"),
+                    spec(3, "Wire the flow", "", "1,2"),
+                ],
+            )
+            .unwrap();
+
+        assert_eq!(plan.to_xml(), gw_fixture("step-00-init.xml"));
+    }
+
+    #[test]
+    fn add_task_appends_max_id_plus_one_rendering_like_java() {
+        let repo = tempfile::tempdir().unwrap();
+        let store = pinned_store(repo.path());
+        let mut plan = PlanTasks::parse(&gw_fixture("step-08-status-needs-triage.xml")).unwrap();
+
+        let assigned = store
+            .add_task(&mut plan, &spec(0, "Added after init", "low", "1,3"), "plan-42-v1")
+            .unwrap();
+
+        assert_eq!(assigned, 4, "id is max(existing) + 1, not the spec's own id");
+        assert_eq!(plan.to_xml(), gw_fixture("step-09-add-task-with-deps.xml"));
+    }
+
+    #[test]
+    fn depends_on_is_set_replaced_and_removed_in_the_extension_slot() {
+        let repo = tempfile::tempdir().unwrap();
+        let store = pinned_store(repo.path());
+        let mut plan = PlanTasks::parse(&gw_fixture("step-00-init.xml")).unwrap();
+
+        assert_eq!(store.get_depends_on(&plan, 2), "1");
+        store.set_depends_on(&mut plan, 2, "1,3").unwrap();
+        assert_eq!(store.get_depends_on(&plan, 2), "1,3");
+        // Replacing must not leave a second <depends-on> behind.
+        assert_eq!(plan.tasks[1].extensions.len(), 1);
+
+        store.set_depends_on(&mut plan, 2, "  ").unwrap();
+        assert_eq!(store.get_depends_on(&plan, 2), "");
+        assert!(plan.tasks[1].extensions.is_empty(), "blank removes the element");
+
+        // A task with no <depends-on> gains one at the end of the slot.
+        store.set_depends_on(&mut plan, 1, " 2 ").unwrap();
+        assert_eq!(store.get_depends_on(&plan, 1), "2");
+
+        assert_eq!(
+            store.set_depends_on(&mut plan, 99, "1").unwrap_err().to_string(),
+            "Task 99 not found"
+        );
+    }
+
     #[test]
     fn with_clock_pins_the_mutation_timestamp() {
         let repo = tempfile::tempdir().unwrap();
