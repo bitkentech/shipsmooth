@@ -94,9 +94,9 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>GitState</name>
-            <commit></commit>
+            <commit>829c88b7368c98fd52d450a5a81ca4257556954a</commit>
             <created-from>plan-107-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
