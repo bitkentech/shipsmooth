@@ -127,9 +127,9 @@
         <task>
             <id>7</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>PlanMarkdown slicing and TaskStore façade methods</name>
-            <commit></commit>
+            <commit>849556faa7f408152a77a7a159cbe434cae77ce3</commit>
             <created-from>plan-107-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
