@@ -67,15 +67,19 @@
         <task>
             <id>4</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>TaskStore mutations and depends-on extension</name>
-            <commit></commit>
+            <commit>e3d65a4305fda7218a7b4a2d9aeea055c29b348a</commit>
             <created-from>plan-107-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
                     <timestamp>2026-08-19T10:21:50.565Z</timestamp>
                     <message>De-risk draft ready for review (b569551): fresh-element construction is byte-identical to the Java fixtures. Two API questions for the reviewer ��� see the deviation note.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-08-19T10:28:24.446Z</timestamp>
+                    <message>Deviation resolved by human ruling: t.id() used faithfully in generate_plan_tasks, test helper ids fixed. Same fidelity principle applied to the second question ��� get_depends_on/add_comment return Result (Java findTask throws), get_task_name stays total.</message>
                 </comment>
             </comments>
             <deviations>
