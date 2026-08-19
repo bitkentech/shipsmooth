@@ -128,7 +128,13 @@ mod tests {
     fn default_clock_is_the_system_clock() {
         let repo = tempfile::tempdir().unwrap();
         let store = store_in(repo.path());
-        // Shape only — the value is the current instant.
-        assert!(store.now_xml_date_time().contains('T'));
+
+        // The lexical form is fixed-width and, at a constant offset, sorts by
+        // instant — so bracketing the call pins it to the live clock without
+        // re-parsing or asserting on a wall-clock value.
+        let before = xml_time::xml_date_time(xml_time::system_now());
+        let stamped = store.now_xml_date_time();
+        let after = xml_time::xml_date_time(xml_time::system_now());
+        assert!(before <= stamped && stamped <= after, "{before} <= {stamped} <= {after}");
     }
 }
