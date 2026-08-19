@@ -11,14 +11,15 @@ use time::OffsetDateTime;
 use crate::conf::ShipsmoothDataLocator;
 use crate::gw::xml_time;
 use crate::gw::xml_time::Clock;
-use crate::model::{Metadata, PlanTasks, RawElement, RawNode, Task, Update};
+use crate::model::{
+    Comment, Deviation, DeviationKind, Metadata, PlanStatus, PlanTasks, RawElement, RawNode, Task,
+    TaskStatus, Update,
+};
 use crate::plan::ParsedTask;
 use crate::{Error, Result};
 
 pub struct TaskStore {
     locator: ShipsmoothDataLocator,
-    // dead_code: no mutation consumes the clock until the Task 4 port lands.
-    #[allow(dead_code)]
     clock: Clock,
 }
 
@@ -39,7 +40,6 @@ impl TaskStore {
     }
 
     /// The `xs:dateTime` stamp mutations record, drawn from the clock seam.
-    #[allow(dead_code)] // first mutation caller arrives with the Task 4 port
     fn now_xml_date_time(&self) -> String {
         xml_time::xml_date_time((self.clock)())
     }
@@ -122,9 +122,10 @@ impl TaskStore {
     }
 
     /// Port of `getDependsOn`: the raw `<depends-on>` text, or `""` when the
-    /// element — or the task itself — is absent.
-    pub fn get_depends_on(&self, plan: &PlanTasks, task_id: u32) -> String {
-        find_task(plan, task_id).map(|t| t.depends_on()).unwrap_or_default()
+    /// element is absent. An unknown task id is an error, as in Java, where
+    /// `findTask` throws before the element lookup happens.
+    pub fn get_depends_on(&self, plan: &PlanTasks, task_id: u32) -> Result<String> {
+        Ok(find_task(plan, task_id)?.depends_on())
     }
 
     /// Port of `setDependsOn`: sets or replaces the task's `<depends-on>`
@@ -140,6 +141,86 @@ impl TaskStore {
                 children: vec![RawNode::Text(trimmed.to_string())],
             });
         }
+        Ok(())
+    }
+
+    /// Port of `getTaskName`: the task's display name, falling back to the
+    /// stringified id — for an unnamed task *and* for one that is not there.
+    /// Java resolves this through a stream default rather than `findTask`, so
+    /// unlike the mutations it never fails.
+    pub fn get_task_name(&self, plan: &PlanTasks, task_id: u32) -> String {
+        match find_task(plan, task_id) {
+            Ok(task) if !task.name.is_empty() => task.name.clone(),
+            _ => task_id.to_string(),
+        }
+    }
+
+    /// Port of `updateTaskStatus`. The token is validated on the way in, as
+    /// Java's `TaskStatusType.fromValue` does.
+    pub fn update_task_status(
+        &self,
+        plan: &mut PlanTasks,
+        task_id: u32,
+        status: &str,
+    ) -> Result<()> {
+        let status: TaskStatus = status.parse()?;
+        find_task_mut(plan, task_id)?.status = status.to_string();
+        Ok(())
+    }
+
+    /// Port of `setCommit`.
+    pub fn set_commit(&self, plan: &mut PlanTasks, task_id: u32, commit: &str) -> Result<()> {
+        find_task_mut(plan, task_id)?.commit = commit.to_string();
+        Ok(())
+    }
+
+    /// Port of `addComment`: appends a timestamped comment to the task.
+    pub fn add_comment(&self, plan: &mut PlanTasks, task_id: u32, message: &str) -> Result<()> {
+        let timestamp = self.now_xml_date_time();
+        find_task_mut(plan, task_id)?
+            .comments
+            .push(Comment { timestamp, message: message.to_string() });
+        Ok(())
+    }
+
+    /// Port of `addDeviation`: appends a timestamped, typed deviation.
+    pub fn add_deviation(
+        &self,
+        plan: &mut PlanTasks,
+        task_id: u32,
+        kind: &str,
+        message: &str,
+    ) -> Result<()> {
+        let kind: DeviationKind = kind.parse()?;
+        let timestamp = self.now_xml_date_time();
+        find_task_mut(plan, task_id)?.deviations.push(Deviation {
+            kind: kind.to_string(),
+            timestamp,
+            message: message.to_string(),
+        });
+        Ok(())
+    }
+
+    /// Port of `projectUpdate`: appends a plan-level update and, when
+    /// `status` is given, rewrites the plan's own status. A missing `blocked`
+    /// records `false` and a missing message records the empty string —
+    /// Java's null-coalescing, not an omitted element.
+    pub fn project_update(
+        &self,
+        plan: &mut PlanTasks,
+        status: Option<&str>,
+        blocked: Option<bool>,
+        message: Option<&str>,
+    ) -> Result<()> {
+        if let Some(status) = status {
+            let status: PlanStatus = status.parse()?;
+            plan.metadata.status = status.to_string();
+        }
+        plan.project_updates.push(Update {
+            timestamp: self.now_xml_date_time(),
+            message: message.unwrap_or_default().to_string(),
+            blocked: Some(blocked.unwrap_or(false).to_string()),
+        });
         Ok(())
     }
 }
@@ -168,8 +249,11 @@ fn next_task_id(plan: &PlanTasks) -> u32 {
     plan.tasks.iter().filter_map(|t| t.id_number().ok()).max().unwrap_or(0) + 1
 }
 
-fn find_task(plan: &PlanTasks, task_id: u32) -> Option<&Task> {
-    plan.tasks.iter().find(|t| t.id_number().ok() == Some(task_id))
+fn find_task(plan: &PlanTasks, task_id: u32) -> Result<&Task> {
+    plan.tasks
+        .iter()
+        .find(|t| t.id_number().ok() == Some(task_id))
+        .ok_or(Error::TaskNotFound(task_id))
 }
 
 /// Port of `findTask`: the first task with this id, or the Java error text.
@@ -231,10 +315,32 @@ mod tests {
 
     // ---- plan-107 Task 4 de-risk: fresh-element construction ----
 
-    /// The instant the Task 1 fixture corpus was generated under.
+    /// The instant the Task 1 fixture corpus was initialised under.
     fn pinned_store(repo: &std::path::Path) -> TaskStore {
+        store_at(repo, time::macros::datetime!(2026-08-06 18:15:26.599 +05:30))
+    }
+
+    /// A store whose clock is pinned to one fixture step's own timestamp, so
+    /// the mutation it performs renders byte-identically to that step's XML.
+    fn store_at(repo: &std::path::Path, now: time::OffsetDateTime) -> TaskStore {
         let locator = ShipsmoothDataLocator::in_repo(repo).unwrap();
-        TaskStore::with_clock(locator, || time::macros::datetime!(2026-08-06 18:15:26.599 +05:30))
+        TaskStore::with_clock(locator, move || now)
+    }
+
+    /// Applies one mutation to `from` and asserts it reproduces `to` exactly.
+    /// Every step here mirrors a real `shipsmooth` CLI invocation captured in
+    /// fixtures/generate.sh, so the corpus is the spec for both.
+    fn assert_step(
+        from: &str,
+        to: &str,
+        now: time::OffsetDateTime,
+        mutate: impl FnOnce(&TaskStore, &mut PlanTasks),
+    ) {
+        let repo = tempfile::tempdir().unwrap();
+        let store = store_at(repo.path(), now);
+        let mut plan = PlanTasks::parse(&gw_fixture(from)).unwrap();
+        mutate(&store, &mut plan);
+        assert_eq!(plan.to_xml(), gw_fixture(to), "{from} -> {to}");
     }
 
     fn spec(id: u32, name: &str, risk: &str, depends_on: &str) -> ParsedTask {
@@ -286,24 +392,189 @@ mod tests {
         let store = pinned_store(repo.path());
         let mut plan = PlanTasks::parse(&gw_fixture("step-00-init.xml")).unwrap();
 
-        assert_eq!(store.get_depends_on(&plan, 2), "1");
+        assert_eq!(store.get_depends_on(&plan, 2).unwrap(), "1");
         store.set_depends_on(&mut plan, 2, "1,3").unwrap();
-        assert_eq!(store.get_depends_on(&plan, 2), "1,3");
+        assert_eq!(store.get_depends_on(&plan, 2).unwrap(), "1,3");
         // Replacing must not leave a second <depends-on> behind.
         assert_eq!(plan.tasks[1].extensions.len(), 1);
 
         store.set_depends_on(&mut plan, 2, "  ").unwrap();
-        assert_eq!(store.get_depends_on(&plan, 2), "");
+        assert_eq!(store.get_depends_on(&plan, 2).unwrap(), "");
         assert!(plan.tasks[1].extensions.is_empty(), "blank removes the element");
 
         // A task with no <depends-on> gains one at the end of the slot.
         store.set_depends_on(&mut plan, 1, " 2 ").unwrap();
-        assert_eq!(store.get_depends_on(&plan, 1), "2");
+        assert_eq!(store.get_depends_on(&plan, 1).unwrap(), "2");
 
         assert_eq!(
             store.set_depends_on(&mut plan, 99, "1").unwrap_err().to_string(),
             "Task 99 not found"
         );
+    }
+
+    #[test]
+    fn update_task_status_replaces_the_status_token() {
+        assert_step(
+            "step-00-init.xml",
+            "step-01-status-in-progress.xml",
+            time::macros::datetime!(2026-08-06 18:15:27.000 +05:30),
+            |store, plan| store.update_task_status(plan, 1, "in-progress").unwrap(),
+        );
+    }
+
+    #[test]
+    fn add_comment_appends_an_entry_escaping_markup_like_jaxb() {
+        assert_step(
+            "step-01-status-in-progress.xml",
+            "step-02-comment-escapables.xml",
+            time::macros::datetime!(2026-08-06 18:15:27.968 +05:30),
+            |store, plan| {
+                store
+                    .add_comment(plan, 1, "Special chars: & < > \" ' and unicode: héllo 🚀")
+                    .unwrap()
+            },
+        );
+    }
+
+    #[test]
+    fn add_comment_appends_after_an_existing_one() {
+        assert_step(
+            "step-11-status-abandoned.xml",
+            "step-12-comment-appends.xml",
+            time::macros::datetime!(2026-08-06 18:15:34.797 +05:30),
+            |store, plan| store.add_comment(plan, 1, "Second comment appends").unwrap(),
+        );
+    }
+
+    #[test]
+    fn set_commit_writes_the_sha_into_the_commit_element() {
+        assert_step(
+            "step-02-comment-escapables.xml",
+            "step-03-set-commit.xml",
+            time::macros::datetime!(2026-08-06 18:15:29.000 +05:30),
+            |store, plan| {
+                store
+                    .set_commit(plan, 1, "0123456789abcdef0123456789abcdef01234567")
+                    .unwrap()
+            },
+        );
+    }
+
+    #[test]
+    fn add_deviation_appends_a_typed_entry() {
+        assert_step(
+            "step-04-status-de-risked.xml",
+            "step-05-deviation-minor.xml",
+            time::macros::datetime!(2026-08-06 18:15:30.060 +05:30),
+            |store, plan| {
+                store.add_deviation(plan, 1, "minor", "Split parsing into two passes").unwrap()
+            },
+        );
+    }
+
+    #[test]
+    fn project_update_appends_an_entry_defaulting_blocked_to_false() {
+        assert_step(
+            "step-12-comment-appends.xml",
+            "step-13-update-message.xml",
+            time::macros::datetime!(2026-08-06 18:15:35.490 +05:30),
+            |store, plan| {
+                store.project_update(plan, None, None, Some("Mid-plan checkpoint")).unwrap()
+            },
+        );
+    }
+
+    #[test]
+    fn project_update_records_a_blocked_entry_without_touching_plan_status() {
+        assert_step(
+            "step-13-update-message.xml",
+            "step-14-update-blocked.xml",
+            time::macros::datetime!(2026-08-06 18:15:36.202 +05:30),
+            |store, plan| {
+                store
+                    .project_update(plan, None, Some(true), Some("Blocked on format decision"))
+                    .unwrap()
+            },
+        );
+    }
+
+    #[test]
+    fn project_update_with_a_status_also_rewrites_plan_status() {
+        assert_step(
+            "step-14-update-blocked.xml",
+            "step-15-update-in-review.xml",
+            time::macros::datetime!(2026-08-06 18:15:36.867 +05:30),
+            |store, plan| {
+                store
+                    .project_update(plan, Some("in-review"), None, Some("Ready for review"))
+                    .unwrap()
+            },
+        );
+    }
+
+    #[test]
+    fn add_task_without_risk_or_depends_on_renders_the_bare_element() {
+        assert_step(
+            "step-09-add-task-with-deps.xml",
+            "step-10-add-task-minimal.xml",
+            time::macros::datetime!(2026-08-06 18:15:33.000 +05:30),
+            |store, plan| {
+                assert_eq!(
+                    store.add_task(plan, &spec(0, "Bare addition", "", ""), "plan-42-v1").unwrap(),
+                    5
+                );
+            },
+        );
+    }
+
+    #[test]
+    fn get_task_name_falls_back_to_the_stringified_id() {
+        let plan = PlanTasks::parse(&gw_fixture("step-00-init.xml")).unwrap();
+        let repo = tempfile::tempdir().unwrap();
+        let store = pinned_store(repo.path());
+        assert_eq!(store.get_task_name(&plan, 2), "Write the output");
+        assert_eq!(store.get_task_name(&plan, 99), "99");
+    }
+
+    #[test]
+    fn mutations_report_a_missing_task_with_the_java_message() {
+        let repo = tempfile::tempdir().unwrap();
+        let store = pinned_store(repo.path());
+        let mut plan = PlanTasks::parse(&gw_fixture("step-00-init.xml")).unwrap();
+
+        let failures = [
+            store.update_task_status(&mut plan, 99, "closed").unwrap_err(),
+            store.add_comment(&mut plan, 99, "nope").unwrap_err(),
+            store.add_deviation(&mut plan, 99, "minor", "nope").unwrap_err(),
+            store.set_commit(&mut plan, 99, "abc").unwrap_err(),
+            store.set_depends_on(&mut plan, 99, "1").unwrap_err(),
+            store.get_depends_on(&plan, 99).unwrap_err(),
+        ];
+        for err in failures {
+            assert_eq!(err.to_string(), "Task 99 not found");
+        }
+    }
+
+    #[test]
+    fn invalid_enum_tokens_are_rejected_on_the_way_in() {
+        let repo = tempfile::tempdir().unwrap();
+        let store = pinned_store(repo.path());
+        let mut plan = PlanTasks::parse(&gw_fixture("step-00-init.xml")).unwrap();
+
+        assert_eq!(
+            store.update_task_status(&mut plan, 1, "nonsense").unwrap_err().to_string(),
+            "invalid task status 'nonsense'"
+        );
+        assert_eq!(
+            store.add_deviation(&mut plan, 1, "sideways", "m").unwrap_err().to_string(),
+            "invalid deviation type 'sideways'"
+        );
+        assert_eq!(
+            store.project_update(&mut plan, Some("dormant"), None, None).unwrap_err().to_string(),
+            "invalid plan status 'dormant'"
+        );
+        // Rejected input leaves the document untouched.
+        assert_eq!(plan.to_xml(), gw_fixture("step-00-init.xml"));
     }
 
     #[test]

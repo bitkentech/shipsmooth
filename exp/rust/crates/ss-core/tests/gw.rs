@@ -55,8 +55,11 @@ const FRESH_PLAN_9: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="y
 </plan-tasks>
 "#;
 
-fn spec(name: &str, risk: &str, depends_on: &str) -> ParsedTask {
-    ParsedTask { id: 0, name: name.into(), risk: risk.into(), depends_on: depends_on.into() }
+/// A `ParsedTask` as `plan::parse_tasks` would yield it. `generate_plan_tasks`
+/// writes the id through verbatim (as Java does), so ids here are the ones
+/// that must land in the XML; `add_task` ignores the id and assigns its own.
+fn spec(id: u32, name: &str, risk: &str, depends_on: &str) -> ParsedTask {
+    ParsedTask { id, name: name.into(), risk: risk.into(), depends_on: depends_on.into() }
 }
 
 #[test]
@@ -70,7 +73,7 @@ fn task_store_lifecycle_generates_mutates_and_persists_java_identical_xml() {
         .generate_plan_tasks(
             9,
             "plan-9-v1",
-            &[spec("Parse the input", "high", ""), spec("Write the output", "medium", "1")],
+            &[spec(1, "Parse the input", "high", ""), spec(2, "Write the output", "medium", "1")],
         )
         .unwrap();
     assert!(!store.plan_tasks_file_exists(9));
@@ -79,10 +82,11 @@ fn task_store_lifecycle_generates_mutates_and_persists_java_identical_xml() {
     assert_eq!(std::fs::read_to_string(store.plan_tasks_file(9)).unwrap(), FRESH_PLAN_9);
 
     // Mutate through every write operation, then persist and re-read.
-    let assigned = store.add_task(&mut plan, &spec("Harden", "low", "1,2"), "plan-9-v2").unwrap();
+    // The id on the spec is ignored — add_task assigns max(existing) + 1.
+    let assigned = store.add_task(&mut plan, &spec(0, "Harden", "low", "1,2"), "plan-9-v2").unwrap();
     assert_eq!(assigned, 3);
     store.update_task_status(&mut plan, 1, "agent-coded").unwrap();
-    store.add_comment(&mut plan, 1, "De-risk draft ready for review");
+    store.add_comment(&mut plan, 1, "De-risk draft ready for review").unwrap();
     store.add_deviation(&mut plan, 2, "minor", "Split the writer").unwrap();
     store.set_commit(&mut plan, 1, "abc123").unwrap();
     store.set_depends_on(&mut plan, 2, "").unwrap(); // blank removes the element
@@ -100,11 +104,11 @@ fn task_store_lifecycle_generates_mutates_and_persists_java_identical_xml() {
     let t2 = &reread.tasks[1];
     assert_eq!(t2.deviations.len(), 1);
     assert_eq!(t2.deviations[0].kind, "minor");
-    assert_eq!(store.get_depends_on(&reread, 2), "");
+    assert_eq!(store.get_depends_on(&reread, 2).unwrap(), "");
     let t3 = &reread.tasks[2];
     assert_eq!(t3.status, "pending");
     assert_eq!(t3.created_from, "plan-9-v2");
-    assert_eq!(store.get_depends_on(&reread, 3), "1,2");
+    assert_eq!(store.get_depends_on(&reread, 3).unwrap(), "1,2");
     assert_eq!(reread.metadata.status, "in-review");
     assert_eq!(reread.project_updates.len(), 2);
     assert_eq!(reread.project_updates[1].message, "Awaiting review");
