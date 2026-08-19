@@ -144,6 +144,21 @@ impl TaskStore {
         Ok(())
     }
 
+    /// Port of `sliceTaskMarkdown`: the plan narrative's section for one
+    /// task. A missing or unreadable plan file slices to nothing, matching
+    /// Java's `exists()` guard and its `IOException` catch.
+    pub fn slice_task_markdown(&self, plan_id: u32, task_id: u32) -> String {
+        match std::fs::read_to_string(self.locator.plan_markdown_file(plan_id)) {
+            Ok(markdown) => crate::plan::slice_task_section(&markdown, task_id),
+            Err(_) => String::new(),
+        }
+    }
+
+    /// Port of `formatPlanSummary` — delegation, as in Java.
+    pub fn format_plan_summary(&self, plan: &PlanTasks) -> String {
+        crate::plan::summary(plan)
+    }
+
     /// Port of `getTaskName`: the task's display name, falling back to the
     /// stringified id — for an unnamed task *and* for one that is not there.
     /// Java resolves this through a stream default rather than `findTask`, so
@@ -525,6 +540,35 @@ mod tests {
                 );
             },
         );
+    }
+
+    #[test]
+    fn slice_task_markdown_reads_the_plan_file_and_slices_one_section() {
+        let repo = tempfile::tempdir().unwrap();
+        let store = pinned_store(repo.path());
+
+        // Absent plan file: nothing to slice, and no error.
+        assert_eq!(store.slice_task_markdown(42, 1), "");
+
+        let markdown = store.locator.plan_markdown_file(42);
+        std::fs::create_dir_all(markdown.parent().unwrap()).unwrap();
+        std::fs::write(
+            &markdown,
+            "### Task 1: First [High]\n\nBody one.\n\n### Task 2: Second [Low]\n\nBody two.\n",
+        )
+        .unwrap();
+
+        assert_eq!(store.slice_task_markdown(42, 1), "### Task 1: First [High]\n\nBody one.");
+        assert_eq!(store.slice_task_markdown(42, 2), "### Task 2: Second [Low]\n\nBody two.");
+        assert_eq!(store.slice_task_markdown(42, 9), "");
+    }
+
+    #[test]
+    fn format_plan_summary_delegates_to_the_ported_formatter() {
+        let repo = tempfile::tempdir().unwrap();
+        let store = pinned_store(repo.path());
+        let plan = PlanTasks::parse(&gw_fixture("step-00-init.xml")).unwrap();
+        assert_eq!(store.format_plan_summary(&plan), crate::plan::summary(&plan));
     }
 
     #[test]

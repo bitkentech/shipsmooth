@@ -71,6 +71,25 @@ fn depends_on_in(region: &str) -> String {
 // No dedicated Java unit test file exists for the parser; these pin the
 // behaviours the Java regexes define and the fixture corpus exercises
 // (fixtures/xml/01-fresh-init.xml is `plan init` over this same syntax).
+/// Port of `PlanMarkdown.sliceTaskSection`: the `### Task {id}:` section of a
+/// plan narrative, up to the next task heading, or `""` when absent.
+///
+/// Java reads the file here; the port takes the text so this module stays
+/// pure, and [`crate::gw::TaskStore::slice_task_markdown`] owns the read.
+/// The trailing colon in the marker is what stops task 1 from matching the
+/// `### Task 10:` heading.
+pub fn slice_task_section(markdown: &str, task_id: u32) -> String {
+    let marker = format!("### Task {task_id}:");
+    let Some(start) = markdown.find(&marker) else {
+        return String::new();
+    };
+    let body = &markdown[start..];
+    match body[marker.len()..].find("### Task ") {
+        Some(next) => body[..marker.len() + next].trim().to_string(),
+        None => body.trim().to_string(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
