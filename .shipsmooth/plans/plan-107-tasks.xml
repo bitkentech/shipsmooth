@@ -139,9 +139,9 @@
         <task>
             <id>8</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>gw golden-replay harness</name>
-            <commit></commit>
+            <commit>d3ffbf84921ed987e4af93d857fed9428f32d060</commit>
             <created-from>plan-107-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
