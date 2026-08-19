@@ -11,8 +11,9 @@ use time::OffsetDateTime;
 use crate::conf::ShipsmoothDataLocator;
 use crate::gw::xml_time;
 use crate::gw::xml_time::Clock;
-use crate::model::PlanTasks;
-use crate::Result;
+use crate::model::{Metadata, PlanTasks, RawElement, RawNode, Task, Update};
+use crate::plan::ParsedTask;
+use crate::{Error, Result};
 
 pub struct TaskStore {
     locator: ShipsmoothDataLocator,
@@ -63,6 +64,120 @@ impl TaskStore {
     pub fn save_plan(&self, plan_id: u32, plan: &PlanTasks) -> Result<()> {
         plan.save(&self.plan_tasks_file(plan_id))
     }
+
+    /// Port of `generatePlanTasks`: a fresh plan document with one pending
+    /// task per spec. Task ids come from the spec (the markdown headings),
+    /// not from the position — Java writes `t.id()` through verbatim.
+    ///
+    /// `depends-on` is applied in a second pass, as Java does, so every task
+    /// element exists before any of them is looked up by id.
+    pub fn generate_plan_tasks(
+        &self,
+        plan_num: u32,
+        plan_version: &str,
+        specs: &[ParsedTask],
+    ) -> Result<PlanTasks> {
+        let now = (self.clock)();
+        let mut plan = PlanTasks {
+            plan: plan_num.to_string(),
+            plan_version: plan_version.to_string(),
+            metadata: Metadata {
+                backlog_issue: String::new(),
+                status: "active".to_string(),
+                created: xml_time::xml_date(now.date()),
+                extensions: Vec::new(),
+            },
+            tasks: specs
+                .iter()
+                .map(|t| new_pending_task(t.id, &t.name, &t.risk, plan_version))
+                .collect(),
+            project_updates: vec![Update {
+                timestamp: xml_time::xml_date_time(now),
+                message: "Plan initialised.".to_string(),
+                blocked: Some("false".to_string()),
+            }],
+        };
+        for spec in specs {
+            if !spec.depends_on.trim().is_empty() {
+                self.set_depends_on(&mut plan, spec.id, &spec.depends_on)?;
+            }
+        }
+        Ok(plan)
+    }
+
+    /// Port of `addTask`: appends a pending task, ignoring the spec's own id
+    /// in favour of `max(existing ids) + 1`. Returns the assigned id.
+    pub fn add_task(
+        &self,
+        plan: &mut PlanTasks,
+        spec: &ParsedTask,
+        plan_version: &str,
+    ) -> Result<u32> {
+        let next_id = next_task_id(plan);
+        plan.tasks.push(new_pending_task(next_id, &spec.name, &spec.risk, plan_version));
+        if !spec.depends_on.trim().is_empty() {
+            self.set_depends_on(plan, next_id, &spec.depends_on)?;
+        }
+        Ok(next_id)
+    }
+
+    /// Port of `getDependsOn`: the raw `<depends-on>` text, or `""` when the
+    /// element — or the task itself — is absent.
+    pub fn get_depends_on(&self, plan: &PlanTasks, task_id: u32) -> String {
+        find_task(plan, task_id).map(|t| t.depends_on()).unwrap_or_default()
+    }
+
+    /// Port of `setDependsOn`: sets or replaces the task's `<depends-on>`
+    /// extension element. A blank value removes it.
+    pub fn set_depends_on(&self, plan: &mut PlanTasks, task_id: u32, value: &str) -> Result<()> {
+        let task = find_task_mut(plan, task_id)?;
+        task.extensions.retain(|e| e.name != "depends-on");
+        let trimmed = value.trim();
+        if !trimmed.is_empty() {
+            task.extensions.push(RawElement {
+                name: "depends-on".to_string(),
+                attrs: Vec::new(),
+                children: vec![RawNode::Text(trimmed.to_string())],
+            });
+        }
+        Ok(())
+    }
+}
+
+/// Port of `newPendingTask`: pending, empty commit, `created-from` set, empty
+/// comment/deviation containers and no extensions.
+fn new_pending_task(id: u32, name: &str, risk: &str, plan_version: &str) -> Task {
+    Task {
+        id: id.to_string(),
+        risk: risk.to_string(),
+        status: "pending".to_string(),
+        name: name.to_string(),
+        commit: String::new(),
+        created_from: plan_version.to_string(),
+        closed_at_version: String::new(),
+        comments: Vec::new(),
+        deviations: Vec::new(),
+        extensions: Vec::new(),
+    }
+}
+
+/// Port of `nextTaskId`: `max(existing ids) + 1`, or 1 on an empty plan.
+/// Ids that do not parse are skipped rather than failing the append — Java's
+/// `BigInteger` ids cannot be non-numeric, but this model stores lexicals.
+fn next_task_id(plan: &PlanTasks) -> u32 {
+    plan.tasks.iter().filter_map(|t| t.id_number().ok()).max().unwrap_or(0) + 1
+}
+
+fn find_task(plan: &PlanTasks, task_id: u32) -> Option<&Task> {
+    plan.tasks.iter().find(|t| t.id_number().ok() == Some(task_id))
+}
+
+/// Port of `findTask`: the first task with this id, or the Java error text.
+fn find_task_mut(plan: &mut PlanTasks, task_id: u32) -> Result<&mut Task> {
+    plan.tasks
+        .iter_mut()
+        .find(|t| t.id_number().ok() == Some(task_id))
+        .ok_or(Error::TaskNotFound(task_id))
 }
 
 #[cfg(test)]
