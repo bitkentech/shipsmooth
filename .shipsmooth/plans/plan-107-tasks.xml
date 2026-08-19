@@ -4,14 +4,14 @@
     <plan-version>plan-107-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-08-06</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Golden mutation-fixture corpus for gw</name>
             <commit>9fd81e7</commit>
             <created-from>plan-107-v1</created-from>
@@ -33,7 +33,7 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>TaskStore read/write path</name>
             <commit>6b69633</commit>
             <created-from>plan-107-v1</created-from>
@@ -50,7 +50,7 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>XSD timestamp lexical forms and injectable clock</name>
             <commit>1b6125fdc0d8a7882f8a552b9de905a82445a744</commit>
             <created-from>plan-107-v1</created-from>
@@ -67,7 +67,7 @@
         <task>
             <id>4</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>TaskStore mutations and depends-on extension</name>
             <commit>e3d65a4305fda7218a7b4a2d9aeea055c29b348a</commit>
             <created-from>plan-107-v1</created-from>
@@ -94,7 +94,7 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>GitState</name>
             <commit>829c88b7368c98fd52d450a5a81ca4257556954a</commit>
             <created-from>plan-107-v1</created-from>
@@ -110,7 +110,7 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>GitTags</name>
             <commit>9e68c9b670b20203aa3363f67c1cad3d67420757</commit>
             <created-from>plan-107-v1</created-from>
@@ -127,7 +127,7 @@
         <task>
             <id>7</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>PlanMarkdown slicing and TaskStore façade methods</name>
             <commit>849556faa7f408152a77a7a159cbe434cae77ce3</commit>
             <created-from>plan-107-v1</created-from>
@@ -139,7 +139,7 @@
         <task>
             <id>8</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>gw golden-replay harness</name>
             <commit>d3ffbf84921ed987e4af93d857fed9428f32d060</commit>
             <created-from>plan-107-v1</created-from>
@@ -151,7 +151,7 @@
         <task>
             <id>9</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Migration notes write-back</name>
             <commit>322affa84ba1cd7c70422a1c267a137f206bd040</commit>
             <created-from>plan-107-v1</created-from>
@@ -170,6 +170,11 @@
         <update>
             <timestamp>2026-08-19T11:01:06.022Z</timestamp>
             <message>Preamble integration tests (tests/gw.rs) pass for the first time: both TaskStore and Git gateway halves green.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-08-19T11:17:50.092Z</timestamp>
+            <message>Plan complete. ss_core::gw ported and verified byte-identical against the Java CLI's own output.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
