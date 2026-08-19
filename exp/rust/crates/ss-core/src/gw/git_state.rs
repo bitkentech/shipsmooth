@@ -123,18 +123,48 @@ impl GitState {
 
 #[cfg(test)]
 mod tests {
-    //! Port of `GitStateTest`, against real temporary git repositories.
+    //! Tests ported from `GitStateTest.java`, against real temporary git
+    //! repositories, plus the upstream/remote cases Java's suite cannot reach
+    //! without a second repo to push to.
 
     use super::*;
     use std::cell::RefCell;
     use std::rc::Rc;
+    use tempfile::TempDir;
 
-    /// A GitState whose diagnostics are captured instead of printed.
-    fn capturing(work_dir: &Path) -> (GitState, Rc<RefCell<Vec<String>>>) {
-        let log = Rc::new(RefCell::new(Vec::new()));
+    /// Captured diagnostics, so the exact Java strings can be asserted.
+    type Reported = Rc<RefCell<Vec<String>>>;
+
+    /// A one-commit repo and a GitState over it whose diagnostics are
+    /// captured rather than printed — Java's `@BeforeEach initRepo`.
+    fn fresh_repo() -> (TempDir, GitState, Reported) {
+        let repo = tempfile::tempdir().unwrap();
+        init_repo(repo.path());
+        let (state, log) = capturing(repo.path());
+        (repo, state, log)
+    }
+
+    fn capturing(work_dir: &Path) -> (GitState, Reported) {
+        let log: Reported = Rc::new(RefCell::new(Vec::new()));
         let sink = Rc::clone(&log);
-        let state = GitState::with_reporter(work_dir, move |m| sink.borrow_mut().push(m.to_string()));
+        let state =
+            GitState::with_reporter(work_dir, move |m| sink.borrow_mut().push(m.to_string()));
         (state, log)
+    }
+
+    fn init_repo(dir: &Path) {
+        git(dir, &["init"]);
+        git(dir, &["config", "user.email", "test@test.com"]);
+        git(dir, &["config", "user.name", "Test"]);
+        // At least one commit, or branch and tag operations have nothing to
+        // point at.
+        commit(dir, "README.md", "init", "init");
+    }
+
+    fn commit(dir: &Path, file: &str, contents: &str, message: &str) {
+        std::fs::write(dir.join(file), contents).unwrap();
+        git(dir, &["add", "."]);
+        git(dir, &["commit", "-m", message]);
     }
 
     fn git(dir: &Path, args: &[&str]) {
@@ -142,82 +172,207 @@ mod tests {
         assert!(out.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&out.stderr));
     }
 
-    fn init_repo(dir: &Path) {
-        git(dir, &["init"]);
-        git(dir, &["config", "user.email", "test@test.com"]);
-        git(dir, &["config", "user.name", "Test"]);
-        std::fs::write(dir.join("README.md"), "init").unwrap();
-        git(dir, &["add", "."]);
-        git(dir, &["commit", "-m", "init"]);
+    /// A bare repo wired up as `origin`, so the upstream-tracking and
+    /// ls-remote paths can be exercised for real.
+    fn with_origin(dir: &Path) -> TempDir {
+        let remote = tempfile::tempdir().unwrap();
+        git(remote.path(), &["init", "--bare"]);
+        git(dir, &["remote", "add", "origin", remote.path().to_str().unwrap()]);
+        remote
+    }
+
+    // ---- is_clean ----
+
+    #[test]
+    fn is_clean_on_a_fresh_repo() {
+        let (_repo, state, _log) = fresh_repo();
+        assert!(state.is_clean());
     }
 
     #[test]
-    fn queries_and_branch_creation_work_against_a_real_repo() {
-        let repo = tempfile::tempdir().unwrap();
-        let dir = repo.path();
-        init_repo(dir);
-        let (state, _log) = capturing(dir);
+    fn is_clean_is_false_with_an_untracked_file() {
+        let (repo, state, _log) = fresh_repo();
+        std::fs::write(repo.path().join("dirty.txt"), "change").unwrap();
+        assert!(!state.is_clean());
+    }
 
-        assert!(state.is_clean());
-        std::fs::write(dir.join("dirty.txt"), "change").unwrap();
-        assert!(!state.is_clean(), "an untracked file is a dirty tree");
-        git(dir, &["add", "."]);
-        git(dir, &["commit", "-m", "second"]);
-        assert!(state.is_clean());
+    #[test]
+    fn is_clean_is_false_with_a_modified_tracked_file() {
+        let (repo, state, _log) = fresh_repo();
+        std::fs::write(repo.path().join("README.md"), "modified").unwrap();
+        assert!(!state.is_clean());
+    }
 
-        assert!(!state.branch_exists("t/9-gw-port"));
-        assert!(state.create_branch("t/9-gw-port"));
-        assert!(state.branch_exists("t/9-gw-port"));
-        assert_eq!(state.current_branch(), "t/9-gw-port");
+    // ---- branches ----
 
-        assert!(!state.tag_exists_locally("plan-7-v1"));
-        git(dir, &["tag", "plan-7-v1"]);
+    #[test]
+    fn current_branch_returns_a_name() {
+        let (_repo, state, _log) = fresh_repo();
+        assert!(!state.current_branch().is_empty());
+    }
+
+    #[test]
+    fn branch_exists_after_creation() {
+        let (repo, state, _log) = fresh_repo();
+        git(repo.path(), &["branch", "t/pb-99-my-feature"]);
+        assert!(state.branch_exists("t/pb-99-my-feature"));
+    }
+
+    #[test]
+    fn branch_exists_is_false_for_a_non_existent_branch() {
+        let (_repo, state, _log) = fresh_repo();
+        assert!(!state.branch_exists("t/pb-99-no-such-branch"));
+    }
+
+    #[test]
+    fn create_branch_succeeds_and_switches_branch() {
+        let (_repo, state, _log) = fresh_repo();
+        assert!(state.create_branch("t/pb-99-new-branch"));
+        assert_eq!(state.current_branch(), "t/pb-99-new-branch");
+    }
+
+    #[test]
+    fn create_branch_fails_if_the_branch_already_exists() {
+        let (repo, state, _log) = fresh_repo();
+        git(repo.path(), &["branch", "t/pb-99-existing"]);
+        assert!(!state.create_branch("t/pb-99-existing"));
+    }
+
+    // ---- tags ----
+
+    #[test]
+    fn tag_exists_locally_after_creation() {
+        let (repo, state, _log) = fresh_repo();
+        git(repo.path(), &["tag", "plan-7-v1"]);
         assert!(state.tag_exists_locally("plan-7-v1"));
-
-        // No upstream and no remote configured.
-        assert!(!state.is_branch_pushed_and_not_ahead());
-        assert!(!state.tag_exists_on_remote("plan-7-v1"));
-
-        assert!(state.worktree_list().iter().any(|l| l.contains(dir.to_str().unwrap())));
     }
 
     #[test]
-    fn a_failing_git_returns_false_and_surfaces_its_output() {
-        let repo = tempfile::tempdir().unwrap();
-        let dir = repo.path();
-        init_repo(dir);
-        let (state, log) = capturing(dir);
-        git(dir, &["branch", "t/9-existing"]);
+    fn tag_exists_locally_is_false_when_absent() {
+        let (_repo, state, _log) = fresh_repo();
+        assert!(!state.tag_exists_locally("plan-7-v1"));
+    }
 
-        assert!(!state.create_branch("t/9-existing"));
+    #[test]
+    fn tag_exists_on_remote_is_false_with_no_remote() {
+        let (_repo, state, _log) = fresh_repo();
+        assert!(!state.tag_exists_on_remote("plan-7-v1"));
+    }
+
+    #[test]
+    fn tag_exists_on_remote_sees_only_pushed_tags() {
+        let (repo, state, _log) = fresh_repo();
+        let _remote = with_origin(repo.path());
+        git(repo.path(), &["tag", "plan-7-v1"]);
+
+        assert!(!state.tag_exists_on_remote("plan-7-v1"), "a local-only tag is not on the remote");
+        git(repo.path(), &["push", "origin", "plan-7-v1"]);
+        assert!(state.tag_exists_on_remote("plan-7-v1"));
+        assert!(!state.tag_exists_on_remote("plan-7-v2"));
+    }
+
+    // ---- upstream tracking ----
+
+    #[test]
+    fn is_branch_pushed_is_false_with_no_upstream() {
+        let (_repo, state, _log) = fresh_repo();
+        assert!(!state.is_branch_pushed_and_not_ahead());
+    }
+
+    #[test]
+    fn is_branch_pushed_is_true_only_while_head_is_not_ahead() {
+        let (repo, state, _log) = fresh_repo();
+        let _remote = with_origin(repo.path());
+        let branch = state.current_branch();
+        git(repo.path(), &["push", "-u", "origin", &branch]);
+
+        assert!(state.is_branch_pushed_and_not_ahead());
+
+        commit(repo.path(), "later.txt", "more", "unpushed work");
+        assert!(!state.is_branch_pushed_and_not_ahead(), "one unpushed commit is ahead");
+
+        git(repo.path(), &["push"]);
+        assert!(state.is_branch_pushed_and_not_ahead());
+    }
+
+    // ---- worktrees ----
+
+    #[test]
+    fn worktree_list_returns_at_least_the_main_worktree() {
+        let (repo, state, _log) = fresh_repo();
+        let list = state.worktree_list();
+        assert!(!list.is_empty());
+        // The temp dir may resolve through a symlink (/tmp on macOS), so
+        // match on the final component rather than the whole path.
+        let name = repo.path().file_name().unwrap().to_str().unwrap();
+        assert!(list.iter().any(|l| l.contains(name)), "main worktree missing from {list:?}");
+    }
+
+    // ---- diagnostics ----
+
+    #[test]
+    fn create_branch_failure_surfaces_gits_own_stderr() {
+        let (repo, state, log) = fresh_repo();
+        git(repo.path(), &["branch", "t/pb-99-existing"]);
+
+        assert!(!state.create_branch("t/pb-99-existing"));
 
         let reported = log.borrow().join("\n");
         assert!(reported.contains("already exists"), "git's own text is the payload: {reported}");
         assert!(
-            reported.starts_with("git checkout -b t/9-existing failed (exit "),
+            reported.starts_with("git checkout -b t/pb-99-existing failed (exit "),
             "exact Java diagnostic shape: {reported}"
         );
     }
 
     #[test]
-    fn a_git_that_cannot_run_degrades_quietly_but_reports_writes() {
+    fn a_git_that_cannot_run_reports_why_and_returns_false() {
         let repo = tempfile::tempdir().unwrap();
-        let missing = repo.path().join("does-not-exist");
-        let (state, log) = capturing(&missing);
+        let (state, log) = capturing(&repo.path().join("does-not-exist"));
 
-        // Read paths degrade silently to "no output".
-        assert!(state.is_clean(), "an unrunnable git reads as a clean tree");
+        assert!(!state.create_branch("t/pb-99-anything"));
+
+        let reported = log.borrow().join("\n");
+        assert!(
+            reported.starts_with("git checkout -b t/pb-99-anything could not run: "),
+            "exact Java diagnostic shape: {reported}"
+        );
+    }
+
+    #[test]
+    fn read_queries_degrade_to_empty_output_when_git_cannot_run() {
+        let repo = tempfile::tempdir().unwrap();
+        let (state, log) = capturing(&repo.path().join("does-not-exist"));
+
+        // Deliberate degradation (plan-107 decision 3): no output reads as a
+        // clean tree, which is what lets preflight run outside a repo at all.
+        assert!(state.is_clean());
         assert_eq!(state.current_branch(), "");
         assert!(state.worktree_list().is_empty());
         assert!(!state.branch_exists("anything"));
-        assert!(log.borrow().is_empty(), "read paths stay quiet");
+        assert!(!state.tag_exists_locally("plan-7-v1"));
+        assert!(!state.tag_exists_on_remote("plan-7-v1"));
+        assert!(log.borrow().is_empty(), "run_lines queries stay quiet: {:?}", log.borrow());
 
-        // Write paths report why.
-        assert!(!state.create_branch("t/9-anything"));
-        let reported = log.borrow().join("\n");
-        assert!(
-            reported.starts_with("git checkout -b t/9-anything could not run: "),
-            "exact Java diagnostic shape: {reported}"
-        );
+        // The one read query that does report: Java probes for an upstream
+        // with runExitCode, not runLines, so a failed probe is announced.
+        assert!(!state.is_branch_pushed_and_not_ahead());
+        assert!(log
+            .borrow()
+            .iter()
+            .any(|m| m.starts_with("git rev-parse --abbrev-ref --symbolic-full-name @{u} could not run: ")));
+    }
+
+    #[test]
+    fn the_default_constructor_installs_the_stderr_sink() {
+        let repo = tempfile::tempdir().unwrap();
+        init_repo(repo.path());
+        let state = GitState::new(repo.path());
+
+        assert!(state.is_clean());
+        // Drives the default sink: the diagnostic goes to the harness's
+        // stderr, which is exactly why the capturing seam exists.
+        git(repo.path(), &["branch", "t/pb-99-existing"]);
+        assert!(!state.create_branch("t/pb-99-existing"));
     }
 }
