@@ -94,12 +94,17 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>GitState</name>
             <commit></commit>
             <created-from>plan-107-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-19T10:53:59.424Z</timestamp>
+                    <message>De-risk draft ready for review (700a612). Approach question for the reviewer: git diagnostics go through an injectable sink (Diagnostics = Box&lt;dyn Fn(&amp;str)&gt;, default eprintln!) so the exact Java stderr strings can be asserted, mirroring the task-3 clock seam. Full surface ported; coverage 93.2% pending hardening.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
