@@ -50,9 +50,9 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>XSD timestamp lexical forms and injectable clock</name>
-            <commit></commit>
+            <commit>1b6125fdc0d8a7882f8a552b9de905a82445a744</commit>
             <created-from>plan-107-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
