@@ -110,13 +110,19 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>GitTags</name>
-            <commit></commit>
+            <commit>9e68c9b670b20203aa3363f67c1cad3d67420757</commit>
             <created-from>plan-107-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-08-19T11:01:05.444Z</timestamp>
+                    <message>Task 6 was executed single-pass (no separate de-risk gate) on explicit human instruction ('harden it then do gittags'), rather than the two-phase cycle its Medium risk would normally get. The plan itself calls this task small and mechanical.</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>7</id>
@@ -159,6 +165,11 @@
         <update>
             <timestamp>2026-08-06T17:59:42.252+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-08-19T11:01:06.022Z</timestamp>
+            <message>Preamble integration tests (tests/gw.rs) pass for the first time: both TaskStore and Git gateway halves green.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
