@@ -246,6 +246,72 @@ dispatch through.
   defect still stands: `plan tag --kind version` derives the version from the
   XML field, not git tags — port as-is.
 
+## plan slice findings (plan-109, 2026-08-20) — the CLI is feature-complete
+
+The `plan` group (all nine leaves) plus the last unported `svc::plan` classes
+are ported and parity-verified. **Every Java CLI package now has a Rust
+equivalent**; there is no remaining command surface to port.
+
+- **Cost.** ~657 lines of Java main source became ~1,617 lines of Rust
+  (implementation, inline tests, 411 lines of integration tests, and 147 lines
+  of parity harness) across 10 tasks in one session. Coverage: `ss-core`
+  98.98% line with `markdown.rs` and `new_plan.rs` at 100%/99.24%; `ss-cli`
+  96.17% line, every `plan/` file 100% except the leaves' unreachable error
+  branches.
+- **Parity.** 45 scenarios (10 store, 13 task, 22 plan), all byte-identical.
+  Plan scenarios seed with the implementation **under test** rather than
+  always with Java — possible for the first time because `plan init` is now
+  ported, and strictly stronger: a `plan init` divergence surfaces in the
+  seeded XML instead of hiding behind an identical Java-written start.
+- **Divergences found (all resolved):**
+  - **`plan tag`'s recorded defect does not exist.** 02-cli.md said it
+    "derives the version from the XML field, not git tags" and should be
+    ported as-is. The Java `Tag` contains zero XML references; it calls
+    `GitTags.nextPlanVersion`, which reads `git tag -l … --sort=-version:refname`.
+    Corrected in 02-cli.md rather than faithfully reproducing a bug that was
+    not there. **Check a recorded defect against the source before porting it.**
+  - **Rendered timestamps.** `plan show`/`resume` print the project-update
+    timestamp, so the wall-clock divergence already normalised in the XML also
+    reaches stdout. Caught by the harness, not by the ported tests.
+  - **The plan group prints errors to stdout**, unlike `store`/`task` which
+    use stderr — except `plan init`, which uses stderr. Ported as observed.
+  - Same Java-stack-trace allowlist as the task slice for the paths picocli's
+    default handler swallows.
+- **Decisions that outlived the plan:**
+  - **`PlanService` was never built**, extending plan-108's call. Its four
+    remaining methods are one-liners over `NewPlan` and `TaskStore`. This
+    deliberately contradicts 01-core.md's "keep, cli leaves call it", which
+    predates the `TaskStore::mutate` seam that absorbed its reason to exist.
+  - **`BranchOps` trait** as the scaffolding seam: Java's `NewPlanTest`
+    subclasses `GitState` to stub two methods, and Rust has no subclassing.
+    One test drives the production `impl` against a real repo so the fakes do
+    not leave the shipped path unexercised.
+  - **`LeafContext`** generalises plan-108's `dispatch_task`: the settled
+    roots travel with the gateways because `plan quick` mints its own locator.
+  - **Diagnostics and reports are returned, not printed** (`parse_with_diagnostics`,
+    `near_miss_report`, `preflight::report`, `quick::handoff`). That is what
+    makes exact wording, the 10-item cap, and the fail-fast/warn ordering
+    unit-testable instead of only observable through the binary. `preflight`
+    additionally builds its report once, because every line costs a git
+    subprocess and one of them writes to stderr.
+- **Feature-complete is not "next comes shipping".** `exp/rust` is an
+  experiment: it is built only when someone explicitly runs cargo there,
+  nothing in the release pipeline touches it, and **the Java CLI remains the
+  daily driver and the shipped artifact**. Reaching feature parity does not
+  make a cutover the next task, and none is planned. Do not start packaging,
+  installer or release work for the Rust tree unless it is explicitly asked
+  for.
+
+  Recorded because the reverse is easy to assume — this document and 02-cli.md
+  describe the cutover in enough detail to read like a roadmap. What that
+  material actually is: a note of what shipping *would* cost, if it is ever
+  wanted. For the record, that cost is `packaging/`, `harness/*` and the Gradle
+  publish tasks all assuming a jlink runtime image per OS (so a Rust binary
+  changes the artifact shape, the three installer scripts and SKILL.md's
+  `cliBin` paths), a real Windows target with the git-shelling paths retested,
+  the unresolved Cargo-vs-`plugin.version` split from plan-106, and a rollout
+  in which both implementations coexist (02-cli.md §definition of done).
+
 ## Target layout
 
 Cargo workspace mirroring the Gradle module split:

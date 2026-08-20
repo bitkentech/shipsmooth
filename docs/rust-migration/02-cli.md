@@ -5,14 +5,16 @@ on `ss-core`. Conversion order: ds → conf → commands (store, then plan/task)
 wiring/main. The picocli→clap shift is the one *architectural* change in the
 whole migration, so it is described first.
 
-> **Status (plan-108, 2026-08-20):** `ds/`, `conf` (ConfigFileLocator),
-> `resolution_json.rs`, RepoRoot/RemoteUrl, the `store` group (plan-106),
-> `ss-core::gw` (plan-107), and now the full `task` group **plus the
-> resolve-gate wiring in `main.rs`** are **ported and parity-verified**
-> (see 00-overview.md §task-slice findings).
-> Remaining: `commands/plan/` and the four unported `ss-core::svc::plan`
-> classes beneath it (`NewPlan`, `PlanService`, `ScaffoldResult`,
-> `ScaffoldException`).
+> **Status (plan-109, 2026-08-20): the CLI is feature-complete.** Every
+> package in this module is **ported and parity-verified** — `ds/`, `conf`,
+> `resolution_json.rs`, RepoRoot/RemoteUrl, `store` (plan-106), `ss-core::gw`
+> (plan-107), `task` + the resolve gate (plan-108), and `plan` + the last
+> `svc::plan` classes (plan-109). 45 parity scenarios byte-identical.
+> Nothing remains to port. That does **not** make a cutover the next task:
+> `exp/rust` is an experiment, built only on demand, and the Java CLI remains
+> the shipped artifact. The packaging/installer notes in this file describe
+> what shipping would cost if it is ever wanted — they are not a roadmap.
+> See 00-overview.md §plan-slice.
 
 ## Architecture shift: picocli command objects → clap + dispatch
 
@@ -143,18 +145,34 @@ for config fixtures, port only what the surviving tests need — or replace with
   only for errors** — this is an explicit project rule; port the tests that
   pin it.
 
-### `io.bitken.ss.cli.plan` (9 files) → `commands/plan/`
+### `io.bitken.ss.cli.plan` (9 files) → `src/plan/` — PORTED (plan-109)
 
 Plan, Init, Show, Tag, Branch, Preflight, Resume, QuickStart, ProjectUpdate.
-All are thin: parse options → call `PlanService`/`TaskStore`/`GitTags`/`GitState`
-→ format output. Mechanical ports; the per-command integration tests
-(`PlanTagTest`, `PlanPreflightTest`, `PlanBranchTest`, `PlanResumeTest`,
-`PlanQuickStartTest`, `PlanCommandsIntegrationTest`) are the spec — port each
-command *with* its test in the same session.
+Ported with their tests; notable deltas:
 
-Known quirk to preserve or fix consciously: `plan tag --kind version` derives
-the version from the XML field, not git tags (recorded defect — stale-version
-behaviour). Port as-is; do not silently "fix" during migration.
+- **No `PlanService`** — the leaves call `NewPlan` and `TaskStore` directly,
+  extending plan-108's decision (see 01-core.md §2 for why that guidance is
+  superseded).
+- **Errors go to stdout** for this group, unlike `store`/`task` — except
+  `init`, which uses stderr. Ported as observed, not as expected.
+- `init` reports near-miss diagnostics on stderr when it fails (zero tasks,
+  nothing written) and on stdout when it succeeds, capped at 10 with an
+  "… and N more" summary.
+- `preflight` builds its report once rather than per-line: each line costs a
+  git subprocess and `isBranchPushedAndNotAhead` writes a diagnostic to
+  stderr (plan-107), so evaluating twice would double it.
+- `branch`'s exactly-one-of `--issue`/`--plan` is enforced at dispatch with
+  Java's own message, not a clap arg group whose wording would differ.
+- `project-update`'s `--blocked` is tri-state in Java (arity-0 `Boolean`:
+  true when present, null when absent) and maps to `Option<bool>`.
+
+**Correction (plan-109):** this file previously recorded a defect here —
+"`plan tag --kind version` derives the version from the XML field, not git
+tags" — to be ported as-is. **That was wrong.** `Tag.java` contains no XML
+references at all; it calls `GitTags.nextPlanVersion`, which derives from
+`git tag -l 'plan-N-v*' --sort=-version:refname`. There was no defect to
+preserve, and the Rust port matches the real behaviour. Verify a recorded
+defect against the source before reproducing it.
 
 ### `io.bitken.ss.cli.task` (6 files) → `src/task/` — PORTED (plan-108)
 

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>109</plan>
+    <plan-version>plan-109-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-08-20</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>parse_with_diagnostics and the near-miss heuristics</name>
+            <commit>737b86333f84c4eeaeec519acb8f2c0a76da8290</commit>
+            <created-from>plan-109-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-20T07:28:44.347Z</timestamp>
+                    <message>De-risk draft ready for review. Key translation decision: Java's Matcher.matches()/String.matches() are FULL matches, so every near-miss pattern becomes an anchored Rust regex over a single trailing-trimmed line. Diagnostics returned as data (Vec&lt;Diagnostic&gt;), not printed, so the reason text is unit-testable. All 14 markdown tests green including 3 new core tests; existing parse_tasks behaviour unchanged.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>NewPlan, ScaffoldResult and the Scaffold error</name>
+            <commit>64b416ceff53e8e4fecca8a63d24d4d18e668e7a</commit>
+            <created-from>plan-109-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-20T07:34:15.150Z</timestamp>
+                    <message>De-risk draft ready for review; hardening is already included (real-git test through the production impl, 99.24% line / 100% function, clippy clean), so approval closes this task out. Key decision: BranchOps trait replaces Java's GitState subclassing as the test seam. Ordering guarantee verified by perturbation rather than red-first, since tests and impl were written together.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>`plan init` leaf</name>
+            <commit>ebbb15b1da69b8944c9b0bf0aaa1567311a1e4af</commit>
+            <created-from>plan-109-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>`plan quick` leaf</name>
+            <commit>7b5d9c9462f8febc62719f9074f4114e2162445c</commit>
+            <created-from>plan-109-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>`plan tag` leaf</name>
+            <commit>38cae152deee99e8a9ae82ef0e1096aa60f6d934</commit>
+            <created-from>plan-109-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>`plan preflight` leaf</name>
+            <commit>38cae152deee99e8a9ae82ef0e1096aa60f6d934</commit>
+            <created-from>plan-109-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>7</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>`plan branch` leaf</name>
+            <commit>38cae152deee99e8a9ae82ef0e1096aa60f6d934</commit>
+            <created-from>plan-109-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>8</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>`plan show`, `resume`, `project-update` and the group parent</name>
+            <commit>8019d99903d35125729b21f7a73a9a92576729da</commit>
+            <created-from>plan-109-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+        <task>
+            <id>9</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Parity harness: plan scenarios</name>
+            <commit>81bc1dfd5b5c910522daafccb0247b2fad9031f0</commit>
+            <created-from>plan-109-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>3,4,5,6,7,8</depends-on>
+        </task>
+        <task>
+            <id>10</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Migration notes write-back</name>
+            <commit>8222fe41fae22988f93f4f36bc8a0abada7a6338</commit>
+            <created-from>plan-109-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>9</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-08-20T07:21:14.864Z</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-08-20T11:09:39.068Z</timestamp>
+            <message>Plan complete. The plan command group and the remaining svc::plan classes are ported and verified byte-identical across 45 parity scenarios; the Rust CLI is now feature-complete against the Java CLI.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
