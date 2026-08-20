@@ -11,13 +11,24 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Resolution-gate wiring in main.rs</name>
             <commit></commit>
             <created-from>plan-108-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-20T06:27:24.840Z</timestamp>
+                    <message>De-risk draft ready for review: gate() implemented as a pure function over DataStoreResolution (unit-tested for Settled/NeedsDecision/Unresolvable), wired into dispatch_task for the new task command. Scope grew to include the task-add leaf (see minor deviation) so the gate could be proven against a real command; both preamble integration tests (tests/task.rs) now pass end-to-end. store/probe dispatch unaffected -- confirmed all pre-existing tests still green (1 unrelated pre-existing failure: config_writer's unwritable-dir test, caused by running as root in this sandbox).</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-08-20T06:26:48.375Z</timestamp>
+                    <message>Task 1's scope grew to include the 'task add' leaf: clap's static command tree means the gate can't be proven against a real state-dependent command without at least one concrete TaskCommand variant, and 'add' is what the committed preamble test already targets. Task 2 now covers just the TaskStore::mutate convenience the remaining leaves (3-6) need.</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>2</id>
