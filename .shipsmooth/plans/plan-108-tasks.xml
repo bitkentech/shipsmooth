@@ -62,9 +62,9 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`task comment` leaf</name>
-            <commit></commit>
+            <commit>cbd779afb6ac161b97aa63092bc0b2158ee5189b</commit>
             <created-from>plan-108-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -74,9 +74,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`task deviation` leaf</name>
-            <commit></commit>
+            <commit>36c7337461598761fa04f0e6405b8429ee07af25</commit>
             <created-from>plan-108-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -86,9 +86,9 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`task set-commit` leaf</name>
-            <commit></commit>
+            <commit>a84f7a246f40a498d260dc226c4915b817e611e6</commit>
             <created-from>plan-108-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
