@@ -9,6 +9,7 @@
 //! exception and uses stderr. Ported as observed, not as expected.
 
 mod init;
+mod quick;
 
 use crate::LeafContext;
 
@@ -23,6 +24,12 @@ pub enum PlanCommand {
         #[arg(long = "tasks-from", value_name = "<Path to Markdown file>")]
         tasks_from: String,
     },
+    /// Quick start mode: Derive plan number, create a branch, write a stub plan file. No git commit.
+    Quick {
+        /// Short plan description (used for the branch slug)
+        #[arg(long, value_name = "TEXT")]
+        desc: String,
+    },
 }
 
 /// Dispatch a `plan` leaf against the already-constructed, settled gateways.
@@ -31,5 +38,6 @@ pub fn run(command: &PlanCommand, cx: &LeafContext) -> i32 {
         PlanCommand::Init { plan, tasks_from } => {
             init::run(&cx.store, &cx.git_tags, *plan, tasks_from)
         }
+        PlanCommand::Quick { desc } => quick::run(cx, desc),
     }
 }

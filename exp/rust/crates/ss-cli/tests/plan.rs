@@ -76,14 +76,37 @@ fn plan_quick_scaffolds_a_branch_and_stub_without_committing() {
     let text = std::fs::read_to_string(&stub).expect("stub plan file should exist");
     assert!(text.starts_with("# plan-1 — Desktop UI"), "stub was: {text}");
 
-    // The whole point of the thin path: the stub is left for the human to commit.
+    // The whole point of the thin path: the stub is left for the human to
+    // commit. `--untracked-files=all` is required — plain --porcelain
+    // collapses an untracked directory to `?? .shipsmooth/` and never names
+    // the file.
     let porcelain = std::process::Command::new("git")
-        .args(["status", "--porcelain"])
+        .args(["status", "--porcelain", "--untracked-files=all"])
         .current_dir(&fx.repo)
         .output()
         .unwrap();
     let dirty = String::from_utf8_lossy(&porcelain.stdout);
     assert!(dirty.contains("plan-1.md"), "stub must be left uncommitted, saw: {dirty}");
+}
+
+/// Spec: a branch collision is reported with the resume hint and exit 1 —
+/// on **stdout**, which is the plan group's convention (unlike store/task).
+#[test]
+fn plan_quick_reports_a_branch_collision_without_writing_a_stub() {
+    let fx = Fixture::new();
+    git(&fx.repo, &["branch", "t/1-desktop-ui"]);
+
+    fx.shipsmooth(&["plan", "quick", "--desc", "Desktop UI"])
+        .assert()
+        .code(1)
+        .stdout(predicates::str::contains("ERROR: branch t/1-desktop-ui already exists")
+            .and(predicates::str::contains("did you mean to resume plan 1?")))
+        .stderr("");
+
+    assert!(
+        !fx.plans_dir().join("plan-1.md").exists(),
+        "a refused scaffold must leave no stray stub"
+    );
 }
 
 /// Spec: `plan init` parses the plan markdown and writes the task XML,
