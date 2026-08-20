@@ -43,9 +43,9 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`plan init` leaf</name>
-            <commit></commit>
+            <commit>ebbb15b1da69b8944c9b0bf0aaa1567311a1e4af</commit>
             <created-from>plan-109-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
