@@ -45,12 +45,17 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>`task status` leaf</name>
             <commit></commit>
             <created-from>plan-108-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-20T06:39:48.298Z</timestamp>
+                    <message>De-risk draft ready for review: task status validates before touching TaskStore (Java's early branch), invalid status -&gt; exact Java message (no shipsmooth: prefix), exit 2. TaskStatus::ALL added to the xsd_enum! macro to derive the allowed-values list from the enum rather than hand-typing it. Both success and exit-2 paths covered by CLI integration tests; full suite + clippy clean.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>2</depends-on>
         </task>
