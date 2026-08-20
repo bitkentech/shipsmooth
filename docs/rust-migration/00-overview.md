@@ -179,6 +179,73 @@ the Java CLI wrote.
   `plan tag --kind version` derives the version from the XML field, not git
   tags.
 
+## task slice findings (plan-108, 2026-08-20) — the first state-dependent commands
+
+The `task` noun group (all five leaves) is ported and parity-verified, along
+with the generic **resolve gate** every remaining state-dependent command will
+dispatch through.
+
+- **Cost.** ~290 lines of Java main source became ~295 lines of Rust
+  implementation plus ~317 lines of integration tests, over 8 tasks in one
+  session. Coverage: every `task/` file 100% except `add.rs` at 91.30% line;
+  `ss-cli` total 96.29% line against the agreed 95% bar.
+- **The gate was the real work, not the leaves.** The leaves are 13–34 lines
+  each; `store`/`probe` are state-*independent*, so nothing before this slice
+  had ever needed the classify-then-gate step 02-cli.md specifies. That is why
+  the plan put it first and rated it High.
+- **Parity.** `parity/run.sh` grew 13 `task` scenarios (23 total, all
+  byte-identical). Because `plan init` is not ported yet, every scenario is
+  seeded with the **Java** binary for both sides, so the starting XML is
+  identical by construction and only the command under test varies.
+- **The harness caught a real bug on its first run** — the invalid-status
+  message was missing Java's `Error: ` prefix. The ported unit *and*
+  integration tests both passed, because both asserted the porter's own wrong
+  assumption. This is plan-107's lesson recurring from the other side: ported
+  tests pin what you *believed* the Java did; only the real binary pins what it
+  *does*. **Run the parity harness before believing a leaf is done.**
+- **Divergences found (all resolved, all commented at the call site):**
+  - **Java stack traces on unhandled error paths.** `deviation --type bogus`,
+    an unknown task id, and an unknown plan all let the exception reach
+    picocli's default handler, which dumps a full JVM stack trace to stderr;
+    Rust prints one `shipsmooth: <msg>` line. Exit code (1), stdout, and the
+    resulting XML are identical. Not reproducible and not a contract, so those
+    three scenarios compare stderr only as "was a diagnostic emitted".
+    `status --status bogus` is deliberately **not** on that allowlist: Java
+    validates it explicitly, so it matches byte-for-byte — which is exactly
+    what caught the missing prefix.
+  - **`task status` exits 2, not 1** — the only leaf with its own exit code,
+    because Java validates before calling the service. Preserved as-is.
+  - **`set-commit --branch` is accepted and ignored.** Java's
+    `PlanService.setTaskCommit` takes the argument and never passes it to
+    `TaskStore.setCommit`. Ported as-is with a test pinning that it is inert;
+    filed as behaviour to decide on later, not fixed in flight.
+  - **Locale, not code:** under a non-UTF-8 locale the JVM transcodes the
+    decision prompts' em dashes to `?` while Rust always writes UTF-8, failing
+    4 *store* scenarios for purely environmental reasons. The harness now pins
+    `C.UTF-8`. Worth knowing before trusting any future parity failure.
+- **Decisions that outlived the plan:**
+  - **No `PlanService` struct.** Every method the task leaves needed was a
+    one-line load-mutate-save wrapper, so `TaskStore::mutate` carries it
+    instead. `PlanService` proper (with `quickStart`/`NewPlan`) belongs to the
+    `plan` slice.
+  - **`GateOutcome` over `Option<i32>`.** The gate consumes the resolution and
+    returns `Exit(code) | Proceed(store)`, so there is no unreachable `Settled`
+    arm to guard after the fact — the shape Java's exception handler could not
+    express.
+  - **`TaskStatus::ALL`** added to the `xsd_enum!` macro so allowed-value
+    messages derive from the enum rather than a hand-typed list.
+  - **Guard your parity seeds.** Under `set -e` a failing seed command aborted
+    the harness with no diagnostic, making the seed check unreachable; seeding
+    now reports which step failed. An unnoticed bad seed compares two
+    identically-broken runs — a false pass, the worst outcome for a harness.
+- **Recommended next slice:** the `plan` leaves, but note it is **not** pure
+  wiring: `NewPlan`, `PlanService`, `ScaffoldResult` and `ScaffoldException`
+  are still unported and `NewPlan` is what `plan init`/`plan quick` sit on. The
+  gate this slice built means the remaining leaves are dispatch-only work;
+  budget the core scaffolding classes as the real cost. 02-cli.md's flagged
+  defect still stands: `plan tag --kind version` derives the version from the
+  XML field, not git tags — port as-is.
+
 ## Target layout
 
 Cargo workspace mirroring the Gradle module split:

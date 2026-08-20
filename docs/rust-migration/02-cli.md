@@ -5,11 +5,14 @@ on `ss-core`. Conversion order: ds → conf → commands (store, then plan/task)
 wiring/main. The picocli→clap shift is the one *architectural* change in the
 whole migration, so it is described first.
 
-> **Status (plan-106, 2026-07-27):** `ds/`, `conf` (ConfigFileLocator),
-> `resolution_json.rs`, RepoRoot/RemoteUrl, and the full `store` group are
-> **ported and parity-verified** (see 00-overview.md §store-slice findings).
-> Remaining: `commands/plan/`, `commands/task/`, the gate wiring for
-> state-dependent commands in `main.rs`, and `ss-core::gw` beneath them.
+> **Status (plan-108, 2026-08-20):** `ds/`, `conf` (ConfigFileLocator),
+> `resolution_json.rs`, RepoRoot/RemoteUrl, the `store` group (plan-106),
+> `ss-core::gw` (plan-107), and now the full `task` group **plus the
+> resolve-gate wiring in `main.rs`** are **ported and parity-verified**
+> (see 00-overview.md §task-slice findings).
+> Remaining: `commands/plan/` and the four unported `ss-core::svc::plan`
+> classes beneath it (`NewPlan`, `PlanService`, `ScaffoldResult`,
+> `ScaffoldException`).
 
 ## Architecture shift: picocli command objects → clap + dispatch
 
@@ -153,11 +156,31 @@ Known quirk to preserve or fix consciously: `plan tag --kind version` derives
 the version from the XML field, not git tags (recorded defect — stale-version
 behaviour). Port as-is; do not silently "fix" during migration.
 
-### `io.bitken.ss.cli.task` (6 files) → `commands/task/`
+### `io.bitken.ss.cli.task` (6 files) → `src/task/` — PORTED (plan-108)
 
-Task group + AddTask, AddComment, AddDeviation, SetCommit, UpdateStatus. Same
-shape as plan commands, smaller. `UpdateStatus` validates against the status
-enum (`closed` is the terminal state); keep validation messages identical.
+Task group + AddTask, AddComment, AddDeviation, SetCommit, UpdateStatus. Ported
+as planned; the leaves are 13–34 lines each over `TaskStore`. Notable deltas:
+
+- No `PlanService` struct — `TaskStore::mutate` (load-apply-save) carries what
+  the leaves needed; `PlanService` proper waits for the `plan` slice.
+- `UpdateStatus` is the one leaf with its own exit code (**2**, not 1) and its
+  own message, `Error: invalid status "X". Allowed values: …` — validated
+  before the store is touched, as in Java. The `Error: ` prefix was missed on
+  the first pass and caught by the parity harness, not by the ported tests.
+- `SetCommit --branch` is accepted and ignored, matching Java's
+  `PlanService.setTaskCommit`; pinned by a test rather than silently fixed.
+- Java's *unhandled* error paths dump a JVM stack trace via picocli's default
+  handler where Rust prints one line — an accepted, allowlisted divergence
+  (exit code, stdout and XML all match). See 00-overview.md §task-slice.
+
+### The resolve gate in `main.rs` — PORTED (plan-108)
+
+Implemented as specified above, with one refinement: `gate` **consumes** the
+resolution and returns `GateOutcome::Exit(code) | GateOutcome::Proceed(store)`,
+so a settled resolution flows straight into service construction with no
+unreachable arm to guard. `store`/`probe` remain state-independent and
+dispatch unconditionally. `task` is the first family to route through it; the
+`plan` leaves will reuse it unchanged.
 
 ### `java-templates/SchemaConfig.java` → constant or `build.rs`
 
@@ -170,7 +193,8 @@ Build.java: compile-time constants from Cargo metadata.
 |---|---|
 | `ShipsmoothTest`, `CommandsTest`, `OptionMetadataTest`, `GroupedCommandTreeTest` | unit tests on the clap tree (`Cli::command().debug_assert()`, help/metadata asserts) |
 | `ShipsmoothIntegrationTest`, `HelpAcrossTreeIntegrationTest`, `UnsettledTreeIntegrationTest`, `ShipsmoothGateTest` | `tests/` with `assert_cmd`: spawn the real binary in temp git repos; gate JSON + exit-code asserts |
-| `Plan*Test`, `AddTaskIntegrationTest` | `tests/` per command group |
+| `Plan*Test` | `tests/` per command group |
+| `AddTaskIntegrationTest`, `PlanServiceTest`'s task-mutation cases | `tests/task.rs` (ported, plan-108) |
 | `DefaultConfigFileLocatorTest`, resolver branch-table tests | unit tests in `ds/` with temp XDG dirs |
 | `InitTest`, `InfoTest` | `tests/store.rs` |
 
