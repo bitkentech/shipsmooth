@@ -45,9 +45,9 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>`task status` leaf</name>
-            <commit></commit>
+            <commit>e7d3908d68a945e79664cc20d0dbc618cd8b5a76</commit>
             <created-from>plan-108-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
