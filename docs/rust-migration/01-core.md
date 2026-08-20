@@ -81,6 +81,27 @@ in the real model type in step 2.
 | `PlanService` | struct (task_store, new_plan) | Thin façade; keep it or inline — keep, cli leaves call it |
 | `ScaffoldResult` / `ScaffoldException` | struct + `thiserror` variant | — |
 
+- **PORTED (plan-109, 2026-08-20).** The package is complete:
+  `parse_with_diagnostics` (the near-miss heuristics `plan init` reports),
+  `NewPlan`, `ScaffoldResult` and `Error::Scaffold`. Coverage 98.98% line.
+  - **`PlanService` was NOT built**, superseding the row above. Its methods
+    are one-liners over `NewPlan` and `TaskStore`; the `TaskStore::mutate`
+    seam added in plan-108 absorbed the reason the façade existed. The cli
+    leaves call the two directly.
+  - **`BranchOps` trait** is the scaffolding test seam. Java's `NewPlanTest`
+    subclasses `GitState` to stub `branchExists`/`createBranch`; Rust has no
+    subclassing, so those two methods become a trait `GitState` implements —
+    the same shape as `gw`'s injectable clock and diagnostics sink. One test
+    drives the production impl against a real repo so the fakes do not leave
+    the shipped path unexercised.
+  - **Java's `matches()` is a FULL match.** Every near-miss pattern became an
+    anchored regex over one trailing-trimmed line; using Rust's substring
+    `is_match` instead would have flagged ordinary prose. The single most
+    important translation detail in the package.
+  - `NewPlan`'s ordering guarantee (check branch availability *before*
+    touching the filesystem, so a collision leaves no stray stub) is verified
+    by perturbation, not just asserted.
+
 Error model for the whole crate: one `ss_core::Error` enum via `thiserror`
 (variants: Xml, Io, Scaffold, StateRootUnsettled, InaccessibleRoot, TaskNotFound
 …). Java's checked `JAXBException`/`Exception` signatures all become
