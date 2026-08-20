@@ -212,3 +212,44 @@ fn task_comment_via_cli_mutates_xml() {
     assert_eq!(plan.tasks[0].comments.len(), 1);
     assert_eq!(plan.tasks[0].comments[0].message, "looks good");
 }
+
+/// Spec: task-5 — `task deviation` records a typed deviation. No Java unit
+/// test covers the leaf itself (TaskStoreTest pins the store call), so this
+/// smoke test is the CLI-level contract.
+#[test]
+fn task_deviation_via_cli_mutates_xml() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&[
+        "task", "deviation", "--plan", &PLAN_NUM.to_string(), "--task", "1", "--type", "minor",
+        "--message", "split into two",
+    ])
+    .assert()
+    .code(0)
+    .stdout("Deviation added to task 1\n")
+    .stderr("");
+
+    let plan = fx.load_plan();
+    assert_eq!(plan.tasks[0].deviations.len(), 1);
+    assert_eq!(plan.tasks[0].deviations[0].kind, "minor");
+    assert_eq!(plan.tasks[0].deviations[0].message, "split into two");
+}
+
+/// An unknown `--type` is rejected by the store's own enum parse, so it
+/// takes the generic exit-1 path (Java reaches the same code via picocli's
+/// default execution-exception handler) — not `status`'s exit-2 shape.
+#[test]
+fn task_deviation_rejects_an_unknown_type_with_exit_1() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&[
+        "task", "deviation", "--plan", &PLAN_NUM.to_string(), "--task", "1", "--type", "bogus",
+        "--message", "x",
+    ])
+    .assert()
+    .code(1)
+    .stdout("")
+    .stderr(predicates::str::starts_with("shipsmooth: "));
+
+    assert!(fx.load_plan().tasks[0].deviations.is_empty(), "a rejected type must not mutate the plan");
+}
