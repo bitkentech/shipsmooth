@@ -10,7 +10,7 @@ use ss_core::model::TaskStatus;
 
 /// `Err` carries the exact exit code and message to print verbatim — 2 for
 /// an invalid status (Java's own text), 1 for everything else (the
-/// generic `"shipsmouth: {msg}"` shape the caller applies).
+/// generic `"shipsmooth: {msg}"` shape the caller applies).
 pub fn run(store: &TaskStore, plan: u32, task: u32, status: &str) -> Result<String, (i32, String)> {
     if status.parse::<TaskStatus>().is_err() {
         let allowed: Vec<&str> = TaskStatus::ALL.iter().map(|s| s.as_str()).collect();
@@ -48,6 +48,20 @@ mod tests {
                     .to_string()
             )
         );
+    }
+
+    #[test]
+    fn a_store_failure_is_reported_as_a_generic_exit_1() {
+        // A valid status against a plan that does not exist: validation
+        // passes, so the failure comes back from TaskStore and takes the
+        // generic exit-1 path rather than the invalid-status exit-2 one.
+        let repo = tempfile::tempdir().unwrap();
+        let store = store_in(repo.path());
+
+        let (code, message) = run(&store, 7, 1, "closed").unwrap_err();
+
+        assert_eq!(code, 1);
+        assert!(!message.is_empty());
     }
 
     #[test]
