@@ -12,6 +12,7 @@ mod branch;
 mod init;
 mod preflight;
 mod quick;
+mod show;
 mod tag;
 
 use ss_core::gw::GitState;
@@ -62,6 +63,33 @@ pub enum PlanCommand {
         #[arg(long, value_name = "TEXT")]
         desc: String,
     },
+    /// Show plan tasks.
+    Show {
+        /// Plan number
+        #[arg(long, value_name = "PLAN_NUMBER")]
+        plan: u32,
+    },
+    /// Session-resume pre-flight: task state check.
+    Resume {
+        /// Plan number
+        #[arg(long, value_name = "PLAN_NUMBER")]
+        plan: u32,
+    },
+    /// Add a project update.
+    Update {
+        /// Plan number
+        #[arg(long, value_name = "PLAN_NUMBER")]
+        plan: u32,
+        /// New plan status: active, complete, abandoned, in-review
+        #[arg(long, value_name = "STATUS")]
+        status: Option<String>,
+        /// Mark the plan blocked (major deviation)
+        #[arg(long)]
+        blocked: bool,
+        /// Update message
+        #[arg(long, value_name = "TEXT")]
+        message: Option<String>,
+    },
 }
 
 /// Dispatch a `plan` leaf against the already-constructed, settled gateways.
@@ -78,5 +106,16 @@ pub fn run(command: &PlanCommand, cx: &LeafContext) -> i32 {
         PlanCommand::Branch { issue, plan, desc } => {
             branch::run(&GitState::new(&cx.repo_root), issue.as_deref(), *plan, desc)
         }
+        PlanCommand::Show { plan } => show::show(&cx.store, *plan),
+        PlanCommand::Resume { plan } => show::resume(&cx.store, *plan),
+        PlanCommand::Update { plan, status, blocked, message } => show::project_update(
+            &cx.store,
+            *plan,
+            status.as_deref(),
+            // clap gives a plain bool for an arity-0 flag; Java's tri-state
+            // Boolean is absent-vs-true, so only a present flag is Some.
+            if *blocked { Some(true) } else { None },
+            message.as_deref(),
+        ),
     }
 }

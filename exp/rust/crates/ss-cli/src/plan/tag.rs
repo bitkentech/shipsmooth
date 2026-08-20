@@ -26,6 +26,10 @@ pub fn run(git_tags: &GitTags, plan: u32, kind: &str) -> i32 {
 
 fn create_version_tag(git_tags: &GitTags, plan: u32) -> i32 {
     let tag = git_tags.next_plan_version(plan);
+    // Defensive, and unreachable in practice: next_plan_version returns
+    // highest + 1, so the tag it names cannot already exist. Java carries the
+    // same guard, so it is ported rather than dropped — but nothing can test
+    // it without reaching past the gateway.
     if git_tags.tag_exists(&tag) {
         println!("ERROR: tag {tag} already exists — commit more changes before re-tagging");
         return 1;

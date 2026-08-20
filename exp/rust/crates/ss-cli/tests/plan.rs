@@ -303,6 +303,102 @@ fn plan_branch_requires_exactly_one_selector() {
     }
 }
 
+/// Spec: Java `PlanResumeTest` — a missing task file is an expected
+/// condition with its own advice, reported on **stdout** with exit 1.
+#[test]
+fn plan_resume_reports_a_missing_task_file_with_the_init_hint() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["plan", "resume", "--plan", "4"])
+        .assert()
+        .code(1)
+        .stdout("ERROR: task file not found for plan 4 — run: shipsmooth plan init --plan 4\n")
+        .stderr("");
+}
+
+/// show, resume and project-update over an initialised plan: resume adds the
+/// header, show does not, and an update lands in the XML.
+#[test]
+fn plan_show_resume_and_update_operate_on_an_initialised_plan() {
+    let fx = Fixture::new();
+    let md = fx.plans_dir().join("plan-6.md");
+    std::fs::write(&md, "# Plan\n\n### Task 1: Only task [High]\n").unwrap();
+    fx.shipsmooth(&["plan", "init", "--plan", "6", "--tasks-from", md.to_str().unwrap()])
+        .assert()
+        .code(0);
+
+    fx.shipsmooth(&["plan", "show", "--plan", "6"])
+        .assert()
+        .code(0)
+        .stdout(predicates::str::contains("Only task").and(
+            predicates::str::contains("=== Task state ===").not(),
+        ));
+
+    fx.shipsmooth(&["plan", "resume", "--plan", "6"])
+        .assert()
+        .code(0)
+        .stdout(predicates::str::starts_with("=== Task state ===")
+            .and(predicates::str::contains("Only task")));
+
+    fx.shipsmooth(&["plan", "update", "--plan", "6", "--status", "in-review", "--message", "ready"])
+        .assert()
+        .code(0)
+        .stdout("Project update added.\n");
+
+    let xml = std::fs::read_to_string(fx.plans_dir().join("plan-6-tasks.xml")).unwrap();
+    assert!(xml.contains("<status>in-review</status>"), "xml was: {xml}");
+    assert!(xml.contains("ready"));
+    assert!(xml.contains("<blocked>false</blocked>"), "absent --blocked records false");
+}
+
+/// `--blocked` is an arity-0 flag: present means blocked, absent means the
+/// update records `false` (asserted above).
+#[test]
+fn plan_update_records_a_blocked_entry_when_the_flag_is_present() {
+    let fx = Fixture::new();
+    let md = fx.plans_dir().join("plan-11.md");
+    std::fs::write(&md, "# Plan\n\n### Task 1: T [Low]\n").unwrap();
+    fx.shipsmooth(&["plan", "init", "--plan", "11", "--tasks-from", md.to_str().unwrap()])
+        .assert()
+        .code(0);
+
+    fx.shipsmooth(&["plan", "update", "--plan", "11", "--blocked", "--message", "stuck"])
+        .assert()
+        .code(0)
+        .stdout("Project update added.\n");
+
+    let xml = std::fs::read_to_string(fx.plans_dir().join("plan-11-tasks.xml")).unwrap();
+    assert!(xml.contains("<blocked>true</blocked>"), "xml was: {xml}");
+}
+
+/// The three thin leaves' failure paths. `show` and `update` use the CLI's
+/// generic stderr shape; `resume` reports XML trouble on stdout, as Java does.
+#[test]
+fn the_thin_leaves_report_their_failures_in_the_right_shape() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["plan", "show", "--plan", "77"])
+        .assert()
+        .code(1)
+        .stdout("")
+        .stderr(predicates::str::starts_with("shipsmooth: "));
+
+    fx.shipsmooth(&["plan", "update", "--plan", "77", "--message", "x"])
+        .assert()
+        .code(1)
+        .stdout("")
+        .stderr(predicates::str::starts_with("shipsmooth: "));
+
+    // resume finds a file but cannot parse it: its own stdout error, not the
+    // missing-file advice and not the generic stderr shape.
+    std::fs::write(fx.plans_dir().join("plan-78-tasks.xml"), "not xml at all").unwrap();
+    fx.shipsmooth(&["plan", "resume", "--plan", "78"])
+        .assert()
+        .code(1)
+        .stdout(predicates::str::starts_with("ERROR reading plan XML: "))
+        .stderr("");
+}
+
 #[test]
 fn plan_branch_refuses_an_existing_branch() {
     let fx = Fixture::new();
