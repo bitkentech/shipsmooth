@@ -282,6 +282,34 @@ Depends-on: 1
     }
 
     #[test]
+    fn an_h3_heading_with_a_word_id_says_the_id_must_be_a_number() {
+        // Distinct from the wrong-level and missing-colon reasons: the level
+        // and the colon are both right, only the id is not numeric.
+        let (tasks, diagnostics) = parse_with_diagnostics("### Task one: Do it [Low]\n");
+
+        assert!(tasks.is_empty());
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(
+            diagnostics[0].reason,
+            "task id must be a number: ### Task N: Name [High|Medium|Low]"
+        );
+    }
+
+    #[test]
+    fn a_multibyte_character_astride_the_region_cap_does_not_split_a_char() {
+        // task_region truncates at heading end + 500 bytes, which can land
+        // mid-character; slicing there would panic. Pad so an em-dash spans
+        // the boundary.
+        let padding = "x".repeat(REGION_CAP - 2);
+        let markdown = format!("### Task 1: A [Low]\n{padding}—tail\n*Depends-on: 2*\n");
+
+        let tasks = parse_tasks(&markdown);
+
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(tasks[0].depends_on, "", "the marker sits beyond the capped region");
+    }
+
+    #[test]
     fn deliberate_no_dependency_markers_and_prose_are_never_flagged() {
         // "*Depends-on:*" and "*Depends-on: none*" are historically widespread
         // no-ops; "## Task ordering note" is plain prose, not an attempt.
