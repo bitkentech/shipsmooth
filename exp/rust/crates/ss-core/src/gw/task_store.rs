@@ -65,6 +65,17 @@ impl TaskStore {
         plan.save(&self.plan_tasks_file(plan_id))
     }
 
+    /// Load-apply-save: the shape every single-task mutation (status,
+    /// comment, deviation, commit, project-update) shares. Mirrors the
+    /// private helper Java's `PlanService` used internally — ported here,
+    /// on `TaskStore` itself, since this slice does not stand up a
+    /// `PlanService` struct (see plan-108). `f` failing skips the save.
+    pub fn mutate(&self, plan_id: u32, f: impl FnOnce(&mut PlanTasks) -> Result<()>) -> Result<()> {
+        let mut plan = self.load_plan(plan_id)?;
+        f(&mut plan)?;
+        self.save_plan(plan_id, &plan)
+    }
+
     /// Port of `generatePlanTasks`: a fresh plan document with one pending
     /// task per spec. Task ids come from the spec (the markdown headings),
     /// not from the position — Java writes `t.id()` through verbatim.
@@ -326,6 +337,36 @@ mod tests {
     fn load_plan_reports_a_missing_file() {
         let repo = tempfile::tempdir().unwrap();
         assert!(store_in(repo.path()).load_plan(7).is_err());
+    }
+
+    #[test]
+    fn mutate_loads_applies_and_persists_the_change() {
+        let repo = tempfile::tempdir().unwrap();
+        let store = store_in(repo.path());
+        let seed = ParsedTask { id: 1, name: "a task".to_string(), risk: "low".to_string(), depends_on: String::new() };
+        let plan = store.generate_plan_tasks(1, "plan-1-v1", &[seed]).unwrap();
+        store.save_plan(1, &plan).unwrap();
+
+        store.mutate(1, |plan| store.update_task_status(plan, 1, "agent-coded")).unwrap();
+
+        let loaded = store.load_plan(1).unwrap();
+        assert_eq!(loaded.tasks[0].status, "agent-coded");
+    }
+
+    #[test]
+    fn mutate_propagates_the_closures_error_without_saving() {
+        let repo = tempfile::tempdir().unwrap();
+        let store = store_in(repo.path());
+        let seed = ParsedTask { id: 1, name: "a task".to_string(), risk: "low".to_string(), depends_on: String::new() };
+        let plan = store.generate_plan_tasks(1, "plan-1-v1", &[seed]).unwrap();
+        store.save_plan(1, &plan).unwrap();
+
+        let err = store.mutate(1, |plan| store.update_task_status(plan, 99, "agent-coded"));
+        assert!(err.is_err());
+
+        // Untouched: the failed mutation never reached save_plan.
+        let loaded = store.load_plan(1).unwrap();
+        assert_eq!(loaded.tasks[0].status, "pending");
     }
 
     // ---- plan-107 Task 4 de-risk: fresh-element construction ----
