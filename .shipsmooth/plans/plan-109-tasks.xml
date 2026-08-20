@@ -11,12 +11,17 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>parse_with_diagnostics and the near-miss heuristics</name>
             <commit></commit>
             <created-from>plan-109-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-20T07:28:44.347Z</timestamp>
+                    <message>De-risk draft ready for review. Key translation decision: Java's Matcher.matches()/String.matches() are FULL matches, so every near-miss pattern becomes an anchored Rust regex over a single trailing-trimmed line. Diagnostics returned as data (Vec&lt;Diagnostic&gt;), not printed, so the reason text is unit-testable. All 14 markdown tests green including 3 new core tests; existing parse_tasks behaviour unchanged.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
