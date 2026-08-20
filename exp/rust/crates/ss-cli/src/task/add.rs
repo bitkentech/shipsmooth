@@ -7,6 +7,11 @@
 use ss_core::gw::{GitTags, TaskStore};
 use ss_core::plan::ParsedTask;
 
+/// Errors as a plain string for the caller's generic `"shipsmooth: {msg}"`
+/// exit-1 reporting. `load_plan` failing (no such plan) is the realistic
+/// case a test pins; `add_task`/`save_plan` failing here would mean an
+/// unknown just-created task id or a filesystem race, neither reachable in
+/// practice.
 pub fn run(
     store: &TaskStore,
     git_tags: &GitTags,

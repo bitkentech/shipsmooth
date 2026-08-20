@@ -1,9 +1,10 @@
-//! plan-108 preamble: end-to-end integration test for the `task` noun group.
+//! End-to-end integration tests for the `task` noun group (plan-108).
 //!
 //! Port of the Java `AddTaskIntegrationTest`'s two cases: `task add` appends
 //! a task to an existing plan's XML, assigning the next id and recording
-//! `--depends-on`. Committed red before any `task` command or resolve-gate
-//! wiring exists — today `task add` isn't even a recognised subcommand.
+//! `--depends-on`. Plus the two contracts task 1 introduces: the resolve
+//! gate for a `task` command against an unsettled project, and a missing
+//! plan reported as a generic CLI error.
 
 use assert_cmd::Command;
 use ss_core::conf::ShipsmoothDataLocator;
@@ -118,4 +119,48 @@ fn task_add_via_cli_records_depends_on() {
     .code(0);
 
     assert_eq!(fx.depends_on(2), "1", "depends-on should be persisted on the new task");
+}
+
+/// Spec: task-1 contract 1 — a `task` command run against a clean, unsettled
+/// project prints the same needs-decision gate JSON `store info` would, and
+/// exits 10 rather than touching any state.
+#[test]
+fn task_add_on_unsettled_project_emits_gate_json_and_exits_10() {
+    let work = tempfile::tempdir().unwrap();
+    let repo = work.path().join("fresh-proj");
+    let config_home = work.path().join("config");
+    std::fs::create_dir_all(&repo).unwrap();
+    std::fs::create_dir_all(&config_home).unwrap();
+    let status = std::process::Command::new("git")
+        .args(["init", "-q", "."])
+        .current_dir(&repo)
+        .status()
+        .unwrap();
+    assert!(status.success());
+
+    let assert = Command::cargo_bin("shipsmooth")
+        .unwrap()
+        .args(["task", "add", "--plan", "1", "--name", "x"])
+        .current_dir(&repo)
+        .env("XDG_CONFIG_HOME", &config_home)
+        .assert()
+        .code(10);
+    let output = assert.get_output();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("\"status\":\"needs-decision\""), "stdout was: {stdout}");
+    assert!(!repo.join(".shipsmooth").exists(), "an unsettled project must not be mutated");
+}
+
+/// Spec: task-1 contract — a `task` command against a settled but
+/// non-existent plan reports the generic CLI error shape (stderr, exit 1),
+/// not a panic.
+#[test]
+fn task_add_reports_a_missing_plan() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["task", "add", "--plan", "1", "--name", "x"])
+        .assert()
+        .code(1)
+        .stdout("")
+        .stderr(predicates::str::starts_with("shipsmooth: "));
 }

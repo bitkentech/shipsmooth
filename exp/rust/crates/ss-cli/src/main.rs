@@ -1,9 +1,11 @@
-//! shipsmooth CLI (Rust) — walking skeleton (plan-102 Task 2).
+//! shipsmooth CLI (Rust) — clap root, dispatch, and the resolve gate.
 //!
-//! Only the frame exists at this stage: clap root with version, and the
-//! run() -> exit-code shape the resolve gate needs (exit codes 10/11 are
-//! emitted by dispatch, not by panicking handlers). Subcommands land with
-//! their packages in the follow-up plan.
+//! `store`/`probe` are state-independent and dispatch unconditionally;
+//! `task` is state-dependent, so `dispatch_task` resolves the project's data
+//! store exactly once and runs it through `gate` before constructing any
+//! service, mirroring the Java `Shipsmooth.execute()` contract (exit codes
+//! 10/11, resolution JSON on stdout) with static classification in place of
+//! Java's lazy-`Provider` exception handler (see 02-cli.md "The resolve gate").
 
 mod ds;
 mod probe;
@@ -84,19 +86,17 @@ fn dispatch(command: Command) -> i32 {
     }
 }
 
+/// Resolve this invocation's project context and data store exactly once,
+/// gate on it, and dispatch to the `task` leaf only once it is `Settled`.
 fn dispatch_task(command: &task::TaskCommand) -> i32 {
     let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::Path::new(".").to_path_buf());
     let project = ProjectContext::from_dir(&cwd);
     let resolver = ProjectDataStoreResolver::new(ds::config_file::locate());
     let resolution = resolver.resolve(&project.repo_root, project.remote_url());
 
-    match gate(&resolution) {
-        Some(code) => code,
-        None => {
-            let store = match resolution {
-                DataStoreResolution::Settled(store) => store,
-                _ => unreachable!("gate already handled every non-settled resolution"),
-            };
+    match gate(resolution) {
+        GateOutcome::Exit(code) => code,
+        GateOutcome::Proceed(store) => {
             let token = ResolvedStateRoot::of(store.state_root()).expect("settled state root must be accessible");
             let locator = ShipsmoothDataLocator::new(&project.repo_root, token)
                 .expect("settled repo root must be accessible");
@@ -107,19 +107,28 @@ fn dispatch_task(command: &task::TaskCommand) -> i32 {
     }
 }
 
+/// The result of running a resolution through the resolve gate: either the
+/// exit code for an unsettled project (its JSON already printed), or the
+/// settled store to proceed with.
+enum GateOutcome {
+    Exit(i32),
+    Proceed(ds::store::ProjectDataStore),
+}
+
 /// The resolve gate: for an unsettled project, print the resolution JSON and
-/// return the exit code the skill branches on; `None` means the resolution
-/// was `Settled` and the caller should proceed to construct services.
-fn gate(resolution: &DataStoreResolution) -> Option<i32> {
+/// carry the exit code the skill branches on; for a settled one, hand back
+/// the store to construct services from. Consumes `resolution` (rather than
+/// re-matching it after `Settled`) so there is no unreachable arm to cover.
+fn gate(resolution: DataStoreResolution) -> GateOutcome {
     match resolution {
-        DataStoreResolution::Settled(_) => None,
+        DataStoreResolution::Settled(store) => GateOutcome::Proceed(store),
         DataStoreResolution::NeedsDecision(needs) => {
-            println!("{}", resolution_json::needs_decision(needs));
-            Some(EXIT_NEEDS_DECISION)
+            println!("{}", resolution_json::needs_decision(&needs));
+            GateOutcome::Exit(EXIT_NEEDS_DECISION)
         }
         DataStoreResolution::Unresolvable(bad) => {
-            println!("{}", resolution_json::unresolvable(bad));
-            Some(EXIT_UNRESOLVABLE)
+            println!("{}", resolution_json::unresolvable(&bad));
+            GateOutcome::Exit(EXIT_UNRESOLVABLE)
         }
     }
 }
@@ -169,7 +178,12 @@ mod tests {
     fn gate_lets_a_settled_resolution_through() {
         let resolution =
             DataStoreResolution::Settled(ProjectDataStore::InRepo { repo_root: "/proj".into() });
-        assert_eq!(gate(&resolution), None);
+        match gate(resolution) {
+            GateOutcome::Proceed(ProjectDataStore::InRepo { repo_root }) => {
+                assert_eq!(repo_root, std::path::Path::new("/proj"))
+            }
+            _ => panic!("expected Proceed"),
+        }
     }
 
     #[test]
@@ -182,13 +196,13 @@ mod tests {
                 recommended: true,
             }],
         });
-        assert_eq!(gate(&resolution), Some(EXIT_NEEDS_DECISION));
+        assert!(matches!(gate(resolution), GateOutcome::Exit(EXIT_NEEDS_DECISION)));
     }
 
     #[test]
     fn gate_prints_unresolvable_json_and_returns_exit_11() {
         let resolution =
             DataStoreResolution::Unresolvable(Unresolvable::of(UnresolvableReason::LegacyAgentsTree));
-        assert_eq!(gate(&resolution), Some(EXIT_UNRESOLVABLE));
+        assert!(matches!(gate(resolution), GateOutcome::Exit(EXIT_UNRESOLVABLE)));
     }
 }
