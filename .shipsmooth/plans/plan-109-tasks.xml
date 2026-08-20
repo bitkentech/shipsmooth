@@ -27,12 +27,17 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>NewPlan, ScaffoldResult and the Scaffold error</name>
             <commit></commit>
             <created-from>plan-109-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-20T07:34:15.150Z</timestamp>
+                    <message>De-risk draft ready for review; hardening is already included (real-git test through the production impl, 99.24% line / 100% function, clippy clean), so approval closes this task out. Key decision: BranchOps trait replaces Java's GitState subclassing as the test seam. Ordering guarantee verified by perturbation rather than red-first, since tests and impl were written together.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
