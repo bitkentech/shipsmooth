@@ -196,3 +196,19 @@ fn task_status_rejects_an_invalid_status_with_exit_2() {
 
     assert_eq!(fx.load_plan().tasks[0].status, "pending", "an invalid status must not mutate the plan");
 }
+
+/// Spec: Java `PlanServiceTest.addCommentMutatesXml`, via the CLI.
+#[test]
+fn task_comment_via_cli_mutates_xml() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["task", "comment", "--plan", &PLAN_NUM.to_string(), "--task", "1", "--message", "looks good"])
+        .assert()
+        .code(0)
+        .stdout("Comment added to task 1\n")
+        .stderr("");
+
+    let plan = fx.load_plan();
+    assert_eq!(plan.tasks[0].comments.len(), 1);
+    assert_eq!(plan.tasks[0].comments[0].message, "looks good");
+}
