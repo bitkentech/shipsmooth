@@ -27,9 +27,9 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>NewPlan, ScaffoldResult and the Scaffold error</name>
-            <commit></commit>
+            <commit>64b416ceff53e8e4fecca8a63d24d4d18e668e7a</commit>
             <created-from>plan-109-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
