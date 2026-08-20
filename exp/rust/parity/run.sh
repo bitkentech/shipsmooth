@@ -241,6 +241,149 @@ compare_task_scenario() {
     fi
 }
 
+# --- plan scenarios (plan-109 Task 9) -----------------------------------------
+# The last command family, and the first that can seed with the implementation
+# UNDER TEST: `plan init` is ported now, so each side builds its own starting
+# XML. That is strictly stronger than the task scenarios' Java-only seed — a
+# `plan init` divergence shows up in the seeded file rather than hiding behind
+# an identical Java-written start.
+#
+# Several of these create branches and tags; scenario_reset rebuilds the repo
+# from scratch per scenario, so they cannot leak into one another.
+
+PLAN_NUM=801
+
+plan_scenario_seed() { # plan_scenario_seed <bin> <scenario>
+    local bin="$1" name="$2"
+    scenario_reset "$name"
+    (cd "$SPROJ" && XDG_CONFIG_HOME="$SCFG" "$bin" store init --type same-repo --json) >/dev/null 2>&1 || {
+        echo "seed failed for plan/$name: store init" >&2
+        exit 1
+    }
+    mkdir -p "$SPROJ/.shipsmooth/plans"
+    cat >"$SPROJ/.shipsmooth/plans/plan-$PLAN_NUM.md" <<EOF
+### Task 1: Seed task [High]
+
+### Task 2: Second task [Low]
+*Depends-on: 1*
+EOF
+}
+
+# Seed AND initialise, for the scenarios that need an existing plan XML.
+plan_scenario_seed_initialised() { # <bin> <scenario>
+    local bin="$1" name="$2"
+    plan_scenario_seed "$bin" "$name"
+    (cd "$SPROJ" && XDG_CONFIG_HOME="$SCFG" "$bin" \
+        plan init --plan "$PLAN_NUM" --tasks-from ".shipsmooth/plans/plan-$PLAN_NUM.md") >/dev/null 2>&1 || {
+        echo "seed failed for plan/$name: plan init (with $bin)" >&2
+        exit 1
+    }
+}
+
+# Commit everything so `preflight`'s clean-tree condition can be satisfied.
+plan_commit_all() {
+    git -C "$SPROJ" add -A
+    git -C "$SPROJ" -c user.email=fixture@example.com -c user.name=Fixture \
+        commit -q -m "state" >/dev/null 2>&1 || true
+}
+
+capture_plan_scenario() { # capture_plan_scenario <bin> <capdir> <scenario>
+    local bin="$1" dir="$2" name="$3"
+    case "$name" in
+        init|init-no-tasks|init-near-miss|init-missing-file|quick|tag-version|tag-complete|tag-bad-kind|branch-plan|branch-issue|branch-neither|branch-both|branch-exists|preflight-dirty|preflight-no-tag|preflight-pass|resume-missing)
+            plan_scenario_seed "$bin" "$name" ;;
+        show|resume|update|update-blocked|init-twice)
+            plan_scenario_seed_initialised "$bin" "$name" ;;
+        *) echo "unknown plan scenario: $name" >&2; exit 1 ;;
+    esac
+
+    case "$name" in
+        init)         run_one "$bin" "$dir" cmd plan init --plan "$PLAN_NUM" --tasks-from ".shipsmooth/plans/plan-$PLAN_NUM.md" ;;
+        init-twice)   run_one "$bin" "$dir" cmd plan init --plan "$PLAN_NUM" --tasks-from ".shipsmooth/plans/plan-$PLAN_NUM.md" ;;
+        init-no-tasks)
+            printf 'no headings here at all\n' >"$SPROJ/.shipsmooth/plans/plan-$PLAN_NUM.md"
+            run_one "$bin" "$dir" cmd plan init --plan "$PLAN_NUM" --tasks-from ".shipsmooth/plans/plan-$PLAN_NUM.md" ;;
+        init-near-miss)
+            printf '### Task 1: Good [Low]\n\n## Task 2: Wrong level [Low]\n\nDepends-on: 1\n' \
+                >"$SPROJ/.shipsmooth/plans/plan-$PLAN_NUM.md"
+            run_one "$bin" "$dir" cmd plan init --plan "$PLAN_NUM" --tasks-from ".shipsmooth/plans/plan-$PLAN_NUM.md" ;;
+        init-missing-file)
+            run_one "$bin" "$dir" cmd plan init --plan "$PLAN_NUM" --tasks-from "no-such-file.md" ;;
+        quick)        run_one "$bin" "$dir" cmd plan quick --desc "Desktop UI" ;;
+        tag-version)  run_one "$bin" "$dir" cmd plan tag --plan "$PLAN_NUM" --kind version ;;
+        tag-complete) run_one "$bin" "$dir" cmd plan tag --plan "$PLAN_NUM" --kind complete ;;
+        tag-bad-kind) run_one "$bin" "$dir" cmd plan tag --plan "$PLAN_NUM" --kind bogus ;;
+        branch-plan)  run_one "$bin" "$dir" cmd plan branch --plan 5 --desc "Some Work" ;;
+        branch-issue) run_one "$bin" "$dir" cmd plan branch --issue PB-42 --desc "Other Work" ;;
+        branch-neither) run_one "$bin" "$dir" cmd plan branch --desc "Some Work" ;;
+        branch-both)  run_one "$bin" "$dir" cmd plan branch --issue PB-1 --plan 2 --desc "Some Work" ;;
+        branch-exists)
+            git -C "$SPROJ" branch t/5-some-work >/dev/null 2>&1
+            run_one "$bin" "$dir" cmd plan branch --plan 5 --desc "Some Work" ;;
+        preflight-dirty)
+            run_one "$bin" "$dir" cmd plan preflight --plan "$PLAN_NUM" ;;
+        preflight-no-tag)
+            plan_commit_all
+            run_one "$bin" "$dir" cmd plan preflight --plan "$PLAN_NUM" ;;
+        preflight-pass)
+            plan_commit_all
+            git -C "$SPROJ" tag "plan-$PLAN_NUM-v1" >/dev/null 2>&1
+            run_one "$bin" "$dir" cmd plan preflight --plan "$PLAN_NUM" ;;
+        show)         run_one "$bin" "$dir" cmd plan show --plan "$PLAN_NUM" ;;
+        resume)       run_one "$bin" "$dir" cmd plan resume --plan "$PLAN_NUM" ;;
+        resume-missing) run_one "$bin" "$dir" cmd plan resume --plan "$PLAN_NUM" ;;
+        update)       run_one "$bin" "$dir" cmd plan update --plan "$PLAN_NUM" --status in-review --message "ready" ;;
+        update-blocked) run_one "$bin" "$dir" cmd plan update --plan "$PLAN_NUM" --blocked --message "stuck" ;;
+    esac
+
+    # show/resume RENDER the project-update timestamp, so the same wall-clock
+    # divergence the XML normalises also reaches stdout. Rewrite only
+    # timestamp-shaped text; everything else in the summary stays byte-checked.
+    if [ -f "$dir/cmd.out" ]; then
+        sed -E -i 's/[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}(Z|[+-][0-9]{2}:[0-9]{2})/NORMALISED/g' \
+            "$dir/cmd.out"
+    fi
+    # The XML is only present for scenarios that initialised or wrote one.
+    local xml="$SPROJ/.shipsmooth/plans/plan-$PLAN_NUM-tasks.xml"
+    if [ -f "$xml" ]; then
+        normalise_task_xml "$xml" "$dir/plan-tasks.xml"
+    fi
+    # Branch and tag inventories: several leaves' whole effect is on git refs.
+    git -C "$SPROJ" branch --format='%(refname:short)' >"$dir/branches" 2>/dev/null || true
+    git -C "$SPROJ" tag --list >"$dir/tags" 2>/dev/null || true
+    # `plan quick` writes a stub whose content is contract.
+    if [ -f "$SPROJ/.shipsmooth/plans/plan-1.md" ]; then
+        cp "$SPROJ/.shipsmooth/plans/plan-1.md" "$dir/stub.md"
+    fi
+    case " $PLAN_STDERR_DIVERGES " in
+        *" $name "*) normalise_diagnostic "$dir/cmd.err" ;;
+    esac
+}
+
+# Same accepted divergence as the task group: where Java lets the exception
+# reach picocli's default handler it dumps a JVM stack trace. `plan show` and
+# `plan update` on a missing plan are those cases.
+PLAN_STDERR_DIVERGES="show-missing update-missing"
+
+compare_plan_scenario() {
+    local name="$1"
+    local jdir="$WORK/cap/java/plan-$name" rdir="$WORK/cap/rust/plan-$name"
+    capture_plan_scenario "$SS_JAVA" "$jdir" "$name"
+    capture_plan_scenario "$SS_RUST" "$rdir" "$name"
+    if diff -r "$jdir" "$rdir" >"$WORK/cap/plan-$name.diff" 2>&1; then
+        echo "parity ok: plan/$name"
+    else
+        echo "PARITY FAIL: plan/$name"
+        cat "$WORK/cap/plan-$name.diff"
+        FAILED=1
+    fi
+}
+
+PLAN_SCENARIOS="init init-twice init-no-tasks init-near-miss init-missing-file
+quick tag-version tag-complete tag-bad-kind branch-plan branch-issue
+branch-neither branch-both branch-exists preflight-dirty preflight-no-tag
+preflight-pass show resume resume-missing update update-blocked"
+
 TASK_SCENARIOS="add add-depends add-no-risk status status-bad comment
 comment-markup deviation deviation-bad set-commit set-commit-branch
 unknown-task unknown-plan"
@@ -253,6 +396,10 @@ for s in $STORE_SCENARIOS; do
 done
 for s in $TASK_SCENARIOS; do
     compare_task_scenario "$s"
+    COUNT=$((COUNT + 1))
+done
+for s in $PLAN_SCENARIOS; do
+    compare_plan_scenario "$s"
     COUNT=$((COUNT + 1))
 done
 
