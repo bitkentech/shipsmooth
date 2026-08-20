@@ -100,9 +100,9 @@
         <task>
             <id>8</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`plan show`, `resume`, `project-update` and the group parent</name>
-            <commit></commit>
+            <commit>8019d99903d35125729b21f7a73a9a92576729da</commit>
             <created-from>plan-109-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
