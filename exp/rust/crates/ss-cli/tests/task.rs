@@ -190,7 +190,7 @@ fn task_status_rejects_an_invalid_status_with_exit_2() {
         .code(2)
         .stdout("")
         .stderr(
-            "invalid status \"bogus\". Allowed values: pending, in-progress, de-risked, \
+            "Error: invalid status \"bogus\". Allowed values: pending, in-progress, de-risked, \
              agent-coded, closed, needs-triage, abandoned\n",
         );
 

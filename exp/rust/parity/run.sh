@@ -7,6 +7,12 @@
 # must then be byte-identical.
 set -euo pipefail
 
+# The JVM transcodes non-ASCII output (the em dashes in the decision prompts)
+# to '?' under a non-UTF-8 locale, while Rust always writes UTF-8 — a
+# difference in the harness's environment, not in the implementations. Pin a
+# UTF-8 locale so the comparison reflects the code.
+export LANG="${LANG:-C.UTF-8}" LC_ALL="${LC_ALL:-C.UTF-8}"
+
 SS_JAVA="${SS_JAVA:-$HOME/.cache/shipsmooth/0.3.36/bin/shipsmooth}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 SS_RUST="${SS_RUST:-$HERE/../target/debug/shipsmooth}"
@@ -124,10 +130,111 @@ settled-separate-dir in-repo-not-set-up config-dir-missing
 malformed-missing-type malformed-bad-type malformed-same-repo-with-root
 legacy-agents-tree"
 
+# --- task scenarios (plan-108 Task 7) -----------------------------------------
+# The first parity coverage of a STATE-DEPENDENT command family: the store
+# scenarios only ever exercised the gate's independent-command side.
+#
+# Task commands need a settled store and an existing plan. `plan init` is not
+# ported yet (next slice), so the seed is always run with the JAVA binary for
+# both implementations — the starting XML is therefore identical by
+# construction, and only the command under test varies.
+
+TASK_PLAN=901
+
+task_scenario_seed() { # task_scenario_seed <scenario>
+    scenario_reset "$1"
+    (cd "$SPROJ" && XDG_CONFIG_HOME="$SCFG" "$SS_JAVA" store init --type same-repo --json) >/dev/null 2>&1
+    mkdir -p "$SPROJ/.shipsmooth/plans"
+    cat >"$SPROJ/.shipsmooth/plans/plan-$TASK_PLAN.md" <<EOF
+### Task 1: Seed task [High]
+
+### Task 2: Second task [Low]
+*Depends-on: 1*
+EOF
+    (cd "$SPROJ" && XDG_CONFIG_HOME="$SCFG" "$SS_JAVA" \
+        plan init --plan "$TASK_PLAN" --tasks-from ".shipsmooth/plans/plan-$TASK_PLAN.md") >/dev/null 2>&1
+}
+
+# Mutation timestamps come from the wall clock, so the two runs legitimately
+# differ there (the same call the gw golden-replay pins with an injected
+# clock — unavailable through the CLI). Normalise only the timestamp and
+# created-date text; everything else in the file stays byte-checked.
+normalise_task_xml() { # normalise_task_xml <src> <dest>
+    sed -E -e 's|<timestamp>[^<]*</timestamp>|<timestamp>NORMALISED</timestamp>|g' \
+           -e 's|<created>[^<]*</created>|<created>NORMALISED</created>|g' \
+           "$1" >"$2"
+}
+
+capture_task_scenario() { # capture_task_scenario <bin> <capdir> <scenario>
+    local bin="$1" dir="$2" name="$3"
+    task_scenario_seed "$name"
+    case "$name" in
+        add)          run_one "$bin" "$dir" cmd task add --plan "$TASK_PLAN" --name "Added task" --risk medium ;;
+        add-depends)  run_one "$bin" "$dir" cmd task add --plan "$TASK_PLAN" --name "Dependent task" --risk low --depends-on 1,2 ;;
+        add-no-risk)  run_one "$bin" "$dir" cmd task add --plan "$TASK_PLAN" --name "Bare task" ;;
+        status)       run_one "$bin" "$dir" cmd task status --plan "$TASK_PLAN" --task 1 --status agent-coded ;;
+        status-bad)   run_one "$bin" "$dir" cmd task status --plan "$TASK_PLAN" --task 1 --status bogus ;;
+        comment)      run_one "$bin" "$dir" cmd task comment --plan "$TASK_PLAN" --task 1 --message "looks good" ;;
+        comment-markup) run_one "$bin" "$dir" cmd task comment --plan "$TASK_PLAN" --task 2 --message '<b>&"quoted"</b>' ;;
+        deviation)    run_one "$bin" "$dir" cmd task deviation --plan "$TASK_PLAN" --task 1 --type minor --message "split in two" ;;
+        deviation-bad) run_one "$bin" "$dir" cmd task deviation --plan "$TASK_PLAN" --task 1 --type bogus --message x ;;
+        set-commit)   run_one "$bin" "$dir" cmd task set-commit --plan "$TASK_PLAN" --task 1 --commit abc1234 ;;
+        set-commit-branch) run_one "$bin" "$dir" cmd task set-commit --plan "$TASK_PLAN" --task 1 --commit abc1234 --branch t/some-branch ;;
+        unknown-task) run_one "$bin" "$dir" cmd task comment --plan "$TASK_PLAN" --task 99 --message x ;;
+        unknown-plan) run_one "$bin" "$dir" cmd task comment --plan 999 --task 1 --message x ;;
+        *) echo "unknown task scenario: $name" >&2; exit 1 ;;
+    esac
+    normalise_task_xml "$SPROJ/.shipsmooth/plans/plan-$TASK_PLAN-tasks.xml" "$dir/plan-tasks.xml"
+    case " $STDERR_DIVERGES " in
+        *" $name "*) normalise_diagnostic "$dir/cmd.err" ;;
+    esac
+}
+
+# ACCEPTED DIVERGENCE (plan-108 Task 7). On the error paths Java does not
+# handle explicitly, the exception escapes to picocli's default execution
+# handler, which dumps a full JVM stack trace to stderr; Rust prints the
+# CLI's one-line `shipsmooth: <message>`. A JVM stack trace cannot be
+# reproduced (nor is it a contract — it names Java classes and line
+# numbers), so for these scenarios stderr is reduced to "was a diagnostic
+# emitted at all". Exit code, stdout, and the resulting XML stay byte-checked,
+# and `status-bad` is deliberately NOT on this list: Java validates the
+# status itself and prints a clean message, so that one matches byte-for-byte.
+STDERR_DIVERGES="deviation-bad unknown-task unknown-plan"
+
+normalise_diagnostic() { # normalise_diagnostic <capture>
+    if [ -s "$1" ]; then
+        echo "<non-empty diagnostic>" >"$1"
+    else
+        echo "<empty>" >"$1"
+    fi
+}
+
+compare_task_scenario() {
+    local name="$1"
+    local jdir="$WORK/cap/java/task-$name" rdir="$WORK/cap/rust/task-$name"
+    capture_task_scenario "$SS_JAVA" "$jdir" "$name"
+    capture_task_scenario "$SS_RUST" "$rdir" "$name"
+    if diff -r "$jdir" "$rdir" >"$WORK/cap/task-$name.diff" 2>&1; then
+        echo "parity ok: task/$name"
+    else
+        echo "PARITY FAIL: task/$name"
+        cat "$WORK/cap/task-$name.diff"
+        FAILED=1
+    fi
+}
+
+TASK_SCENARIOS="add add-depends add-no-risk status status-bad comment
+comment-markup deviation deviation-bad set-commit set-commit-branch
+unknown-task unknown-plan"
+
 mkdir -p "$WORK/cap"
 COUNT=0
 for s in $STORE_SCENARIOS; do
     compare_store_scenario "$s"
+    COUNT=$((COUNT + 1))
+done
+for s in $TASK_SCENARIOS; do
+    compare_task_scenario "$s"
     COUNT=$((COUNT + 1))
 done
 
@@ -135,4 +242,4 @@ if [ "$FAILED" != 0 ]; then
     echo "parity: FAILURES above" >&2
     exit 1
 fi
-echo "parity: all $COUNT store scenarios byte-identical (java vs rust)"
+echo "parity: all $COUNT scenarios byte-identical (java vs rust)"

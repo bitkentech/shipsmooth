@@ -14,7 +14,9 @@ use ss_core::model::TaskStatus;
 pub fn run(store: &TaskStore, plan: u32, task: u32, status: &str) -> Result<String, (i32, String)> {
     if status.parse::<TaskStatus>().is_err() {
         let allowed: Vec<&str> = TaskStatus::ALL.iter().map(|s| s.as_str()).collect();
-        return Err((2, format!("invalid status \"{status}\". Allowed values: {}", allowed.join(", "))));
+        // "Error: " prefix included verbatim — Java prints it and the parity
+        // harness caught its omission.
+        return Err((2, format!("Error: invalid status \"{status}\". Allowed values: {}", allowed.join(", "))));
     }
     store
         .mutate(plan, |p| store.update_task_status(p, task, status))
@@ -43,7 +45,7 @@ mod tests {
             err,
             (
                 2,
-                "invalid status \"bogus\". Allowed values: pending, in-progress, de-risked, \
+                "Error: invalid status \"bogus\". Allowed values: pending, in-progress, de-risked, \
                  agent-coded, closed, needs-triage, abandoned"
                     .to_string()
             )
