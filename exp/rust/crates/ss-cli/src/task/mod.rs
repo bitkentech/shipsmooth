@@ -7,6 +7,7 @@
 mod add;
 mod comment;
 mod deviation;
+mod set_commit;
 mod status;
 
 #[derive(clap::Subcommand)]
@@ -53,6 +54,22 @@ pub enum TaskCommand {
         #[arg(long, value_name = "MESSAGE")]
         message: String,
     },
+    /// Set the commit hash for a task.
+    SetCommit {
+        /// Plan number
+        #[arg(long, value_name = "PLAN_NUMBER")]
+        plan: u32,
+        /// Task ID (integer)
+        #[arg(long, value_name = "TASK_ID")]
+        task: u32,
+        /// Commit hash to record for the task
+        #[arg(long, value_name = "HASH")]
+        commit: String,
+        /// Branch the commit lives on
+        // Accepted and ignored, as in Java — see set_commit.rs.
+        #[arg(long, value_name = "BRANCH")]
+        branch: Option<String>,
+    },
     /// Update the status of a task.
     Status {
         /// Plan number
@@ -83,6 +100,9 @@ pub fn run(command: &TaskCommand, store: &ss_core::gw::TaskStore, git_tags: &ss_
         }
         TaskCommand::Deviation { plan, task, kind, message } => {
             report(deviation::run(store, *plan, *task, kind, message))
+        }
+        TaskCommand::SetCommit { plan, task, commit, branch: _ } => {
+            report(set_commit::run(store, *plan, *task, commit))
         }
         // The one leaf that owns its own exit code: an invalid --status is
         // rejected before TaskStore is touched, with Java's own message and

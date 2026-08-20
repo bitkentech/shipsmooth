@@ -213,6 +213,21 @@ fn task_comment_via_cli_mutates_xml() {
     assert_eq!(plan.tasks[0].comments[0].message, "looks good");
 }
 
+/// The store-failure path for `comment`: an unknown task id is rejected by
+/// `TaskStore` and reported in the generic exit-1 shape.
+#[test]
+fn task_comment_reports_an_unknown_task() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["task", "comment", "--plan", &PLAN_NUM.to_string(), "--task", "99", "--message", "x"])
+        .assert()
+        .code(1)
+        .stdout("")
+        .stderr(predicates::str::starts_with("shipsmooth: "));
+
+    assert!(fx.load_plan().tasks[0].comments.is_empty(), "a failed comment must not mutate the plan");
+}
+
 /// Spec: task-5 — `task deviation` records a typed deviation. No Java unit
 /// test covers the leaf itself (TaskStoreTest pins the store call), so this
 /// smoke test is the CLI-level contract.
@@ -266,6 +281,21 @@ fn task_set_commit_via_cli_mutates_xml() {
         .stderr("");
 
     assert_eq!(fx.load_plan().tasks[0].commit, "abc1234");
+}
+
+/// The store-failure path for `set-commit`: an unknown task id is rejected
+/// by `TaskStore` and reported in the generic exit-1 shape.
+#[test]
+fn task_set_commit_reports_an_unknown_task() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["task", "set-commit", "--plan", &PLAN_NUM.to_string(), "--task", "99", "--commit", "abc1234"])
+        .assert()
+        .code(1)
+        .stdout("")
+        .stderr(predicates::str::starts_with("shipsmooth: "));
+
+    assert_eq!(fx.load_plan().tasks[0].commit, "", "a failed set-commit must not mutate the plan");
 }
 
 /// `--branch` is accepted and deliberately ignored: Java's
