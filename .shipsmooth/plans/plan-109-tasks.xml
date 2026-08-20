@@ -124,9 +124,9 @@
         <task>
             <id>10</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Migration notes write-back</name>
-            <commit></commit>
+            <commit>8222fe41fae22988f93f4f36bc8a0abada7a6338</commit>
             <created-from>plan-109-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
