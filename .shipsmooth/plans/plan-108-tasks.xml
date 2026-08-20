@@ -4,14 +4,14 @@
     <plan-version>plan-108-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-08-20</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Resolution-gate wiring in main.rs</name>
             <commit>aa08951c46073095030e90ae6c64df381a558d64</commit>
             <created-from>plan-108-v1</created-from>
@@ -33,7 +33,7 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>TaskStore::mutate convenience + `task add` leaf</name>
             <commit>f3e2922f2748f058b0e35da29e07a4041b9089fb</commit>
             <created-from>plan-108-v1</created-from>
@@ -45,7 +45,7 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`task status` leaf</name>
             <commit>e7d3908d68a945e79664cc20d0dbc618cd8b5a76</commit>
             <created-from>plan-108-v1</created-from>
@@ -62,7 +62,7 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`task comment` leaf</name>
             <commit>cbd779afb6ac161b97aa63092bc0b2158ee5189b</commit>
             <created-from>plan-108-v1</created-from>
@@ -74,7 +74,7 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`task deviation` leaf</name>
             <commit>36c7337461598761fa04f0e6405b8429ee07af25</commit>
             <created-from>plan-108-v1</created-from>
@@ -86,7 +86,7 @@
         <task>
             <id>6</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`task set-commit` leaf</name>
             <commit>a84f7a246f40a498d260dc226c4915b817e611e6</commit>
             <created-from>plan-108-v1</created-from>
@@ -98,7 +98,7 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Parity harness: task scenarios</name>
             <commit>c2015e0e0e007007bed50bcbebed0ca87a2a6948</commit>
             <created-from>plan-108-v1</created-from>
@@ -121,7 +121,7 @@
         <task>
             <id>8</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Migration notes write-back</name>
             <commit>a69a12956c2c930305c0f3769b0732afdcee9681</commit>
             <created-from>plan-108-v1</created-from>
@@ -135,6 +135,11 @@
         <update>
             <timestamp>2026-08-20T06:08:12.335Z</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-08-20T07:12:25.124Z</timestamp>
+            <message>Plan complete. The task command group and the generic resolve gate are ported and verified byte-identical against the Java CLI across 13 parity scenarios.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
