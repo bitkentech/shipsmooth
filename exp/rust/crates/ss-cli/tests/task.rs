@@ -253,3 +253,35 @@ fn task_deviation_rejects_an_unknown_type_with_exit_1() {
 
     assert!(fx.load_plan().tasks[0].deviations.is_empty(), "a rejected type must not mutate the plan");
 }
+
+/// Spec: Java `PlanServiceTest.setTaskCommitMutatesXml`, via the CLI.
+#[test]
+fn task_set_commit_via_cli_mutates_xml() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["task", "set-commit", "--plan", &PLAN_NUM.to_string(), "--task", "1", "--commit", "abc1234"])
+        .assert()
+        .code(0)
+        .stdout("Commit set for task 1\n")
+        .stderr("");
+
+    assert_eq!(fx.load_plan().tasks[0].commit, "abc1234");
+}
+
+/// `--branch` is accepted and deliberately ignored: Java's
+/// `PlanService.setTaskCommit` takes the argument and never passes it to
+/// `TaskStore.setCommit`. Ported as-is rather than "fixed" (see plan-108).
+#[test]
+fn task_set_commit_accepts_but_ignores_the_branch_flag() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&[
+        "task", "set-commit", "--plan", &PLAN_NUM.to_string(), "--task", "1", "--commit", "abc1234",
+        "--branch", "t/some-branch",
+    ])
+    .assert()
+    .code(0)
+    .stdout("Commit set for task 1\n");
+
+    assert_eq!(fx.load_plan().tasks[0].commit, "abc1234");
+}
