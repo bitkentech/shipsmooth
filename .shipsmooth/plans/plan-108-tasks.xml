@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Resolution-gate wiring in main.rs</name>
-            <commit></commit>
+            <commit>aa08951c46073095030e90ae6c64df381a558d64</commit>
             <created-from>plan-108-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
