@@ -132,3 +132,184 @@ fn plan_init_writes_task_xml_from_the_markdown() {
     assert!(xml.contains("<depends-on>1</depends-on>"));
     assert!(xml.contains("<risk>high</risk>"));
 }
+
+/// Spec: a plan whose headings are all near-misses parses to zero tasks —
+/// a loud failure on stderr that writes nothing, so existing task state
+/// cannot be silently clobbered. Port of Java's
+/// `PlanInitDiagnosticsIntegrationTest.zeroTaskParseFailsLoudlyAndPreservesExistingXml`.
+#[test]
+fn plan_init_with_no_parsable_tasks_fails_loudly_and_writes_nothing() {
+    let fx = Fixture::new();
+    let md = fx.plans_dir().join("plan-8.md");
+    std::fs::write(
+        &md,
+        "# Plan\n\n## Task 1: Wrong level [Low]\n\nDepends-on: 1\n\n### Task 2 - Dash not colon [Low]\n",
+    )
+    .unwrap();
+
+    fx.shipsmooth(&["plan", "init", "--plan", "8", "--tasks-from", md.to_str().unwrap()])
+        .assert()
+        .code(1)
+        .stdout("")
+        .stderr(
+            predicates::str::contains("Error: no tasks found in")
+                .and(predicates::str::contains("### Task N:"))
+                .and(predicates::str::contains("*Depends-on:"))
+                .and(predicates::str::contains("task heading must be an h3")),
+        );
+
+    assert!(!fx.plans_dir().join("plan-8-tasks.xml").exists(), "nothing must be written");
+}
+
+/// Spec: a partial parse succeeds but still surfaces the skipped lines — on
+/// stdout this time. Port of `partialParseSucceedsButReportsNearMissLines`.
+#[test]
+fn plan_init_reports_near_misses_on_stdout_when_it_succeeds() {
+    let fx = Fixture::new();
+    let md = fx.plans_dir().join("plan-9.md");
+    std::fs::write(&md, "# Plan\n\n### Task 1: Good [Low]\n\nBody.\n\n## Task 2: Wrong level [Medium]\n")
+        .unwrap();
+
+    fx.shipsmooth(&["plan", "init", "--plan", "9", "--tasks-from", md.to_str().unwrap()])
+        .assert()
+        .code(0)
+        .stdout(
+            predicates::str::contains("Written 1 tasks to")
+                .and(predicates::str::contains("line 7")),
+        );
+}
+
+/// Spec: a missing plan file is reported and nothing is written.
+#[test]
+fn plan_init_reports_a_missing_plan_file() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["plan", "init", "--plan", "9", "--tasks-from", "nope.md"])
+        .assert()
+        .code(1)
+        .stdout("")
+        .stderr("Plan file not found: nope.md\n");
+}
+
+/// Spec: Java `PlanTagTest` — version derives the next vK from git tags,
+/// refuses when it already exists, and the fixed kinds create their own tag.
+/// All output, errors included, on stdout.
+#[test]
+fn plan_tag_creates_version_complete_and_abandoned_tags() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["plan", "tag", "--plan", "3", "--kind", "version"])
+        .assert()
+        .code(0)
+        .stdout("Created tag: plan-3-v1\nRun: git push origin plan-3-v1\n");
+
+    // v1 exists now, so the next version is v2 — derived from git, not a count.
+    fx.shipsmooth(&["plan", "tag", "--plan", "3", "--kind", "version"])
+        .assert()
+        .code(0)
+        .stdout("Created tag: plan-3-v2\nRun: git push origin plan-3-v2\n");
+
+    fx.shipsmooth(&["plan", "tag", "--plan", "3", "--kind", "complete"])
+        .assert()
+        .code(0)
+        .stdout("Created tag: plan-3-complete\nRun: git push origin plan-3-complete\n");
+
+    // A fixed tag that already exists cannot be created again.
+    fx.shipsmooth(&["plan", "tag", "--plan", "3", "--kind", "complete"])
+        .assert()
+        .code(1)
+        .stdout("ERROR: failed to create tag plan-3-complete\n");
+}
+
+#[test]
+fn plan_tag_rejects_an_unknown_kind() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["plan", "tag", "--plan", "3", "--kind", "bogus"])
+        .assert()
+        .code(1)
+        .stdout("ERROR: --kind must be one of: version, complete, abandoned\n");
+}
+
+/// Spec: Java `PlanPreflightTest` — a dirty tree fails immediately, and the
+/// later conditions are never reached.
+#[test]
+fn plan_preflight_fails_fast_on_a_dirty_tree() {
+    let fx = Fixture::new();
+    std::fs::write(fx.repo.join("dirty.txt"), "x").unwrap();
+
+    fx.shipsmooth(&["plan", "preflight", "--plan", "1"])
+        .assert()
+        .code(1)
+        .stdout("FAIL: working tree has uncommitted changes (git status --porcelain)\n");
+}
+
+#[test]
+fn plan_preflight_fails_when_the_version_tag_is_absent_locally() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["plan", "preflight", "--plan", "1"])
+        .assert()
+        .code(1)
+        .stdout("FAIL: version tag plan-1-v1 not found locally\n");
+}
+
+/// With a clean tree and the tag present, the remaining two conditions are
+/// warnings — printed before PASS, and the exit code stays 0.
+#[test]
+fn plan_preflight_warns_but_passes_without_a_remote() {
+    let fx = Fixture::new();
+    git(&fx.repo, &["tag", "plan-1-v1"]);
+
+    fx.shipsmooth(&["plan", "preflight", "--plan", "1"])
+        .assert()
+        .code(0)
+        .stdout(
+            predicates::str::contains("WARN: branch is not pushed or HEAD is ahead of upstream")
+                .and(predicates::str::contains("WARN: version tag plan-1-v1 not found on remote"))
+                .and(predicates::str::ends_with("PASS\n")),
+        );
+}
+
+/// Spec: Java `PlanBranchTest` — exactly one of --issue/--plan, the issue
+/// lowercased, and the collision/creation messages.
+#[test]
+fn plan_branch_creates_from_either_selector() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["plan", "branch", "--plan", "5", "--desc", "Some Work"])
+        .assert()
+        .code(0)
+        .stdout("Created branch: t/5-some-work\nRun: git push -u origin t/5-some-work\n");
+
+    fx.shipsmooth(&["plan", "branch", "--issue", "PB-42", "--desc", "Other Work"])
+        .assert()
+        .code(0)
+        .stdout("Created branch: t/pb-42-other-work\nRun: git push -u origin t/pb-42-other-work\n");
+}
+
+#[test]
+fn plan_branch_requires_exactly_one_selector() {
+    let fx = Fixture::new();
+
+    for args in [
+        vec!["plan", "branch", "--desc", "x"],
+        vec!["plan", "branch", "--issue", "PB-1", "--plan", "2", "--desc", "x"],
+    ] {
+        fx.shipsmooth(&args)
+            .assert()
+            .code(1)
+            .stdout("ERROR: provide exactly one of --issue or --plan\n");
+    }
+}
+
+#[test]
+fn plan_branch_refuses_an_existing_branch() {
+    let fx = Fixture::new();
+    git(&fx.repo, &["branch", "t/5-some-work"]);
+
+    fx.shipsmooth(&["plan", "branch", "--plan", "5", "--desc", "Some Work"])
+        .assert()
+        .code(1)
+        .stdout("ERROR: branch t/5-some-work already exists\n");
+}

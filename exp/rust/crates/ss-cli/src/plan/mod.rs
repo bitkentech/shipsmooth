@@ -8,8 +8,13 @@
 //! print their `ERROR: …` lines to **stdout**, matching Java. `init` is the
 //! exception and uses stderr. Ported as observed, not as expected.
 
+mod branch;
 mod init;
+mod preflight;
 mod quick;
+mod tag;
+
+use ss_core::gw::GitState;
 
 use crate::LeafContext;
 
@@ -30,6 +35,33 @@ pub enum PlanCommand {
         #[arg(long, value_name = "TEXT")]
         desc: String,
     },
+    /// Create a plan version/complete/abandoned tag.
+    Tag {
+        /// Plan number
+        #[arg(long, value_name = "PLAN_NUMBER")]
+        plan: u32,
+        /// Tag kind: version, complete, abandoned
+        #[arg(long, value_name = "KIND")]
+        kind: String,
+    },
+    /// Verify plan preconditions before Phase 2.
+    Preflight {
+        /// Plan number
+        #[arg(long, value_name = "PLAN_NUMBER")]
+        plan: u32,
+    },
+    /// Create a task branch locally and print the push line.
+    Branch {
+        /// Issue ID for the branch (used in the slug; defaults to the plan number)
+        #[arg(long, value_name = "ISSUE_ID")]
+        issue: Option<String>,
+        /// Plan number (used for the slug when --issue is absent)
+        #[arg(long, value_name = "PLAN_NUMBER")]
+        plan: Option<u32>,
+        /// Short branch description
+        #[arg(long, value_name = "TEXT")]
+        desc: String,
+    },
 }
 
 /// Dispatch a `plan` leaf against the already-constructed, settled gateways.
@@ -39,5 +71,12 @@ pub fn run(command: &PlanCommand, cx: &LeafContext) -> i32 {
             init::run(&cx.store, &cx.git_tags, *plan, tasks_from)
         }
         PlanCommand::Quick { desc } => quick::run(cx, desc),
+        PlanCommand::Tag { plan, kind } => tag::run(&cx.git_tags, *plan, kind),
+        PlanCommand::Preflight { plan } => {
+            preflight::run(&GitState::new(&cx.repo_root), &cx.git_tags, *plan)
+        }
+        PlanCommand::Branch { issue, plan, desc } => {
+            branch::run(&GitState::new(&cx.repo_root), issue.as_deref(), *plan, desc)
+        }
     }
 }
