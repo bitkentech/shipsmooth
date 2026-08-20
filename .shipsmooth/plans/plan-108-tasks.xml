@@ -98,9 +98,9 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Parity harness: task scenarios</name>
-            <commit></commit>
+            <commit>c2015e0e0e007007bed50bcbebed0ca87a2a6948</commit>
             <created-from>plan-108-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
