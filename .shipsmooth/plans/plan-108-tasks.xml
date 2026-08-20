@@ -33,9 +33,9 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>TaskStore::mutate convenience + `task add` leaf</name>
-            <commit></commit>
+            <commit>f3e2922f2748f058b0e35da29e07a4041b9089fb</commit>
             <created-from>plan-108-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
