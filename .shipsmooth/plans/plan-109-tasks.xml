@@ -112,9 +112,9 @@
         <task>
             <id>9</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Parity harness: plan scenarios</name>
-            <commit></commit>
+            <commit>81bc1dfd5b5c910522daafccb0247b2fad9031f0</commit>
             <created-from>plan-109-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
