@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>parse_with_diagnostics and the near-miss heuristics</name>
-            <commit></commit>
+            <commit>737b86333f84c4eeaeec519acb8f2c0a76da8290</commit>
             <created-from>plan-109-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
