@@ -21,6 +21,10 @@ macro_rules! xsd_enum {
                     $($name::$variant => $token),+
                 }
             }
+
+            /// Every variant, in XSD declaration order — for allowed-values
+            /// messages (e.g. an invalid `--status` on the CLI).
+            pub const ALL: &'static [$name] = &[$($name::$variant),+];
         }
 
         impl FromStr for $name {
@@ -106,5 +110,14 @@ mod tests {
     fn invalid_token_names_the_kind_and_value() {
         let err = "bogus".parse::<TaskStatus>().unwrap_err();
         assert_eq!(err.to_string(), "invalid task status 'bogus'");
+    }
+
+    #[test]
+    fn all_lists_every_variant_in_xsd_declaration_order() {
+        let tokens: Vec<&str> = TaskStatus::ALL.iter().map(|s| s.as_str()).collect();
+        assert_eq!(
+            tokens,
+            vec!["pending", "in-progress", "de-risked", "agent-coded", "closed", "needs-triage", "abandoned"]
+        );
     }
 }

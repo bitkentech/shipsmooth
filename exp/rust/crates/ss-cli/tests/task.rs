@@ -164,3 +164,35 @@ fn task_add_reports_a_missing_plan() {
         .stdout("")
         .stderr(predicates::str::starts_with("shipsmooth: "));
 }
+
+/// Spec: Java `PlanServiceTest.updateTaskStatusMutatesXml`, via the CLI.
+#[test]
+fn task_status_via_cli_mutates_xml() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["task", "status", "--plan", &PLAN_NUM.to_string(), "--task", "1", "--status", "agent-coded"])
+        .assert()
+        .code(0)
+        .stdout("Task 1 status set to \"agent-coded\"\n")
+        .stderr("");
+
+    assert_eq!(fx.load_plan().tasks[0].status, "agent-coded");
+}
+
+/// Spec: task-3 contract — an invalid `--status` prints Java's own message
+/// (no `shipsmooth: ` prefix) and exits 2, not the generic exit-1 shape.
+#[test]
+fn task_status_rejects_an_invalid_status_with_exit_2() {
+    let fx = Fixture::new();
+
+    fx.shipsmooth(&["task", "status", "--plan", &PLAN_NUM.to_string(), "--task", "1", "--status", "bogus"])
+        .assert()
+        .code(2)
+        .stdout("")
+        .stderr(
+            "invalid status \"bogus\". Allowed values: pending, in-progress, de-risked, \
+             agent-coded, closed, needs-triage, abandoned\n",
+        );
+
+    assert_eq!(fx.load_plan().tasks[0].status, "pending", "an invalid status must not mutate the plan");
+}

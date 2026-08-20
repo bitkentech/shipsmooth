@@ -5,6 +5,7 @@
 //! this module's leaves need before `run` is ever called.
 
 mod add;
+mod status;
 
 #[derive(clap::Subcommand)]
 pub enum TaskCommand {
@@ -22,6 +23,18 @@ pub enum TaskCommand {
         /// Comma-separated task ids this task depends on (e.g. 1,3)
         #[arg(long = "depends-on", value_name = "IDS")]
         depends_on: Option<String>,
+    },
+    /// Update the status of a task.
+    Status {
+        /// Plan number
+        #[arg(long, value_name = "PLAN_NUMBER")]
+        plan: u32,
+        /// Task ID (integer)
+        #[arg(long, value_name = "TASK_ID")]
+        task: u32,
+        /// New task status: pending, in-progress, de-risked, agent-coded, closed, needs-triage, abandoned
+        #[arg(long, value_name = "STATUS")]
+        status: String,
     },
 }
 
@@ -48,5 +61,15 @@ pub fn run(command: &TaskCommand, store: &ss_core::gw::TaskStore, git_tags: &ss_
                 }
             }
         }
+        TaskCommand::Status { plan, task, status } => match status::run(store, *plan, *task, status) {
+            Ok(message) => {
+                println!("{message}");
+                0
+            }
+            Err((code, message)) => {
+                eprintln!("{message}");
+                code
+            }
+        },
     }
 }
