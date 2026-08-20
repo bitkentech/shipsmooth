@@ -6,6 +6,7 @@
 
 mod add;
 mod comment;
+mod deviation;
 mod status;
 
 #[derive(clap::Subcommand)]
@@ -37,6 +38,21 @@ pub enum TaskCommand {
         #[arg(long, value_name = "MESSAGE")]
         message: String,
     },
+    /// Add a deviation to a task.
+    Deviation {
+        /// Plan number
+        #[arg(long, value_name = "PLAN_NUMBER")]
+        plan: u32,
+        /// Task ID (integer)
+        #[arg(long, value_name = "TASK_ID")]
+        task: u32,
+        /// Type of deviation: minor, major
+        #[arg(long = "type", value_name = "TYPE")]
+        kind: String,
+        /// The deviation message
+        #[arg(long, value_name = "MESSAGE")]
+        message: String,
+    },
     /// Update the status of a task.
     Status {
         /// Plan number
@@ -64,6 +80,9 @@ pub fn run(command: &TaskCommand, store: &ss_core::gw::TaskStore, git_tags: &ss_
         )),
         TaskCommand::Comment { plan, task, message } => {
             report(comment::run(store, *plan, *task, message))
+        }
+        TaskCommand::Deviation { plan, task, kind, message } => {
+            report(deviation::run(store, *plan, *task, kind, message))
         }
         // The one leaf that owns its own exit code: an invalid --status is
         // rejected before TaskStore is touched, with Java's own message and
