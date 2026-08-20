@@ -141,9 +141,32 @@ legacy-agents-tree"
 
 TASK_PLAN=901
 
+# ACCEPTED DIVERGENCE (plan-108 Task 7). On the error paths Java does not
+# handle explicitly, the exception escapes to picocli's default execution
+# handler, which dumps a full JVM stack trace to stderr; Rust prints the
+# CLI's one-line `shipsmooth: <message>`. A JVM stack trace cannot be
+# reproduced (nor is it a contract — it names Java classes and line
+# numbers), so for these scenarios stderr is reduced to "was a diagnostic
+# emitted at all". Exit code, stdout, and the resulting XML stay byte-checked,
+# and `status-bad` is deliberately NOT on this list: Java validates the
+# status itself and prints a clean message, so that one matches byte-for-byte.
+STDERR_DIVERGES="deviation-bad unknown-task unknown-plan"
+
+# Seeding runs under `set -e`, so each step is guarded explicitly: a bare
+# failing command would abort the whole harness with no diagnostic, and an
+# unnoticed bad seed would otherwise compare two identically-broken runs.
+seed_step() { # seed_step <scenario> <description> <cli args...>
+    local name="$1" what="$2"; shift 2
+    (cd "$SPROJ" && XDG_CONFIG_HOME="$SCFG" "$SS_JAVA" "$@") >/dev/null 2>&1 || {
+        echo "seed failed for task/$name: $what (\`$SS_JAVA $*\`)" >&2
+        exit 1
+    }
+}
+
 task_scenario_seed() { # task_scenario_seed <scenario>
-    scenario_reset "$1"
-    (cd "$SPROJ" && XDG_CONFIG_HOME="$SCFG" "$SS_JAVA" store init --type same-repo --json) >/dev/null 2>&1
+    local name="$1"
+    scenario_reset "$name"
+    seed_step "$name" "store init" store init --type same-repo --json
     mkdir -p "$SPROJ/.shipsmooth/plans"
     cat >"$SPROJ/.shipsmooth/plans/plan-$TASK_PLAN.md" <<EOF
 ### Task 1: Seed task [High]
@@ -151,8 +174,14 @@ task_scenario_seed() { # task_scenario_seed <scenario>
 ### Task 2: Second task [Low]
 *Depends-on: 1*
 EOF
-    (cd "$SPROJ" && XDG_CONFIG_HOME="$SCFG" "$SS_JAVA" \
-        plan init --plan "$TASK_PLAN" --tasks-from ".shipsmooth/plans/plan-$TASK_PLAN.md") >/dev/null 2>&1
+    seed_step "$name" "plan init" \
+        plan init --plan "$TASK_PLAN" --tasks-from ".shipsmooth/plans/plan-$TASK_PLAN.md"
+    # Belt and braces: a zero exit that wrote nothing would be just as bad.
+    local seeded="$SPROJ/.shipsmooth/plans/plan-$TASK_PLAN-tasks.xml"
+    [ -s "$seeded" ] || {
+        echo "seed failed for task/$name: $seeded is missing or empty" >&2
+        exit 1
+    }
 }
 
 # Mutation timestamps come from the wall clock, so the two runs legitimately
@@ -189,17 +218,6 @@ capture_task_scenario() { # capture_task_scenario <bin> <capdir> <scenario>
         *" $name "*) normalise_diagnostic "$dir/cmd.err" ;;
     esac
 }
-
-# ACCEPTED DIVERGENCE (plan-108 Task 7). On the error paths Java does not
-# handle explicitly, the exception escapes to picocli's default execution
-# handler, which dumps a full JVM stack trace to stderr; Rust prints the
-# CLI's one-line `shipsmooth: <message>`. A JVM stack trace cannot be
-# reproduced (nor is it a contract — it names Java classes and line
-# numbers), so for these scenarios stderr is reduced to "was a diagnostic
-# emitted at all". Exit code, stdout, and the resulting XML stay byte-checked,
-# and `status-bad` is deliberately NOT on this list: Java validates the
-# status itself and prints a clean message, so that one matches byte-for-byte.
-STDERR_DIVERGES="deviation-bad unknown-task unknown-plan"
 
 normalise_diagnostic() { # normalise_diagnostic <capture>
     if [ -s "$1" ]; then
