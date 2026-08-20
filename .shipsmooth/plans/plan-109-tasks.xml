@@ -4,14 +4,14 @@
     <plan-version>plan-109-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-08-20</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>parse_with_diagnostics and the near-miss heuristics</name>
             <commit>737b86333f84c4eeaeec519acb8f2c0a76da8290</commit>
             <created-from>plan-109-v1</created-from>
@@ -27,7 +27,7 @@
         <task>
             <id>2</id>
             <risk>high</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>NewPlan, ScaffoldResult and the Scaffold error</name>
             <commit>64b416ceff53e8e4fecca8a63d24d4d18e668e7a</commit>
             <created-from>plan-109-v1</created-from>
@@ -43,7 +43,7 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`plan init` leaf</name>
             <commit>ebbb15b1da69b8944c9b0bf0aaa1567311a1e4af</commit>
             <created-from>plan-109-v1</created-from>
@@ -55,7 +55,7 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`plan quick` leaf</name>
             <commit>7b5d9c9462f8febc62719f9074f4114e2162445c</commit>
             <created-from>plan-109-v1</created-from>
@@ -67,7 +67,7 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`plan tag` leaf</name>
             <commit>38cae152deee99e8a9ae82ef0e1096aa60f6d934</commit>
             <created-from>plan-109-v1</created-from>
@@ -78,7 +78,7 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`plan preflight` leaf</name>
             <commit>38cae152deee99e8a9ae82ef0e1096aa60f6d934</commit>
             <created-from>plan-109-v1</created-from>
@@ -89,7 +89,7 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`plan branch` leaf</name>
             <commit>38cae152deee99e8a9ae82ef0e1096aa60f6d934</commit>
             <created-from>plan-109-v1</created-from>
@@ -100,7 +100,7 @@
         <task>
             <id>8</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>`plan show`, `resume`, `project-update` and the group parent</name>
             <commit>8019d99903d35125729b21f7a73a9a92576729da</commit>
             <created-from>plan-109-v1</created-from>
@@ -112,7 +112,7 @@
         <task>
             <id>9</id>
             <risk>medium</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Parity harness: plan scenarios</name>
             <commit>81bc1dfd5b5c910522daafccb0247b2fad9031f0</commit>
             <created-from>plan-109-v1</created-from>
@@ -124,7 +124,7 @@
         <task>
             <id>10</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Migration notes write-back</name>
             <commit>8222fe41fae22988f93f4f36bc8a0abada7a6338</commit>
             <created-from>plan-109-v1</created-from>
@@ -138,6 +138,11 @@
         <update>
             <timestamp>2026-08-20T07:21:14.864Z</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-08-20T11:09:39.068Z</timestamp>
+            <message>Plan complete. The plan command group and the remaining svc::plan classes are ported and verified byte-identical across 45 parity scenarios; the Rust CLI is now feature-complete against the Java CLI.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
