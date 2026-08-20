@@ -55,9 +55,9 @@
         <task>
             <id>4</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`plan quick` leaf</name>
-            <commit></commit>
+            <commit>7b5d9c9462f8febc62719f9074f4114e2162445c</commit>
             <created-from>plan-109-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
