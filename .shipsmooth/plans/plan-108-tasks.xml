@@ -98,13 +98,24 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Parity harness: task scenarios</name>
             <commit></commit>
             <created-from>plan-108-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-20T07:00:32.941Z</timestamp>
+                    <message>De-risk draft ready for review. 13 task scenarios, all byte-identical; harness proven non-vacuous by perturbation AND by catching a real bug on first run (missing 'Error: ' prefix on the invalid-status message, now fixed). Two documented accepted divergences: Java stack traces on unhandled error paths (stderr reduced to non-empty check for 3 scenarios; status-bad excluded and byte-exact), and wall-clock timestamps normalised. Also pinned a UTF-8 locale after finding the JVM mangles em dashes to '?' under the sandbox's POSIX locale.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-08-20T07:00:33.420Z</timestamp>
+                    <message>Scenario count grew from the planned add/comment/deviation/status/set-commit set to 13, adding edge cases the plan did not enumerate: no-risk add, XML-escaped comment markup, invalid deviation type, the inert --branch flag, and unknown-task/unknown-plan error paths. The error paths are what surfaced the Java stack-trace divergence.</message>
+                </deviation>
+            </deviations>
             <depends-on>3,4,5,6</depends-on>
         </task>
         <task>
