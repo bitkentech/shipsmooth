@@ -67,9 +67,9 @@
         <task>
             <id>5</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`plan tag` leaf</name>
-            <commit></commit>
+            <commit>38cae152deee99e8a9ae82ef0e1096aa60f6d934</commit>
             <created-from>plan-109-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -78,9 +78,9 @@
         <task>
             <id>6</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`plan preflight` leaf</name>
-            <commit></commit>
+            <commit>38cae152deee99e8a9ae82ef0e1096aa60f6d934</commit>
             <created-from>plan-109-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -89,9 +89,9 @@
         <task>
             <id>7</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`plan branch` leaf</name>
-            <commit></commit>
+            <commit>38cae152deee99e8a9ae82ef0e1096aa60f6d934</commit>
             <created-from>plan-109-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
