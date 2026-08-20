@@ -1,13 +1,15 @@
 //! shipsmooth CLI (Rust) — clap root, dispatch, and the resolve gate.
 //!
 //! `store`/`probe` are state-independent and dispatch unconditionally;
-//! `task` is state-dependent, so `dispatch_task` resolves the project's data
-//! store exactly once and runs it through `gate` before constructing any
-//! service, mirroring the Java `Shipsmooth.execute()` contract (exit codes
-//! 10/11, resolution JSON on stdout) with static classification in place of
-//! Java's lazy-`Provider` exception handler (see 02-cli.md "The resolve gate").
+//! `plan` and `task` are state-dependent, so `dispatch_state_dependent`
+//! resolves the project's data store exactly once and runs it through `gate`
+//! before constructing any service, mirroring the Java `Shipsmooth.execute()`
+//! contract (exit codes 10/11, resolution JSON on stdout) with static
+//! classification in place of Java's lazy-`Provider` exception handler
+//! (see 02-cli.md "The resolve gate").
 
 mod ds;
+mod plan;
 mod probe;
 mod project;
 mod resolution_json;
@@ -51,6 +53,11 @@ enum Command {
         #[command(subcommand)]
         command: store::StoreCommand,
     },
+    /// Create, inspect and tag plans.
+    Plan {
+        #[command(subcommand)]
+        command: plan::PlanCommand,
+    },
     /// Manage individual tasks within a plan and record their progress.
     Task {
         #[command(subcommand)]
@@ -75,20 +82,34 @@ fn run(args: impl IntoIterator<Item = String>) -> i32 {
 }
 
 /// State-independent commands (`store`, `probe`, `--help`/`--version`) run
-/// unconditionally. A state-dependent command (`task`) resolves the store
-/// once, gates on an unsettled project, and only then is handed the
-/// constructed gateways — see `gate` and `dispatch_task`.
+/// unconditionally. A state-dependent command (`plan`, `task`) resolves the
+/// store once, gates on an unsettled project, and only then is handed the
+/// constructed gateways — see `gate` and `dispatch_state_dependent`.
 fn dispatch(command: Command) -> i32 {
     match command {
         Command::Probe(args) => probe::run(&args),
         Command::Store { command } => store::run(&command),
-        Command::Task { command } => dispatch_task(&command),
+        Command::Plan { command } => dispatch_state_dependent(&mut |cx| plan::run(&command, cx)),
+        Command::Task { command } => {
+            dispatch_state_dependent(&mut |cx| task::run(&command, &cx.store, &cx.git_tags))
+        }
     }
 }
 
-/// Resolve this invocation's project context and data store exactly once,
-/// gate on it, and dispatch to the `task` leaf only once it is `Settled`.
-fn dispatch_task(command: &task::TaskCommand) -> i32 {
+/// Everything a state-dependent leaf may need, once the store is settled.
+/// The roots travel alongside the gateways because a leaf that scaffolds
+/// (`plan quick`) mints its own locator, while most only need the store.
+pub struct LeafContext {
+    pub store: TaskStore,
+    pub git_tags: GitTags,
+    pub repo_root: std::path::PathBuf,
+    pub state_root: std::path::PathBuf,
+}
+
+/// Resolve this invocation's project context and data store exactly once, gate
+/// on it, and hand the constructed gateways to `leaf` only once it is
+/// `Settled`. Shared by every state-dependent group (`plan`, `task`).
+fn dispatch_state_dependent(leaf: &mut dyn FnMut(&LeafContext) -> i32) -> i32 {
     let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::Path::new(".").to_path_buf());
     let project = ProjectContext::from_dir(&cwd);
     let resolver = ProjectDataStoreResolver::new(ds::config_file::locate());
@@ -97,14 +118,24 @@ fn dispatch_task(command: &task::TaskCommand) -> i32 {
     match gate(resolution) {
         GateOutcome::Exit(code) => code,
         GateOutcome::Proceed(store) => {
-            let token = ResolvedStateRoot::of(store.state_root()).expect("settled state root must be accessible");
-            let locator = ShipsmoothDataLocator::new(&project.repo_root, token)
-                .expect("settled repo root must be accessible");
-            let task_store = TaskStore::new(locator);
-            let git_tags = GitTags::new(&project.repo_root);
-            task::run(command, &task_store, &git_tags)
+            let state_root = store.state_root().to_path_buf();
+            let cx = LeafContext {
+                store: TaskStore::new(locator_for(&project.repo_root, &state_root)),
+                git_tags: GitTags::new(&project.repo_root),
+                repo_root: project.repo_root.clone(),
+                state_root,
+            };
+            leaf(&cx)
         }
     }
+}
+
+/// Mint a locator for an already-settled pair of roots. The resolver just
+/// verified both, so failure here would mean a filesystem race, not a user
+/// error — hence the expects.
+pub fn locator_for(repo_root: &std::path::Path, state_root: &std::path::Path) -> ShipsmoothDataLocator {
+    let token = ResolvedStateRoot::of(state_root).expect("settled state root must be accessible");
+    ShipsmoothDataLocator::new(repo_root, token).expect("settled repo root must be accessible")
 }
 
 /// The result of running a resolution through the resolve gate: either the
