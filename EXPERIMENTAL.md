@@ -40,3 +40,58 @@ The tasks locate cargo via `-Pcargo.home=<dir>`, `$CARGO_HOME`, or `PATH` (plus
 when no Rust toolchain is installed. Plain `cargo build` / `cargo test` from
 `exp/rust/` works equally well. The wrapper here is a copy of the root one — bump both
 together on a Gradle upgrade.
+
+Note that `cargoBuild` runs a plain `cargo build`, which is a **debug** build. For an
+optimized binary, invoke cargo directly as below.
+
+#### Building and running the Rust CLI
+
+All commands run from `exp/rust/`. If cargo is not on your `PATH`, export the toolchain
+location first (this repo keeps it under `/opt`):
+
+```bash
+export CARGO_HOME=/opt/cargo RUSTUP_HOME=/opt/installers/rustup
+export PATH="$CARGO_HOME/bin:$PATH"
+```
+
+Build a release binary:
+
+```bash
+cd exp/rust
+cargo build --release
+```
+
+The binary is written to `target/release/shipsmooth` — note it is named `shipsmooth`
+(matching the Java CLI it mirrors), not `ss-cli`, even though the crate is `ss-cli`.
+Launch it directly:
+
+```bash
+./target/release/shipsmooth --help
+./target/release/shipsmooth --version        # -> shipsmooth 0.3.34
+./target/release/shipsmooth plan --help
+```
+
+The port currently exposes three command groups — `store`, `plan`, and `task` —
+mirroring their Java counterparts. Run it from within a project directory, exactly as
+you would the Java CLI; it resolves state through the same `store` config.
+
+To build and launch in one step (useful while iterating), `cargo run` forwards
+everything after `--` to the binary:
+
+```bash
+cargo run --release --quiet -- plan --help
+```
+
+Drop `--release` for a faster-compiling debug build at `target/debug/shipsmooth`.
+
+There is also a size-optimized `release-small` profile (`opt-level = "z"`, LTO, symbols
+stripped, `panic = "abort"`) — this is the profile behind the ~2 MB footprint figure
+quoted above, and it is what to use when measuring binary size:
+
+```bash
+cargo build --profile release-small   # -> target/release-small/shipsmooth
+```
+
+For reference, a local build produces ~4.6 MB for `release` versus ~2.3 MB for
+`release-small`. Because `panic = "abort"` drops unwinding, prefer plain `--release`
+for day-to-day work and reserve `release-small` for footprint measurements.
