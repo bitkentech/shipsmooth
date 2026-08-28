@@ -312,6 +312,91 @@ equivalent**; there is no remaining command surface to port.
   the unresolved Cargo-vs-`plugin.version` split from plan-106, and a rollout
   in which both implementations coexist (02-cli.md §definition of done).
 
+## Parity gap audit findings (plan-110, 2026-08-28) — what the harness never looked at
+
+plan-109 declared feature parity with 45 byte-identical scenarios. plan-110
+probed the surfaces those 45 never touched — help/version, bare invocations,
+several `store init` branches, separate-dir mode for state-dependent commands —
+by running both binaries by hand. Every item below was **reproduced against a
+running binary**, then fixed and pinned in the harness (now 60 scenarios).
+
+- **Divergences found (all fixed):**
+  - **`{:?}` situation-enum leak.** `store init --type recreate` on a clean
+    first run: Java prints `… (CLEAN_FIRST_RUN)`, Rust printed `… (CleanFirstRun)`
+    — `store/init.rs` formatted `UndecidableSituation` with `{:?}` where Java
+    renders the SCREAMING_SNAKE_CASE name. Fixed with a `name()` method
+    alongside the existing kebab-case `token()` (which serves the JSON wire
+    contract and stays untouched). Harness: `store/init-off-menu`.
+  - **Silent bare root.** `shipsmooth` with no subcommand returned 0 and
+    printed nothing; Java prints usage to **stderr** and exits **2**. This was
+    the worst of the set — a silent success where Java tells the user what to
+    do. Harness: `cli/bare-root`.
+  - **Bare command groups.** `shipsmooth store|plan|task` hit clap's
+    missing-subcommand error (exit 2); Java prints the group's usage to stderr
+    and exits **0** (pinned Java-side by `GroupedCommandTreeTest`). The
+    asymmetry — root 2, groups 0 — is Java's real behaviour and was ported
+    as-is, not normalised into agreement. Harness: `cli/bare-store|plan|task`.
+  - **`--version` format.** clap's derived flag renders `shipsmooth 0.3.34`;
+    picocli prints the bare number. Intercepted `DisplayVersion` to print
+    `CARGO_PKG_VERSION` alone. Only the *format* is aligned — the value stays
+    `0.3.34`, deliberately unsynced from Java's `plugin.version` while the two
+    implementations coexist (plan-106). Harness: `cli/version-long|short`.
+
+- **Claims tested and found FALSE — do not act on them:**
+  - **Malformed `shipsmooth.toml` does *not* diverge.** An earlier analysis
+    claimed Rust silently ignores an invalid config while Java errors. Both
+    treat a syntactically-invalid config as absent (the plan-87 leniency),
+    verified by hand. This is plan-109's `plan tag` lesson from the other
+    direction: **check a recorded claim against a running binary before acting
+    on it — including a claim that something is broken.**
+  - Usage-error *exit codes* already matched (both 2) for unknown subcommand
+    and unknown option, despite different wording.
+
+- **Accepted divergences — documented, not chased:**
+  - **Help *body* layout** is framework-shaped (picocli leads with `Usage:`,
+    clap with the description; clap adds a `help` pseudo-subcommand). Skills
+    invoke commands, not help, so it is not a contract. The new `cli/*`
+    scenarios compare exit code and *which stream* carried output, never the
+    body text (`normalise_usage`); `--version` scenarios also strip the
+    version digits (`normalise_version`).
+  - **`probe`** is Rust-only by design (plan-102 footprint spike, hidden); no
+    Java counterpart exists to parity-test.
+  - **Java stack traces** where picocli's default handler swallows an
+    exception — already covered by the harness's `STDERR_DIVERGES` allowlists.
+
+- **Harness hardening (45 → 60 scenarios):**
+  - New `cli` scenario group (6): the bare invocations and `--version` above.
+  - Six `store init` scenarios: the `RECREATE_MISSING_DIR` action was set up
+    by `config-dir-missing` but never *run*; `--path` (the user-supplied
+    branch of `resolvePath`) was never exercised; plus off-menu / unknown /
+    already-settled / missing-type.
+  - Separate-dir coverage for state-dependent commands (`task comment`,
+    `plan init`, `plan show`). Every earlier seed hardcoded `--type same-repo`,
+    so `ShipsmoothDataLocator`'s separate-dir layout branch was never
+    parity-checked for any command that reads state.
+  - Task scenarios now seed with the implementation **under test**, not always
+    Java — `plan init` is ported (plan-109) and byte-identical on the same
+    input, so a Rust `plan init` regression surfaces in the seeded file
+    instead of hiding behind a Java-written start. (The plan scenarios already
+    did this; the task scenarios predated the port.)
+  - Removed a dead `PLAN_STDERR_DIVERGES` entry that named scenarios not in
+    `PLAN_SCENARIOS`.
+
+- **Corpus round-trip test.** `.shipsmooth/plans/*-tasks.xml` (~90 files the
+  Java CLI wrote across many versions) is round-tripped through the Rust model
+  for idempotent serialization — an order of magnitude more real shapes than
+  the 8 committed fixtures, and free to keep current. One exclusion:
+  `plan-26-tasks.xml`, pre-schema hand-written (`plan="26"` attribute, no
+  `<plan>` element). Java rejects it too (a `NullPointerException`, exit 0);
+  the test asserts it *stays* rejected so the parser can't quietly be relaxed
+  to accept it. Skips cleanly when the working tree isn't present.
+
+- **Environment note.** Under a privileged sandbox (root / `CAP_DAC_OVERRIDE`)
+  the directory-mode is not enforced, so `config_writer`'s
+  `failed_write_leaves_existing_config_intact_and_no_temp_litter` can't force
+  its write failure — it now probes for that and skips rather than false-fail.
+  Unrelated to parity; unprivileged CI is unaffected.
+
 ## Target layout
 
 Cargo workspace mirroring the Gradle module split:

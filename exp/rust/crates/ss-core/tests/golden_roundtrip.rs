@@ -58,6 +58,71 @@ fn every_fixture_round_trips_byte_identical() {
     }
 }
 
+/// plan-110 Task 5: round-trip the repo's OWN plan corpus, not just the 8
+/// committed fixtures. `.shipsmooth/plans/*-tasks.xml` is ~90 files written by
+/// the Java CLI across many versions — a far larger, free sample of real
+/// shapes. All of them parse and serialize idempotently EXCEPT one legacy
+/// hand-written file, which Java rejects too.
+///
+/// This is a repo-shape test: it needs the working tree, so it skips cleanly
+/// in a checkout (or packaged crate) that does not carry `.shipsmooth/`.
+#[test]
+fn the_repo_plan_corpus_round_trips_except_the_one_known_legacy_file() {
+    // manifest dir = exp/rust/crates/ss-core -> three up is the repo root.
+    let corpus = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../.shipsmooth/plans");
+    if !corpus.is_dir() {
+        eprintln!("skipping: {} not present (packaged crate / partial checkout)", corpus.display());
+        return;
+    }
+
+    // plan-26-tasks.xml predates the schema: `plan="26"` as an ATTRIBUTE, no
+    // `<plan>` element, 2-space indent. Java rejects it too (a
+    // NullPointerException, while still exiting 0) — both implementations
+    // refuse it, they only differ in how. Do NOT relax the parser to accept
+    // it; it is frozen legacy.
+    const KNOWN_LEGACY: &str = "plan-26-tasks.xml";
+
+    let mut paths: Vec<_> = fs::read_dir(&corpus)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .filter(|p| p.file_name().and_then(|n| n.to_str()).is_some_and(|n| n.ends_with("-tasks.xml")))
+        .collect();
+    paths.sort();
+    assert!(paths.len() > 50, "corpus unexpectedly small ({} files)", paths.len());
+
+    let mut round_tripped = 0;
+    let mut legacy_seen = false;
+    for path in &paths {
+        let name = path.file_name().unwrap().to_str().unwrap();
+        let input = fs::read_to_string(path).unwrap();
+        let parsed = PlanTasks::parse(&input);
+
+        if name == KNOWN_LEGACY {
+            legacy_seen = true;
+            assert!(parsed.is_err(), "{name} is the frozen pre-schema file; it must still be rejected");
+            continue;
+        }
+
+        let plan = parsed.unwrap_or_else(|e| panic!("parse failed for {name}: {e}"));
+        // Idempotent serialization: parse(serialize) serializes back identically
+        // (the same check `probe --dir` runs).
+        let first = plan.to_xml();
+        assert_eq!(
+            PlanTasks::parse(&first).unwrap().to_xml(),
+            first,
+            "serialization not idempotent for {name}"
+        );
+        round_tripped += 1;
+    }
+
+    assert!(legacy_seen, "expected {KNOWN_LEGACY} in the corpus — has it been removed?");
+    assert_eq!(
+        round_tripped,
+        paths.len() - 1,
+        "every corpus file except {KNOWN_LEGACY} must round-trip"
+    );
+}
+
 #[test]
 fn typed_accessors_read_the_rich_fixture() {
     let input = fs::read_to_string(fixture_dir().join("02-rich.xml")).unwrap();

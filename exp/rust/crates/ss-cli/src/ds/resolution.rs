@@ -111,6 +111,19 @@ impl UndecidableSituation {
         }
     }
 
+    /// The raw Java enum name (SCREAMING_SNAKE_CASE), for user-facing text
+    /// that quotes the situation back — mirrors `UnresolvableReason::name()`.
+    ///
+    /// Deliberately distinct from `token()`: that one is the kebab-case JSON
+    /// wire contract the skill parses and must not follow enum renames.
+    pub fn name(&self) -> &'static str {
+        match self {
+            UndecidableSituation::CleanFirstRun => "CLEAN_FIRST_RUN",
+            UndecidableSituation::ConfigDirMissing => "CONFIG_DIR_MISSING",
+            UndecidableSituation::InRepoNotSetUp => "IN_REPO_NOT_SET_UP",
+        }
+    }
+
     /// Stable wire token for the skill (kebab-case, independent of enum naming).
     pub fn token(&self) -> &'static str {
         match self {
@@ -249,6 +262,25 @@ mod tests {
         let bad = Unresolvable::of(UnresolvableReason::LegacyAgentsTree);
         assert!(bad.cause.is_none());
         assert_eq!(bad.message(), UnresolvableReason::LegacyAgentsTree.message());
+    }
+
+    #[test]
+    fn every_situation_renders_the_java_enum_name_and_keeps_its_wire_token() {
+        // The user-facing `store init` refusal prints the situation the way
+        // Java's enum does; the JSON gate contract keeps the kebab-case token.
+        // Driving both off ALL means a new variant cannot slip through
+        // untested.
+        let rendered: Vec<(&str, &str)> =
+            UndecidableSituation::ALL.iter().map(|s| (s.name(), s.token())).collect();
+
+        assert_eq!(
+            rendered,
+            vec![
+                ("CLEAN_FIRST_RUN", "clean-first-run"),
+                ("CONFIG_DIR_MISSING", "config-dir-missing"),
+                ("IN_REPO_NOT_SET_UP", "in-repo-not-set-up"),
+            ]
+        );
     }
 
     #[test]

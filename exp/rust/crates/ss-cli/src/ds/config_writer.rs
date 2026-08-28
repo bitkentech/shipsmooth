@@ -394,6 +394,22 @@ mod tests {
         // Now make the write fail mid-flight: the config dir refuses new files,
         // so the temp-file creation blows up before the rename can happen.
         std::fs::set_permissions(&config_dir, std::fs::Permissions::from_mode(0o555)).unwrap();
+
+        // A privileged caller (root / CAP_DAC_OVERRIDE) is not bound by the
+        // directory mode, so the write would succeed and this test would prove
+        // nothing. Detect that by probing and skip rather than false-fail — the
+        // assertions below are only meaningful for an unprivileged user.
+        let probe = config_dir.join(".perm-probe");
+        if std::fs::write(&probe, b"").is_ok() {
+            let _ = std::fs::remove_file(&probe);
+            std::fs::set_permissions(&config_dir, std::fs::Permissions::from_mode(0o755)).unwrap();
+            eprintln!(
+                "skipping: caller can write through a read-only dir (root?); \
+                 directory-permission failure path is untestable here"
+            );
+            return;
+        }
+
         let repo2 = tmp.path().join("repo2");
         let other = tmp.path().join("other");
         std::fs::create_dir(&repo2).unwrap();

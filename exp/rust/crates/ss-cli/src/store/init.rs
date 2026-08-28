@@ -44,7 +44,10 @@ pub fn run(
     };
 
     let option = offered_option(&needs, choice).ok_or_else(|| {
-        format!("--type {type_arg} is not valid for the current situation ({:?})", needs.situation)
+        format!(
+            "--type {type_arg} is not valid for the current situation ({})",
+            needs.situation.name()
+        )
     })?;
 
     act(config_writer, project, choice, option, path_arg).map_err(|e| e.to_string())?;

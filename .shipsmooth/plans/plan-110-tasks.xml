@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>110</plan>
+    <plan-version>plan-110-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-08-21</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Fix the `{:?}` situation-enum leak</name>
+            <commit>115ff67</commit>
+            <created-from>plan-110-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-21T05:44:39.928Z</timestamp>
+                    <message>De-risk draft ready for review</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-08-21T06:54:18.200Z</timestamp>
+                    <message>Hardening pass required no changes: resolution.rs 98.08% / store/init.rs 98.03% line coverage (both over the 95% bar), clippy-clean. Commit is the de-risk draft.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-08-21T05:44:40.484Z</timestamp>
+                    <message>Named the accessor name() instead of the plan's java_name(), mirroring the UnresolvableReason::name() precedent in the same file.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Fix bare-invocation behaviour</name>
+            <commit>d78132d</commit>
+            <created-from>plan-110-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-21T06:56:03.608Z</timestamp>
+                    <message>De-risk draft ready for review</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-08-28T07:43:35.954Z</timestamp>
+                    <message>Hardening pass: draft d78132d needs no code changes. Full cargo test --workspace green (bare root -&gt; usage on stderr exit 2; bare store/plan/task -&gt; usage on stderr exit 0, verified by unit tests + tests/cli_surface.rs the_clap_root_surface_matches_the_java_cli). clippy-clean. Workspace llvm-cov total 96.89% region / 97.52% line, over the 95% bar.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Align `--version` output format</name>
+            <commit>ba25e18</commit>
+            <created-from>plan-110-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-28T07:44:30.878Z</timestamp>
+                    <message>Intercept clap DisplayVersion in run(); print bare CARGO_PKG_VERSION to stdout exit 0. -V shares the path. Value stays 0.3.34 by design (plan-106); comment expanded on version_matches_workspace_version. tests/cli_surface.rs the_clap_root_surface_matches_the_java_cli now green + new unit test. cargo test --workspace green, clippy-clean. De-risk/harden collapsed (3-line change).</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Extend the parity harness</name>
+            <commit>faee541</commit>
+            <created-from>plan-110-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-28T08:04:44.744Z</timestamp>
+                    <message>Harness 45-&gt;60 scenarios: cli group (bare invocations + --version, help-body non-contract via normalise_usage/normalise_version), 6 store init scenarios (init-off-menu pins task 1; init-recreate/init-with-path drive untested action branches), separate-dir coverage (task comment-sepdir, plan init-sepdir/show-sepdir via set_splans/storage_for), task seed switched to $bin. Dropped dead PLAN_STDERR_DIVERGES. De-risk: pre-fix revert (90b8180) fails exactly store/init-off-menu + 6 cli/* and nothing else; post-fix 60/60.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>2,3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Add the real-XML corpus round-trip test</name>
+            <commit>a45b95e</commit>
+            <created-from>plan-110-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-28T08:06:45.830Z</timestamp>
+                    <message>golden_roundtrip.rs: the_repo_plan_corpus_round_trips_except_the_one_known_legacy_file. Idempotent round-trip over .shipsmooth/plans/*-tasks.xml (89 clean), plan-26-tasks.xml asserted to still error (frozen pre-schema; Java NPEs on it too). Skips when the dir is absent. clippy-clean, full suite green.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>6</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Record findings in the migration notes</name>
+            <commit>16ca8c6</commit>
+            <created-from>plan-110-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-28T08:07:39.235Z</timestamp>
+                    <message>Added 'Parity gap audit findings (plan-110, 2026-08-28)' section to docs/rust-migration/00-overview.md: 4 fixed divergences, disproved malformed-TOML claim, accepted help-body divergence, harness 45-&gt;60, corpus round-trip + plan-26 exclusion, root/DAC env note.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>4,5</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-08-21T10:57:05.799+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-08-28T08:09:38.739Z</timestamp>
+            <message>Plan complete. Parity gaps closed: 4 divergences fixed (enum {:?} leak, silent bare root, bare-group exit code, --version format), harness 45-&gt;60 scenarios (cli group + store init branches + separate-dir coverage), corpus round-trip test over .shipsmooth/plans/*.xml, findings recorded in 00-overview.md. cargo test --workspace 277 passed / 0 failed, clippy-clean, parity 60/60 byte-identical.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

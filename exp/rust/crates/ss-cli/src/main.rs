@@ -16,7 +16,7 @@ mod resolution_json;
 mod store;
 mod task;
 
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use ss_core::conf::{ResolvedStateRoot, ShipsmoothDataLocator};
 use ss_core::gw::{GitTags, TaskStore};
 
@@ -51,26 +51,35 @@ enum Command {
     /// Manage where this project's shipsmooth state lives.
     Store {
         #[command(subcommand)]
-        command: store::StoreCommand,
+        command: Option<store::StoreCommand>,
     },
     /// Create, inspect and tag plans.
     Plan {
         #[command(subcommand)]
-        command: plan::PlanCommand,
+        command: Option<plan::PlanCommand>,
     },
     /// Manage individual tasks within a plan and record their progress.
     Task {
         #[command(subcommand)]
-        command: task::TaskCommand,
+        command: Option<task::TaskCommand>,
     },
 }
 
 fn run(args: impl IntoIterator<Item = String>) -> i32 {
     match Cli::try_parse_from(args) {
         Ok(Cli { command: Some(command), .. }) => dispatch(command),
-        Ok(_cli) => 0,
+        Ok(_bare) => bare_root_usage(),
+        Err(e) if e.kind() == clap::error::ErrorKind::DisplayVersion => {
+            // clap's default `--version` renders "shipsmooth <ver>"; Java's
+            // picocli prints the bare number. Match Java: bare version to
+            // stdout, exit 0. Only the *format* is aligned here — the value
+            // stays 0.3.34 (see the note on the version assertion below: the
+            // Cargo workspace version is deliberately not synced to Java's).
+            println!("{}", env!("CARGO_PKG_VERSION"));
+            0
+        }
         Err(e) => {
-            // clap renders --help/--version through the Err path with exit 0.
+            // clap renders --help through the Err path with exit 0.
             let _ = e.print();
             if e.use_stderr() {
                 2
@@ -81,6 +90,33 @@ fn run(args: impl IntoIterator<Item = String>) -> i32 {
     }
 }
 
+/// A bare `shipsmooth`: usage on **stderr**, exit **2**. Java refuses the
+/// invocation rather than succeeding silently, and the leading diagnostic is
+/// picocli's own wording, reproduced verbatim.
+fn bare_root_usage() -> i32 {
+    eprintln!("Missing required subcommand");
+    eprint!("{}", Cli::command().render_help());
+    2
+}
+
+/// A bare `shipsmooth store|plan|task`: usage on **stderr**, exit **0**.
+///
+/// The asymmetry with `bare_root_usage` is deliberate — it is Java's actual
+/// behaviour (pinned there by `GroupedCommandTreeTest`), ported as-is rather
+/// than normalised into agreement with the root.
+fn bare_group_usage(group: &str) -> i32 {
+    // `build()` propagates the root's name down, so the rendered usage reads
+    // "shipsmooth store" — a bare `find_subcommand_mut` would render "store".
+    let mut root = Cli::command();
+    root.build();
+    let help = root
+        .find_subcommand_mut(group)
+        .expect("every group dispatched here is declared on the clap root")
+        .render_help();
+    eprint!("{help}");
+    0
+}
+
 /// State-independent commands (`store`, `probe`, `--help`/`--version`) run
 /// unconditionally. A state-dependent command (`plan`, `task`) resolves the
 /// store once, gates on an unsettled project, and only then is handed the
@@ -88,9 +124,14 @@ fn run(args: impl IntoIterator<Item = String>) -> i32 {
 fn dispatch(command: Command) -> i32 {
     match command {
         Command::Probe(args) => probe::run(&args),
-        Command::Store { command } => store::run(&command),
-        Command::Plan { command } => dispatch_state_dependent(&mut |cx| plan::run(&command, cx)),
-        Command::Task { command } => {
+        Command::Store { command: None } => bare_group_usage("store"),
+        Command::Plan { command: None } => bare_group_usage("plan"),
+        Command::Task { command: None } => bare_group_usage("task"),
+        Command::Store { command: Some(command) } => store::run(&command),
+        Command::Plan { command: Some(command) } => {
+            dispatch_state_dependent(&mut |cx| plan::run(&command, cx))
+        }
+        Command::Task { command: Some(command) } => {
             dispatch_state_dependent(&mut |cx| task::run(&command, &cx.store, &cx.git_tags))
         }
     }
@@ -175,12 +216,36 @@ mod tests {
     #[test]
     fn version_matches_workspace_version() {
         // The workspace version is the single source of truth (Build.VERSION).
+        //
+        // It is pinned at 0.3.34 and deliberately NOT kept in lockstep with
+        // Java's gradle.properties (0.3.36+): while the two implementations
+        // coexist as an experiment the Rust side does not cut releases, so
+        // syncing the digits would be misleading. `--version` aligns the Java
+        // *format* (bare number, no "shipsmooth " prefix) but not the value —
+        // do not "fix" this assertion to match Java's number (plan-106/110).
         assert_eq!(env!("CARGO_PKG_VERSION"), "0.3.34");
     }
 
     #[test]
-    fn bare_invocation_parses() {
-        assert_eq!(run(["shipsmooth".to_string()]), 0);
+    fn a_bare_root_invocation_exits_2_like_java() {
+        // Java prints usage and exits 2 rather than succeeding silently.
+        assert_eq!(run(["shipsmooth".to_string()]), 2);
+    }
+
+    #[test]
+    fn version_flag_prints_the_bare_number_to_stdout_and_exits_0() {
+        // Java's picocli prints "0.3.36\n"; clap's default would prefix the
+        // bin name. `run` intercepts DisplayVersion to match Java's shape.
+        assert_eq!(run(["shipsmooth".to_string(), "--version".to_string()]), 0);
+    }
+
+    #[test]
+    fn a_bare_group_invocation_exits_0_like_java() {
+        // Deliberately asymmetric with the root: Java's grouped commands exit
+        // 0 after printing their usage (pinned by GroupedCommandTreeTest).
+        for group in ["store", "plan", "task"] {
+            assert_eq!(run(["shipsmooth".to_string(), group.to_string()]), 0, "bare {group}");
+        }
     }
 
     #[test]
@@ -189,7 +254,9 @@ mod tests {
         // declared in clap, so pin the short alias at parse level.
         let cli = Cli::try_parse_from(["shipsmooth", "store", "info", "-j"]).unwrap();
         match cli.command {
-            Some(Command::Store { command: store::StoreCommand::Info { json } }) => assert!(json),
+            Some(Command::Store { command: Some(store::StoreCommand::Info { json }) }) => {
+                assert!(json)
+            }
             _ => panic!("expected store info"),
         }
     }
