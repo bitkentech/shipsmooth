@@ -17,6 +17,10 @@ const PLAN_PREFIX: &str = "plan-";
 const MARKDOWN_SUFFIX: &str = ".md";
 const TASKS_SUFFIX: &str = "-tasks.xml";
 
+/// The owned-folder marker file, at the data root (PB-360). Its presence is a
+/// recorded fact that shipsmooth created this folder, rather than a heuristic.
+pub const MANIFEST_FILE: &str = "manifest.toml";
+
 #[derive(Debug)]
 pub struct ShipsmoothDataLocator {
     repo_root: PathBuf,
@@ -48,6 +52,11 @@ impl ShipsmoothDataLocator {
     /// `plans/` — the directory holding all plan files (under the data root).
     pub fn plans_dir(&self) -> PathBuf {
         self.data_root().join(PLANS_SUBDIR)
+    }
+
+    /// `manifest.toml` — the owned-folder marker, at the data root (PB-360).
+    pub fn manifest_file(&self) -> PathBuf {
+        self.data_root().join(MANIFEST_FILE)
     }
 
     /// `plans/plan-{plan_id}-tasks.xml` under the data root.
@@ -113,6 +122,20 @@ mod tests {
         let standalone =
             ShipsmoothDataLocator::new(&repo, ResolvedStateRoot::of(&state).unwrap()).unwrap();
         assert_eq!(standalone.plans_dir(), state.join("plans"));
+    }
+
+    #[test]
+    fn manifest_file_sits_at_the_data_root_in_both_modes() {
+        let (_tmp, repo, state) = two_dirs();
+
+        let in_repo = ShipsmoothDataLocator::in_repo(&repo).unwrap();
+        assert_eq!(in_repo.manifest_file(), repo.join(".shipsmooth/manifest.toml"));
+
+        let standalone =
+            ShipsmoothDataLocator::new(&repo, ResolvedStateRoot::of(&state).unwrap()).unwrap();
+        assert_eq!(standalone.manifest_file(), state.join("manifest.toml"));
+        // Marker and plans dir share the data root — the one place layout forks.
+        assert_eq!(standalone.manifest_file().parent(), standalone.plans_dir().parent());
     }
 
     // ── ShipsmoothDataLocatorValidationTest ──────────────────────────────────

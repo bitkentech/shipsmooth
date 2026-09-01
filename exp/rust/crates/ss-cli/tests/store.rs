@@ -106,3 +106,50 @@ fn store_init_same_repo_then_info_round_trips_the_ready_shape() {
         .stderr("");
     fx.shipsmooth(&["store", "info", "--json"]).assert().code(0).stdout(ready).stderr("");
 }
+
+// ── plan-111 preamble (PB-360): the manifest.toml owned-folder marker ────────
+// End-to-end pins, committed red before any of plan-111's implementation.
+
+/// `store init` leaves a manifest.toml at the data root naming shipsmooth as
+/// the folder's owner, plus the CLI version that created it and a schema
+/// version. In same-repo mode the data root is `<repo>/.shipsmooth/`.
+#[test]
+fn store_init_writes_a_manifest_at_the_data_root() {
+    let fx = Fixture::new();
+    fx.shipsmooth(&["store", "init", "--type", "same-repo", "--json"]).assert().code(0);
+
+    let manifest = fx.repo.join(".shipsmooth/manifest.toml");
+    let body = std::fs::read_to_string(&manifest)
+        .unwrap_or_else(|e| panic!("no manifest at {}: {e}", manifest.display()));
+
+    assert!(body.contains("[shipsmooth]"), "manifest missing [shipsmooth] table:\n{body}");
+    assert!(body.contains("kind = 'state-store'"), "manifest missing kind:\n{body}");
+    assert!(body.contains("cli-version = "), "manifest missing cli-version:\n{body}");
+    assert!(body.contains("[manifest-schema]"), "manifest missing schema table:\n{body}");
+    assert!(body.contains("version = '1'"), "manifest missing schema version:\n{body}");
+}
+
+/// A `.shipsmooth/` that carries the manifest but no `plans/` subtree yet is
+/// still recognised as settled shipsmooth state — the marker is authoritative.
+/// (An unmarked folder is unaffected: that path keeps working via the existing
+/// `plans/`-directory check, covered by the resolver unit tests.)
+#[test]
+fn a_manifest_alone_marks_the_folder_as_settled_in_repo_state() {
+    let fx = Fixture::new();
+    std::fs::create_dir_all(fx.repo.join(".shipsmooth")).unwrap();
+    std::fs::write(
+        fx.repo.join(".shipsmooth/manifest.toml"),
+        "[shipsmooth]\nkind = 'state-store'\ncli-version = '0.0.0'\n\n[manifest-schema]\nversion = '1'\n",
+    )
+    .unwrap();
+
+    let repo = fx.repo_str();
+    let ready = format!(
+        concat!(
+            "{{\"status\":\"ready\",\"storageType\":\"same-repo\",",
+            "\"stateRoot\":\"{repo}\",\"plansDir\":\"{repo}/.shipsmooth/plans\"}}\n"
+        ),
+        repo = repo
+    );
+    fx.shipsmooth(&["store", "info", "--json"]).assert().code(0).stdout(ready).stderr("");
+}

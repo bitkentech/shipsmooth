@@ -9,5 +9,5 @@
 mod locator;
 mod state_root;
 
-pub use locator::ShipsmoothDataLocator;
+pub use locator::{ShipsmoothDataLocator, MANIFEST_FILE};
 pub use state_root::ResolvedStateRoot;

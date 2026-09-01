@@ -44,6 +44,32 @@ public class DataFolderLayoutIntegrationTest {
     }
 
     @Test
+    public void manifestFileSitsAtTheDataRootInBothModes() throws Exception {
+        AppComponents inRepo = DaggerAppComponents.builder()
+                .servicesModule(new ServicesModule(repoRoot))
+                .build();
+        assertEquals(
+                repoRoot.resolve(".shipsmooth").resolve("manifest.toml").toFile().getCanonicalPath(),
+                inRepo.dataLocator().manifestFile().toFile().getCanonicalPath(),
+                "in-repo manifest must live at <repoRoot>/.shipsmooth/manifest.toml");
+
+        Files.createDirectories(externalStateDir);
+        AppComponents standalone = DaggerAppComponents.builder()
+                .servicesModule(new ServicesModule(repoRoot, externalStateDir,
+                        new io.bitken.ss.conf.ExperimentalMode(false)))
+                .build();
+        ShipsmoothDataLocator locator = standalone.dataLocator();
+        assertEquals(
+                externalStateDir.resolve("manifest.toml").toFile().getCanonicalPath(),
+                locator.manifestFile().toFile().getCanonicalPath(),
+                "standalone manifest must hang directly off the dedicated stateDir");
+        assertEquals(
+                locator.plansDir().getParent().toFile().getCanonicalPath(),
+                locator.manifestFile().getParent().toFile().getCanonicalPath(),
+                "marker and plans dir must share the data root");
+    }
+
+    @Test
     public void standaloneModePutsPlansDirectlyUnderStateDir() throws Exception {
         // Two-root (standalone) wiring: a dedicated state dir owns the data tree.
         Files.createDirectories(externalStateDir);

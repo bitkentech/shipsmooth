@@ -79,6 +79,9 @@ class InitTest {
 
         assertEquals(0, code);
         assertTrue(Files.isDirectory(external.resolve(".git")), "external state repo created");
+        // PB-360: the owned-folder marker sits at the data root — the state dir
+        // itself in separate-dir mode.
+        assertManifestAt(external.resolve("manifest.toml"));
         // config now resolves settled-standalone for this repo
         var r = new ProjectDataStoreResolver(() -> config).resolve(repo, Optional.empty());
         assertInstanceOf(ProjectDataStore.Standalone.class,
@@ -99,6 +102,8 @@ class InitTest {
 
         assertEquals(0, code);
         assertTrue(Files.isDirectory(repo.resolve(".shipsmooth").resolve("plans")), "in-repo folder created");
+        // PB-360: the marker sits under .shipsmooth/ in in-repo mode.
+        assertManifestAt(repo.resolve(".shipsmooth").resolve("manifest.toml"));
         var r = new ProjectDataStoreResolver(() -> config).resolve(repo, Optional.empty());
         assertInstanceOf(ProjectDataStore.InRepo.class, ((DataStoreResolution.Settled) r).store());
     }
@@ -120,6 +125,20 @@ class InitTest {
 
         assertEquals(0, code);
         assertTrue(Files.isDirectory(stateDir.resolve(".git")), "configured dir recreated");
+        // PB-360: recreate re-stamps the marker at the data root; a second
+        // recreate rewrites it byte-for-byte (idempotent).
+        assertManifestAt(stateDir.resolve("manifest.toml"));
+        String first = Files.readString(stateDir.resolve("manifest.toml"));
+        run(boundInit(config, needs, repo), "--type", "recreate", "--path", stateDir.toString());
+        assertEquals(first, Files.readString(stateDir.resolve("manifest.toml")));
+    }
+
+    /** The manifest.toml `store init` wrote names shipsmooth as the owner and carries this build's version. */
+    private void assertManifestAt(Path path) throws IOException {
+        io.bitken.ss.cli.conf.ds.Manifest m = io.bitken.ss.cli.conf.ds.Manifest.read(path)
+                .orElseThrow(() -> new AssertionError("no readable manifest at " + path));
+        assertTrue(m.isStateStore(), "manifest at " + path + " is not a state-store marker");
+        assertEquals(io.bitken.ss.cli.conf.ds.Manifest.currentBody(), Files.readString(path));
     }
 
     @Test

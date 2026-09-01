@@ -63,6 +63,12 @@ public final class ShipsmoothDataLocator {
     private static final String TASKS_SUFFIX = "-tasks.xml";
 
     /**
+     * The owned-folder marker file, at the data root (PB-360). Its presence is a
+     * recorded fact that shipsmooth created this folder, rather than a heuristic.
+     */
+    public static final String MANIFEST_FILE = "manifest.toml";
+
+    /**
      * Root of the data tree. In in-repo mode ({@code repoRoot == stateRoot}) the data lives
      * under {@code <repoRoot>/.shipsmooth}; in standalone mode the dedicated {@code stateRoot}
      * <em>is</em> the data root, so {@code plans/} hangs directly off it with no dot-folder
@@ -75,6 +81,11 @@ public final class ShipsmoothDataLocator {
     /** {@code plans/} — the directory holding all plan files (under {@link #dataRoot()}). */
     public Path plansDir() {
         return dataRoot().resolve(PLANS_SUBDIR);
+    }
+
+    /** {@code manifest.toml} — the owned-folder marker, at the {@link #dataRoot()} (PB-360). */
+    public Path manifestFile() {
+        return dataRoot().resolve(MANIFEST_FILE);
     }
 
     /** {@code plans/plan-{planId}-tasks.xml} under the data root. */

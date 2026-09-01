@@ -12,7 +12,10 @@
 
 use std::path::{Path, PathBuf};
 
+use ss_core::conf::{ResolvedStateRoot, ShipsmoothDataLocator};
+
 use crate::ds::config_writer::ConfigWriter;
+use crate::ds::manifest::Manifest;
 use crate::ds::paths::normalize_lexical;
 use crate::ds::resolution::{Choice, DataStoreResolution, DecisionOption, NeedsDecision};
 use crate::ds::resolver::ProjectDataStoreResolver;
@@ -72,20 +75,34 @@ fn act(
         Choice::External => {
             let dir = resolve_path(path_arg, &option.proposed_path);
             standalone(&project.repo_root, &dir).init()?;
-            config_writer.write_external(&project.repo_root, project.remote_url(), &dir)
+            config_writer.write_external(&project.repo_root, project.remote_url(), &dir)?;
+            stamp_manifest_standalone(&project.repo_root, &dir)
         }
         Choice::RecreateMissingDir => {
             // Already configured — provision the dir, do not touch the config.
             let dir = resolve_path(path_arg, &option.proposed_path);
-            standalone(&project.repo_root, &dir).init()
+            standalone(&project.repo_root, &dir).init()?;
+            stamp_manifest_standalone(&project.repo_root, &dir)
         }
         Choice::InRepo => {
             // Provision the in-repo data folder so the project resolves settled
             // next run; record the in-repo choice so it is not re-asked.
             std::fs::create_dir_all(project.repo_root.join(".shipsmooth/plans"))?;
-            config_writer.write_in_repo(&project.repo_root, project.remote_url())
+            config_writer.write_in_repo(&project.repo_root, project.remote_url())?;
+            let locator = ShipsmoothDataLocator::in_repo(&project.repo_root)
+                .map_err(std::io::Error::other)?;
+            Manifest::write(&locator.manifest_file())
         }
     }
+}
+
+/// Write the owned-folder marker at a just-provisioned standalone state dir
+/// (PB-360). Idempotent — a re-run or upgrade refreshes the CLI-version stamp.
+/// The locator owns the path; this command never hardcodes the filename.
+fn stamp_manifest_standalone(repo_root: &Path, state_dir: &Path) -> std::io::Result<()> {
+    let token = ResolvedStateRoot::of(state_dir).map_err(std::io::Error::other)?;
+    let locator = ShipsmoothDataLocator::new(repo_root, token).map_err(std::io::Error::other)?;
+    Manifest::write(&locator.manifest_file())
 }
 
 fn standalone(repo_root: &Path, state_dir: &Path) -> ProjectDataStore {
@@ -146,6 +163,15 @@ mod tests {
 
     fn needs(situation: UndecidableSituation, options: Vec<DecisionOption>) -> DataStoreResolution {
         DataStoreResolution::NeedsDecision(NeedsDecision { situation, options })
+    }
+
+    /// The manifest.toml written by `store init` is well-formed, names
+    /// shipsmooth as the owner, and carries this build's version (PB-360).
+    fn assert_manifest_at(path: &Path) {
+        let parsed = Manifest::read(path)
+            .unwrap_or_else(|| panic!("no readable manifest at {}", path.display()));
+        assert!(parsed.is_state_store(), "manifest at {} is not a state-store marker", path.display());
+        assert_eq!(std::fs::read_to_string(path).unwrap(), Manifest::current_body());
     }
 
     /// The Java `boundInit` + `run` pair: run the flow against `d`'s config
@@ -211,6 +237,9 @@ mod tests {
             .expect("init must settle");
 
         assert!(external.join(".git").is_dir(), "external state repo created");
+        // PB-360: the owned-folder marker sits at the data root (the state dir
+        // itself in separate-dir mode) carrying this build's version.
+        assert_manifest_at(&external.join("manifest.toml"));
         // config now resolves settled-standalone for this repo
         match ProjectDataStoreResolver::new(d.config.clone()).resolve(&d.repo, None) {
             DataStoreResolution::Settled(ProjectDataStore::Standalone { .. }) => {}
@@ -232,6 +261,8 @@ mod tests {
         run_bound(&d, resolution, "same-repo", None, false).expect("init must settle");
 
         assert!(d.repo.join(".shipsmooth/plans").is_dir(), "in-repo folder created");
+        // PB-360: the marker sits under .shipsmooth/ in in-repo mode.
+        assert_manifest_at(&d.repo.join(".shipsmooth/manifest.toml"));
         match ProjectDataStoreResolver::new(d.config.clone()).resolve(&d.repo, None) {
             DataStoreResolution::Settled(ProjectDataStore::InRepo { .. }) => {}
             _ => panic!("expected Settled(InRepo)"),
@@ -259,6 +290,23 @@ mod tests {
             config_before,
             "recreate must not touch the config"
         );
+        // PB-360: recreate re-stamps the marker at the data root too.
+        assert_manifest_at(&state_dir.join("manifest.toml"));
+
+        // Re-stamping is idempotent (write() overwrites with the current body).
+        let first = std::fs::read_to_string(state_dir.join("manifest.toml")).unwrap();
+        run_bound(
+            &d,
+            needs(
+                UndecidableSituation::ConfigDirMissing,
+                vec![option(Choice::RecreateMissingDir, &state_dir, true)],
+            ),
+            "recreate",
+            Some(state_dir.to_str().unwrap()),
+            false,
+        )
+        .expect("second recreate must settle");
+        assert_eq!(std::fs::read_to_string(state_dir.join("manifest.toml")).unwrap(), first);
     }
 
     #[test]

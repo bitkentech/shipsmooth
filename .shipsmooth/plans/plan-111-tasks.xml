@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>111</plan>
+    <plan-version>plan-111-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-08-28</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>`manifestFile()` path accessor + shared filename constant</name>
+            <commit>cdbe849</commit>
+            <created-from>plan-111-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>`Manifest` value type + atomic reader/writer</name>
+            <commit>4802d79</commit>
+            <created-from>plan-111-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-28T08:29:28.217Z</timestamp>
+                    <message>Manifest model + lenient read + atomic write, Java + Rust twin. Fixed single-quote template (golden-string test both sides); only cli-version differs by design. read() -&gt; empty/None on missing/unparseable/foreign. Atomic write factored to ds/atomic.rs, shared with config_writer. Rust module has a temp #![allow(dead_code)] removed in task 4. De-risk/harden collapsed.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>resolver consults the manifest as an authoritative in-repo signal</name>
+            <commit>c06c7d8</commit>
+            <created-from>plan-111-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-28T08:33:48.112Z</timestamp>
+                    <message>settledInRepo()/settled_in_repo() predicate: manifest OR plans/ =&gt; Settled(InRepo). Additive: absent manifest keeps today's behaviour (regression-guarded); present =&gt; authoritative even pre-plans/; unparseable/foreign =&gt; fall through. Legacy guard + separate-dir config untouched. resolve() detection-only. 6 test arms/side; full Java + Rust suites green (T4 preamble red by design); clippy-clean.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>`store init` writes `manifest.toml` on every creation path</name>
+            <commit>e3ff24e</commit>
+            <created-from>plan-111-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-28T08:37:49.549Z</timestamp>
+                    <message>Init.act()/init.rs act() stamp manifest at data root on all 3 paths via a minted ShipsmoothDataLocator (path stays locator-owned). Idempotent overwrite. 3 InitTest/init.rs path tests assert owner+version; recreate asserts byte-identical re-stamp. Preamble e2e green. Removed temp #![allow(dead_code)]. 290 cargo tests, clippy-clean, :cli/:core green.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>parity harness — manifest capture + `cli-version` normalisation</name>
+            <commit>f3d1363</commit>
+            <created-from>plan-111-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-08-28T08:47:25.506Z</timestamp>
+                    <message>capture_scenario copies manifest.toml with only cli-version normalised (like the toml-schema version). Both layouts via settled-same-repo/settled-separate-dir + init-recreate/with-path/already-settled. SS_JAVA auto-prefers a local :cli:installDist build (0.3.36 release predates the marker). De-risk: perturbing the Rust body fails exactly the 5 manifest scenarios; restore =&gt; 60/60.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>4</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-08-28T08:16:42.282Z</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-08-28T08:50:00.878Z</timestamp>
+            <message>Plan complete. manifest.toml owned-folder marker (PB-360): ShipsmoothDataLocator.manifestFile() accessor; Manifest value type + atomic reader/writer (Java + exp/rust twin, byte-identical bar cli-version); store init stamps it at the data root on all 3 paths; resolver treats a valid marker as authoritative in-repo state, additive-only so every existing corpus keeps resolving; parity harness captures it with cli-version normalised. Java :cli:test/:core:test green, 290 cargo tests pass, clippy-clean, parity 60/60. NOT merged ��� branch t/pb-360-manifest-toml-marker is ready for PR review.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

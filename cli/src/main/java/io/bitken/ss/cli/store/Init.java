@@ -3,8 +3,11 @@ package io.bitken.ss.cli.store;
 import io.bitken.ss.cli.HasSpec;
 import io.bitken.ss.cli.conf.ds.ConfigWriter;
 import io.bitken.ss.cli.conf.ds.DataStoreResolution;
+import io.bitken.ss.cli.conf.ds.Manifest;
 import io.bitken.ss.cli.conf.ds.ProjectDataStore;
 import io.bitken.ss.cli.conf.ds.ProjectDataStoreResolver;
+import io.bitken.ss.conf.ResolvedStateRoot;
+import io.bitken.ss.conf.ShipsmoothDataLocator;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
@@ -122,19 +125,31 @@ public class Init implements Callable<Integer>, HasSpec {
                 Path dir = resolvePath(pathArg, option.proposedPath());
                 new ProjectDataStore.Standalone(repoRoot, dir).init();
                 configWriter.writeExternal(repoRoot, remoteUrl, dir);
+                stampManifest(new ShipsmoothDataLocator(repoRoot, ResolvedStateRoot.of(dir)));
             }
             case RECREATE_MISSING_DIR -> {
                 Path dir = resolvePath(pathArg, option.proposedPath());
                 // Already configured — provision the dir, do not touch the config.
                 new ProjectDataStore.Standalone(repoRoot, dir).init();
+                stampManifest(new ShipsmoothDataLocator(repoRoot, ResolvedStateRoot.of(dir)));
             }
             case IN_REPO -> {
                 // Provision the in-repo data folder so the project resolves settled next run;
                 // record the in-repo choice in config so it is not re-asked.
                 Files.createDirectories(repoRoot.resolve(".shipsmooth").resolve("plans"));
                 configWriter.writeInRepo(repoRoot, remoteUrl);
+                stampManifest(new ShipsmoothDataLocator(repoRoot));
             }
         }
+    }
+
+    /**
+     * Write the owned-folder marker at the data root (PB-360). Idempotent: a re-run or an
+     * upgrade refreshes the CLI-version stamp. The locator owns the path; this command
+     * never hardcodes the filename or the {@code .shipsmooth/} segment.
+     */
+    private static void stampManifest(ShipsmoothDataLocator locator) throws IOException {
+        Manifest.write(locator.manifestFile());
     }
 
     /** Use the user-supplied path if given, else the path the resolver proposed. */

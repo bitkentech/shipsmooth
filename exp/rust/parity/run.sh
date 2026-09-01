@@ -13,8 +13,16 @@ set -euo pipefail
 # UTF-8 locale so the comparison reflects the code.
 export LANG="${LANG:-C.UTF-8}" LC_ALL="${LC_ALL:-C.UTF-8}"
 
-SS_JAVA="${SS_JAVA:-$HOME/.cache/shipsmooth/0.3.36/bin/shipsmooth}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
+# The Java side must be a build of the CURRENT tree, not just any release:
+# plan-111 (PB-360) made `store init` write a manifest.toml that the installed
+# 0.3.36 release does not. Prefer a local `:cli:installDist` launcher, then the
+# pinned release; override with SS_JAVA=.
+_JAVA_DIST="$HERE/../../../cli/build/install/cli/bin/cli"
+if [ -z "${SS_JAVA:-}" ] && [ -x "$_JAVA_DIST" ]; then
+    SS_JAVA="$_JAVA_DIST"
+fi
+SS_JAVA="${SS_JAVA:-$HOME/.cache/shipsmooth/0.3.36/bin/shipsmooth}"
 SS_RUST="${SS_RUST:-$HERE/../target/debug/shipsmooth}"
 
 [ -x "$SS_JAVA" ] || { echo "Java CLI not found at $SS_JAVA (override via SS_JAVA=)" >&2; exit 1; }
@@ -133,6 +141,22 @@ EOF
         sed -E 's|(shipsmooth/)v[0-9]+\.[0-9]+\.[0-9]+(/dist)|\1v<VERSION>\2|' \
             "$SCFG/shipsmooth/shipsmooth.toml" >"$dir/shipsmooth.toml"
     fi
+    # PB-360: `store init` also stamps a manifest.toml at the data root. Capture
+    # it with only `cli-version` normalised — that field carries the writing
+    # CLI's own version (Java 0.3.36 vs Rust 0.3.34, unsynced by design, exactly
+    # like the [toml-schema] version above); every other byte stays checked.
+    # The data root is <repo>/.shipsmooth in same-repo mode, or the dedicated
+    # state dir itself in separate-dir/recreate mode.
+    for _mroot in \
+        "$SPROJ/.shipsmooth" \
+        "$WORK/store/$name/proj-shipsmooth" \
+        "$WORK/store/$name/custom-state"; do
+        if [ -f "$_mroot/manifest.toml" ]; then
+            sed -E "s|^(cli-version = ').*(')\$|\1<VERSION>\2|" \
+                "$_mroot/manifest.toml" >"$dir/manifest.toml"
+            break
+        fi
+    done
     # A missing required `--type` is a framework error: picocli writes
     # "Missing required option '--type=TYPE'" + its own usage, clap writes
     # "error: the following required arguments were not provided". Same exit

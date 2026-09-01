@@ -106,18 +106,43 @@ public final class ProjectDataStoreResolver {
     }
 
     /**
-     * Valid in-repo entry: settled only once the in-repo folder is actually set up. The
-     * entry records the choice, but settled-ness still requires the on-disk folder, so an
-     * unprovisioned repo is offered the in-repo setup rather than re-asked from scratch.
+     * Valid in-repo entry: settled only once the in-repo folder is recognisably ours. The
+     * entry records the choice, but settled-ness still requires an on-disk folder that is
+     * ours (see {@link #settledInRepo}), so an unprovisioned repo is offered the in-repo
+     * setup rather than re-asked from scratch.
      */
     private DataStoreResolution fromInRepoEntry(Path localPath) {
-        if (Files.isDirectory(localPath.resolve(DATA_DIR).resolve(PLANS_SUBDIR))) {
+        if (settledInRepo(localPath)) {
             return new DataStoreResolution.Settled(new ProjectDataStore.InRepo(localPath));
         }
         return new DataStoreResolution.NeedsDecision(
                 DataStoreResolution.UndecidableSituation.IN_REPO_NOT_SET_UP,
                 List.of(new DataStoreResolution.Option(
                         DataStoreResolution.Choice.IN_REPO, localPath.resolve(DATA_DIR), true)));
+    }
+
+    /**
+     * The single definition of "in-repo state is set up". A tool-owned {@code .shipsmooth/}
+     * is recognisably ours in one of two ways:
+     *
+     * <ul>
+     *   <li>it carries the {@code manifest.toml} marker (PB-360) — an authoritative,
+     *       recorded fact that {@code store init} created the folder; or</li>
+     *   <li>for folders created before the marker existed, the {@code .shipsmooth/plans/}
+     *       subtree is present.</li>
+     * </ul>
+     *
+     * The marker is purely additive: dropping it changes nothing for any existing corpus,
+     * which the {@code plans/} check alone still settles. A missing / unparseable / foreign
+     * {@code manifest.toml} is simply not a marker — resolution falls through to today's
+     * logic, never a hard failure.
+     */
+    private boolean settledInRepo(Path localPath) {
+        Path dataDir = localPath.resolve(DATA_DIR);
+        return Manifest.read(dataDir.resolve(io.bitken.ss.conf.ShipsmoothDataLocator.MANIFEST_FILE))
+                       .map(Manifest::isStateStore)
+                       .orElse(false)
+                || Files.isDirectory(dataDir.resolve(PLANS_SUBDIR));
     }
 
     private static DataStoreResolution malformed() {
@@ -131,7 +156,7 @@ public final class ProjectDataStoreResolver {
             return DataStoreResolution.Unresolvable.of(
                     DataStoreResolution.UnresolvableReason.LEGACY_AGENTS_TREE);
         }
-        if (Files.isDirectory(localPath.resolve(DATA_DIR).resolve(PLANS_SUBDIR))) {
+        if (settledInRepo(localPath)) {
             return new DataStoreResolution.Settled(new ProjectDataStore.InRepo(localPath));
         }
         return cleanFirstRun(localPath, remoteUrl);

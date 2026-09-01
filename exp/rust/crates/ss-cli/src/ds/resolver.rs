@@ -10,6 +10,7 @@ use std::path::{Path, PathBuf};
 
 use crate::ds::config::{ProjectEntry, StandaloneConfig};
 use crate::ds::legacy_guard;
+use crate::ds::manifest::Manifest;
 use crate::ds::paths::normalize_lexical;
 use crate::ds::resolution::{
     Choice, DataStoreResolution, DecisionOption, NeedsDecision, UndecidableSituation,
@@ -104,15 +105,35 @@ fn from_in_repo_entry(local_path: &Path) -> DataStoreResolution {
     })
 }
 
-/// Settled in-repo iff the tool-owned `.shipsmooth/plans/` subtree exists —
-/// the single definition of what "in-repo state is set up" means.
+/// Settled in-repo iff the tool-owned `.shipsmooth/` is recognisably ours —
+/// the single definition of what "in-repo state is set up" means. Two ways to
+/// be recognisably ours:
+///
+/// - it carries the `manifest.toml` marker (PB-360) — an authoritative,
+///   recorded fact that `store init` created the folder; or
+/// - for folders created before the marker existed, the `.shipsmooth/plans/`
+///   subtree is present.
+///
+/// A `.shipsmooth/` with neither is not (yet) our state. The marker is purely
+/// additive: dropping it changes nothing for any existing corpus, which is
+/// covered by `plans/` alone.
 fn settled_in_repo(local_path: &Path) -> Option<DataStoreResolution> {
-    if !local_path.join(DATA_DIR).join(PLANS_SUBDIR).is_dir() {
+    let data_dir = local_path.join(DATA_DIR);
+    let owned = has_state_store_manifest(&data_dir) || data_dir.join(PLANS_SUBDIR).is_dir();
+    if !owned {
         return None;
     }
     Some(DataStoreResolution::Settled(ProjectDataStore::InRepo {
         repo_root: local_path.to_path_buf(),
     }))
+}
+
+/// True when `<data_dir>/manifest.toml` parses as a shipsmooth state-store
+/// marker. A missing / unparseable / foreign file is not a marker — resolution
+/// then falls through to today's logic (no hard failure on a stray file).
+fn has_state_store_manifest(data_dir: &Path) -> bool {
+    Manifest::read(&data_dir.join(ss_core::conf::MANIFEST_FILE))
+        .is_some_and(|m| m.is_state_store())
 }
 
 fn malformed() -> DataStoreResolution {
@@ -304,6 +325,71 @@ mod tests {
 
         let store = settled(resolve(absent, repo.path(), None));
         assert!(matches!(store, ProjectDataStore::InRepo { .. }));
+    }
+
+    // ── the manifest.toml owned-folder marker (PB-360) ──────────────────────
+
+    fn write_manifest(data_dir: &Path, body: &str) {
+        std::fs::create_dir_all(data_dir).unwrap();
+        std::fs::write(data_dir.join("manifest.toml"), body).unwrap();
+    }
+
+    const VALID_MANIFEST: &str =
+        "[shipsmooth]\nkind = 'state-store'\ncli-version = '0.0.0'\n\n[manifest-schema]\nversion = '1'\n";
+
+    #[test]
+    fn a_manifest_alone_settles_in_repo_even_without_a_plans_dir() {
+        let repo = repo();
+        write_manifest(&repo.path().join(".shipsmooth"), VALID_MANIFEST);
+        // deliberately no .shipsmooth/plans/
+        let absent = repo.path().join("shipsmooth.toml");
+
+        let store = settled(resolve(absent, repo.path(), None));
+        assert!(matches!(store, ProjectDataStore::InRepo { .. }));
+    }
+
+    #[test]
+    fn a_populated_plans_dir_without_a_manifest_still_settles() {
+        // The backward-compat guarantee: every existing corpus predates the
+        // marker. Dropping the marker must change nothing for them.
+        let repo = repo();
+        std::fs::create_dir_all(repo.path().join(".shipsmooth/plans")).unwrap();
+        assert!(!repo.path().join(".shipsmooth/manifest.toml").exists());
+
+        let store = settled(resolve(repo.path().join("shipsmooth.toml"), repo.path(), None));
+        assert!(matches!(store, ProjectDataStore::InRepo { .. }));
+    }
+
+    #[test]
+    fn an_unparseable_manifest_is_ignored_and_resolution_falls_through() {
+        let repo = repo();
+        write_manifest(&repo.path().join(".shipsmooth"), "not valid toml =");
+        // no plans dir either -> falls all the way through to first-run
+        let r = resolve(repo.path().join("shipsmooth.toml"), repo.path(), None);
+        assert_eq!(needs_decision(r).situation, UndecidableSituation::CleanFirstRun);
+    }
+
+    #[test]
+    fn a_config_in_repo_entry_is_settled_by_the_manifest_before_the_folder_is_provisioned() {
+        let repo = repo();
+        write_manifest(&repo.path().join(".shipsmooth"), VALID_MANIFEST);
+        let config = write_config(
+            repo.path(),
+            &format!("[[projects]]\nlocalPath = '{}'\nstorageType = 'same-repo'\n", repo.path().display()),
+        );
+
+        let store = settled(resolve(config, repo.path(), None));
+        assert!(matches!(store, ProjectDataStore::InRepo { .. }));
+    }
+
+    #[test]
+    fn a_legacy_agents_tree_stays_unresolvable_even_with_a_manifest() {
+        let repo = repo();
+        std::fs::create_dir_all(repo.path().join(".agents/plans")).unwrap();
+        write_manifest(&repo.path().join(".shipsmooth"), VALID_MANIFEST);
+
+        let bad = unresolvable(resolve(repo.path().join("shipsmooth.toml"), repo.path(), None));
+        assert_eq!(bad.reason, UnresolvableReason::LegacyAgentsTree);
     }
 
     #[test]

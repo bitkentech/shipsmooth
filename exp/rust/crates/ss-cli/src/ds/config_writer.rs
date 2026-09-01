@@ -15,6 +15,7 @@
 
 use std::path::{Path, PathBuf};
 
+use crate::ds::atomic::write_atomically;
 use crate::ds::paths::normalize_lexical;
 use crate::ds::schema_config;
 
@@ -87,21 +88,10 @@ impl ConfigWriter {
     }
 
     /// Serialize to a sibling temp file first, then atomically rename it into
-    /// place. A failed write leaves only the discarded temp file behind —
-    /// never a truncated 0-byte `shipsmooth.toml` that would wedge every
-    /// subsequent resolve (plan-87).
+    /// place — the plan-87 guarantee, now shared with `manifest.toml` via
+    /// [`crate::ds::atomic`].
     fn write_atomically(&self, content: &str) -> std::io::Result<()> {
-        let dir = match self.config_file.parent() {
-            Some(parent) => {
-                std::fs::create_dir_all(parent)?;
-                parent
-            }
-            None => Path::new("."),
-        };
-        let mut tmp = tempfile::NamedTempFile::new_in(dir)?;
-        std::io::Write::write_all(&mut tmp, content.as_bytes())?;
-        tmp.persist(&self.config_file).map_err(|e| e.error)?;
-        Ok(())
+        write_atomically(&self.config_file, content.as_bytes())
     }
 
     /// Read the existing config document, or start empty when the file does

@@ -85,6 +85,68 @@ class ProjectDataStoreResolverTest {
         assertInstanceOf(ProjectDataStore.InRepo.class, settled.store());
     }
 
+    // ── the manifest.toml owned-folder marker (PB-360) ──────────────────────────
+
+    private static final String VALID_MANIFEST =
+            "[shipsmooth]\nkind = 'state-store'\ncli-version = '0.0.0'\n\n[manifest-schema]\nversion = '1'\n";
+
+    private void writeManifest(String body) throws IOException {
+        Path dataDir = Files.createDirectories(repo.resolve(".shipsmooth"));
+        Files.writeString(dataDir.resolve("manifest.toml"), body);
+    }
+
+    @Test
+    void manifestAlone_settlesInRepo_evenWithoutAPlansDir() throws IOException {
+        writeManifest(VALID_MANIFEST); // deliberately no .shipsmooth/plans/
+
+        var r = resolve(repo.resolve("shipsmooth.toml"), Optional.empty());
+        var settled = assertInstanceOf(DataStoreResolution.Settled.class, r);
+        assertInstanceOf(ProjectDataStore.InRepo.class, settled.store());
+    }
+
+    @Test
+    void populatedPlansDir_withoutAManifest_stillSettles() throws IOException {
+        // The backward-compat guarantee: every existing corpus predates the marker.
+        Files.createDirectories(repo.resolve(".shipsmooth").resolve("plans"));
+        assertFalse(Files.exists(repo.resolve(".shipsmooth").resolve("manifest.toml")));
+
+        var r = resolve(repo.resolve("shipsmooth.toml"), Optional.empty());
+        assertInstanceOf(DataStoreResolution.Settled.class, r);
+    }
+
+    @Test
+    void unparseableManifest_isIgnored_andResolutionFallsThrough() throws IOException {
+        writeManifest("not valid toml ="); // and no plans dir
+
+        var r = resolve(repo.resolve("shipsmooth.toml"), Optional.empty());
+        var needs = assertInstanceOf(DataStoreResolution.NeedsDecision.class, r);
+        assertEquals(DataStoreResolution.UndecidableSituation.CLEAN_FIRST_RUN, needs.situation());
+    }
+
+    @Test
+    void embeddedConfigEntry_settledByTheManifest_beforeTheFolderIsProvisioned() throws IOException {
+        writeManifest(VALID_MANIFEST);
+        Path config = writeConfig("""
+                [[projects]]
+                localPath = "%s"
+                storageType = "same-repo"
+                """.formatted(repo));
+
+        var r = resolve(config, Optional.empty());
+        var settled = assertInstanceOf(DataStoreResolution.Settled.class, r);
+        assertInstanceOf(ProjectDataStore.InRepo.class, settled.store());
+    }
+
+    @Test
+    void legacyAgentsTree_staysUnresolvable_evenWithAManifest() throws IOException {
+        Files.createDirectories(repo.resolve(".agents").resolve("plans"));
+        writeManifest(VALID_MANIFEST);
+
+        var r = resolve(repo.resolve("shipsmooth.toml"), Optional.empty());
+        var bad = assertInstanceOf(DataStoreResolution.Unresolvable.class, r);
+        assertEquals(DataStoreResolution.UnresolvableReason.LEGACY_AGENTS_TREE, bad.reason());
+    }
+
     @Test
     void bothInRepoAndConfiguredExternal_configWins() throws IOException {
         Files.createDirectories(repo.resolve(".shipsmooth").resolve("plans"));
