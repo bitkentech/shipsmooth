@@ -4,7 +4,7 @@
     <plan-version>plan-71-v15</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>in-review</status>
+        <status>complete</status>
         <created>2026-06-05</created>
     </metadata>
     <tasks>
@@ -591,6 +591,11 @@
         <update>
             <timestamp>2026-06-07T14:23:06.311+05:30</timestamp>
             <message>plan-71 closed in-review (v17). Maven-&gt;Gradle migration functionally complete: all 7 modules build under Gradle, all 5 payloads assemble byte-identical to Maven, 5-platform jlink + SCC launcher, TS tests in check, Gradle-native release path (Task 26). 24 tasks closed, Task 12 closed, Task 17 needs-triage DEFERRED to plan-72. Sequence: merge to main with both build systems -&gt; cut a real release via the proven Gradle path -&gt; remove Maven in plan-72. Gradle is the build/release path on main; Maven best-effort until plan-72. plan-72.md created (tasks deferred until that plan starts).</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-09-01T11:21:34.423+05:30</timestamp>
+            <message>Retroactive close: plan-71 was left at status=in-review per its own v17 closing update, which deferred Task 17 (pom deletion + final parity sign-off) to plan-72. plan-72 is complete (Maven teardown done, 9 poms removed under plan-73, merged 9af1e6b) and 0.3.16 released and verified via the Gradle path. Task 17 stays needs-triage as the historical record of the deferral; the plan itself has no outstanding work.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>

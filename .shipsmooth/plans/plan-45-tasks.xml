@@ -4,7 +4,7 @@
     <plan-version>plan-45-v4</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-05-19</created>
     </metadata>
     <tasks>
@@ -109,6 +109,11 @@
         <update>
             <timestamp>2026-05-19T00:35:13.457+05:30</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-09-01T11:21:26.038+05:30</timestamp>
+            <message>Retroactive close: plan-45 was left at status=active with all 8 tasks agent-coded, but the work shipped long ago (XDG cache resolution in session-start.ts, commits 7364b6d et al). The Task-4 tilde-expansion regression it introduced was found and fixed under plan-105 (merged to main 3640988). No outstanding work; closing the dangling status.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>

@@ -4,7 +4,7 @@
     <plan-version>plan-54-v8</plan-version>
     <metadata>
         <backlog-issue>PB-52</backlog-issue>
-        <status>closed</status>
+        <status>complete</status>
         <created>2026-05-21</created>
     </metadata>
     <tasks>
@@ -89,6 +89,11 @@
         <update>
             <timestamp>2026-05-22T12:00:00.000+05:30</timestamp>
             <message>Smoke test complete. Tasks 6, 7, 9, 10 moved to Plan 55. Plan 54 closed.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-09-01T11:23:44.255+05:30</timestamp>
+            <message>Retroactive close: plan-54 carried plan status=closed, not a valid plan-tasks.xsd value. Normalised to complete. Task mix (3 abandoned, 2 agent-coded, 1 closed) left as the historical record of what was and wasn't done.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>

@@ -4,14 +4,14 @@
     <plan-version>plan-38-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>closed</status>
+        <status>complete</status>
         <created>2026-05-15</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>finished</status>
+            <status>closed</status>
             <name>Add Dagger dependency and verify codegen</name>
             <commit>f68e05798307bbc3a643b0fccd08538de6074b30</commit>
             <created-from>plan-38-v1</created-from>
@@ -22,7 +22,7 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>finished</status>
+            <status>closed</status>
             <name>Create di package with ServicesModule and AppComponent</name>
             <commit>6d4805f790feca8d6ff5669443f0bff2741128f1</commit>
             <created-from>plan-38-v1</created-from>
@@ -34,7 +34,7 @@
         <task>
             <id>3</id>
             <risk>medium</risk>
-            <status>finished</status>
+            <status>closed</status>
             <name>Migrate AddCommentCommand to constructor injection</name>
             <commit>eae8ae2480d157e58195332722228ac21867dee2</commit>
             <created-from>plan-38-v1</created-from>
@@ -51,7 +51,7 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>finished</status>
+            <status>closed</status>
             <name>Update AddCommentCommand tests for constructor injection</name>
             <commit>eae8ae2480d157e58195332722228ac21867dee2</commit>
             <created-from>plan-38-v1</created-from>
@@ -70,6 +70,11 @@
         <update>
             <timestamp>2026-05-15T00:00:00.000+05:30</timestamp>
             <message>All 4 tasks finished. Squash-merged to main. Plan closed.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-09-01T11:23:43.646+05:30</timestamp>
+            <message>Retroactive close: plan-38 carried plan status=closed and 4 tasks at status=finished, neither of which is in plan-tasks.xsd (plan enum: active/complete/abandoned/in-review; task enum has closed, not finished). Predates the current schema. Normalised to complete/closed; no work outstanding.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
