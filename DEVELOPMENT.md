@@ -19,6 +19,7 @@ This repo uses a multi-module Gradle layout:
 - `harness`: Plugin code for various coding harnesses (Claude, Gemini etc).
   - `harness/shared` (`:harness:shared`): renders everything that is NOT the skill file — `Target` (orchestrator), `HooksRenderer`/`HookCommandRenderer` (hooks.json + the SessionStart command and its `install-shipsmooth.sh`/`install-runtime.bat` companion), `SessionStartConfigRenderer`, the TypeScript hook scripts (`scripts/`), `install-shipsmooth.sh`, and the `render*`/`copyDist*` tasks the host builds consume. Depends on `plugin-model` + `skills:pkg`.
 - `packaging`: Code for generating the production build and packaging it
+- `docker`: build tooling for the `bitkentech/shipsmooth-claude` sandbox image (`io.bitken.ss.docker`). No internal deps — consumes the *published* plugin, not the build graph. See [`docker/README.md`](docker/README.md).
 - `devtools` : development time helper scripts
 - `exp` : totally exploratory work. Not even included in builds.
 
@@ -295,3 +296,14 @@ filesystem-only (`OPENCODE_CONFIG_DIR`).
 Release orchestration (Claude Code, Gemini CLI, and Windows releases, prod builds, and the
 `publishRelease` task) lives in the `packaging` module. See
 [`packaging/README.md`](packaging/README.md).
+
+## Docker image (Claude Code sandbox)
+
+The `bitkentech/shipsmooth-claude` image (Ubuntu + Node + Claude Code + the pre-installed
+plugin) is built by the `docker` module. It is **not** wired into `publishRelease` — it is
+a downstream consumer of the *published* plugin, built and pushed deliberately with
+`./gradlew :docker:buildAndPush`. The shipsmooth version baked in comes from the root
+`plugin.version`; Claude Code is resolved from the npm `stable` dist-tag at build time.
+
+Maintainer reference (tasks, credentials, the three version channels):
+[`docker/README.md`](docker/README.md). End-user usage: [`DOCKER.md`](DOCKER.md).

@@ -49,7 +49,7 @@ RUN --mount=type=secret,id=claude_api_key \
 
 # Component versions and image identity. OCI labels are immutable and baked in
 # here; they are invisible in the Docker Hub UI, so the Overview + the compound
-# tag name carry the same information visibly (see plan-1). Read them with:
+# tag name carry the same information visibly. Read them with:
 #   docker inspect --format '{{json .Config.Labels}}' <image>
 ARG SHIPSMOOTH_VERSION
 ARG IMAGE_VERSION
@@ -57,7 +57,7 @@ ARG VCS_REF
 ARG BUILD_DATE
 LABEL org.opencontainers.image.title="shipsmooth-claude sandbox" \
       org.opencontainers.image.description="Ubuntu + Node + Claude Code + the shipsmooth plugin, ready to pull-and-run" \
-      org.opencontainers.image.source="https://github.com/pramodbiligiri/cc-setup" \
+      org.opencontainers.image.source="https://github.com/bitkentech/shipsmooth" \
       org.opencontainers.image.version="${IMAGE_VERSION}" \
       org.opencontainers.image.revision="${VCS_REF}" \
       org.opencontainers.image.created="${BUILD_DATE}" \

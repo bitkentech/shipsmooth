@@ -4,14 +4,14 @@ plugins {
 }
 
 dependencies {
-    // Match the jackson line used by :cli / :packaging rather than cc-setup's 2.18.x.
+    // Match the jackson line used by :cli / :packaging.
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
 }
 
 // ===========================================================================
-// shipsmooth-claude image build tooling (io.bitken.ss.docker), folded in from
-// the standalone cc-setup repo (plan-113). This module has NO internal deps: it
-// is a downstream consumer of the *published* plugin — the Dockerfile runs
+// shipsmooth-claude image build tooling (io.bitken.ss.docker), folded in from a
+// standalone build repo (plan-113). This module has NO internal deps: it is a
+// downstream consumer of the *published* plugin — the Dockerfile runs
 // `claude plugin install shipsmooth` against the bitkentech marketplace — not a
 // participant in the plugin build graph. A branch-built image therefore ships
 // the last *released* plugin, not this working tree.
@@ -25,10 +25,10 @@ val shipsmoothVersion = providers.gradleProperty("plugin.version").get()
 val dockerRepo = providers.gradleProperty("dockerRepo").getOrElse("bitkentech/shipsmooth-claude")
 val explicitImage = providers.gradleProperty("image").getOrElse("")
 
-// docker build / push / inspect resolve the Dockerfile, the build context, and the
-// rendered build/overview.md from user.dir (a cc-setup-era Maven-ism in
-// BuildAndPushImage). Run from the repo root via `./gradlew :docker:<task>`, that
-// would be the repo root — so pin the working dir to this module.
+// BuildAndPushImage resolves the Dockerfile, the build context, and the rendered
+// build/overview.md from user.dir. Run from the repo root via
+// `./gradlew :docker:<task>`, that would be the repo root — so pin the working
+// dir to this module.
 val moduleDir = layout.projectDirectory.asFile
 
 // Prints `key=value` lines: claude-code (npm stable), shipsmooth, compound-tag.
