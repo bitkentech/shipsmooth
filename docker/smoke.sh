@@ -74,6 +74,15 @@ docker run --rm "$SMOKE_IMAGE" \
   | grep -qE '"shipsmooth@bitkentech"[[:space:]]*:[[:space:]]*true' \
   || fail "shipsmooth not enabled in /root/.claude/settings.json"
 
+note "checking the baked-in status line survived the settings.json merge"
+# The Dockerfile adds .statusLine by merging into the same settings.json the
+# plugin install wrote — a botched merge would drop one or the other.
+docker run --rm "$SMOKE_IMAGE" \
+  jq -e '.statusLine.command' /root/.claude/settings.json >/dev/null 2>&1 \
+  || fail ".statusLine.command missing from /root/.claude/settings.json"
+docker run --rm "$SMOKE_IMAGE" test -x /root/.claude/scripts/statusline.sh \
+  || fail "/root/.claude/scripts/statusline.sh missing or not executable"
+
 # ---------------------------------------------------------------------------
 # 4. validateLabels (local consistency mode — no Docker Hub round trip).
 # ---------------------------------------------------------------------------

@@ -33,7 +33,7 @@ marketplace, it is not part of the plugin build graph.
 | `./gradlew :docker:validateLabels` | Check `latest`'s labels against the Docker Hub Overview (`-Plocal=true` to check against the image itself) |
 | `./gradlew :docker:buildAndPush` | Build, then push the image tags **and** the repository Overview to Docker Hub |
 | `./gradlew :docker:test` | Unit tests for the tooling |
-| `docker/smoke.sh` | End-to-end: real `docker build` + `docker run`, label cross-check, `validateLabels --local`. Needs a Docker host |
+| `docker/smoke.sh` | End-to-end: real `docker build` + `docker run`, label cross-check, plugin + status-line settings check, `validateLabels --local`. Needs a Docker host |
 
 `buildAndPush` is outward-facing and is **never** run as a side effect of another
 task. Before running it:

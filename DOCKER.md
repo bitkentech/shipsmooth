@@ -67,6 +67,10 @@ so it prints a URL — open it in your browser, approve, and paste the code back
 The login lands in the `cc-config` volume and survives restarts **and**
 `docker rm`. No credentials are ever baked into the image itself.
 
+The image ships a Claude Code status line showing the model, context-window
+usage, and your Claude usage limits (5-hour and weekly). It appears once you
+have logged in.
+
 Then start the workflow:
 
 ```
@@ -97,9 +101,10 @@ docker rm -f cc
 ```
 
 Your code and the `cc-config` volume are untouched, so you won't log in again.
-One caveat: the config volume keeps the shipsmooth plugin from the image it was
-*first created* against. To pick up a newer bundled plugin, drop the volume and
-re-authenticate:
+One caveat: the config volume keeps the `settings.json` from the image it was
+*first created* against — so a newer bundled plugin, or the baked-in status
+line if your volume predates it, won't show up. To pick these up, drop the
+volume and re-authenticate:
 
 ```sh
 docker volume rm cc-config    # next run starts clean, needs a fresh login
