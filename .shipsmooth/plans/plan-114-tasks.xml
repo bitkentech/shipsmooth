@@ -49,9 +49,9 @@
         <task>
             <id>3</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`smoke.sh` assertions + `DOCKER.md` doc addition</name>
-            <commit></commit>
+            <commit>786a03d7ee5437083c033915ada45d1272c9f477</commit>
             <created-from>plan-114-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
