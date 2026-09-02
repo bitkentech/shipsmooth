@@ -7,6 +7,9 @@ rootProject.name = "shipsmooth"
 // runtimes/releases. Add a new agent harness as harness:<name>.
 // Dependency direction: plugin-model <- skills:pkg <- harness:shared <-
 // harness:{claude,gemini,codex}; plugin-model <- packaging.
+// docker: shipsmooth-claude image build tooling (plan-113), folded in from the
+// standalone cc-setup repo. No internal deps — it consumes the *published*
+// plugin, not the build graph. Its outward task (buildAndPush) is wired-only.
 // See DEVELOPMENT.md for the per-module breakdown.
 include("core")
 include("cli")
@@ -18,3 +21,4 @@ include("harness:gemini")
 include("harness:codex")
 include("harness:opencode")
 include("packaging")
+include("docker")

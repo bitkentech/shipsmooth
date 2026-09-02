@@ -1,0 +1,21 @@
+{
+  "_id": "@anthropic-ai/claude-code",
+  "name": "@anthropic-ai/claude-code",
+  "dist-tags": {
+    "stable": "2.1.236",
+    "latest": "2.1.252",
+    "next": "2.1.252"
+  },
+  "versions": {
+    "2.1.236": {
+      "name": "@anthropic-ai/claude-code",
+      "version": "2.1.236",
+      "dist": { "tarball": "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-2.1.236.tgz" }
+    },
+    "2.1.252": {
+      "name": "@anthropic-ai/claude-code",
+      "version": "2.1.252",
+      "dist": { "tarball": "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-2.1.252.tgz" }
+    }
+  }
+}
