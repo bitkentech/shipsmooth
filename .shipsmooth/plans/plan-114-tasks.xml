@@ -22,15 +22,19 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Wire the status line into the Dockerfile + layer-ordering test</name>
-            <commit></commit>
+            <commit>cc9f54c9150e993328491d252f72b727da15cd56</commit>
             <created-from>plan-114-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
                 <comment>
                     <timestamp>2026-09-02T12:41:15.019Z</timestamp>
                     <message>De-risk draft ready for review. Dockerfile layer (COPY + jq merge) after plugin install; preamble tests green. Real docker build validation pending on user's Docker host (smoke.sh). Also: not adding a separate DockerfileLayoutTest ��� the preamble StatusLineImageContractTest already pins the exact ordering + merge contract (minor deviation).</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-09-02T15:41:42.958Z</timestamp>
+                    <message>Hardened: no refactor needed, block already final form. Committed cc9f54c, pushed. Real docker build + smoke.sh validation to be run by user on a Docker host.</message>
                 </comment>
             </comments>
             <deviations>

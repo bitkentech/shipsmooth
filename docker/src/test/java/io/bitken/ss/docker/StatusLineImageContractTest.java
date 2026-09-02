@@ -89,6 +89,18 @@ class StatusLineImageContractTest {
     }
 
     @Test
+    void smokeShVerifiesTheBakedInStatusLine() throws IOException {
+        String smoke = String.join("\n", Files.readAllLines(smokeSh(), StandardCharsets.UTF_8));
+
+        assertTrue(
+                smoke.contains(".statusLine.command"),
+                "smoke.sh must assert .statusLine.command survived the settings.json merge");
+        assertTrue(
+                smoke.contains("test -x /root/.claude/scripts/statusline.sh"),
+                "smoke.sh must assert the baked-in script is present and executable");
+    }
+
+    @Test
     void jqMergeKeepsEnabledPluginsAndAddsTheStatusLine() throws IOException, InterruptedException {
         assumeTrue(onPath("jq"), "jq not on PATH — skipping the live merge check");
 
@@ -120,6 +132,15 @@ class StatusLineImageContractTest {
             }
         }
         throw new IllegalStateException("Dockerfile not found from " + Path.of("").toAbsolutePath());
+    }
+
+    private static Path smokeSh() {
+        for (Path candidate : List.of(Path.of("smoke.sh"), Path.of("docker", "smoke.sh"))) {
+            if (Files.isRegularFile(candidate)) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("smoke.sh not found from " + Path.of("").toAbsolutePath());
     }
 
     private static int firstLineContaining(List<String> lines, String needle) {
