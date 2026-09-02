@@ -54,7 +54,7 @@ On Windows, see the [shipsmooth-windows README](https://github.com/bitkentech/sh
 
 #### 2. Docker (Claude Code)
 
-Prefer a ready-made sandbox? The `bitkentech/shipsmooth-claude` image ships Claude Code with the shipsmooth plugin already installed. From the directory you want Claude to work in:
+The `bitkentech/shipsmooth-claude` image ships Claude Code with the shipsmooth plugin already installed. Run the following commands from the directory containing the codebase you want to work on:
 
 ```sh
 docker pull bitkentech/shipsmooth-claude:latest
@@ -68,7 +68,7 @@ docker run -dit \
 docker exec -it cc bash
 ```
 
-Inside the container, set up git and run `claude` (first launch prints a login URL to open in your browser), then `/shipsmooth:start`. Full guide — git auth, container lifecycle, image updates, remote hosting, troubleshooting: **[DOCKER.md](DOCKER.md)**.
+Run `claude`, then `/shipsmooth:start`. See [DOCKER.md](DOCKER.md) for more instructions, including how to set up Github authentication inside the container.
 
 #### 3. Gemini CLI
 
