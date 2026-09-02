@@ -52,13 +52,31 @@ Restart Claude Code, then run `/shipsmooth:start` in the new session.
 
 On Windows, see the [shipsmooth-windows README](https://github.com/bitkentech/shipsmooth-windows) for Windows-specific installation instructions instead.
 
-#### 2. Gemini CLI
+#### 2. Docker (Claude Code)
+
+Prefer a ready-made sandbox? The `bitkentech/shipsmooth-claude` image ships Claude Code with the shipsmooth plugin already installed. From the directory you want Claude to work in:
+
+```sh
+docker pull bitkentech/shipsmooth-claude:latest
+
+docker run -dit \
+  --name cc \
+  -v "$(pwd):/workspace" \
+  -v cc-config:/root/.claude \
+  bitkentech/shipsmooth-claude:latest
+
+docker exec -it cc bash
+```
+
+Inside the container, set up git and run `claude` (first launch prints a login URL to open in your browser), then `/shipsmooth:start`. Full guide — git auth, container lifecycle, image updates, remote hosting, troubleshooting: **[DOCKER.md](DOCKER.md)**.
+
+#### 3. Gemini CLI
 
 ```bash
 gemini extensions install https://github.com/bitkentech/shipsmooth-gemini
 ```
 
-#### 3. Codex CLI
+#### 4. Codex CLI
 
 First, register the marketplace (one-time setup):
 ```bash
@@ -72,7 +90,7 @@ codex plugin add shipsmooth@bitkentech
 
 The workflow loads as the `start` skill (run `/skills` to confirm it is enabled).
 
-#### 4. OpenCode
+#### 5. OpenCode
 
 Add the plugin to your `opencode.json`:
 
@@ -99,6 +117,9 @@ script (`install-shipsmooth.sh`) that uses only tools present on a stock system
 (`sh`, `curl`, `unzip`), and on Windows it is a `.bat`. The downloaded runtime is a
 jlink image, so there is nothing else to install.
 
+With the Docker method this same download happens inside the container on the
+first `claude` run (the plugin itself is already baked into the image).
+
 ## Uninstall
 
 To remove all traces of shipsmooth from a system:
@@ -113,6 +134,8 @@ rm -rf ~/.cache/shipsmooth
 # 3. (optional) Remove the config directory holding shipsmooth.toml
 rm -rf ~/.config/shipsmooth
 ```
+
+If you used the Docker method, there is nothing to uninstall from the host — `docker rm -f cc` removes the container, and `docker volume rm cc-config` drops the stored login (see [DOCKER.md](DOCKER.md)).
 
 It is recommended to retain your plan history (the `.shipsmooth/` directory within your codebase, or in a separate state directory if you have chosen that option) since that serves as documentation of the project.
 
