@@ -47,6 +47,18 @@ RUN --mount=type=secret,id=claude_api_key \
     CLAUDE_API_KEY=$(cat /run/secrets/claude_api_key) claude plugin marketplace add bitkentech/claude-plugins && \
     CLAUDE_API_KEY=$(cat /run/secrets/claude_api_key) claude plugin install shipsmooth --scope user
 
+# Bake in the Claude Code status line: the script at a stable path, plus a
+# statusLine key in settings.json. The key is MERGED with jq, not COPYed — the
+# plugin-install step above already wrote enabledPlugins / extraKnownMarketplaces
+# into this file, and a plain COPY would clobber them (docker/smoke.sh guards
+# this). jq is already in the apt list (needed by the script too). Writing a temp
+# file + mv avoids the `jq file > file` truncation trap.
+COPY scripts/statusline.sh /root/.claude/scripts/statusline.sh
+RUN chmod +x /root/.claude/scripts/statusline.sh && \
+    jq '.statusLine = {"type":"command","command":"~/.claude/scripts/statusline.sh"}' \
+       /root/.claude/settings.json > /tmp/settings.json && \
+    mv /tmp/settings.json /root/.claude/settings.json
+
 # Component versions and image identity. OCI labels are immutable and baked in
 # here; they are invisible in the Docker Hub UI, so the Overview + the compound
 # tag name carry the same information visibly. Read them with:

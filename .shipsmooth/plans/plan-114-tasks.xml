@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Port `statusline.sh` into the module + script unit test</name>
-            <commit></commit>
+            <commit>950abc673e12948e536d5ab2f4752936f031dee5</commit>
             <created-from>plan-114-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
