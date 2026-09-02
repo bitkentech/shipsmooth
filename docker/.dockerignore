@@ -1,4 +1,5 @@
-# The Dockerfile COPYs nothing from the build context — keep what is sent to the
-# daemon minimal. (Context is this module dir; see build.gradle.kts workingDir.)
+# Keep what is sent to the daemon minimal — only the Dockerfile and the files it
+# COPYs. (Context is this module dir; see build.gradle.kts workingDir.)
 *
 !Dockerfile
+!scripts
