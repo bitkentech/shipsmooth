@@ -4,14 +4,14 @@
     <plan-version>plan-112-v1</plan-version>
     <metadata>
         <backlog-issue></backlog-issue>
-        <status>active</status>
+        <status>complete</status>
         <created>2026-09-02</created>
     </metadata>
     <tasks>
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Add `DOCKER.md` — the full Docker usage guide</name>
             <commit>6d94b45918903a721baff569c325c10085b8dd61</commit>
             <created-from>plan-112-v1</created-from>
@@ -22,7 +22,7 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>agent-coded</status>
+            <status>closed</status>
             <name>Add the README quickstart (method 2) + renumber 3–5 + reconcile prose</name>
             <commit>4384212c64123e4b05dd3792c333a2d73651d469</commit>
             <created-from>plan-112-v1</created-from>
@@ -42,6 +42,11 @@
         <update>
             <timestamp>2026-09-02T09:25:52.774Z</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-09-02T09:33:52.929Z</timestamp>
+            <message>Plan complete. README gains a Docker (Claude Code) install method (method 2); Gemini/Codex/OpenCode renumbered 3-5. New DOCKER.md carries the full guide (pull/run, git auth, lifecycle, updates, remote box, troubleshooting, version labels), adapted from the image README with no private-repo references. What-gets-installed and Uninstall each note the Docker path. Docs-only, no runtime change.</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
