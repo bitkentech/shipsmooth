@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add `DOCKER.md` — the full Docker usage guide</name>
-            <commit></commit>
+            <commit>6d94b45918903a721baff569c325c10085b8dd61</commit>
             <created-from>plan-112-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
@@ -22,13 +22,19 @@
         <task>
             <id>2</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Add the README quickstart (method 2) + renumber 3–5 + reconcile prose</name>
-            <commit></commit>
+            <commit>4384212c64123e4b05dd3792c333a2d73651d469</commit>
             <created-from>plan-112-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-09-02T09:27:55.041Z</timestamp>
+                    <message>"How to start using the workflow" intro is already method-agnostic ��� no change needed. "What gets installed" and "Uninstall" each got a one-line Docker note.</message>
+                </deviation>
+            </deviations>
             <depends-on>1</depends-on>
         </task>
     </tasks>
