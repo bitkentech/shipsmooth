@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>113</plan>
+    <plan-version>plan-113-v1</plan-version>
+    <metadata>
+        <backlog-issue>consolidate the shipsmooth-claude image build into the main repo (local backlog; no external issue) — continues plan-112's Docker distribution channel</backlog-issue>
+        <status>complete</status>
+        <created>2026-09-02</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>`docker/` module — code, tests, Gradle wiring</name>
+            <commit>eb74b72f0e5b76af50fe44fa7dcf9dff8497c965</commit>
+            <created-from>plan-113-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-09-02T11:37:22.421Z</timestamp>
+                    <message>De-risk draft ready for review. Module wired, :docker:test green, version sourced from plugin.version. smoke.sh needs a Docker host (unavailable here).</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-09-02T11:48:52.053Z</timestamp>
+                    <message>De-risk and harden collapsed: this is a straight file-port + Gradle wiring with no throwaway logic to refactor. Full reactor ./gradlew build green, :docker:test green (5 classes), :docker:resolveVersions sources shipsmooth from plugin.version. Task commit == the draft commit eb74b72f0e5b76af50fe44fa7dcf9dff8497c965.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>source the shipsmooth version from root `plugin.version`</name>
+            <commit>90747e1d40b559250a53d654cc53d18c7b10cf4f</commit>
+            <created-from>plan-113-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-09-02T11:50:05.765Z</timestamp>
+                    <message>Version wiring (plugin.version) implemented in task 1 alongside the module; task 2 delivered the doc rewrite + regression tests. Tests green on arrival (guards, not red-&gt;green) since the wiring already existed.</message>
+                </deviation>
+            </deviations>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>docs — maintainer guide, source label, private-ref scrub</name>
+            <commit>75e0833faa8492a88b853a3c9bda0296540ca30b</commit>
+            <created-from>plan-113-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>1</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-09-02T11:22:50.602Z</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-09-02T11:52:50.505Z</timestamp>
+            <message>All 3 tasks agent-coded. docker/ module folded in: :docker:test green (7 tests across 5 classes incl. preamble), ./gradlew build green, :docker:resolveVersions sources shipsmooth=0.3.36 from root plugin.version. Docs: docker/README.md (maintainer), DEVELOPMENT.md pointers, image.source label -&gt; bitkentech/shipsmooth. Private-ref scrub clean. PENDING: real 'docker build' / buildAndPush / smoke.sh ��� Docker is unavailable in this container; user verifying on a separate host.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-09-02T11:59:52.985Z</timestamp>
+            <message>Plan complete. shipsmooth-claude image build folded in as the docker/ Gradle module (flat copy from the standalone repo, no history import). :docker:test green; ./gradlew build green; shipsmooth version sourced from root plugin.version (no local pin). Verified on a Docker host: ./gradlew :docker:buildImage and docker/smoke.sh both PASS ��� labels correct, plugin installed+enabled, validateLabels --local OK. Docs: docker/README.md (maintainer), DEVELOPMENT.md pointers, image.source -&gt; bitkentech/shipsmooth. Hosting notes deliberately left out; private-ref scrub clean. Follow-up (separate repo): strip image-build files from the standalone repo.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
