@@ -11,13 +11,24 @@
         <task>
             <id>1</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>`docker/` module — code, tests, Gradle wiring</name>
-            <commit></commit>
+            <commit>eb74b72f0e5b76af50fe44fa7dcf9dff8497c965</commit>
             <created-from>plan-113-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
-            <deviations/>
+            <comments>
+                <comment>
+                    <timestamp>2026-09-02T11:37:22.421Z</timestamp>
+                    <message>De-risk draft ready for review. Module wired, :docker:test green, version sourced from plugin.version. smoke.sh needs a Docker host (unavailable here).</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-09-02T11:48:52.053Z</timestamp>
+                    <message>De-risk and harden collapsed: this is a straight file-port + Gradle wiring with no throwaway logic to refactor. Full reactor ./gradlew build green, :docker:test green (5 classes), :docker:resolveVersions sources shipsmooth from plugin.version. Task commit == the draft commit eb74b72f0e5b76af50fe44fa7dcf9dff8497c965.</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>2</id>

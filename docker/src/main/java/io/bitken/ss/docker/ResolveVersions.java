@@ -16,14 +16,17 @@ import java.time.Duration;
  * depends on when it was built. This resolves the npm {@code stable} dist-tag on the
  * build host so the Dockerfile can install that exact version and record it as a label.
  *
- * <p>The shipsmooth version is a manual pin ({@code shipsmoothVersion} in
- * {@code gradle.properties}) for now — the plugin marketplace has no simple
- * version endpoint, and plugin + CLI runtime share one number today. Revisit if
- * they diverge.
+ * <p>The shipsmooth version is not resolved here — the {@code :docker:resolveVersions}
+ * Gradle task passes it in from the repo-root {@code plugin.version} (the single
+ * source of truth every module uses). It is supplied explicitly and with no
+ * fallback: {@link #main} throws on a blank/missing value rather than baking an
+ * empty label. The image's Dockerfile then installs the <em>latest published</em>
+ * plugin from the {@code bitkentech} marketplace, which is expected to match
+ * {@code plugin.version} at release time (the release bumps and publishes together).
  *
- * <p>de-risk draft (Task 2): the JSON parse is unit-tested against a fixture; the
- * HTTP fetch and the {@code main} wiring are exercised by the {@code resolveVersions}
- * Gradle task and, end to end, by the laptop smoke test.
+ * <p>Test coverage: the JSON parse is unit-tested against a fixture; the HTTP fetch
+ * and the {@code main} wiring are exercised by the {@code :docker:resolveVersions}
+ * Gradle task and, end to end, by {@code docker/smoke.sh} on a Docker-capable host.
  */
 public final class ResolveVersions {
 
