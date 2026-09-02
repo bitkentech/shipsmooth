@@ -4,7 +4,7 @@
     <plan-version>plan-114-v1</plan-version>
     <metadata>
         <backlog-issue>operate the bitkentech/shipsmooth-claude image as a distribution channel (local backlog; no external issue) — continues plan-112 and plan-113</backlog-issue>
-        <status>active</status>
+        <status>in-review</status>
         <created>2026-09-02</created>
     </metadata>
     <tasks>
@@ -63,6 +63,11 @@
         <update>
             <timestamp>2026-09-02T12:28:18.295Z</timestamp>
             <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-09-02T15:44:14.506Z</timestamp>
+            <message>All 3 tasks agent-coded and pushed. :docker:test green (statusline.sh unit test, Dockerfile COPY+jq-merge contract with a live jq run, smoke.sh assertions). Awaiting real docker build + docker/smoke.sh on a Docker host (Docker unavailable in the build container).</message>
             <blocked>false</blocked>
         </update>
     </project-updates>
