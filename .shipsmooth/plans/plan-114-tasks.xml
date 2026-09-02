@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>114</plan>
+    <plan-version>plan-114-v1</plan-version>
+    <metadata>
+        <backlog-issue>operate the bitkentech/shipsmooth-claude image as a distribution channel (local backlog; no external issue) — continues plan-112 and plan-113</backlog-issue>
+        <status>complete</status>
+        <created>2026-09-02</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Port `statusline.sh` into the module + script unit test</name>
+            <commit>950abc673e12948e536d5ab2f4752936f031dee5</commit>
+            <created-from>plan-114-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Wire the status line into the Dockerfile + layer-ordering test</name>
+            <commit>cc9f54c9150e993328491d252f72b727da15cd56</commit>
+            <created-from>plan-114-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-09-02T12:41:15.019Z</timestamp>
+                    <message>De-risk draft ready for review. Dockerfile layer (COPY + jq merge) after plugin install; preamble tests green. Real docker build validation pending on user's Docker host (smoke.sh). Also: not adding a separate DockerfileLayoutTest ��� the preamble StatusLineImageContractTest already pins the exact ordering + merge contract (minor deviation).</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-09-02T15:41:42.958Z</timestamp>
+                    <message>Hardened: no refactor needed, block already final form. Committed cc9f54c, pushed. Real docker build + smoke.sh validation to be run by user on a Docker host.</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-09-02T12:41:21.527Z</timestamp>
+                    <message>No separate DockerfileLayoutTest ��� the preamble StatusLineImageContractTest already asserts the COPY line, the stable path, chmod, the exact jq merge program (run live against the published settings.json), the after-plugin-install ordering, and the no-truncation guard. A second class would duplicate it.</message>
+                </deviation>
+            </deviations>
+            <depends-on>1</depends-on>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>`smoke.sh` assertions + `DOCKER.md` doc addition</name>
+            <commit>786a03d7ee5437083c033915ada45d1272c9f477</commit>
+            <created-from>plan-114-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+            <depends-on>2</depends-on>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-09-02T12:28:18.295Z</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-09-02T15:44:14.506Z</timestamp>
+            <message>All 3 tasks agent-coded and pushed. :docker:test green (statusline.sh unit test, Dockerfile COPY+jq-merge contract with a live jq run, smoke.sh assertions). Awaiting real docker build + docker/smoke.sh on a Docker host (Docker unavailable in the build container).</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-09-02T17:01:28.714Z</timestamp>
+            <message>Status line baked into shipsmooth-claude image. Validated on a Docker host: docker build + manual image inspection confirm /root/.claude/scripts/statusline.sh (executable) and .statusLine in settings.json alongside enabledPlugins. Status line renders after fresh login.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
