@@ -32,7 +32,7 @@ pro_display=$(printf "%.2f%%" "$pro_raw")
 ts=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
 resets_display="--"
 if [[ -n "$ts" ]]; then
-    resets_display="till $(date -d "@$ts" +"%I:%M %p")"
+    resets_display="till $(TZ=Asia/Kolkata date -d "@$ts" +"%I:%M %p IST")"
 fi
 
 # 5. Seven Day (Weekly) Limits
