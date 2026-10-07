@@ -7,6 +7,16 @@ follow-up to plan before cutting any release from the Rust tree;
 [02-cli.md](02-cli.md) records that the CLI itself is feature-complete and
 parity-verified. This file is the plan that note defers to.
 
+> **Superseded in part (2026-10-07).** The parallel-period half of this plan — one
+> version line, `SHIPSMOOTH_ENGINE`, the `-rs` asset infix and the cache symlink — is
+> replaced by [05-separate-beta-release.md](05-separate-beta-release.md), which ships
+> the Rust CLI as a separate product (`shipsmooth-beta`) with its own version series.
+> That route needs no installer change and no version reconciliation, so it can start
+> immediately. **Still valid and referenced by the new plan:** §2 (a separate packager
+> rather than a branch in `PackageRuntime`), §3 (gating the publish, skipping
+> `ReleaseGuard`), §Verification's `SS_JAVA` warning, and the symlink technique itself —
+> which becomes useful again at promotion.
+
 Prerequisite state (plan-109, 2026-08-20): every `cli` package is ported, 45
 parity scenarios byte-identical, nothing left to port. What remains is entirely a
 distribution problem.
