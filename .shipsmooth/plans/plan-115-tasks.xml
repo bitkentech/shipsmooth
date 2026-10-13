@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>115</plan>
+    <plan-version>plan-115-v1</plan-version>
+    <metadata>
+        <backlog-issue>distribute the Rust CLI to real users as the shipsmooth-beta release line (local backlog; no external issue) — continues the rust-migration series, plans 102–110</backlog-issue>
+        <status>complete</status>
+        <created>2026-10-13</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Beta binary — rename, version series, unversioned schema URL, cross-compile</name>
+            <commit>e39066afa58c11ce00b0952bf2eee0378352f147</commit>
+            <created-from>plan-115-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-10-13T08:28:24.737Z</timestamp>
+                    <message>De-risk draft ready for review (2d2274d). All 3 POSIX targets cross-compile from Linux; darwin pinned to minos 11.0 via own zig linker wrapper (cargo-zigbuild default gives 15.0). Darwin binaries NOT yet executed on a Mac. Parity 60/60 with schema ref normalised. Java/beta write different schema.location values to the shared config (05 ��4 'agree' claim is false unless Java changes too).</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-10-13T10:19:32.302Z</timestamp>
+                    <message>Correction to the previous comment: no schema.location ping-pong. Both writers add [toml-schema] only if absent (Rust config_writer.rs:114, Java ConfigWriter.java:83), so the first product to create shipsmooth.toml sets location and the other never changes it. 05 ��4's 'overwrite each other' concern is likewise false.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-10-13T10:31:01.035Z</timestamp>
+                    <message>Config-isolation de-risk draft ready for review (a2056ba): resolver with_fallback(beta, shared), ConfigWriter::seeded_from(shared). 294 Rust tests / 0 failed, clippy clean, parity 60/60. Manual check: shared file sha unchanged across beta init; beta finds Java-set-up repos before and after the seed. One-way gap only matters for separate-dir (same-repo is found from the filesystem without a config entry).</message>
+                </comment>
+            </comments>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-10-13T10:26:02.292Z</timestamp>
+                    <message>Scope addition (user-directed, 2026-10-13): beta config isolation. Reads use shipsmooth-beta.toml if present, else shipsmooth.toml; a project missing from shipsmooth-beta.toml falls back to shipsmooth.toml. First write seeds shipsmooth-beta.toml from shipsmooth.toml (atomic copy), and all writes go only to shipsmooth-beta.toml. The beta never writes shipsmooth.toml. Knock-ons: parity run.sh captures shipsmooth-beta.toml on the Rust side; IT-2 asserts shipsmooth.toml is byte-identical after beta runs (Task 4); Task 5 docs describe the copy and the one-way visibility.</message>
+                </deviation>
+            </deviations>
+        </task>
+        <task>
+            <id>2</id>
+            <risk>medium</risk>
+            <status>closed</status>
+            <name>Render the plugin as `shipsmooth-beta`</name>
+            <commit>018168d417b705937572972ee0b6fc6f6e0509be</commit>
+            <created-from>plan-115-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-10-13T08:06:26.362Z</timestamp>
+                    <message>Scope per plan-115-v2: renamed 'Render the plugin as shipsmooth-beta, with its own installer'; adds install-shipsmooth-beta.sh, renderer script detection, lint, :213 hook command.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-10-13T10:41:13.204Z</timestamp>
+                    <message>De-risk draft ready for review (c371b2f). Java renders byte-identical (5/5 vs baseline); IT-1 + IT-2 green with the real Rust binary and a hand-built zip. Remaining for hardening: beta .claude-plugin manifests + assembleClaudeBeta payload, shared install-case tests across both installers, trimming Java-specific comments in the beta installer.</message>
+                </comment>
+            </comments>
+            <deviations/>
+        </task>
+        <task>
+            <id>3</id>
+            <risk>high</risk>
+            <status>closed</status>
+            <name>Beta packager + gated publish flow with `--version` guard</name>
+            <commit>5156fef5156c44e11c4b717785f5084bda53b844</commit>
+            <created-from>plan-115-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-10-13T10:55:28.471Z</timestamp>
+                    <message>De-risk draft ready for review (efb61c9). Unit: command order (all checks before any push/release), refusals (gate/version/tag) run nothing outward. Real-git IT: orphan then incremental releases-beta, tags on release commits, checkout untouched. IT-1/IT-2 green on real packaged zips. Not exercised: real gh / GitHub push (outward, human-run).</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>1,2</depends-on>
+        </task>
+        <task>
+            <id>4</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Installer coexistence (IT-2 hardening)</name>
+            <commit>38e6dfe5ec3bc67f75a6cca94d6519748f2c7510</commit>
+            <created-from>plan-115-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments>
+                <comment>
+                    <timestamp>2026-10-13T11:05:26.551Z</timestamp>
+                    <message>IT-2 (two products, one cache, no re-download/shadowing) landed in the preamble and goes green from Task 3. This task adds the shared-config check from the Task 1 deviation. It passed on first run because Task 1 implemented the behaviour, so it is a regression guard on the installed binary, not a red-first test.</message>
+                </comment>
+            </comments>
+            <deviations/>
+            <depends-on>2,3</depends-on>
+        </task>
+        <task>
+            <id>5</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Docs — `EXPERIMENTAL.md` beta section + release runbook</name>
+            <commit>f2233975a7fba26f6ef5bee3464e90a6c6b1ba9f</commit>
+            <created-from>plan-115-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-10-13T07:52:27.736Z</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-10-13T07:59:03.722Z</timestamp>
+            <message>Major deviation before preamble: install-shipsmooth.sh is NOT launcher-agnostic (05 premise wrong). :40 BIN=$RUNTIME_DIR/bin/shipsmooth and :65-66 EXTRACTED_BIN=bin/shipsmooth are hardcoded, so a zip containing bin/shipsmooth-beta dies 'extracted archive is missing bin/shipsmooth'. bin/$NAME is not a safe fix: opencode dev passes NAME=shipsmooth-dev with a Java bin/shipsmooth. Also: hook commands in harness/shared/build.gradle.kts:213,223,233,256 hardcode the 'shipsmooth' NAME argument (and :213 the plugins/cache/bitkentech/shipsmooth fallback path), which Task 2 must cover. Awaiting human decision: keep launcher bin/shipsmooth vs optional 3rd installer arg vs bin/$NAME.</message>
+            <blocked>true</blocked>
+        </update>
+        <update>
+            <timestamp>2026-10-13T08:06:25.818Z</timestamp>
+            <message>Unblocked by plan-115-v2: the beta gets a separate install-shipsmooth-beta.sh (Java install-shipsmooth.sh untouched). Task 2 scope widened (beta installer, HookCommandRenderer script detection, lint task, Claude hook command :213), risk stays Medium. Task ids/risks unchanged from v1.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-10-13T16:40:31.275+05:30</timestamp>
+            <message>Plan complete.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>

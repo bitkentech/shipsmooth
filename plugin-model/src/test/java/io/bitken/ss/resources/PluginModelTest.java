@@ -24,6 +24,18 @@ class PluginModelTest {
         );
     }
 
+    /** plan-115: the POSIX launcher is named after the product, so shipsmooth-beta gets its own. */
+    @Test
+    void posixCliBinPath_namesTheLauncherAfterTheBasePluginName() {
+        assertEquals("${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth-beta/0.1.0-beta/bin/shipsmooth-beta",
+            Os.POSIX.cliBinPath("shipsmooth-beta", "0.1.0-beta", Platform.CLAUDE.cacheSubdir("shipsmooth-beta", Env.PROD)));
+        assertEquals("${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth-beta-dev/0.1.0-beta/bin/shipsmooth-beta",
+            Os.POSIX.cliBinPath("shipsmooth-beta", "0.1.0-beta", Platform.CLAUDE.cacheSubdir("shipsmooth-beta", Env.DEV)),
+            "a dev build decorates the cache dir, never the launcher");
+        assertEquals("${XDG_CACHE_HOME:-$HOME/.cache}/shipsmooth-dev/0.3.10/bin/shipsmooth",
+            Os.POSIX.cliBinPath("shipsmooth", "0.3.10", Platform.CLAUDE.cacheSubdir("shipsmooth", Env.DEV)));
+    }
+
     @Test
     void posix_os_isCorrect() {
         assertEquals(Os.POSIX, claudeProd().os());

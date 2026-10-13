@@ -174,3 +174,48 @@ tasks.register<JavaExec>("publishReleaseOpenCode") {
     mainClass.set("io.bitken.ss.dist.PublishOpencode")
     args((findProperty("shipsmooth.release.version") as String?) ?: pluginVersion)
 }
+
+// ---------------------------------------------------------------------------
+// shipsmooth-beta (plan-115): the Rust CLI's own release line. A separate pipeline from
+// publishRelease — no shared task, no shared branch — so neither can strand the other.
+// ---------------------------------------------------------------------------
+val betaVersion = CargoVersion.workspace(repoRoot.file("exp/rust/Cargo.toml").asFile)
+val betaBinDir = repoRoot.dir("exp/rust/build/beta-bin").asFile
+val betaDistDir = layout.projectDirectory.dir("target/beta-dist").asFile
+val betaPayloadDir = repoRoot.dir("build-claude-beta").asFile
+
+// Cross-compiles and verifies the binaries in the standalone exp/rust build (which the
+// root build deliberately does not include). Needs cargo + cargo-zigbuild + zig; without
+// them betaBinaries skips and verifyBetaBinaries then fails on the missing binaries.
+val buildBetaBinaries by tasks.registering(GradleBuild::class) {
+    group = "release"
+    description = "Cross-compile + verify the shipsmooth-beta binaries (standalone exp/rust build)."
+    dir = repoRoot.dir("exp/rust").asFile
+    tasks = listOf("betaBinaries", "verifyBetaBinaries")
+}
+
+val packageBeta by tasks.registering(JavaExec::class) {
+    group = "release"
+    description = "Zip the shipsmooth-beta binaries into packaging/target/beta-dist/ (not outward)."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("io.bitken.ss.dist.PackageBeta")
+    dependsOn(buildBetaBinaries)
+    args(betaVersion, betaBinDir.absolutePath, betaDistDir.absolutePath)
+    outputs.dir(betaDistDir)
+}
+
+// publishBetaRelease — OUTWARD, gated, never part of an aggregate. Without -PpublishBeta=true
+// it builds nothing and PublishBetaRelease refuses with the gate message.
+// Run: ./gradlew :packaging:publishBetaRelease -PpublishBeta=true   (bare — never piped)
+tasks.register<JavaExec>("publishBetaRelease") {
+    group = "release"
+    description = "Publish a shipsmooth-beta release (tag, releases-beta branch, GitHub pre-release). Gated: -PpublishBeta=true."
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("io.bitken.ss.dist.PublishBetaRelease")
+    val gated = (findProperty("publishBeta") as String?)?.lowercase() == "true"
+    if (gated) dependsOn(buildBetaBinaries, ":harness:claude:assembleClaudeBeta")
+    val publishArgs = mutableListOf(betaVersion, repoRootPath, betaBinDir.absolutePath,
+        betaPayloadDir.absolutePath, betaDistDir.absolutePath)
+    if (gated) publishArgs.add("--publish-beta")
+    args(publishArgs)
+}

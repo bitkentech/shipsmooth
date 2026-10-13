@@ -72,9 +72,8 @@ fn run(args: impl IntoIterator<Item = String>) -> i32 {
         Err(e) if e.kind() == clap::error::ErrorKind::DisplayVersion => {
             // clap's default `--version` renders "shipsmooth <ver>"; Java's
             // picocli prints the bare number. Match Java: bare version to
-            // stdout, exit 0. Only the *format* is aligned here — the value
-            // stays 0.3.34 (see the note on the version assertion below: the
-            // Cargo workspace version is deliberately not synced to Java's).
+            // stdout, exit 0. Only the *format* is aligned here — the value is
+            // the independent shipsmooth-beta series (see version_is_a_beta_prerelease).
             println!("{}", env!("CARGO_PKG_VERSION"));
             0
         }
@@ -153,7 +152,7 @@ pub struct LeafContext {
 fn dispatch_state_dependent(leaf: &mut dyn FnMut(&LeafContext) -> i32) -> i32 {
     let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::Path::new(".").to_path_buf());
     let project = ProjectContext::from_dir(&cwd);
-    let resolver = ProjectDataStoreResolver::new(ds::config_file::locate());
+    let resolver = ProjectDataStoreResolver::with_fallback(ds::config_file::locate_beta(), ds::config_file::locate());
     let resolution = resolver.resolve(&project.repo_root, project.remote_url());
 
     match gate(resolution) {
@@ -214,16 +213,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn version_matches_workspace_version() {
-        // The workspace version is the single source of truth (Build.VERSION).
-        //
-        // It is pinned at 0.3.34 and deliberately NOT kept in lockstep with
-        // Java's gradle.properties (0.3.36+): while the two implementations
-        // coexist as an experiment the Rust side does not cut releases, so
-        // syncing the digits would be misleading. `--version` aligns the Java
-        // *format* (bare number, no "shipsmooth " prefix) but not the value —
-        // do not "fix" this assertion to match Java's number (plan-106/110).
-        assert_eq!(env!("CARGO_PKG_VERSION"), "0.3.34");
+    fn version_is_a_beta_prerelease() {
+        // The workspace version is the single source of truth: it names the
+        // shipsmooth-beta release, its v<version> tag and its asset filenames. It is
+        // an independent series that does not track Java's plugin.version (plan-115),
+        // and is always a -beta prerelease so it can never collide with a Java tag.
+        let version = env!("CARGO_PKG_VERSION");
+        let (core, pre) = version.split_once('-').expect("version must carry a prerelease");
+        assert_eq!(core.split('.').filter(|p| p.parse::<u32>().is_ok()).count(), 3, "{version}");
+        assert!(pre == "beta" || pre.strip_prefix("beta.").is_some_and(|n| n.parse::<u32>().is_ok()),
+            "prerelease must be beta or beta.N, got {version}");
     }
 
     #[test]

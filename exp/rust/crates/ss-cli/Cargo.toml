@@ -7,7 +7,9 @@ edition.workspace = true
 experimental = ["ss-core/experimental"]
 
 [[bin]]
-name = "shipsmooth"
+# The shipsmooth-beta product's launcher (plan-115). clap's command name stays
+# "shipsmooth" so usage/error text matches the Java CLI byte-for-byte (parity).
+name = "shipsmooth-beta"
 path = "src/main.rs"
 
 [dependencies]

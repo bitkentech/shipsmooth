@@ -12,7 +12,7 @@ fn fixtures_dir() -> std::path::PathBuf {
 
 #[test]
 fn probe_round_trips_the_corpus_and_reports_json() {
-    let out = Command::cargo_bin("shipsmooth")
+    let out = Command::cargo_bin("shipsmooth-beta")
         .unwrap()
         .args(["probe", "--dir"])
         .arg(fixtures_dir())
@@ -38,14 +38,14 @@ fn probe_round_trips_the_corpus_and_reports_json() {
 
 #[test]
 fn probe_is_hidden_from_help() {
-    let out = Command::cargo_bin("shipsmooth").unwrap().arg("--help").assert().success();
+    let out = Command::cargo_bin("shipsmooth-beta").unwrap().arg("--help").assert().success();
     let help = String::from_utf8(out.get_output().stdout.clone()).unwrap();
     assert!(!help.contains("probe"), "probe must stay hidden: {help}");
 }
 
 #[test]
 fn probe_fails_cleanly_on_a_missing_dir() {
-    Command::cargo_bin("shipsmooth")
+    Command::cargo_bin("shipsmooth-beta")
         .unwrap()
         .args(["probe", "--dir", "/nonexistent"])
         .assert()

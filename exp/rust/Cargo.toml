@@ -3,9 +3,11 @@ members = ["crates/ss-core", "crates/ss-cli"]
 resolver = "2"
 
 [workspace.package]
-# Single source of truth for the Rust side; kept in lockstep with
-# gradle.properties plugin.version while both implementations coexist.
-version = "0.3.34"
+# Single source of truth for the Rust side, and the shipsmooth-beta release version:
+# it names the v<version> tag and the shipsmooth-beta-<version>-<platform>.zip assets.
+# An independent series that does NOT track gradle.properties plugin.version; always a
+# -beta / -beta.N prerelease so it can never collide with a Java v* tag (plan-115).
+version = "0.1.0-beta"
 edition = "2021"
 
 # Size-tuned variant measured by the plan-102 footprint spike (Task 6); the

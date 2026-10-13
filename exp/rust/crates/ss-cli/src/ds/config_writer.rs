@@ -25,18 +25,32 @@ pub struct ConfigWriter {
     /// The `[toml-schema] location` to emit; `None` means version only
     /// (spec-valid: `location` is optional).
     schema_location: Option<String>,
+    /// Copy-on-first-write source (plan-115): while `config_file` does not exist,
+    /// the upsert starts from this file's content instead of an empty document.
+    /// The seed itself is only ever read.
+    seed: Option<PathBuf>,
 }
 
 impl ConfigWriter {
     /// Production shape: emits the build's baked schema location.
     pub fn new(config_file: PathBuf) -> ConfigWriter {
-        ConfigWriter { config_file, schema_location: Some(schema_config::SCHEMA_LOCATION.to_string()) }
+        ConfigWriter {
+            config_file,
+            schema_location: Some(schema_config::SCHEMA_LOCATION.to_string()),
+            seed: None,
+        }
+    }
+
+    /// Seed the first write from `seed` (the shared `shipsmooth.toml`), so the
+    /// beta's own config starts as a copy of every project already set up.
+    pub fn seeded_from(self, seed: PathBuf) -> ConfigWriter {
+        ConfigWriter { seed: Some(seed), ..self }
     }
 
     /// Inject the schema `location` to emit (tests only).
     #[cfg(test)]
     pub fn with_schema_location(config_file: PathBuf, schema_location: Option<String>) -> ConfigWriter {
-        ConfigWriter { config_file, schema_location }
+        ConfigWriter { config_file, schema_location, seed: None }
     }
 
     /// Upsert a `separate-dir` entry recording the chosen `storageRoot`.
@@ -100,10 +114,15 @@ impl ConfigWriter {
     /// silently overwrite. Parsing as a `DocumentMut` (not into the model)
     /// preserves unknown-but-valid content verbatim across the upsert.
     fn read_or_empty(&self) -> std::io::Result<toml_edit::DocumentMut> {
-        if !self.config_file.exists() {
-            return Ok(toml_edit::DocumentMut::new());
-        }
-        std::fs::read_to_string(&self.config_file)?
+        let source = if self.config_file.exists() {
+            &self.config_file
+        } else {
+            match self.seed.as_ref().filter(|seed| seed.exists()) {
+                Some(seed) => seed,
+                None => return Ok(toml_edit::DocumentMut::new()),
+            }
+        };
+        std::fs::read_to_string(source)?
             .parse::<toml_edit::DocumentMut>()
             .map_err(std::io::Error::other)
     }
@@ -222,6 +241,86 @@ mod tests {
             settled_standalone_root(resolve(&config, &repo)),
             normalize_lexical(&state)
         );
+    }
+
+    // ---- plan-115: beta config isolation (copy-on-first-write) ----
+
+    #[test]
+    fn first_beta_write_seeds_from_the_shared_config_and_never_touches_it() {
+        let tmp = tempfile::tempdir().unwrap();
+        let shared = tmp.path().join("shipsmooth.toml");
+        let beta = tmp.path().join("shipsmooth-beta.toml");
+        let (old_repo, new_repo, old_state, new_state) =
+            (tmp.path().join("old"), tmp.path().join("new"), tmp.path().join("s1"), tmp.path().join("s2"));
+        for d in [&old_repo, &new_repo, &old_state, &new_state] {
+            std::fs::create_dir(d).unwrap();
+        }
+        ConfigWriter::with_schema_location(shared.clone(), Some("java-pinned".into()))
+            .write_external(&old_repo, None, &old_state)
+            .unwrap();
+        let shared_before = std::fs::read(&shared).unwrap();
+
+        ConfigWriter::new(beta.clone()).seeded_from(shared.clone()).write_external(&new_repo, None, &new_state).unwrap();
+
+        assert_eq!(std::fs::read(&shared).unwrap(), shared_before, "shared config must be byte-identical");
+        assert_eq!(settled_standalone_root(resolve(&beta, &old_repo)), normalize_lexical(&old_state));
+        assert_eq!(settled_standalone_root(resolve(&beta, &new_repo)), normalize_lexical(&new_state));
+        assert!(std::fs::read_to_string(&beta).unwrap().contains("location = 'java-pinned'"),
+            "the seed's [toml-schema] is kept (first writer wins)");
+    }
+
+    #[test]
+    fn an_existing_beta_config_is_not_reseeded() {
+        let tmp = tempfile::tempdir().unwrap();
+        let shared = tmp.path().join("shipsmooth.toml");
+        let beta = tmp.path().join("shipsmooth-beta.toml");
+        let (a, b, sa, sb) =
+            (tmp.path().join("a"), tmp.path().join("b"), tmp.path().join("sa"), tmp.path().join("sb"));
+        for d in [&a, &b, &sa, &sb] {
+            std::fs::create_dir(d).unwrap();
+        }
+        ConfigWriter::new(beta.clone()).write_external(&a, None, &sa).unwrap();
+        // Java sets up project b AFTER the beta file exists: the beta file must not absorb it.
+        ConfigWriter::new(shared.clone()).write_external(&b, None, &sb).unwrap();
+
+        ConfigWriter::new(beta.clone()).seeded_from(shared.clone()).write_external(&a, None, &sa).unwrap();
+
+        assert!(!std::fs::read_to_string(&beta).unwrap().contains(&*b.to_string_lossy()),
+            "seeding happens only when the beta config does not exist yet");
+    }
+
+    #[test]
+    fn an_unparseable_seed_fails_the_first_write_and_creates_no_beta_config() {
+        // Strict like any write: seeding from a corrupt shared config would drop
+        // every project recorded in it from the beta's view.
+        let tmp = tempfile::tempdir().unwrap();
+        let shared = tmp.path().join("shipsmooth.toml");
+        let beta = tmp.path().join("shipsmooth-beta.toml");
+        let repo = tmp.path().join("repo");
+        std::fs::create_dir(&repo).unwrap();
+        std::fs::write(&shared, "this is = = not valid toml [[[").unwrap();
+
+        let result = ConfigWriter::new(beta.clone()).seeded_from(shared.clone()).write_in_repo(&repo, None);
+
+        assert!(result.is_err(), "seeding from an unparseable config must fail");
+        assert!(!beta.exists(), "no beta config may be created from a failed seed");
+        assert_eq!(std::fs::read_to_string(&shared).unwrap(), "this is = = not valid toml [[[");
+    }
+
+    #[test]
+    fn a_missing_seed_starts_the_beta_config_empty() {
+        let tmp = tempfile::tempdir().unwrap();
+        let beta = tmp.path().join("shipsmooth-beta.toml");
+        let repo = tmp.path().join("repo");
+        std::fs::create_dir(&repo).unwrap();
+
+        ConfigWriter::new(beta.clone())
+            .seeded_from(tmp.path().join("shipsmooth.toml"))
+            .write_in_repo(&repo, None)
+            .unwrap();
+
+        assert_eq!(std::fs::read_to_string(&beta).unwrap().matches("[[projects]]").count(), 1);
+        assert!(!tmp.path().join("shipsmooth.toml").exists(), "a missing seed is never created");
     }
 
     #[test]

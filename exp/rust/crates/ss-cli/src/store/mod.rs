@@ -44,8 +44,8 @@ pub enum StoreCommand {
 pub fn run(command: &StoreCommand) -> i32 {
     let cwd = std::env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf());
     let project = ProjectContext::from_dir(&cwd);
-    let config_file = ds::config_file::locate();
-    let resolver = ProjectDataStoreResolver::new(config_file.clone());
+    let (beta_config, shared_config) = (ds::config_file::locate_beta(), ds::config_file::locate());
+    let resolver = ProjectDataStoreResolver::with_fallback(beta_config.clone(), shared_config.clone());
 
     match command {
         StoreCommand::Info { json } => {
@@ -58,7 +58,7 @@ pub fn run(command: &StoreCommand) -> i32 {
             let resolution = resolver.resolve(&project.repo_root, project.remote_url());
             let outcome = init::run(
                 &resolver,
-                &ConfigWriter::new(config_file),
+                &ConfigWriter::new(beta_config).seeded_from(shared_config),
                 &project,
                 resolution,
                 type_arg,

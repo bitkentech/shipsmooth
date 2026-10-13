@@ -49,7 +49,7 @@ impl Fixture {
     }
 
     fn shipsmooth(&self, args: &[&str]) -> Command {
-        let mut cmd = Command::cargo_bin("shipsmooth").unwrap();
+        let mut cmd = Command::cargo_bin("shipsmooth-beta").unwrap();
         cmd.args(args).current_dir(&self.repo).env("XDG_CONFIG_HOME", &self.config_home);
         cmd
     }
@@ -138,7 +138,7 @@ fn task_add_on_unsettled_project_emits_gate_json_and_exits_10() {
         .unwrap();
     assert!(status.success());
 
-    let assert = Command::cargo_bin("shipsmooth")
+    let assert = Command::cargo_bin("shipsmooth-beta")
         .unwrap()
         .args(["task", "add", "--plan", "1", "--name", "x"])
         .current_dir(&repo)

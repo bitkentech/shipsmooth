@@ -3,6 +3,8 @@ package io.bitken.ss.resources;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -143,20 +145,34 @@ class PosixBootstrapIntegrationTest {
      * flow and, critically, that unzip restores the stored +x bit (the OpenJ9 jspawnhelper
      * hazard). Hermetic — builds its own zip, no network and no gitignored release artifact.
      * Skips where the POSIX toolchain (sh/zip/unzip) is unavailable (e.g. Windows CI).
+     *
+     * <p>plan-115: runs for BOTH products. shipsmooth-beta ships its own near-copy
+     * installer (launcher bin/shipsmooth-beta) so the Java one stays untouched; driving
+     * both through the same install, exec-bit and idempotency cases is what keeps the
+     * two copies from drifting apart.
      */
-    @Test
-    void copiedScript_installsRuntime_preservingExecBit(@TempDir Path work) throws Exception {
+    @ParameterizedTest(name = "{0}")
+    @CsvSource({
+        "shipsmooth,      0.2.0,      install-shipsmooth.sh",
+        "shipsmooth-beta, 0.1.0-beta, install-shipsmooth-beta.sh",
+    })
+    void copiedScript_installsRuntime_preservingExecBit(String product, String version, String scriptName,
+                                                        @TempDir Path work) throws Exception {
         assumeTrue(toolsPresent("sh", "zip", "unzip"),
             "requires sh + zip + unzip on PATH");
 
         setProdPosixProps();
+        System.setProperty("plugin.base.name", product);
+        System.setProperty("plugin.version", version);
+        System.setProperty("plugin.hook.command",
+            "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/" + scriptName + "\" " + product + " " + version);
         Target.main(new String[]{});
-        Path script = tempDir.resolve("hooks/install-shipsmooth.sh");
-        assertTrue(Files.exists(script), "render must have copied the script");
+        Path script = tempDir.resolve("hooks/" + scriptName);
+        assertTrue(Files.exists(script), "render must have copied " + scriptName);
 
-        // Build a fake release: bin/shipsmooth (executable, +x stored in the zip).
+        // Build a fake release: bin/<product> (executable, +x stored in the zip).
         Path stage = Files.createDirectories(work.resolve("stage/bin"));
-        Path fakeBin = stage.resolve("shipsmooth");
+        Path fakeBin = stage.resolve(product);
         Files.writeString(fakeBin, "#!/bin/sh\necho fake-runtime\n");
         Files.setPosixFilePermissions(fakeBin, Set.of(
             PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
@@ -165,21 +181,37 @@ class PosixBootstrapIntegrationTest {
         Path releases = Files.createDirectories(work.resolve("releases"));
         // Zip name must match what the script builds: <name>-<version>-<platform>.zip
         String platform = detectLinuxOrDarwinPlatform();
-        Path zip = releases.resolve("shipsmooth-0.2.0-" + platform + ".zip");
+        Path zip = releases.resolve(product + "-" + version + "-" + platform + ".zip");
         run(work.resolve("stage"), "zip", "-q", "-r", "-X", zip.toString(), "bin");
 
         Path cache = work.resolve("cache");
-        int code = runInstaller(script, cache, releases, "shipsmooth", "0.2.0");
+        int code = runInstaller(script, cache, releases, product, version);
         assertEquals(0, code, "installer must exit 0");
 
-        Path installedBin = cache.resolve("shipsmooth/0.2.0/bin/shipsmooth");
+        Path installedBin = cache.resolve(product + "/" + version + "/bin/" + product);
         assertTrue(Files.exists(installedBin), "runtime launcher must be installed");
         assertTrue(Files.isExecutable(installedBin),
             "unzip must restore the stored +x bit on the launcher");
 
-        // Idempotent: a second run sees the executable launcher and no-ops (exit 0).
-        assertEquals(0, runInstaller(script, cache, releases, "shipsmooth", "0.2.0"),
+        // Idempotent: a second run sees the executable launcher and no-ops (exit 0)
+        // without downloading — an empty release dir would fail any fetch.
+        assertEquals(0, runInstaller(script, cache, Files.createDirectories(work.resolve("none")), product, version),
             "second install must no-op");
+    }
+
+    /** plan-115: a beta payload carries only its own installer, never the Java one. */
+    @Test
+    void betaRender_shipsOnlyItsOwnInstaller() throws Exception {
+        setProdPosixProps();
+        System.setProperty("plugin.base.name", "shipsmooth-beta");
+        System.setProperty("plugin.version", "0.1.0-beta");
+        System.setProperty("plugin.hook.command",
+            "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/install-shipsmooth-beta.sh\" shipsmooth-beta 0.1.0-beta");
+        Target.main(new String[]{});
+
+        assertTrue(Files.exists(tempDir.resolve("hooks/install-shipsmooth-beta.sh")));
+        assertFalse(Files.exists(tempDir.resolve("hooks/install-shipsmooth.sh")),
+            "beta render must not ship the Java installer");
     }
 
     private int runInstaller(Path script, Path cache, Path releases, String name, String version)

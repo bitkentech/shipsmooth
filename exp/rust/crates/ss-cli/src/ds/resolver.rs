@@ -26,14 +26,25 @@ const STORAGE_EMBEDDED: &str = "same-repo";
 const STORAGE_FILESYSTEM: &str = "separate-dir";
 
 pub struct ProjectDataStoreResolver {
-    /// Injected config-file location (Java's `ConfigFileLocator`), so tests
-    /// never touch the real `~/.config/shipsmooth/shipsmooth.toml`.
-    config_file: PathBuf,
+    /// Injected config-file locations (Java's `ConfigFileLocator`), so tests
+    /// never touch the real `~/.config/shipsmooth/shipsmooth.toml`. Consulted in
+    /// order; the first file with an entry for the project wins.
+    config_files: Vec<PathBuf>,
 }
 
 impl ProjectDataStoreResolver {
+    /// Single-file resolver (tests only; the binary always uses [`Self::with_fallback`]).
+    #[cfg(test)]
     pub fn new(config_file: PathBuf) -> ProjectDataStoreResolver {
-        ProjectDataStoreResolver { config_file }
+        ProjectDataStoreResolver { config_files: vec![config_file] }
+    }
+
+    /// Per-project fallback (plan-115): look the project up in `primary` (the
+    /// beta's own config) and, only when it has no entry there, in `fallback`
+    /// (the shared `shipsmooth.toml`), so a project set up by the Java product
+    /// after the beta config was seeded is still found.
+    pub fn with_fallback(primary: PathBuf, fallback: PathBuf) -> ProjectDataStoreResolver {
+        ProjectDataStoreResolver { config_files: vec![primary, fallback] }
     }
 
     /// Classify per the plan-85 branch table: `Settled` when the location is
@@ -43,9 +54,11 @@ impl ProjectDataStoreResolver {
     /// `local_path` is the canonical repo root (`git rev-parse --show-toplevel`);
     /// `remote_url` the origin URL if present.
     pub fn resolve(&self, local_path: &Path, remote_url: Option<&str>) -> DataStoreResolution {
-        if let Some(config) = StandaloneConfig::parse(&self.config_file) {
-            if let Some(entry) = config.matching_entry(local_path, remote_url) {
-                return from_config_entry(local_path, entry);
+        for config_file in &self.config_files {
+            if let Some(config) = StandaloneConfig::parse(config_file) {
+                if let Some(entry) = config.matching_entry(local_path, remote_url) {
+                    return from_config_entry(local_path, entry);
+                }
             }
         }
         from_filesystem(local_path)
@@ -212,6 +225,65 @@ mod tests {
     /// the tempdir as the project's local path.
     fn resolve(config: PathBuf, repo: &Path, remote_url: Option<&str>) -> DataStoreResolution {
         ProjectDataStoreResolver::new(config).resolve(repo, remote_url)
+    }
+
+    #[test]
+    fn beta_config_wins_and_falls_back_to_the_shared_config_per_project() {
+        // plan-115: shipsmooth-beta reads its own config first; a project it has no
+        // entry for is looked up in the shared shipsmooth.toml (set up by Java later).
+        let tmp = repo();
+        let (both, java_only) = (tmp.path().join("both"), tmp.path().join("java-only"));
+        let (beta_state, java_state, java_only_state) =
+            (tmp.path().join("bs"), tmp.path().join("js"), tmp.path().join("jos"));
+        for d in [&both, &java_only, &beta_state, &java_state, &java_only_state] {
+            std::fs::create_dir(d).unwrap();
+        }
+        let entry = |repo: &Path, root: &Path| {
+            format!(
+                "[[projects]]\nlocalPath = '{}'\nstorageRoot = '{}'\nstorageType = 'separate-dir'\n\n",
+                repo.display(),
+                root.display()
+            )
+        };
+        let beta = tmp.path().join("shipsmooth-beta.toml");
+        std::fs::write(&beta, entry(&both, &beta_state)).unwrap();
+        let shared = tmp.path().join("shipsmooth.toml");
+        std::fs::write(&shared, entry(&both, &java_state) + &entry(&java_only, &java_only_state)).unwrap();
+
+        let resolver = ProjectDataStoreResolver::with_fallback(beta, shared);
+        let root = |repo: &Path| match settled(resolver.resolve(repo, None)) {
+            ProjectDataStore::Standalone { state_dir, .. } => state_dir,
+            _ => panic!("expected Standalone"),
+        };
+        assert_eq!(root(&both), normalize_lexical(&beta_state), "beta entry takes precedence");
+        assert_eq!(root(&java_only), normalize_lexical(&java_only_state), "falls back to shared");
+    }
+
+    #[test]
+    fn an_unparseable_beta_config_falls_back_to_the_shared_config() {
+        // The read path stays lenient per file (as for a single config): a corrupt
+        // beta file is skipped, so the project is still found via the shared file.
+        // Writes stay strict, so the corrupt file is never silently replaced.
+        let tmp = repo();
+        let (project, state) = (tmp.path().join("p"), tmp.path().join("s"));
+        std::fs::create_dir(&project).unwrap();
+        std::fs::create_dir(&state).unwrap();
+        let beta = write_config(tmp.path(), "this is = = not valid toml [[[");
+        let beta_path = tmp.path().join("shipsmooth-beta.toml");
+        std::fs::rename(&beta, &beta_path).unwrap();
+        let shared = write_config(
+            tmp.path(),
+            &format!(
+                "[[projects]]\nlocalPath = '{}'\nstorageRoot = '{}'\nstorageType = 'separate-dir'\n",
+                project.display(),
+                state.display()
+            ),
+        );
+
+        match settled(ProjectDataStoreResolver::with_fallback(beta_path, shared).resolve(&project, None)) {
+            ProjectDataStore::Standalone { state_dir, .. } => assert_eq!(state_dir, normalize_lexical(&state)),
+            _ => panic!("expected Standalone"),
+        }
     }
 
     fn settled(r: DataStoreResolution) -> ProjectDataStore {
