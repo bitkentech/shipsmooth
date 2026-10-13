@@ -61,12 +61,17 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Beta packager + gated publish flow with `--version` guard</name>
             <commit></commit>
             <created-from>plan-115-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-10-13T10:55:28.471Z</timestamp>
+                    <message>De-risk draft ready for review (efb61c9). Unit: command order (all checks before any push/release), refusals (gate/version/tag) run nothing outward. Real-git IT: orphan then incremental releases-beta, tags on release commits, checkout untouched. IT-1/IT-2 green on real packaged zips. Not exercised: real gh / GitHub push (outward, human-run).</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>1,2</depends-on>
         </task>
