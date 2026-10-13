@@ -259,6 +259,33 @@ mod tests {
         assert_eq!(root(&java_only), normalize_lexical(&java_only_state), "falls back to shared");
     }
 
+    #[test]
+    fn an_unparseable_beta_config_falls_back_to_the_shared_config() {
+        // The read path stays lenient per file (as for a single config): a corrupt
+        // beta file is skipped, so the project is still found via the shared file.
+        // Writes stay strict, so the corrupt file is never silently replaced.
+        let tmp = repo();
+        let (project, state) = (tmp.path().join("p"), tmp.path().join("s"));
+        std::fs::create_dir(&project).unwrap();
+        std::fs::create_dir(&state).unwrap();
+        let beta = write_config(tmp.path(), "this is = = not valid toml [[[");
+        let beta_path = tmp.path().join("shipsmooth-beta.toml");
+        std::fs::rename(&beta, &beta_path).unwrap();
+        let shared = write_config(
+            tmp.path(),
+            &format!(
+                "[[projects]]\nlocalPath = '{}'\nstorageRoot = '{}'\nstorageType = 'separate-dir'\n",
+                project.display(),
+                state.display()
+            ),
+        );
+
+        match settled(ProjectDataStoreResolver::with_fallback(beta_path, shared).resolve(&project, None)) {
+            ProjectDataStore::Standalone { state_dir, .. } => assert_eq!(state_dir, normalize_lexical(&state)),
+            _ => panic!("expected Standalone"),
+        }
+    }
+
     fn settled(r: DataStoreResolution) -> ProjectDataStore {
         match r {
             DataStoreResolution::Settled(store) => store,

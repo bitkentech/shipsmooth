@@ -290,6 +290,40 @@ mod tests {
     }
 
     #[test]
+    fn an_unparseable_seed_fails_the_first_write_and_creates_no_beta_config() {
+        // Strict like any write: seeding from a corrupt shared config would drop
+        // every project recorded in it from the beta's view.
+        let tmp = tempfile::tempdir().unwrap();
+        let shared = tmp.path().join("shipsmooth.toml");
+        let beta = tmp.path().join("shipsmooth-beta.toml");
+        let repo = tmp.path().join("repo");
+        std::fs::create_dir(&repo).unwrap();
+        std::fs::write(&shared, "this is = = not valid toml [[[").unwrap();
+
+        let result = ConfigWriter::new(beta.clone()).seeded_from(shared.clone()).write_in_repo(&repo, None);
+
+        assert!(result.is_err(), "seeding from an unparseable config must fail");
+        assert!(!beta.exists(), "no beta config may be created from a failed seed");
+        assert_eq!(std::fs::read_to_string(&shared).unwrap(), "this is = = not valid toml [[[");
+    }
+
+    #[test]
+    fn a_missing_seed_starts_the_beta_config_empty() {
+        let tmp = tempfile::tempdir().unwrap();
+        let beta = tmp.path().join("shipsmooth-beta.toml");
+        let repo = tmp.path().join("repo");
+        std::fs::create_dir(&repo).unwrap();
+
+        ConfigWriter::new(beta.clone())
+            .seeded_from(tmp.path().join("shipsmooth.toml"))
+            .write_in_repo(&repo, None)
+            .unwrap();
+
+        assert_eq!(std::fs::read_to_string(&beta).unwrap().matches("[[projects]]").count(), 1);
+        assert!(!tmp.path().join("shipsmooth.toml").exists(), "a missing seed is never created");
+    }
+
+    #[test]
     fn emits_injected_schema_location() {
         let tmp = tempfile::tempdir().unwrap();
         let config = tmp.path().join("shipsmooth.toml");

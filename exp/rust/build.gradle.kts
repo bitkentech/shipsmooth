@@ -107,7 +107,11 @@ val betaBinaryTasks = betaPlatforms.map { platform ->
             ready
         }
         val linker = layout.buildDirectory.file("zig-linkers/${platform.rustTarget}.sh").get().asFile
-        val built = File(projectDir, "target/${platform.rustTarget}/release-small/shipsmooth-beta")
+        // A dedicated target dir: cargo does not relink when only the linker env
+        // changes, so sharing target/ with a plain `cargo zigbuild` could stage a
+        // stale binary linked with the wrong (minos 15.0) deployment target.
+        val targetDir = File(projectDir, "target/beta")
+        val built = File(targetDir, "${platform.rustTarget}/release-small/shipsmooth-beta")
         val staged = betaBinDir.get().file("${platform.id}/shipsmooth-beta").asFile
         outputs.file(staged)
         outputs.upToDateWhen { false } // cargo owns incrementality
@@ -122,6 +126,7 @@ val betaBinaryTasks = betaPlatforms.map { platform ->
         if (toolchain.found()) {
             commandLine(toolchain.command(listOf(
                 "build", "-p", "ss-cli", "--profile", "release-small", "--target", platform.rustTarget,
+                "--target-dir", targetDir.absolutePath,
             )))
             environment(toolchain.environment())
             environment(platform.linkerEnv, linker.absolutePath)
@@ -138,4 +143,69 @@ tasks.register("betaBinaries") {
     group = "rust (experimental)"
     description = "Cross-compiles the shipsmooth-beta binary for every POSIX release platform."
     dependsOn(betaBinaryTasks)
+}
+
+// The workspace version: the shipsmooth-beta release version (exp/rust/Cargo.toml).
+val cargoWorkspaceVersion: String = Regex("""(?s)\[workspace\.package\].*?\nversion\s*=\s*"([^"]+)"""")
+    .find(file("Cargo.toml").readText())?.groupValues?.get(1)
+    ?: error("no [workspace.package] version in exp/rust/Cargo.toml")
+
+/**
+ * Load-command facts of a 64-bit little-endian Mach-O executable: the LC_BUILD_VERSION
+ * minimum OS as (major, minor), and whether an LC_CODE_SIGNATURE is present.
+ */
+data class MachOFacts(val minOs: Pair<Int, Int>?, val signed: Boolean)
+
+fun machOFacts(bin: File): MachOFacts {
+    val buf = java.nio.ByteBuffer.wrap(bin.readBytes()).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+    require(buf.getInt(0) == 0xfeedfacf.toInt()) { "$bin is not a 64-bit Mach-O executable" }
+    var minOs: Pair<Int, Int>? = null
+    var signed = false
+    var offset = 32 // sizeof(mach_header_64)
+    repeat(buf.getInt(16)) { // ncmds
+        val cmd = buf.getInt(offset)
+        when (cmd) {
+            0x32 -> buf.getInt(offset + 12).let { minOs = (it ushr 16) to ((it ushr 8) and 0xff) } // LC_BUILD_VERSION
+            0x1d -> signed = true // LC_CODE_SIGNATURE
+        }
+        offset += buf.getInt(offset + 4)
+    }
+    return MachOFacts(minOs, signed)
+}
+
+// Artifact check for the cross-compiled binaries (05 §Risks: verify each binary before
+// the release that advertises it). It cannot execute the darwin binaries on Linux, so it
+// asserts the launch-critical facts instead: minimum macOS <= 11.0 on both (the
+// cargo-zigbuild default of 15.0 regression), and an ad-hoc signature on arm64 (Apple
+// Silicon kills unsigned binaries). The linux binary runs here and must print the version.
+// -Pbeta.bin.dir=<dir> checks another <platform>/shipsmooth-beta tree (e.g. downloaded assets).
+tasks.register("verifyBetaBinaries") {
+    group = "rust (experimental)"
+    description = "Checks the shipsmooth-beta binaries: linux --version, darwin minimum macOS and signature."
+    val binDir = (findProperty("beta.bin.dir") as String?)?.let(::File) ?: betaBinDir.get().asFile
+    if (findProperty("beta.bin.dir") == null) mustRunAfter(betaBinaryTasks)
+    doLast {
+        fun bin(platform: String) = File(binDir, "$platform/shipsmooth-beta").also {
+            check(it.canExecute()) { "missing or not executable: $it" }
+        }
+        val linux = bin("linux-x64")
+        if (System.getProperty("os.name") == "Linux" && System.getProperty("os.arch") in setOf("amd64", "x86_64")) {
+            val proc = ProcessBuilder(linux.absolutePath, "--version").redirectErrorStream(true).start()
+            val printed = proc.inputStream.bufferedReader().readText().trim()
+            check(proc.waitFor() == 0 && printed == cargoWorkspaceVersion) {
+                "linux-x64 --version printed '$printed', expected '$cargoWorkspaceVersion'"
+            }
+        } else {
+            logger.lifecycle("verifyBetaBinaries: not on linux-x64, linux binary not executed")
+        }
+        for ((platform, mustBeSigned) in listOf("darwin-x64" to false, "darwin-arm64" to true)) {
+            val facts = machOFacts(bin(platform))
+            val (major, minor) = checkNotNull(facts.minOs) { "$platform: no LC_BUILD_VERSION" }
+            check(major < 11 || (major == 11 && minor == 0)) {
+                "$platform: minimum macOS is $major.$minor, must be <= 11.0"
+            }
+            check(!mustBeSigned || facts.signed) { "$platform: missing LC_CODE_SIGNATURE" }
+        }
+        logger.lifecycle("verifyBetaBinaries: OK ($cargoWorkspaceVersion, $binDir)")
+    }
 }
