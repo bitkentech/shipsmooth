@@ -41,7 +41,7 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Render the plugin as `shipsmooth-beta`</name>
             <commit></commit>
             <created-from>plan-115-v1</created-from>
@@ -50,6 +50,10 @@
                 <comment>
                     <timestamp>2026-10-13T08:06:26.362Z</timestamp>
                     <message>Scope per plan-115-v2: renamed 'Render the plugin as shipsmooth-beta, with its own installer'; adds install-shipsmooth-beta.sh, renderer script detection, lint, :213 hook command.</message>
+                </comment>
+                <comment>
+                    <timestamp>2026-10-13T10:41:13.204Z</timestamp>
+                    <message>De-risk draft ready for review (c371b2f). Java renders byte-identical (5/5 vs baseline); IT-1 + IT-2 green with the real Rust binary and a hand-built zip. Remaining for hardening: beta .claude-plugin manifests + assembleClaudeBeta payload, shared install-case tests across both installers, trimming Java-specific comments in the beta installer.</message>
                 </comment>
             </comments>
             <deviations/>
