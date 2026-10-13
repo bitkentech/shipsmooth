@@ -72,5 +72,10 @@
             <message>Plan initialised.</message>
             <blocked>false</blocked>
         </update>
+        <update>
+            <timestamp>2026-10-13T07:59:03.722Z</timestamp>
+            <message>Major deviation before preamble: install-shipsmooth.sh is NOT launcher-agnostic (05 premise wrong). :40 BIN=$RUNTIME_DIR/bin/shipsmooth and :65-66 EXTRACTED_BIN=bin/shipsmooth are hardcoded, so a zip containing bin/shipsmooth-beta dies 'extracted archive is missing bin/shipsmooth'. bin/$NAME is not a safe fix: opencode dev passes NAME=shipsmooth-dev with a Java bin/shipsmooth. Also: hook commands in harness/shared/build.gradle.kts:213,223,233,256 hardcode the 'shipsmooth' NAME argument (and :213 the plugins/cache/bitkentech/shipsmooth fallback path), which Task 2 must cover. Awaiting human decision: keep launcher bin/shipsmooth vs optional 3rd installer arg vs bin/$NAME.</message>
+            <blocked>true</blocked>
+        </update>
     </project-updates>
 </plan-tasks>
