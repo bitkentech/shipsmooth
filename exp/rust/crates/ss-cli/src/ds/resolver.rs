@@ -214,6 +214,38 @@ mod tests {
         ProjectDataStoreResolver::new(config).resolve(repo, remote_url)
     }
 
+    #[test]
+    fn beta_config_wins_and_falls_back_to_the_shared_config_per_project() {
+        // plan-115: shipsmooth-beta reads its own config first; a project it has no
+        // entry for is looked up in the shared shipsmooth.toml (set up by Java later).
+        let tmp = repo();
+        let (both, java_only) = (tmp.path().join("both"), tmp.path().join("java-only"));
+        let (beta_state, java_state, java_only_state) =
+            (tmp.path().join("bs"), tmp.path().join("js"), tmp.path().join("jos"));
+        for d in [&both, &java_only, &beta_state, &java_state, &java_only_state] {
+            std::fs::create_dir(d).unwrap();
+        }
+        let entry = |repo: &Path, root: &Path| {
+            format!(
+                "[[projects]]\nlocalPath = '{}'\nstorageRoot = '{}'\nstorageType = 'separate-dir'\n\n",
+                repo.display(),
+                root.display()
+            )
+        };
+        let beta = tmp.path().join("shipsmooth-beta.toml");
+        std::fs::write(&beta, entry(&both, &beta_state)).unwrap();
+        let shared = tmp.path().join("shipsmooth.toml");
+        std::fs::write(&shared, entry(&both, &java_state) + &entry(&java_only, &java_only_state)).unwrap();
+
+        let resolver = ProjectDataStoreResolver::with_fallback(beta, shared);
+        let root = |repo: &Path| match settled(resolver.resolve(repo, None)) {
+            ProjectDataStore::Standalone { state_dir, .. } => state_dir,
+            _ => panic!("expected Standalone"),
+        };
+        assert_eq!(root(&both), normalize_lexical(&beta_state), "beta entry takes precedence");
+        assert_eq!(root(&java_only), normalize_lexical(&java_only_state), "falls back to shared");
+    }
+
     fn settled(r: DataStoreResolution) -> ProjectDataStore {
         match r {
             DataStoreResolution::Settled(store) => store,

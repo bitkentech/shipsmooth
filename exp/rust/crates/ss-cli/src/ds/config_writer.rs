@@ -224,6 +224,52 @@ mod tests {
         );
     }
 
+    // ---- plan-115: beta config isolation (copy-on-first-write) ----
+
+    #[test]
+    fn first_beta_write_seeds_from_the_shared_config_and_never_touches_it() {
+        let tmp = tempfile::tempdir().unwrap();
+        let shared = tmp.path().join("shipsmooth.toml");
+        let beta = tmp.path().join("shipsmooth-beta.toml");
+        let (old_repo, new_repo, old_state, new_state) =
+            (tmp.path().join("old"), tmp.path().join("new"), tmp.path().join("s1"), tmp.path().join("s2"));
+        for d in [&old_repo, &new_repo, &old_state, &new_state] {
+            std::fs::create_dir(d).unwrap();
+        }
+        ConfigWriter::with_schema_location(shared.clone(), Some("java-pinned".into()))
+            .write_external(&old_repo, None, &old_state)
+            .unwrap();
+        let shared_before = std::fs::read(&shared).unwrap();
+
+        ConfigWriter::new(beta.clone()).seeded_from(shared.clone()).write_external(&new_repo, None, &new_state).unwrap();
+
+        assert_eq!(std::fs::read(&shared).unwrap(), shared_before, "shared config must be byte-identical");
+        assert_eq!(settled_standalone_root(resolve(&beta, &old_repo)), normalize_lexical(&old_state));
+        assert_eq!(settled_standalone_root(resolve(&beta, &new_repo)), normalize_lexical(&new_state));
+        assert!(std::fs::read_to_string(&beta).unwrap().contains("location = 'java-pinned'"),
+            "the seed's [toml-schema] is kept (first writer wins)");
+    }
+
+    #[test]
+    fn an_existing_beta_config_is_not_reseeded() {
+        let tmp = tempfile::tempdir().unwrap();
+        let shared = tmp.path().join("shipsmooth.toml");
+        let beta = tmp.path().join("shipsmooth-beta.toml");
+        let (a, b, sa, sb) =
+            (tmp.path().join("a"), tmp.path().join("b"), tmp.path().join("sa"), tmp.path().join("sb"));
+        for d in [&a, &b, &sa, &sb] {
+            std::fs::create_dir(d).unwrap();
+        }
+        ConfigWriter::new(beta.clone()).write_external(&a, None, &sa).unwrap();
+        // Java sets up project b AFTER the beta file exists: the beta file must not absorb it.
+        ConfigWriter::new(shared.clone()).write_external(&b, None, &sb).unwrap();
+
+        ConfigWriter::new(beta.clone()).seeded_from(shared.clone()).write_external(&a, None, &sa).unwrap();
+
+        assert!(!std::fs::read_to_string(&beta).unwrap().contains(&*b.to_string_lossy()),
+            "seeding happens only when the beta config does not exist yet");
+    }
+
     #[test]
     fn emits_injected_schema_location() {
         let tmp = tempfile::tempdir().unwrap();
