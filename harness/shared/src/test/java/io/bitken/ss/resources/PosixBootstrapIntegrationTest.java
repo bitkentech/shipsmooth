@@ -182,6 +182,45 @@ class PosixBootstrapIntegrationTest {
             "second install must no-op");
     }
 
+    /**
+     * plan-115: the shipsmooth-beta render ships its OWN installer, which installs the
+     * single Rust binary {@code bin/shipsmooth-beta} into the beta cache tree. The Java
+     * installer is not copied into a beta payload (and stays byte-identical).
+     */
+    @Test
+    void betaRender_shipsItsOwnInstaller_thatInstallsTheBetaLauncher(@TempDir Path work) throws Exception {
+        assumeTrue(toolsPresent("sh", "zip", "unzip"), "requires sh + zip + unzip on PATH");
+
+        setProdPosixProps();
+        System.setProperty("plugin.base.name", "shipsmooth-beta");
+        System.setProperty("plugin.version", "0.1.0-beta");
+        System.setProperty("plugin.hook.command",
+            "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/install-shipsmooth-beta.sh\" shipsmooth-beta 0.1.0-beta");
+        Target.main(new String[]{});
+
+        Path script = tempDir.resolve("hooks/install-shipsmooth-beta.sh");
+        assertTrue(Files.exists(script), "beta render must copy install-shipsmooth-beta.sh");
+        assertFalse(Files.exists(tempDir.resolve("hooks/install-shipsmooth.sh")),
+            "beta render must not ship the Java installer");
+
+        Path stage = Files.createDirectories(work.resolve("stage/bin"));
+        Path fakeBin = stage.resolve("shipsmooth-beta");
+        Files.writeString(fakeBin, "#!/bin/sh\necho 0.1.0-beta\n");
+        Files.setPosixFilePermissions(fakeBin, Set.of(
+            PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE));
+        Path releases = Files.createDirectories(work.resolve("releases"));
+        Path zip = releases.resolve("shipsmooth-beta-0.1.0-beta-" + detectLinuxOrDarwinPlatform() + ".zip");
+        run(work.resolve("stage"), "zip", "-q", "-r", "-X", zip.toString(), "bin");
+
+        Path cache = work.resolve("cache");
+        assertEquals(0, runInstaller(script, cache, releases, "shipsmooth-beta", "0.1.0-beta"),
+            "beta installer must exit 0");
+        Path installed = cache.resolve("shipsmooth-beta/0.1.0-beta/bin/shipsmooth-beta");
+        assertTrue(Files.isExecutable(installed), "beta launcher must be installed executable");
+        assertEquals(0, runInstaller(script, cache, Files.createDirectories(work.resolve("none")),
+            "shipsmooth-beta", "0.1.0-beta"), "second install must no-op without downloading");
+    }
+
     private int runInstaller(Path script, Path cache, Path releases, String name, String version)
             throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder(
