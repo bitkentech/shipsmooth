@@ -1,20 +1,18 @@
 //! The `[toml-schema]` values this CLI build emits into `shipsmooth.toml`.
 //!
 //! Port of the Java `SchemaConfig` template (plan-91 Task 4). The Java build
-//! bakes `${schema.location}` per variant; the prod value is the version-pinned
-//! releases URL, which Rust derives from the workspace version at compile time
-//! (the workspace version is the single source of truth, so the pinned URL can
-//! never drift from the binary that emits it).
+//! bakes `${schema.location}` per variant as a version-pinned releases URL. The
+//! shipsmooth-beta build deliberately does NOT pin (plan-115, 05 §4 option 2): a
+//! `v<beta-version>` tag never carries `dist/schemas/`, and both products write
+//! this key into the same `shipsmooth.toml`, so the beta points at the unversioned
+//! `releases`-branch copy. Re-pin at promotion.
 
 /// The TOML Schema version advertised in the emitted `[toml-schema]` table.
 pub const SCHEMA_VERSION: &str = "1.0.0";
 
 /// The `location` URI emitted in `[toml-schema]` for this build.
-pub const SCHEMA_LOCATION: &str = concat!(
-    "https://raw.githubusercontent.com/bitkentech/shipsmooth/v",
-    env!("CARGO_PKG_VERSION"),
-    "/dist/schemas/shipsmooth.tosd"
-);
+pub const SCHEMA_LOCATION: &str =
+    "https://raw.githubusercontent.com/bitkentech/shipsmooth/releases/dist/schemas/shipsmooth.tosd";
 
 #[cfg(test)]
 mod tests {

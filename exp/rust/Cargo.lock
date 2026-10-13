@@ -465,7 +465,7 @@ dependencies = [
 
 [[package]]
 name = "ss-cli"
-version = "0.3.34"
+version = "0.1.0-beta"
 dependencies = [
  "assert_cmd",
  "clap",
@@ -481,7 +481,7 @@ dependencies = [
 
 [[package]]
 name = "ss-core"
-version = "0.3.34"
+version = "0.1.0-beta"
 dependencies = [
  "quick-xml",
  "regex",

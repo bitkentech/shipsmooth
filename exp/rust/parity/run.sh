@@ -23,7 +23,7 @@ if [ -z "${SS_JAVA:-}" ] && [ -x "$_JAVA_DIST" ]; then
     SS_JAVA="$_JAVA_DIST"
 fi
 SS_JAVA="${SS_JAVA:-$HOME/.cache/shipsmooth/0.3.36/bin/shipsmooth}"
-SS_RUST="${SS_RUST:-$HERE/../target/debug/shipsmooth}"
+SS_RUST="${SS_RUST:-$HERE/../target/debug/shipsmooth-beta}"
 
 [ -x "$SS_JAVA" ] || { echo "Java CLI not found at $SS_JAVA (override via SS_JAVA=)" >&2; exit 1; }
 [ -x "$SS_RUST" ] || { echo "Rust binary not built — run: cargo build" >&2; exit 1; }
@@ -135,10 +135,12 @@ EOF
     run_one "$bin" "$dir" info      store info
     run_one "$bin" "$dir" info-json store info --json
     if [ -f "$SCFG/shipsmooth/shipsmooth.toml" ]; then
-        # The schema location embeds the writing CLI's own version, which is
-        # allowed to differ between the two implementations; normalise it so
-        # the rest of the file stays byte-checked.
-        sed -E 's|(shipsmooth/)v[0-9]+\.[0-9]+\.[0-9]+(/dist)|\1v<VERSION>\2|' \
+        # The schema location's ref is allowed to differ between the two
+        # implementations: Java pins its own release tag (v<ver>), while the
+        # shipsmooth-beta build points at the unversioned `releases` branch
+        # (plan-115, 05 §4). Normalise either ref so the rest of the file stays
+        # byte-checked — the location itself is verified by hand per release.
+        sed -E 's#(shipsmooth/)(v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?|releases)(/dist)#\1<SCHEMA-REF>\4#' \
             "$SCFG/shipsmooth/shipsmooth.toml" >"$dir/shipsmooth.toml"
     fi
     # PB-360: `store init` also stamps a manifest.toml at the data root. Capture
@@ -513,7 +515,7 @@ normalise_usage() { # normalise_usage <capture>
 
 normalise_version() { # normalise_version <capture>  (bare digits -> token)
     local tmp="$1.norm"
-    sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+$/<VERSION>/' "$1" >"$tmp"
+    sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$/<VERSION>/' "$1" >"$tmp"
     mv "$tmp" "$1"
 }
 

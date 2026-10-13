@@ -72,9 +72,8 @@ fn run(args: impl IntoIterator<Item = String>) -> i32 {
         Err(e) if e.kind() == clap::error::ErrorKind::DisplayVersion => {
             // clap's default `--version` renders "shipsmooth <ver>"; Java's
             // picocli prints the bare number. Match Java: bare version to
-            // stdout, exit 0. Only the *format* is aligned here — the value
-            // stays 0.3.34 (see the note on the version assertion below: the
-            // Cargo workspace version is deliberately not synced to Java's).
+            // stdout, exit 0. Only the *format* is aligned here — the value is
+            // the independent shipsmooth-beta series (see version_is_a_beta_prerelease).
             println!("{}", env!("CARGO_PKG_VERSION"));
             0
         }
