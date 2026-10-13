@@ -78,12 +78,17 @@
         <task>
             <id>4</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Installer coexistence (IT-2 hardening)</name>
-            <commit></commit>
+            <commit>38e6dfe5ec3bc67f75a6cca94d6519748f2c7510</commit>
             <created-from>plan-115-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-10-13T11:05:26.551Z</timestamp>
+                    <message>IT-2 (two products, one cache, no re-download/shadowing) landed in the preamble and goes green from Task 3. This task adds the shared-config check from the Task 1 deviation. It passed on first run because Task 1 implemented the behaviour, so it is a regression guard on the installed binary, not a red-first test.</message>
+                </comment>
+            </comments>
             <deviations/>
             <depends-on>2,3</depends-on>
         </task>
