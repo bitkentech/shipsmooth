@@ -61,9 +61,9 @@
         <task>
             <id>3</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Beta packager + gated publish flow with `--version` guard</name>
-            <commit></commit>
+            <commit>5156fef5156c44e11c4b717785f5084bda53b844</commit>
             <created-from>plan-115-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
