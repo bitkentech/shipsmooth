@@ -95,9 +95,9 @@
         <task>
             <id>5</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Docs — `EXPERIMENTAL.md` beta section + release runbook</name>
-            <commit></commit>
+            <commit>f2233975a7fba26f6ef5bee3464e90a6c6b1ba9f</commit>
             <created-from>plan-115-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
