@@ -15,3 +15,20 @@ pub const SCHEMA_LOCATION: &str = concat!(
     env!("CARGO_PKG_VERSION"),
     "/dist/schemas/shipsmooth.tosd"
 );
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn location_is_the_unversioned_releases_branch_url() {
+        // plan-115 (05 §4 option 2): during the beta period both products write this
+        // key into the same shipsmooth.toml, so the beta emits an unversioned URL that
+        // always resolves, instead of a v<beta-version> tag that never carries a schema.
+        assert_eq!(
+            SCHEMA_LOCATION,
+            "https://raw.githubusercontent.com/bitkentech/shipsmooth/releases/dist/schemas/shipsmooth.tosd"
+        );
+        assert!(!SCHEMA_LOCATION.contains(env!("CARGO_PKG_VERSION")));
+    }
+}

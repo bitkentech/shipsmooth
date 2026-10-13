@@ -41,7 +41,7 @@ impl Fixture {
     }
 
     fn shipsmooth(&self, args: &[&str]) -> Command {
-        let mut cmd = Command::cargo_bin("shipsmooth").unwrap();
+        let mut cmd = Command::cargo_bin("shipsmooth-beta").unwrap();
         cmd.args(args).current_dir(&self.repo).env("XDG_CONFIG_HOME", &self.config_home);
         cmd
     }
