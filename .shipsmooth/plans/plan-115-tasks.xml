@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Beta binary — rename, version series, unversioned schema URL, cross-compile</name>
-            <commit></commit>
+            <commit>e39066afa58c11ce00b0952bf2eee0378352f147</commit>
             <created-from>plan-115-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
