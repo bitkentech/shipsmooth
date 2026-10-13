@@ -1,0 +1,10 @@
+{
+  "hooks" : {
+    "SessionStart" : [ {
+      "hooks" : [ {
+        "type" : "command",
+        "command" : "sh \"${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/cache/bitkentech/shipsmooth-beta/0.1.0-beta}/hooks/install-shipsmooth-beta.sh\" shipsmooth-beta 0.1.0-beta"
+      } ]
+    } ]
+  }
+}

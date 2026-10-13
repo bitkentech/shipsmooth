@@ -1,0 +1,11 @@
+{
+  "name": "shipsmooth-beta",
+  "version": "0.1.0-beta",
+  "description": "[BETA] Rust CLI preview of shipsmooth — expect rough edges. Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, and immutable git-based plan versioning.",
+  "author": {
+    "name": "Pramod Biligiri"
+  },
+  "homepage": "https://github.com/bitkentech/shipsmooth",
+  "repository": "https://github.com/bitkentech/shipsmooth",
+  "license": "Apache-2.0"
+}

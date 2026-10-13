@@ -1,0 +1,20 @@
+{
+  "name": "bitkentech",
+  "description": "Plugin marketplace for bitkentech/shipsmooth (beta)",
+  "owner": {
+    "name": "Bitken Technologies",
+    "url": "https://github.com/bitkentech/shipsmooth"
+  },
+  "plugins": [
+    {
+      "name": "shipsmooth-beta",
+      "description": "[BETA] Rust CLI preview of shipsmooth — expect rough edges. Agent coding workflow with plan-before-implement discipline, TDD, vertical slices, and immutable git-based plan versioning.",
+      "source": "./",
+      "author": {
+        "name": "Bitken Technologies",
+        "url": "https://github.com/bitkentech/shipsmooth"
+      },
+      "category": "development"
+    }
+  ]
+}
