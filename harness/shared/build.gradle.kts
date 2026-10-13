@@ -428,6 +428,7 @@ val copySchemaProd = registerCopySchema(
 // beta-e2e and kept out of the default `test` task — it consumes the beta release zip from
 // the standalone exp/rust build, which needs a Rust toolchain the root build must not
 // require. Run it explicitly: ./gradlew :harness:shared:betaE2eTest [-Pbeta.dist.dir=<dir>]
+// (needs cargo + cargo-zigbuild + zig for the default, real-zip path via :packaging:packageBeta).
 tasks.named<Test>("test") {
     useJUnitPlatform { excludeTags("beta-e2e") }
 }
@@ -440,8 +441,10 @@ val betaE2eTest by tasks.registering(Test::class) {
     useJUnitPlatform { includeTags("beta-e2e") }
     // The beta side is the ASSEMBLED payload (what a user installs), not the bare render.
     dependsOn(renderClaudeProd, ":harness:claude:assembleClaudeBeta")
+    // The real release zips (cross-compiled Rust binaries) unless -Pbeta.dist.dir overrides.
+    if (findProperty("beta.dist.dir") == null) dependsOn(":packaging:packageBeta")
     val betaDist = (findProperty("beta.dist.dir") as String?)
-        ?: repoRoot.dir("exp/rust/build/beta-dist").asFile.path
+        ?: repoRoot.dir("packaging/target/beta-dist").asFile.path
     systemProperty("beta.dist.dir", betaDist)
     systemProperty("beta.render.dir", repoRoot.dir("build-claude-beta").asFile.path)
     systemProperty("java.render.dir", claudeProdSpec.outputDir)
