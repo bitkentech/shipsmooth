@@ -11,12 +11,17 @@
         <task>
             <id>1</id>
             <risk>high</risk>
-            <status>pending</status>
+            <status>de-risked</status>
             <name>Beta binary — rename, version series, unversioned schema URL, cross-compile</name>
             <commit></commit>
             <created-from>plan-115-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-10-13T08:28:24.737Z</timestamp>
+                    <message>De-risk draft ready for review (2d2274d). All 3 POSIX targets cross-compile from Linux; darwin pinned to minos 11.0 via own zig linker wrapper (cargo-zigbuild default gives 15.0). Darwin binaries NOT yet executed on a Mac. Parity 60/60 with schema ref normalised. Java/beta write different schema.location values to the shared config (05 ��4 'agree' claim is false unless Java changes too).</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
