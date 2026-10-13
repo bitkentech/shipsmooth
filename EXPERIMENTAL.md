@@ -23,9 +23,50 @@ footprint: ~2 MB binary, ~3.8 MB RSS, <10 ms startup, versus ~103 MB runtime, ~6
 RSS, ~450 ms for the jlink-packaged Java CLI. See `docs/rust-migration/` for the
 migration notes.
 
-The port has no shipping path yet and is **not part of the main Gradle build** — the
-root `settings.gradle.kts` does not include it, so `./gradlew build` at the repo root
-cannot see this project or invoke cargo.
+The port ships as a separate, opt-in plugin, `shipsmooth-beta` (below). It is still
+**not part of the main Gradle build**: the root `settings.gradle.kts` does not include it,
+so `./gradlew build` at the repo root cannot see this project or invoke cargo.
+
+#### shipsmooth-beta: the Rust CLI as a separate plugin
+
+`shipsmooth-beta` is the Rust CLI packaged as **its own Claude Code plugin**. It is not a
+mode or a flag of `shipsmooth`. It is bleeding edge: it passes the same 60 parity
+scenarios as the Java CLI, but it has had far less real-world use. Install it if you
+want to try it as a daily driver and report problems.
+
+```text
+/plugin marketplace add bitkentech/claude-plugins
+/plugin install shipsmooth-beta@bitkentech
+```
+
+Then start work with `/shipsmooth-beta:start`. What to expect:
+
+- **It is separate from `shipsmooth`.** It has its own slash command, its own runtime
+  under `~/.cache/shipsmooth-beta/<version>/bin/shipsmooth-beta` (a single ~2 MB static
+  binary, no JRE), and its own installer. Both plugins can be installed at once without
+  touching each other.
+- **Its versions are its own series:** `0.1.0-beta`, `0.1.0-beta.2`, …. They are not tied
+  to `shipsmooth`'s version numbers. Each GitHub pre-release names the `main` commit it was
+  built from.
+- **It sees your existing projects.** It reads `~/.config/shipsmooth/shipsmooth.toml`,
+  where `shipsmooth` records each project's plan location, so repos you already use work
+  as-is.
+- **It never writes `shipsmooth.toml`.** Its first config write copies that file to
+  `shipsmooth-beta.toml` next to it, and all of its writes go there from then on. It
+  reads `shipsmooth-beta.toml` first, then falls back to `shipsmooth.toml` for any
+  project the copy lacks, so projects you set up later with `shipsmooth` are still found.
+  The reverse does not hold for `separate-dir` projects: one set up through the beta is
+  recorded only in `shipsmooth-beta.toml`, so `shipsmooth` will ask the first-run question
+  for it again. `same-repo` projects are unaffected, because both products find them from
+  the repo's `.shipsmooth/` folder.
+- **POSIX only** (linux-x64, darwin-x64, darwin-arm64). On Windows, keep using `shipsmooth`.
+
+To remove it: `/plugin uninstall shipsmooth-beta`, then delete `~/.cache/shipsmooth-beta/`
+and, if present, `~/.config/shipsmooth/shipsmooth-beta.toml`. Your `shipsmooth.toml` and
+your plans are untouched.
+
+Maintainers cut beta releases with `publishBetaRelease`. See
+[`packaging/README.md`](packaging/README.md#shipsmooth-beta-release-rust-cli).
 
 `exp/rust/` is instead a self-contained Gradle build with its own settings file and
 wrapper, driven from that directory:
@@ -61,19 +102,21 @@ cd exp/rust
 cargo build --release
 ```
 
-The binary is written to `target/release/shipsmooth` — note it is named `shipsmooth`
-(matching the Java CLI it mirrors), not `ss-cli`, even though the crate is `ss-cli`.
+The binary is written to `target/release/shipsmooth-beta`. It is named after the
+`shipsmooth-beta` product, not `ss-cli`, even though the crate is `ss-cli`. Its usage and
+error text still say `shipsmooth`, so its output matches the Java CLI byte for byte.
 Launch it directly:
 
 ```bash
-./target/release/shipsmooth --help
-./target/release/shipsmooth --version        # -> shipsmooth 0.3.34
-./target/release/shipsmooth plan --help
+./target/release/shipsmooth-beta --help
+./target/release/shipsmooth-beta --version   # -> 0.1.0-beta (bare, like the Java CLI)
+./target/release/shipsmooth-beta plan --help
 ```
 
 The port currently exposes three command groups — `store`, `plan`, and `task` —
 mirroring their Java counterparts. Run it from within a project directory, exactly as
-you would the Java CLI; it resolves state through the same `store` config.
+you would the Java CLI. It resolves state through the same `store` config, reading
+`shipsmooth.toml` but writing only `shipsmooth-beta.toml` (see above).
 
 To build and launch in one step (useful while iterating), `cargo run` forwards
 everything after `--` to the binary:
@@ -82,16 +125,20 @@ everything after `--` to the binary:
 cargo run --release --quiet -- plan --help
 ```
 
-Drop `--release` for a faster-compiling debug build at `target/debug/shipsmooth`.
+Drop `--release` for a faster-compiling debug build at `target/debug/shipsmooth-beta`.
 
 There is also a size-optimized `release-small` profile (`opt-level = "z"`, LTO, symbols
 stripped, `panic = "abort"`) — this is the profile behind the ~2 MB footprint figure
 quoted above, and it is what to use when measuring binary size:
 
 ```bash
-cargo build --profile release-small   # -> target/release-small/shipsmooth
+cargo build --profile release-small   # -> target/release-small/shipsmooth-beta
 ```
 
 For reference, a local build produces ~4.6 MB for `release` versus ~2.3 MB for
 `release-small`. Because `panic = "abort"` drops unwinding, prefer plain `--release`
 for day-to-day work and reserve `release-small` for footprint measurements.
+
+The release binaries are cross-compiled for every POSIX platform from one Linux host
+with `./gradlew betaBinaries verifyBetaBinaries` (needs `cargo-zigbuild` and zig). See
+[`packaging/README.md`](packaging/README.md#shipsmooth-beta-release-rust-cli).

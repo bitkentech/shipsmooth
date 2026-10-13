@@ -193,3 +193,76 @@ Structure of the `shipsmooth-windows` repo after release:
 ├── skills/start/SKILL.md
 └── runtime/                (bundled Windows jlink JRE + shipsmooth.bat)
 ```
+
+## shipsmooth-beta release (Rust CLI)
+
+`shipsmooth-beta` is the Rust CLI (`exp/rust/`) shipped as **its own product**: its own
+plugin, cache tree, slash command, installer, version series and release line. Its
+pipeline is separate from `publishRelease` (they share no tasks and no branch), so
+neither can strand the other. Design: [`docs/rust-migration/05-separate-beta-release.md`](../docs/rust-migration/05-separate-beta-release.md).
+Users install it as described in [`EXPERIMENTAL.md`](../EXPERIMENTAL.md#shipsmooth-beta-the-rust-cli-as-a-separate-plugin).
+
+| | `shipsmooth` | `shipsmooth-beta` |
+|---|---|---|
+| Version source | `gradle.properties` `plugin.version` | `exp/rust/Cargo.toml` `[workspace.package] version` |
+| Version form | `0.3.36` | `0.1.0-beta`, `0.1.0-beta.2`, … (always `-beta`) |
+| Tag | `v0.3.36` | `v0.1.0-beta` |
+| Payload branch | `releases` (`dist/`, `dist-codex/`) | `releases-beta` (`dist/` only, orphan) |
+| GitHub release | normal, "Latest" | pre-release, never "Latest" |
+| Assets | `shipsmooth-<ver>-<platform>.zip` (jlink) | `shipsmooth-beta-<ver>-<platform>.zip` (one static binary) |
+| Platforms | linux-x64, darwin-x64, darwin-arm64, win32-x64 | linux-x64, darwin-x64, darwin-arm64 |
+| Installer | `install-shipsmooth.sh` | `install-shipsmooth-beta.sh` |
+
+### Prerequisites
+
+The JDK/Gradle setup above, plus the cross toolchain (the beta tasks skip without it):
+
+- cargo + rustup with the targets `x86_64-unknown-linux-musl`, `x86_64-apple-darwin` and
+  `aarch64-apple-darwin` (`rustup target add …`);
+- [`cargo-zigbuild`](https://github.com/rust-cross/cargo-zigbuild) (`cargo install cargo-zigbuild`);
+- zig, found by cargo-zigbuild via `$CARGO_ZIGBUILD_ZIG_COMMAND`, `python3 -m ziglang`
+  (`pip install ziglang` in a venv) or `zig` on `PATH`.
+
+Do not use plain `cargo zigbuild` for the darwin targets: it stamps the binaries with a
+macOS 15.0 minimum and they refuse to start on older macOS. `betaBinaries` links through a
+versioned zig target that pins 11.0, and `verifyBetaBinaries` fails the build if that ever
+regresses.
+
+### Cutting a beta
+
+1. **Bump the version** in `exp/rust/Cargo.toml` (`0.1.0-beta` → `0.1.0-beta.2`, or the
+   next milestone's `-beta`), run `cargo test --workspace` in `exp/rust/`, and commit to
+   `main`. The release tags whatever `main` commit is checked out, and refuses a dirty tree.
+2. **Check end to end** (cross-compile → package → assemble → install → run, all local):
+   ```bash
+   ./gradlew :harness:shared:betaE2eTest
+   ```
+3. **Pin the parity pair.** Build Java at the same commit as a prod build and run the
+   harness. Record the 60/60 result against the beta version:
+   ```bash
+   ./gradlew :cli:installDist -Pbuild.env=prod
+   (cd exp/rust && cargo build -p ss-cli && bash parity/run.sh)
+   ```
+4. **Publish.** Run it bare, never piped through `tail` (a pipe masks Gradle's exit status):
+   ```bash
+   ./gradlew :packaging:publishBetaRelease -PpublishBeta=true
+   ```
+   Without `-PpublishBeta=true` it builds nothing and refuses. With it, it checks the
+   inputs, the clean tree, that the tag is absent locally and on origin, and the linux binary's
+   `--version`, all before anything leaves the machine. Then it commits the payload to
+   `releases-beta` (in a throwaway worktree, so your checkout is not touched), tags and
+   pushes, creates the pre-release (`Release v<ver> (main: <sha>)`), and checks it with
+   `gh release view`.
+5. **Confirm by artifact:** `gh release view v<ver>` shows three assets, `Pre-release`, and
+   is not a draft.
+6. **Check `schema.location` by hand.** The parity harness normalises it. The URL
+   `https://raw.githubusercontent.com/bitkentech/shipsmooth/releases/dist/schemas/shipsmooth.tosd`
+   must return 200.
+7. **First release only:** add the `shipsmooth-beta` entry to the
+   `bitkentech/claude-plugins` marketplace, with a git source of `ref=releases-beta`, `path=dist`.
+8. **Smoke-test on a real machine**, macOS included, since the darwin binaries are only
+   inspected, never executed, at build time: `/plugin install shipsmooth-beta@bitkentech`,
+   start a session, and run `/shipsmooth-beta:start`.
+
+Do not run `publishRelease` and `publishBetaRelease` at the same time from one checkout:
+the Java flow checks out `releases` in the working tree.
