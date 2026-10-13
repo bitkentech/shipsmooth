@@ -24,7 +24,8 @@ with `shipsmooth` with no interference.
 
 - Name `shipsmooth-beta`; version strings `0.1.0-beta`, `0.1.0-beta.2`, … →
   tag `v0.1.0-beta` → asset `shipsmooth-beta-0.1.0-beta-<platform>.zip`. The tag can't
-  collide with the 49 existing `v*` tags, and `install-shipsmooth.sh` needs no change.
+  collide with the 49 existing `v*` tags. (05 also claims `install-shipsmooth.sh` needs
+  no change. That is wrong; see Finding 5.)
 - `schema.location` uses an **unversioned** URL during the beta and goes back to
   version-pinned at promotion (05 §4, option 2).
 - Use a separate packager that zips the single `bin/shipsmooth-beta` (0755), built with
@@ -60,6 +61,34 @@ with `shipsmooth` with no interference.
    05 §1 says. Leave `pluginRepoName` (`:141`) alone, because both products release
    from `bitkentech/shipsmooth`.
 
+5. **(v2) `install-shipsmooth.sh` hard-codes the launcher name**, contrary to 05
+   §"What the name already buys". `BIN="$RUNTIME_DIR/bin/shipsmooth"` (`:40`) and
+   `EXTRACTED_BIN="$EXTRACT_DIR/bin/shipsmooth"` (`:65-66`) are literals, so a zip
+   holding `bin/shipsmooth-beta` dies with "extracted archive is missing
+   bin/shipsmooth". `bin/$NAME` is not a safe substitute, because the OpenCode dev
+   render passes `NAME=shipsmooth-dev` with a Java `bin/shipsmooth`
+   (`harness/shared/build.gradle.kts:256`). **Decision (2026-10-13): a separate
+   `install-shipsmooth-beta.sh`**, which the beta's `hooks.json` invokes. The Java
+   `install-shipsmooth.sh` is **not modified at all**, so no Java user runs new
+   installer code. The beta script hard-codes `bin/shipsmooth-beta`, which makes the
+   product explicit in its own hook command. It is near-duplicate shell (~70 lines);
+   that drift risk is accepted because the beta line is temporary, and the shell tests
+   run both scripts through the same install and idempotency cases. At promotion the
+   beta script either becomes the main installer or is deleted. A considered
+   alternative was an optional third `[launcher]` argument on the shared script; it was
+   rejected because it edits the installer every `shipsmooth` user runs.
+   `HookCommandRenderer` copies the installer only when the command contains
+   `INSTALL_SCRIPT_NAME = "install-shipsmooth.sh"` (`:22`, `:43`), and
+   `install-shipsmooth-beta.sh` does not contain that string, so the renderer must
+   learn the second name.
+6. **(v2) The hook commands hard-code the `shipsmooth` NAME argument**:
+   `harness/shared/build.gradle.kts:213` (Claude, which also has the
+   `plugins/cache/bitkentech/shipsmooth/$pluginVersion` fallback root), `:223`
+   (Gemini), `:233` (Codex) and `:256` (OpenCode). The Claude beta render must pass
+   `hooks/install-shipsmooth-beta.sh shipsmooth-beta <ver>` and use a `bitkentech/shipsmooth-beta`
+   fallback root. Only `:213` is in scope (Claude only, Q2), but it must read the base
+   name rather than gain a second literal.
+
 ### Design decisions
 
 - **The beta release flow is a separate entry point**, for example a
@@ -87,7 +116,7 @@ automated by this plan's tests; they are listed as human-run steps under Verific
 **Preamble integration tests (written red before Task 1):**
 
 - **IT-1, beta install end to end, offline.** Build the beta zip for the host
-  platform, render the beta plugin, and run the rendered `install-shipsmooth.sh` with
+  platform, render the beta plugin, and run the rendered `install-shipsmooth-beta.sh` with
   `SS_URL_BASE` pointing at a local directory and a fake `XDG_CACHE_HOME`. Assert that
   `~/.cache/shipsmooth-beta/0.1.0-beta/bin/shipsmooth-beta --version` prints
   `0.1.0-beta`, and that the rendered skill's `SS=` path points at that exact file.
@@ -104,6 +133,12 @@ automated by this plan's tests; they are listed as human-run steps under Verific
 - Q3: root `.claude-plugin/plugin.json` stays `shipsmooth`-only.
 - Q4: `cargo-zigbuild` first; linux-x64-only is the floor (minor deviation).
 - Q5: coverage threshold **90%** for new Java/Kotlin code.
+- **v2 (2026-10-13, major deviation before the preamble):** the installer hard-codes
+  `bin/shipsmooth` (Finding 5). Decision: a separate `install-shipsmooth-beta.sh`
+  invoked by the beta's `hooks.json`, leaving the Java installer untouched. Task 2
+  stays **Medium** and now also covers the beta installer, renderer script detection,
+  the lint task and the Claude hook command (Finding 6). Task 4 no longer treats the
+  beta installer as a deviation.
 
 ## Open questions (as posed for Phase 1 calibration)
 
@@ -146,10 +181,23 @@ automated by this plan's tests; they are listed as human-run steps under Verific
 - **Risk:** high. Cross-compiling, especially darwin-arm64 from Linux, is the main
   unknown (05 §Risks), and the schema URL writes into shared user config.
 
-### Task 2: Render the plugin as `shipsmooth-beta` [Medium]
+### Task 2: Render the plugin as `shipsmooth-beta`, with its own installer [Medium]
 
+- **Beta installer (Finding 5):** new `harness/shared/src/main/resources/install-shipsmooth-beta.sh`,
+  derived from `install-shipsmooth.sh` with `bin/shipsmooth-beta` in place of
+  `bin/shipsmooth` (the `:40` idempotency check, the `:65-66` extraction check and the
+  `die` message). `install-shipsmooth.sh` stays **byte-identical**. Add the new script
+  to the `lintInstallScript` task (`sh -n` + shellcheck). Shell-level tests run both
+  scripts through the same install, exec-bit and idempotency cases.
+- **Renderer:** `HookCommandRenderer` copies whichever known installer script the hook
+  command names (today it only matches `install-shipsmooth.sh`, `:22`/`:43`). A
+  `shipsmooth` render copies exactly the files it copies today.
 - `harness/shared/build.gradle.kts:135` reads `plugin.base.name` (default
   `"shipsmooth"`); `pluginRepoName` is unchanged.
+- **Claude hook command (Finding 6, `:213`):** the script name, NAME and fallback
+  cache root come from the base name. The rendered `hooks.json` for `shipsmooth` stays
+  byte-identical to today's. Gemini, Codex and OpenCode (`:223`, `:233`, `:256`) are
+  untouched.
 - `Os.Posix` derives the launcher name from the base plugin name (Finding 1); Windows
   is unchanged. Update `PluginModelTest` / `TargetIntegrationTest` and add beta cases
   (`.../shipsmooth-beta/0.1.0-beta/bin/shipsmooth-beta`) **while keeping** the existing
@@ -160,9 +208,10 @@ automated by this plan's tests; they are listed as human-run steps under Verific
   `build/…/shipsmooth-beta` with `plugin.json`/`marketplace.json` named
   `shipsmooth-beta` and the slash command `/shipsmooth-beta:start`. A dev render is
   `shipsmooth-beta-dev` (it composes with `Env.decorate`).
-- **Risk:** medium (ordered ahead of the High-risk Task 3 because Task 3 publishes its output). The mechanism mostly exists already, but the `Os` change sits on
-  the shared path both products render through, so a regression would break the Java
-  product.
+- **Risk:** medium. The Java installer is untouched, but the renderer's script
+  detection, the `:213` hook command and `Os` sit on paths the `shipsmooth` render also
+  goes through. Byte-identical checks on the `shipsmooth` output guard them. It stays
+  ahead of the High-risk Task 3 because Task 3 publishes its output.
 
 ### Task 3: Beta packager + gated publish flow with `--version` guard [High]
 *Depends-on: 1,2*
@@ -187,10 +236,10 @@ automated by this plan's tests; they are listed as human-run steps under Verific
 *Depends-on: 2,3*
 
 - Extend `PosixBootstrapIntegrationTest` with the two-product case from IT-2, using the
-  real beta zip from Task 3 and the rendered beta hook from Task 2. No installer
-  changes are expected; if one turns out to be needed, that is a major deviation.
-- **Risk:** low. 05 shows the installer is already fully parameterised by `NAME`, and
-  the test pattern exists.
+  real beta zip from Task 3 and the rendered beta hook from Task 2 (which invokes
+  `install-shipsmooth-beta.sh`).
+- **Risk:** low. Task 2 has already added the beta installer, so this task only adds
+  the two-product case to an existing test pattern.
 
 ### Task 5: Docs — `EXPERIMENTAL.md` beta section + release runbook [Low]
 
