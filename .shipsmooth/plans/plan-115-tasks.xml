@@ -41,9 +41,9 @@
         <task>
             <id>2</id>
             <risk>medium</risk>
-            <status>de-risked</status>
+            <status>agent-coded</status>
             <name>Render the plugin as `shipsmooth-beta`</name>
-            <commit></commit>
+            <commit>018168d417b705937572972ee0b6fc6f6e0509be</commit>
             <created-from>plan-115-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments>
