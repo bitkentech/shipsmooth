@@ -387,3 +387,27 @@ val copySchemaProd = registerCopySchema(
     "copySchemaProd",
     layout.buildDirectory.dir("stage/schemas-prod").get().asFile,
 )
+
+// plan-115: the shipsmooth-beta end-to-end proof (BetaReleaseIntegrationTest) is tagged
+// beta-e2e and kept out of the default `test` task — it consumes the beta release zip from
+// the standalone exp/rust build, which needs a Rust toolchain the root build must not
+// require. Run it explicitly: ./gradlew :harness:shared:betaE2eTest [-Pbeta.dist.dir=<dir>]
+tasks.named<Test>("test") {
+    useJUnitPlatform { excludeTags("beta-e2e") }
+}
+
+val betaE2eTest by tasks.registering(Test::class) {
+    description = "End-to-end install + coexistence proof for the shipsmooth-beta product."
+    group = "verification"
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    useJUnitPlatform { includeTags("beta-e2e") }
+    dependsOn(renderClaudeProd)
+    val betaDist = (findProperty("beta.dist.dir") as String?)
+        ?: repoRoot.dir("exp/rust/build/beta-dist").asFile.path
+    systemProperty("beta.dist.dir", betaDist)
+    systemProperty("beta.render.dir", layout.buildDirectory.dir("render/claude-beta").get().asFile.path)
+    systemProperty("java.render.dir", claudeProdSpec.outputDir)
+    // Always re-run: the inputs (an external zip, the real installers) are not tracked.
+    outputs.upToDateWhen { false }
+}
