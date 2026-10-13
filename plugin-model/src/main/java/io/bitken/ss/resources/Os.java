@@ -14,7 +14,20 @@ public sealed interface Os permits Os.Posix, Os.Windows {
     Os POSIX   = new Posix();
     Os WINDOWS = new Windows();
 
+    /** The Java product's launcher filename (what {@code PackageRuntime} zips). */
     String launcherFileName();
+
+    /**
+     * The launcher filename of the product named {@code basePluginName} — what the
+     * rendered {@code SS=} path invokes. Defaults to the Java product's launcher; POSIX
+     * names it after the product so {@code shipsmooth-beta} (the Rust CLI, plan-115)
+     * ships {@code bin/shipsmooth-beta}. Takes the BASE name: a dev build decorates the
+     * cache dir, never the launcher.
+     */
+    default String launcherFileName(String basePluginName) {
+        return launcherFileName();
+    }
+
     String javaExe();
     String cliBinPath(String pluginName, String version, String cacheSubdir);
 
@@ -36,6 +49,11 @@ public sealed interface Os permits Os.Posix, Os.Windows {
         }
 
         @Override
+        public String launcherFileName(String basePluginName) {
+            return basePluginName;
+        }
+
+        @Override
         public String javaExe() {
             return "java";
         }
@@ -50,7 +68,7 @@ public sealed interface Os permits Os.Posix, Os.Windows {
          */
         @Override
         public String cliBinPath(String pluginName, String version, String cacheSubdir) {
-            return "${XDG_CACHE_HOME:-$HOME/.cache}/" + cacheSubdir + "/" + version + "/bin/" + launcherFileName();
+            return "${XDG_CACHE_HOME:-$HOME/.cache}/" + cacheSubdir + "/" + version + "/bin/" + launcherFileName(pluginName);
         }
     }
 

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Produces the SessionStart hook command string and emits its OS-specific
@@ -20,6 +22,13 @@ class HookCommandRenderer {
 
     /** Filename of the Node-free POSIX bootstrap script bundled as a classpath resource. */
     static final String INSTALL_SCRIPT_NAME = "install-shipsmooth.sh";
+
+    /**
+     * Any bundled {@code install-<product>.sh} the hook command names: the Java
+     * product's {@link #INSTALL_SCRIPT_NAME}, or {@code install-shipsmooth-beta.sh} for
+     * the Rust beta (plan-115), which ships its own installer.
+     */
+    private static final Pattern INSTALL_SCRIPT = Pattern.compile("install-[A-Za-z0-9-]+\\.sh");
 
     /**
      * Returns the hook command for {@code os}, writing any companion file into
@@ -40,8 +49,9 @@ class HookCommandRenderer {
         // copy the static script next to hooks.json — the Posix sibling of the
         // Windows install-runtime.bat. The hook passes name+version as args, so the
         // script itself is a plain, lintable file with no baked values.
-        if (command.contains(INSTALL_SCRIPT_NAME)) {
-            copyResource(INSTALL_SCRIPT_NAME, hooksDir.resolve(INSTALL_SCRIPT_NAME));
+        Matcher script = INSTALL_SCRIPT.matcher(command);
+        if (script.find()) {
+            copyResource(script.group(), hooksDir.resolve(script.group()));
         }
         return command;
     }

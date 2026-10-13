@@ -63,18 +63,20 @@ tasks.named("check") { dependsOn(testTs) }
 // plan-76: lint the static POSIX bootstrap script. `sh -n` (syntax) always runs;
 // `shellcheck` runs only when installed, so the build never hard-fails on a
 // missing optional linter but enforces it where present.
-val installScript = layout.projectDirectory.file("src/main/resources/install-shipsmooth.sh")
+// plan-115: both installers — the Java product's and the shipsmooth-beta one.
+val installScripts = listOf("install-shipsmooth.sh", "install-shipsmooth-beta.sh")
+    .map { layout.projectDirectory.file("src/main/resources/$it") }
 val lintInstallScript by tasks.registering(Exec::class) {
-    description = "Syntax-check install-shipsmooth.sh (sh -n always; shellcheck if available)."
+    description = "Syntax-check the install-*.sh bootstraps (sh -n always; shellcheck if available)."
     group = "verification"
-    inputs.file(installScript)
+    inputs.files(installScripts)
     val marker = layout.buildDirectory.file("lint/install-shipsmooth.ok")
     outputs.file(marker)
-    val scriptPath = installScript.asFile.path
+    val scriptPaths = installScripts.joinToString(" ") { "\"${it.asFile.path}\"" }
     val markerPath = marker.get().asFile.path
     commandLine("sh", "-c",
-        "set -e; sh -n \"$scriptPath\"; " +
-        "if command -v shellcheck >/dev/null 2>&1; then shellcheck -s sh \"$scriptPath\"; " +
+        "set -e; for s in $scriptPaths; do sh -n \"\$s\"; done; " +
+        "if command -v shellcheck >/dev/null 2>&1; then shellcheck -s sh $scriptPaths; " +
         "else echo 'shellcheck not installed; ran sh -n only'; fi; " +
         "mkdir -p \"$(dirname \"$markerPath\")\"; : > \"$markerPath\"")
 }
@@ -132,7 +134,9 @@ fun baseSpec(env: BuildEnv) = RenderSpec(
     buildPlatform = "",
     buildOs = "posix",
     buildEnv = env,
-    pluginBaseName = "shipsmooth",
+    // One property governs the product identity across every host harness (plan-115);
+    // the shipsmooth-beta render overrides it via claudeBetaSpec, not globally.
+    pluginBaseName = (findProperty("plugin.base.name") as String?) ?: "shipsmooth",
     pluginVersion = pluginVersion,
     pluginDescription = if (env == BuildEnv.PROD) prodDescription else "Agent coding workflow (dev build)",
     pluginSkillStartBasename = "start",
@@ -196,7 +200,13 @@ fun claudeFrontmatter(env: BuildEnv): String = if (env == BuildEnv.PROD) """
         ---
     """.trimIndent()
 
-fun claudeSpec(env: BuildEnv) = baseSpec(env).copy(
+// The prod Claude SessionStart command for product <name> at <version>: it runs that
+// product's own bundled installer, install-<name>.sh (install-shipsmooth.sh for the
+// Java product; install-shipsmooth-beta.sh for the Rust beta, plan-115).
+fun claudeProdHookCommand(name: String, version: String) =
+    "sh \"\${CLAUDE_PLUGIN_ROOT:-\$HOME/.claude/plugins/cache/bitkentech/$name/$version}/hooks/install-$name.sh\" $name $version"
+
+fun claudeSpec(env: BuildEnv, base: RenderSpec = baseSpec(env)) = base.copy(
     buildPlatform = "claude",
     // Claude: bare "start" basename (from base). Frontmatter carries name+description
     // plus disable-model-invocation: true so /shipsmooth:start stays explicit-only.
@@ -210,7 +220,7 @@ fun claudeSpec(env: BuildEnv) = baseSpec(env).copy(
     // (HookCommandRenderer.windowsCacheRoot), which already hardcodes the cache root
     // rather than trusting a plugin-root variable.
     pluginHookCommand = if (env == BuildEnv.PROD)
-        "sh \"\${CLAUDE_PLUGIN_ROOT:-\$HOME/.claude/plugins/cache/bitkentech/shipsmooth/$pluginVersion}/hooks/install-shipsmooth.sh\" shipsmooth $pluginVersion"
+        claudeProdHookCommand(base.pluginBaseName, base.pluginVersion)
     else "node \"\${CLAUDE_PLUGIN_ROOT}/dist/session-start.js\"",
 )
 
@@ -306,7 +316,21 @@ val windowsSpec = claudeSpec(BuildEnv.PROD).copy(
     outputDir = layout.buildDirectory.dir("render/windows").get().asFile.path,
 )
 
+// shipsmooth-beta (plan-115): the Claude prod render under the beta identity — its own
+// name (so its own cache tree, launcher, installer and slash command) and the Rust
+// workspace version (an independent series, not plugin.version). Claude only (Q2).
+val betaVersion = CargoVersion.workspace(repoRoot.file("exp/rust/Cargo.toml").asFile)
+val claudeBetaSpec = claudeSpec(
+    BuildEnv.PROD,
+    baseSpec(BuildEnv.PROD).copy(
+        pluginBaseName = "shipsmooth-beta",
+        pluginVersion = betaVersion,
+        pluginDescription = "[BETA] Rust CLI preview of shipsmooth — expect rough edges. $prodDescription",
+    ),
+).copy(outputDir = layout.buildDirectory.dir("render/claude-beta").get().asFile.path)
+
 val renderClaudeProd = registerRender("renderClaudeProd", claudeProdSpec)
+val renderClaudeBeta = registerRender("renderClaudeBeta", claudeBetaSpec)
 val renderGeminiProd = registerRender("renderGeminiProd", geminiProdSpec)
 val renderCodexProd = registerRender("renderCodexProd", codexProdSpec)
 val renderOpencodeProd = registerRender("renderOpencodeProd", opencodeProdSpec)
@@ -402,7 +426,7 @@ val betaE2eTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets["test"].output.classesDirs
     classpath = sourceSets["test"].runtimeClasspath
     useJUnitPlatform { includeTags("beta-e2e") }
-    dependsOn(renderClaudeProd)
+    dependsOn(renderClaudeProd, renderClaudeBeta)
     val betaDist = (findProperty("beta.dist.dir") as String?)
         ?: repoRoot.dir("exp/rust/build/beta-dist").asFile.path
     systemProperty("beta.dist.dir", betaDist)
