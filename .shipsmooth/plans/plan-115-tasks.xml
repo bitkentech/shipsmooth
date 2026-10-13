@@ -3,7 +3,7 @@
     <plan>115</plan>
     <plan-version>plan-115-v1</plan-version>
     <metadata>
-        <backlog-issue></backlog-issue>
+        <backlog-issue>distribute the Rust CLI to real users as the shipsmooth-beta release line (local backlog; no external issue) — continues the rust-migration series, plans 102–110</backlog-issue>
         <status>active</status>
         <created>2026-10-13</created>
     </metadata>
