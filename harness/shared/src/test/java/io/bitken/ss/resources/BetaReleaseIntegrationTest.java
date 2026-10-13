@@ -106,6 +106,51 @@ class BetaReleaseIntegrationTest {
             "beta re-run must no-op");
     }
 
+    /**
+     * IT-2 (plan-115 Task 1 deviation): the installed beta reads the shared
+     * shipsmooth.toml but never writes it — its first write seeds shipsmooth-beta.toml
+     * from it — and a project the Java product set up stays visible to the beta.
+     */
+    @Test
+    void installedBeta_readsButNeverWritesTheSharedConfig() throws Exception {
+        Path betaRender = requiredDir("beta.render.dir");
+        Path betaDist = requiredDir("beta.dist.dir");
+        Map<String, String> env = new java.util.HashMap<>(sandboxEnv(betaRender, betaDist));
+        Path configDir = Files.createDirectories(work.resolve("config/shipsmooth"));
+        env.put("XDG_CONFIG_HOME", work.resolve("config").toString());
+        env.put("GIT_CONFIG_NOSYSTEM", "1");
+        assertEquals(0, sh(env, sessionStartCommand(betaRender)).code(), "beta install must succeed");
+        String beta = expand(env, ssExpression(betaRender));
+
+        // A project the Java product already set up (separate-dir: only the config knows its state root).
+        Path javaRepo = gitRepo("java-repo");
+        Path javaState = Files.createDirectories(work.resolve("java-state"));
+        Path shared = configDir.resolve("shipsmooth.toml");
+        Files.writeString(shared, "[toml-schema]\nversion = '1.0.0'\n\n[[projects]]\n"
+            + "localPath = '" + javaRepo.toRealPath() + "'\nstorageRoot = '" + javaState + "'\n"
+            + "storageType = 'separate-dir'\n\n");
+        byte[] sharedBefore = Files.readAllBytes(shared);
+
+        Exec seen = exec(env, javaRepo, beta, "store", "info", "--json");
+        assertTrue(seen.output().contains("\"stateRoot\":\"" + javaState + "\""),
+            "the beta must find the Java-set-up project via shipsmooth.toml: " + seen.output());
+
+        Exec init = exec(env, gitRepo("beta-repo"), beta, "store", "init", "--type", "same-repo", "--json");
+        assertEquals(0, init.code(), "beta store init must succeed:\n" + init.output());
+
+        assertArrayEquals(sharedBefore, Files.readAllBytes(shared), "the beta must never write shipsmooth.toml");
+        String betaConfig = Files.readString(configDir.resolve("shipsmooth-beta.toml"));
+        assertTrue(betaConfig.contains(javaRepo.toRealPath().toString()) && betaConfig.contains("beta-repo"),
+            "shipsmooth-beta.toml is seeded from shipsmooth.toml plus the beta's own project:\n" + betaConfig);
+    }
+
+    private Path gitRepo(String name) throws Exception {
+        Path repo = Files.createDirectories(work.resolve(name));
+        Exec init = exec(Map.of("PATH", System.getenv("PATH"), "HOME", work.toString()), repo, "git", "init", "-q");
+        assertEquals(0, init.code(), init.output());
+        return repo;
+    }
+
     // ---- helpers -------------------------------------------------------------------
 
     private Path requiredDir(String property) {
