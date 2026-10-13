@@ -152,7 +152,7 @@ pub struct LeafContext {
 fn dispatch_state_dependent(leaf: &mut dyn FnMut(&LeafContext) -> i32) -> i32 {
     let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::Path::new(".").to_path_buf());
     let project = ProjectContext::from_dir(&cwd);
-    let resolver = ProjectDataStoreResolver::new(ds::config_file::locate());
+    let resolver = ProjectDataStoreResolver::with_fallback(ds::config_file::locate_beta(), ds::config_file::locate());
     let resolution = resolver.resolve(&project.repo_root, project.remote_url());
 
     match gate(resolution) {

@@ -25,18 +25,32 @@ pub struct ConfigWriter {
     /// The `[toml-schema] location` to emit; `None` means version only
     /// (spec-valid: `location` is optional).
     schema_location: Option<String>,
+    /// Copy-on-first-write source (plan-115): while `config_file` does not exist,
+    /// the upsert starts from this file's content instead of an empty document.
+    /// The seed itself is only ever read.
+    seed: Option<PathBuf>,
 }
 
 impl ConfigWriter {
     /// Production shape: emits the build's baked schema location.
     pub fn new(config_file: PathBuf) -> ConfigWriter {
-        ConfigWriter { config_file, schema_location: Some(schema_config::SCHEMA_LOCATION.to_string()) }
+        ConfigWriter {
+            config_file,
+            schema_location: Some(schema_config::SCHEMA_LOCATION.to_string()),
+            seed: None,
+        }
+    }
+
+    /// Seed the first write from `seed` (the shared `shipsmooth.toml`), so the
+    /// beta's own config starts as a copy of every project already set up.
+    pub fn seeded_from(self, seed: PathBuf) -> ConfigWriter {
+        ConfigWriter { seed: Some(seed), ..self }
     }
 
     /// Inject the schema `location` to emit (tests only).
     #[cfg(test)]
     pub fn with_schema_location(config_file: PathBuf, schema_location: Option<String>) -> ConfigWriter {
-        ConfigWriter { config_file, schema_location }
+        ConfigWriter { config_file, schema_location, seed: None }
     }
 
     /// Upsert a `separate-dir` entry recording the chosen `storageRoot`.
@@ -100,10 +114,15 @@ impl ConfigWriter {
     /// silently overwrite. Parsing as a `DocumentMut` (not into the model)
     /// preserves unknown-but-valid content verbatim across the upsert.
     fn read_or_empty(&self) -> std::io::Result<toml_edit::DocumentMut> {
-        if !self.config_file.exists() {
-            return Ok(toml_edit::DocumentMut::new());
-        }
-        std::fs::read_to_string(&self.config_file)?
+        let source = if self.config_file.exists() {
+            &self.config_file
+        } else {
+            match self.seed.as_ref().filter(|seed| seed.exists()) {
+                Some(seed) => seed,
+                None => return Ok(toml_edit::DocumentMut::new()),
+            }
+        };
+        std::fs::read_to_string(source)?
             .parse::<toml_edit::DocumentMut>()
             .map_err(std::io::Error::other)
     }

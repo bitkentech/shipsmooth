@@ -26,14 +26,25 @@ const STORAGE_EMBEDDED: &str = "same-repo";
 const STORAGE_FILESYSTEM: &str = "separate-dir";
 
 pub struct ProjectDataStoreResolver {
-    /// Injected config-file location (Java's `ConfigFileLocator`), so tests
-    /// never touch the real `~/.config/shipsmooth/shipsmooth.toml`.
-    config_file: PathBuf,
+    /// Injected config-file locations (Java's `ConfigFileLocator`), so tests
+    /// never touch the real `~/.config/shipsmooth/shipsmooth.toml`. Consulted in
+    /// order; the first file with an entry for the project wins.
+    config_files: Vec<PathBuf>,
 }
 
 impl ProjectDataStoreResolver {
+    /// Single-file resolver (tests only; the binary always uses [`Self::with_fallback`]).
+    #[cfg(test)]
     pub fn new(config_file: PathBuf) -> ProjectDataStoreResolver {
-        ProjectDataStoreResolver { config_file }
+        ProjectDataStoreResolver { config_files: vec![config_file] }
+    }
+
+    /// Per-project fallback (plan-115): look the project up in `primary` (the
+    /// beta's own config) and, only when it has no entry there, in `fallback`
+    /// (the shared `shipsmooth.toml`), so a project set up by the Java product
+    /// after the beta config was seeded is still found.
+    pub fn with_fallback(primary: PathBuf, fallback: PathBuf) -> ProjectDataStoreResolver {
+        ProjectDataStoreResolver { config_files: vec![primary, fallback] }
     }
 
     /// Classify per the plan-85 branch table: `Settled` when the location is
@@ -43,9 +54,11 @@ impl ProjectDataStoreResolver {
     /// `local_path` is the canonical repo root (`git rev-parse --show-toplevel`);
     /// `remote_url` the origin URL if present.
     pub fn resolve(&self, local_path: &Path, remote_url: Option<&str>) -> DataStoreResolution {
-        if let Some(config) = StandaloneConfig::parse(&self.config_file) {
-            if let Some(entry) = config.matching_entry(local_path, remote_url) {
-                return from_config_entry(local_path, entry);
+        for config_file in &self.config_files {
+            if let Some(config) = StandaloneConfig::parse(config_file) {
+                if let Some(entry) = config.matching_entry(local_path, remote_url) {
+                    return from_config_entry(local_path, entry);
+                }
             }
         }
         from_filesystem(local_path)

@@ -15,6 +15,13 @@ pub fn locate() -> PathBuf {
     )
 }
 
+/// The shipsmooth-beta product's own config (plan-115), next to the shared
+/// `shipsmooth.toml`. The beta writes only here — seeded from the shared file
+/// on its first write — and reads it before falling back to the shared file.
+pub fn locate_beta() -> PathBuf {
+    locate().with_file_name("shipsmooth-beta.toml")
+}
+
 /// Pure config-home selection — exposed for testing the per-platform branches.
 fn config_file_for(xdg_config_home: Option<&str>, app_data: Option<&str>, user_home: &str) -> PathBuf {
     let config_home = match (blank_to_none(xdg_config_home), blank_to_none(app_data)) {

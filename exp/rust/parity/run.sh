@@ -134,14 +134,22 @@ EOF
     esac
     run_one "$bin" "$dir" info      store info
     run_one "$bin" "$dir" info-json store info --json
-    if [ -f "$SCFG/shipsmooth/shipsmooth.toml" ]; then
+    # plan-115: shipsmooth-beta writes only its own shipsmooth-beta.toml (seeded
+    # from shipsmooth.toml on first write), so compare the config each side
+    # actually uses: the beta file when present, else the shared one. That the
+    # beta never writes shipsmooth.toml is pinned by its unit tests and IT-2.
+    local cfg="$SCFG/shipsmooth/shipsmooth.toml"
+    if [ "$bin" = "$SS_RUST" ] && [ -f "$SCFG/shipsmooth/shipsmooth-beta.toml" ]; then
+        cfg="$SCFG/shipsmooth/shipsmooth-beta.toml"
+    fi
+    if [ -f "$cfg" ]; then
         # The schema location's ref is allowed to differ between the two
         # implementations: Java pins its own release tag (v<ver>), while the
         # shipsmooth-beta build points at the unversioned `releases` branch
         # (plan-115, 05 §4). Normalise either ref so the rest of the file stays
         # byte-checked — the location itself is verified by hand per release.
         sed -E 's#(shipsmooth/)(v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?|releases)(/dist)#\1<SCHEMA-REF>\4#' \
-            "$SCFG/shipsmooth/shipsmooth.toml" >"$dir/shipsmooth.toml"
+            "$cfg" >"$dir/shipsmooth.toml"
     fi
     # PB-360: `store init` also stamps a manifest.toml at the data root. Capture
     # it with only `cli-version` normalised — that field carries the writing
