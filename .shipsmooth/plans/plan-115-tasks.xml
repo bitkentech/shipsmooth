@@ -21,6 +21,10 @@
                     <timestamp>2026-10-13T08:28:24.737Z</timestamp>
                     <message>De-risk draft ready for review (2d2274d). All 3 POSIX targets cross-compile from Linux; darwin pinned to minos 11.0 via own zig linker wrapper (cargo-zigbuild default gives 15.0). Darwin binaries NOT yet executed on a Mac. Parity 60/60 with schema ref normalised. Java/beta write different schema.location values to the shared config (05 ��4 'agree' claim is false unless Java changes too).</message>
                 </comment>
+                <comment>
+                    <timestamp>2026-10-13T10:19:32.302Z</timestamp>
+                    <message>Correction to the previous comment: no schema.location ping-pong. Both writers add [toml-schema] only if absent (Rust config_writer.rs:114, Java ConfigWriter.java:83), so the first product to create shipsmooth.toml sets location and the other never changes it. 05 ��4's 'overwrite each other' concern is likewise false.</message>
+                </comment>
             </comments>
             <deviations/>
         </task>
