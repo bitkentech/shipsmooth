@@ -24,6 +24,7 @@ import java.util.Set;
  * <p>Every check runs before anything outward:
  * <ol>
  *   <li>the gate (off by default; {@code -PpublishBeta=true});</li>
+ *   <li>every input present: the three platform binaries and the assembled payload;</li>
  *   <li>a clean tracked working tree;</li>
  *   <li>{@code v<version>} absent locally and on origin;</li>
  *   <li>the linux-x64 binary's {@code --version} equals the release version — the beta's
@@ -74,14 +75,23 @@ public class PublishBetaRelease {
     }
 
     public static void main(String[] args) throws Exception {
+        new PublishBetaRelease(parseArgs(args), PublishRelease::runCommand).run();
+    }
+
+    /**
+     * {@code <version> <repoRoot> <binDir> <payloadDir> <outputDir> [--publish-beta]}, as
+     * passed by the {@code publishBetaRelease} Gradle task. The worktree lives under the
+     * (gitignored) output dir, so a run interrupted before its cleanup leaves nothing in
+     * the checkout.
+     */
+    static Config parseArgs(String[] args) {
         if (args.length < 5) {
-            System.err.println("Usage: PublishBetaRelease <version> <repoRoot> <binDir> <payloadDir> <outputDir> [--publish-beta]");
-            System.exit(1);
+            throw new IllegalArgumentException(
+                "Usage: PublishBetaRelease <version> <repoRoot> <binDir> <payloadDir> <outputDir> [--publish-beta]");
         }
         Path outputDir = Path.of(args[4]);
-        Config config = new Config(List.of(args).contains("--publish-beta"), args[0], Path.of(args[1]),
+        return new Config(List.of(args).contains("--publish-beta"), args[0], Path.of(args[1]),
             Path.of(args[2]), Path.of(args[3]), outputDir, outputDir.resolve("releases-beta-worktree"));
-        new PublishBetaRelease(config, PublishRelease::runCommand).run();
     }
 
     public void run() throws IOException, InterruptedException {
@@ -90,6 +100,7 @@ public class PublishBetaRelease {
                 + "It publishes outward (a tag, the " + BRANCH + " branch, a GitHub release); "
                 + "re-run with -PpublishBeta=true to proceed.");
         }
+        assertInputsPresent();
         assertCleanTrackedTree();
         assertTagAbsent();
         assertBinaryVersion();
@@ -102,6 +113,20 @@ public class PublishBetaRelease {
         createRelease(mainSha, zips);
         verifyRelease();
         System.out.println("shipsmooth-beta " + config.tag() + " published.");
+    }
+
+    private void assertInputsPresent() {
+        for (String platform : PackageBeta.PLATFORMS) {
+            Path binary = PackageBeta.binary(config.binDir(), platform);
+            if (!Files.isRegularFile(binary)) {
+                throw new IllegalStateException("missing " + platform + " binary: " + binary
+                    + " (run `./gradlew betaBinaries` in exp/rust)");
+            }
+        }
+        if (!Files.isDirectory(config.payloadDir())) {
+            throw new IllegalStateException("missing assembled payload: " + config.payloadDir()
+                + " (run `./gradlew :harness:claude:assembleClaudeBeta`)");
+        }
     }
 
     private void assertCleanTrackedTree() throws IOException, InterruptedException {
@@ -215,10 +240,6 @@ public class PublishBetaRelease {
 
     /** Copies {@code src} to {@code dst}, preserving the executable bit (the installer script). */
     private static void copyTree(Path src, Path dst) throws IOException {
-        if (!Files.isDirectory(src)) {
-            throw new IllegalStateException("missing assembled payload: " + src
-                + " (run `./gradlew :harness:claude:assembleClaudeBeta`)");
-        }
         Files.walkFileTree(src, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {

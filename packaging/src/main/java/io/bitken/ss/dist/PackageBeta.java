@@ -40,8 +40,7 @@ public class PackageBeta {
 
     public static void main(String[] args) throws IOException {
         if (args.length != 3) {
-            System.err.println("Usage: PackageBeta <version> <binDir> <outputDir>");
-            System.exit(1);
+            throw new IllegalArgumentException("Usage: PackageBeta <version> <binDir> <outputDir>");
         }
         new PackageBeta(args[0], Path.of(args[1]), Path.of(args[2])).run()
             .forEach(zip -> System.out.println("Beta zip: " + zip));

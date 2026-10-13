@@ -45,4 +45,25 @@ class PackageBetaTest {
             }
         }
     }
+
+    @Test
+    void aMissingPlatformBinaryFailsWithTheBuildHint() throws Exception {
+        Path binDir = tmp.resolve("beta-bin");
+        Files.writeString(Files.createDirectories(binDir.resolve("linux-x64")).resolve("shipsmooth-beta"), "x");
+
+        IllegalStateException e = assertThrows(IllegalStateException.class,
+            () -> new PackageBeta("0.1.0-beta", binDir, tmp.resolve("dist")).run());
+        assertTrue(e.getMessage().contains("darwin-x64") && e.getMessage().contains("betaBinaries"), e.getMessage());
+    }
+
+    @Test
+    void main_packagesFromArgs_andRejectsBadUsage() throws Exception {
+        Path binDir = tmp.resolve("beta-bin");
+        for (String platform : PackageBeta.PLATFORMS) {
+            Files.writeString(Files.createDirectories(binDir.resolve(platform)).resolve("shipsmooth-beta"), platform);
+        }
+        PackageBeta.main(new String[]{"0.1.0-beta", binDir.toString(), tmp.resolve("out").toString()});
+        assertTrue(Files.exists(tmp.resolve("out/shipsmooth-beta-0.1.0-beta-darwin-arm64.zip")));
+        assertThrows(IllegalArgumentException.class, () -> PackageBeta.main(new String[]{"0.1.0-beta"}));
+    }
 }

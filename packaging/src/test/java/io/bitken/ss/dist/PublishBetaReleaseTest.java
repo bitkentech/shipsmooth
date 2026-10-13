@@ -5,10 +5,12 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,17 +24,25 @@ class PublishBetaReleaseTest {
         final List<String> commands = new ArrayList<>();
         String binaryVersion = "0.1.0-beta";
         String localTags = "";
+        String remoteTags = "";
+        String remoteHeads = "";
+        String status = "";
+        String failOn = null;
         String releaseView = "{\"isDraft\":false,\"isPrerelease\":true,\"assets\":["
             + "{\"name\":\"shipsmooth-beta-0.1.0-beta-linux-x64.zip\"},"
             + "{\"name\":\"shipsmooth-beta-0.1.0-beta-darwin-x64.zip\"},"
             + "{\"name\":\"shipsmooth-beta-0.1.0-beta-darwin-arm64.zip\"}]}";
 
         @Override
-        public String run(List<String> cmd, Path dir) {
+        public String run(List<String> cmd, Path dir) throws IOException {
             String line = String.join(" ", cmd);
             commands.add(line);
+            if (failOn != null && line.startsWith(failOn)) throw new IOException("Command failed: " + line);
             if (line.endsWith("--version")) return binaryVersion + "\n";
+            if (line.startsWith("git status")) return status;
             if (line.startsWith("git tag -l")) return localTags;
+            if (line.startsWith("git ls-remote --tags")) return remoteTags;
+            if (line.startsWith("git ls-remote --heads")) return remoteHeads;
             if (line.startsWith("git rev-parse --short HEAD")) return "abc1234\n";
             if (line.startsWith("gh release view")) return releaseView;
             return "";
@@ -86,16 +96,89 @@ class PublishBetaReleaseTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"gate-off", "version-mismatch", "tag-exists"})
+    @ValueSource(strings = {"gate-off", "missing-binary", "missing-payload", "dirty-tree",
+        "local-tag-exists", "remote-tag-exists", "version-mismatch"})
     void refusesBeforeAnythingOutward(String reason) throws Exception {
         FakeRunner runner = new FakeRunner();
-        boolean enabled = !reason.equals("gate-off");
-        if (reason.equals("version-mismatch")) runner.binaryVersion = "0.0.9-beta";
-        if (reason.equals("tag-exists")) runner.localTags = "v0.1.0-beta\n";
+        PublishBetaRelease.Config config = config(!reason.equals("gate-off"));
+        switch (reason) {
+            case "missing-binary" -> Files.delete(PackageBeta.binary(config.binDir(), "darwin-arm64"));
+            case "missing-payload" -> deleteRecursively(config.payloadDir());
+            case "dirty-tree" -> runner.status = " M Cargo.toml\n";
+            case "local-tag-exists" -> runner.localTags = "v0.1.0-beta\n";
+            case "remote-tag-exists" -> runner.remoteTags = "abc\trefs/tags/v0.1.0-beta\n";
+            case "version-mismatch" -> runner.binaryVersion = "0.0.9-beta";
+            default -> { }
+        }
 
-        assertThrows(IllegalStateException.class, () -> new PublishBetaRelease(config(enabled), runner).run());
+        assertThrows(IllegalStateException.class, () -> new PublishBetaRelease(config, runner).run());
 
         assertFalse(runner.anyOutward(), reason + " must stop before any push or release: " + runner.commands);
-        if (reason.equals("gate-off")) assertTrue(runner.commands.isEmpty(), "gate off runs nothing at all");
+        assertEquals(-1, runner.indexOf("git worktree add"), reason + " must stop before touching any branch");
+        if (Set.of("gate-off", "missing-binary", "missing-payload").contains(reason)) {
+            assertTrue(runner.commands.isEmpty(), reason + " runs nothing at all: " + runner.commands);
+        }
+    }
+
+    /** A failed push leaves no release behind and still removes the worktree. */
+    @Test
+    void aFailedPushCreatesNoRelease_andStillRemovesTheWorktree() throws Exception {
+        FakeRunner runner = new FakeRunner();
+        runner.failOn = "git push";
+
+        assertThrows(IOException.class, () -> new PublishBetaRelease(config(true), runner).run());
+
+        assertEquals(-1, runner.indexOf("gh release create"), "no release without its pushed tag");
+        assertTrue(runner.indexOf("git worktree remove --force") > runner.indexOf("git push"),
+            "the worktree is removed even when the push fails");
+    }
+
+    /** The first beta release creates releases-beta as an orphan; later ones build on the fetched tip. */
+    @Test
+    void createsTheBranchAsAnOrphanOnlyWhenOriginLacksIt() throws Exception {
+        FakeRunner first = new FakeRunner();
+        new PublishBetaRelease(config(true), first).run();
+        assertTrue(first.indexOf("git worktree add --orphan -b releases-beta") >= 0, first.commands.toString());
+
+        FakeRunner later = new FakeRunner();
+        later.remoteHeads = "abc\trefs/heads/releases-beta\n";
+        new PublishBetaRelease(config(true), later).run();
+        assertTrue(later.indexOf("git fetch origin releases-beta") < later.indexOf("git worktree add -B releases-beta"));
+        assertEquals(-1, later.indexOf("git worktree add --orphan"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"draft", "not-prerelease", "missing-asset"})
+    void anUnconfirmedReleaseFailsTheRun(String defect) throws Exception {
+        FakeRunner runner = new FakeRunner();
+        runner.releaseView = switch (defect) {
+            case "draft" -> runner.releaseView.replace("\"isDraft\":false", "\"isDraft\":true");
+            case "not-prerelease" -> runner.releaseView.replace("\"isPrerelease\":true", "\"isPrerelease\":false");
+            default -> runner.releaseView.replace(",{\"name\":\"shipsmooth-beta-0.1.0-beta-darwin-arm64.zip\"}", "");
+        };
+
+        IllegalStateException e = assertThrows(IllegalStateException.class,
+            () -> new PublishBetaRelease(config(true), runner).run());
+        assertTrue(e.getMessage().contains("not a complete, published pre-release"), e.getMessage());
+    }
+
+    @Test
+    void parseArgs_isGatedOffUnlessTheFlagIsPassed() {
+        String[] base = {"0.1.0-beta", "/repo", "/bin", "/payload", "/out"};
+        PublishBetaRelease.Config off = PublishBetaRelease.parseArgs(base);
+        assertFalse(off.enabled());
+        assertEquals("v0.1.0-beta", off.tag());
+        assertEquals(Path.of("/out/releases-beta-worktree"), off.worktreeDir());
+
+        String[] gated = java.util.Arrays.copyOf(base, 6);
+        gated[5] = "--publish-beta";
+        assertTrue(PublishBetaRelease.parseArgs(gated).enabled());
+        assertThrows(IllegalArgumentException.class, () -> PublishBetaRelease.parseArgs(new String[]{"0.1.0-beta"}));
+    }
+
+    private static void deleteRecursively(Path dir) throws IOException {
+        try (var paths = Files.walk(dir)) {
+            paths.sorted(java.util.Comparator.reverseOrder()).forEach(p -> p.toFile().delete());
+        }
     }
 }
