@@ -27,7 +27,12 @@
             <commit></commit>
             <created-from>plan-115-v1</created-from>
             <closed-at-version></closed-at-version>
-            <comments/>
+            <comments>
+                <comment>
+                    <timestamp>2026-10-13T08:06:26.362Z</timestamp>
+                    <message>Scope per plan-115-v2: renamed 'Render the plugin as shipsmooth-beta, with its own installer'; adds install-shipsmooth-beta.sh, renderer script detection, lint, :213 hook command.</message>
+                </comment>
+            </comments>
             <deviations/>
         </task>
         <task>
@@ -76,6 +81,11 @@
             <timestamp>2026-10-13T07:59:03.722Z</timestamp>
             <message>Major deviation before preamble: install-shipsmooth.sh is NOT launcher-agnostic (05 premise wrong). :40 BIN=$RUNTIME_DIR/bin/shipsmooth and :65-66 EXTRACTED_BIN=bin/shipsmooth are hardcoded, so a zip containing bin/shipsmooth-beta dies 'extracted archive is missing bin/shipsmooth'. bin/$NAME is not a safe fix: opencode dev passes NAME=shipsmooth-dev with a Java bin/shipsmooth. Also: hook commands in harness/shared/build.gradle.kts:213,223,233,256 hardcode the 'shipsmooth' NAME argument (and :213 the plugins/cache/bitkentech/shipsmooth fallback path), which Task 2 must cover. Awaiting human decision: keep launcher bin/shipsmooth vs optional 3rd installer arg vs bin/$NAME.</message>
             <blocked>true</blocked>
+        </update>
+        <update>
+            <timestamp>2026-10-13T08:06:25.818Z</timestamp>
+            <message>Unblocked by plan-115-v2: the beta gets a separate install-shipsmooth-beta.sh (Java install-shipsmooth.sh untouched). Task 2 scope widened (beta installer, HookCommandRenderer script detection, lint task, Claude hook command :213), risk stays Medium. Task ids/risks unchanged from v1.</message>
+            <blocked>false</blocked>
         </update>
     </project-updates>
 </plan-tasks>
