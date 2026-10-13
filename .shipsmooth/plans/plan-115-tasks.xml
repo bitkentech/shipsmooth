@@ -26,7 +26,13 @@
                     <message>Correction to the previous comment: no schema.location ping-pong. Both writers add [toml-schema] only if absent (Rust config_writer.rs:114, Java ConfigWriter.java:83), so the first product to create shipsmooth.toml sets location and the other never changes it. 05 ��4's 'overwrite each other' concern is likewise false.</message>
                 </comment>
             </comments>
-            <deviations/>
+            <deviations>
+                <deviation>
+                    <type>minor</type>
+                    <timestamp>2026-10-13T10:26:02.292Z</timestamp>
+                    <message>Scope addition (user-directed, 2026-10-13): beta config isolation. Reads use shipsmooth-beta.toml if present, else shipsmooth.toml; a project missing from shipsmooth-beta.toml falls back to shipsmooth.toml. First write seeds shipsmooth-beta.toml from shipsmooth.toml (atomic copy), and all writes go only to shipsmooth-beta.toml. The beta never writes shipsmooth.toml. Knock-ons: parity run.sh captures shipsmooth-beta.toml on the Rust side; IT-2 asserts shipsmooth.toml is byte-identical after beta runs (Task 4); Task 5 docs describe the copy and the one-way visibility.</message>
+                </deviation>
+            </deviations>
         </task>
         <task>
             <id>2</id>
