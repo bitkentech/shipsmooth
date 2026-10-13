@@ -34,6 +34,18 @@ val prodTokens = mapOf(
         "description" to "Plugin marketplace for bitkentech/shipsmooth",
     ),
 )
+// shipsmooth-beta (plan-115): its own plugin name and the Rust workspace version, under
+// the same `bitkentech` marketplace name it is installed through — which is also the
+// marketplace segment of the beta hook's ${CLAUDE_PLUGIN_ROOT:-...} fallback root.
+val betaVersion = CargoVersion.workspace(rootProject.file("exp/rust/Cargo.toml"))
+val betaTokens = mapOf(
+    "plugin" to mapOf("name" to BetaProduct.NAME, "description" to BetaProduct.description(prodDescription)),
+    "project" to mapOf("version" to betaVersion),
+    "marketplace" to mapOf(
+        "name" to "bitkentech",
+        "description" to "Plugin marketplace for bitkentech/shipsmooth (beta)",
+    ),
+)
 // Windows variant (Maven `windows` profile): prod plugin.name, Windows-specific plugin
 // description, and a -windows marketplace description. (plan-71 Task 25.)
 val windowsTokens = mapOf(
@@ -78,10 +90,12 @@ fun registerClaudeMeta(taskName: String, tokens: Map<String, Any>, baseDir: File
 // Sync paths.
 val claudeProdMetaStage = layout.buildDirectory.dir("stage/claude-prod-meta").get().asFile
 val windowsMetaStage = layout.buildDirectory.dir("stage/windows-meta").get().asFile
+val claudeBetaMetaStage = layout.buildDirectory.dir("stage/claude-beta-meta").get().asFile
 
 val copyClaudeMetaDev = registerClaudeMeta("copyClaudeMetaDev", devTokens, outputDir)
 val copyClaudeMetaProd = registerClaudeMeta("copyClaudeMetaProd", prodTokens, claudeProdMetaStage)
 val copyClaudeMetaWindows = registerClaudeMeta("copyClaudeMetaWindows", windowsTokens, windowsMetaStage)
+val copyClaudeMetaBeta = registerClaudeMeta("copyClaudeMetaBeta", betaTokens, claudeBetaMetaStage)
 
 // copyWindowsReadme: the Windows-only README.md (from claude/src/main/resources/windows/,
 // unfiltered) into a fixed private staging dir, merged by the assembleWindows Sync.
@@ -176,6 +190,27 @@ registerPayloadSync(
         SyncSource(copyClaudeMetaProd, claudeProdMetaStage),
         // plan-91 Task 4: stage shipsmooth.tosd into build/schemas/ (-> releases dist/schemas/).
         SyncSource(pluginResources.tasks.named("copySchemaProd"), claudeProdSchemaStage),
+    ),
+)
+
+// ---------------------------------------------------------------------------
+// assembleClaudeBeta (plan-115): the full shipsmooth-beta Claude payload — the beta
+// render (skills/ + hooks/ with install-shipsmooth-beta.sh + session-start-config.json)
+// and the beta manifests, Synced into <build.outputDir> as the sole writer, like
+// assembleClaudeProd. No dist/*.js: the prod hook is the sh installer, and the Node
+// session-start path is dev-only. No schemas/: the beta's [toml-schema] location is the
+// unversioned `releases`-branch copy, which the Java release keeps publishing.
+// Defaults to repo-root build-claude-beta/ so it can never prune the prod build/ payload.
+// ---------------------------------------------------------------------------
+val claudeBetaRenderStage = pluginResources.layout.buildDirectory.dir("render/claude-beta").get().asFile
+registerPayloadSync(
+    syncTaskName = "assembleClaudeBeta",
+    description = "Assemble the full shipsmooth-beta Claude payload into <beta.outputDir> (default build-claude-beta/).",
+    payloadDir = (findProperty("beta.outputDir") as String?)?.let { file(it) }
+        ?: rootProject.layout.projectDirectory.dir("build-claude-beta").asFile,
+    sources = listOf(
+        SyncSource(pluginResources.tasks.named("renderClaudeBeta"), claudeBetaRenderStage),
+        SyncSource(copyClaudeMetaBeta, claudeBetaMetaStage),
     ),
 )
 

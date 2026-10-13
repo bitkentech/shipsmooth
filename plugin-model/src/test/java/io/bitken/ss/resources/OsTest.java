@@ -21,6 +21,12 @@ class OsTest {
     }
 
     @Test
+    void windows_productLauncher_staysTheJavaCmdShim() {
+        // plan-115: the beta is POSIX-only; Windows keeps the Java launcher whatever the product.
+        assertEquals("shipsmooth.cmd", Os.WINDOWS.launcherFileName("shipsmooth-beta"));
+    }
+
+    @Test
     void posix_javaExe_isJava() {
         assertEquals("java", Os.POSIX.javaExe());
     }

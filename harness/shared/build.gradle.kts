@@ -323,9 +323,9 @@ val betaVersion = CargoVersion.workspace(repoRoot.file("exp/rust/Cargo.toml").as
 val claudeBetaSpec = claudeSpec(
     BuildEnv.PROD,
     baseSpec(BuildEnv.PROD).copy(
-        pluginBaseName = "shipsmooth-beta",
+        pluginBaseName = BetaProduct.NAME,
         pluginVersion = betaVersion,
-        pluginDescription = "[BETA] Rust CLI preview of shipsmooth — expect rough edges. $prodDescription",
+        pluginDescription = BetaProduct.description(prodDescription),
     ),
 ).copy(outputDir = layout.buildDirectory.dir("render/claude-beta").get().asFile.path)
 
@@ -341,18 +341,30 @@ val renderWindows = registerRender("renderWindows", windowsSpec)
 // claude-prod hooks.json must never reference a *bare* ${CLAUDE_PLUGIN_ROOT} — only
 // the ${CLAUDE_PLUGIN_ROOT:-<fallback>} form. Fail the build if the fallback regresses.
 val verifyClaudeHookFallback by tasks.registering {
-    description = "Fail if claude-prod hooks.json uses a bare \${CLAUDE_PLUGIN_ROOT} (no :- fallback)."
+    description = "Fail if a claude-prod/beta hooks.json uses a bare \${CLAUDE_PLUGIN_ROOT} or another product's installer."
     group = "verification"
-    dependsOn(renderClaudeProd)
-    val hooksJson = layout.buildDirectory.file("render/claude-prod/hooks/hooks.json")
-    inputs.file(hooksJson)
+    dependsOn(renderClaudeProd, renderClaudeBeta)
+    // plan-115: both products, each pinned to its OWN installer + NAME/version args, so
+    // the beta can never call install-shipsmooth.sh (or the reverse) and a hook-command
+    // refactor cannot silently change the Java product's string.
+    val expectations = listOf(claudeProdSpec, claudeBetaSpec).map { spec ->
+        layout.buildDirectory.file("render/${File(spec.outputDir).name}/hooks/hooks.json") to
+            "/hooks/install-${spec.pluginBaseName}.sh\\\" ${spec.pluginBaseName} ${spec.pluginVersion}\""
+    }
+    expectations.forEach { (hooksJson, _) -> inputs.file(hooksJson) }
     doLast {
-        val text = hooksJson.get().asFile.readText()
-        if (text.contains("\${CLAUDE_PLUGIN_ROOT}")) {
-            throw GradleException(
-                "claude-prod hooks.json contains a bare \${CLAUDE_PLUGIN_ROOT} — it expands empty for " +
-                "SessionStart hooks in the cloud env and installs nothing. Use \${CLAUDE_PLUGIN_ROOT:-<fallback>} " +
-                "(see claudeSpec in harness/shared/build.gradle.kts, plan-92).")
+        for ((hooksJson, expectedTail) in expectations) {
+            val file = hooksJson.get().asFile
+            val text = file.readText()
+            if (text.contains("\${CLAUDE_PLUGIN_ROOT}")) {
+                throw GradleException(
+                    "$file contains a bare \${CLAUDE_PLUGIN_ROOT} — it expands empty for " +
+                    "SessionStart hooks in the cloud env and installs nothing. Use \${CLAUDE_PLUGIN_ROOT:-<fallback>} " +
+                    "(see claudeProdHookCommand in harness/shared/build.gradle.kts, plan-92).")
+            }
+            if (!text.contains(expectedTail)) {
+                throw GradleException("$file must invoke its own installer, ending in: $expectedTail")
+            }
         }
     }
 }
@@ -426,11 +438,12 @@ val betaE2eTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets["test"].output.classesDirs
     classpath = sourceSets["test"].runtimeClasspath
     useJUnitPlatform { includeTags("beta-e2e") }
-    dependsOn(renderClaudeProd, renderClaudeBeta)
+    // The beta side is the ASSEMBLED payload (what a user installs), not the bare render.
+    dependsOn(renderClaudeProd, ":harness:claude:assembleClaudeBeta")
     val betaDist = (findProperty("beta.dist.dir") as String?)
         ?: repoRoot.dir("exp/rust/build/beta-dist").asFile.path
     systemProperty("beta.dist.dir", betaDist)
-    systemProperty("beta.render.dir", layout.buildDirectory.dir("render/claude-beta").get().asFile.path)
+    systemProperty("beta.render.dir", repoRoot.dir("build-claude-beta").asFile.path)
     systemProperty("java.render.dir", claudeProdSpec.outputDir)
     // Always re-run: the inputs (an external zip, the real installers) are not tracked.
     outputs.upToDateWhen { false }

@@ -13,15 +13,14 @@
 #
 # Strict POSIX sh using only the stock-macOS toolset (sh, curl, unzip, uname,
 # chmod, mktemp, mv): detect platform, skip if already installed, download the
-# release zip, unzip (Info-ZIP restores the stored +x on runtime/lib/jspawnhelper
-# that OpenJ9 needs to spawn subprocesses), force-chmod the launcher as a
-# backstop, then atomically mv into place. Mirrors session-start.ts.
+# release zip (one file: bin/shipsmooth-beta), unzip, force-chmod the launcher
+# as a backstop, then atomically mv into place.
 #
 # Env override (tests): SS_URL_BASE replaces the GitHub releases base URL.
 set -eu
 
-NAME="${1:?usage: install-shipsmooth.sh <plugin-name> <version>}"
-VERSION="${2:?usage: install-shipsmooth.sh <plugin-name> <version>}"
+NAME="${1:?usage: install-shipsmooth-beta.sh <plugin-name> <version>}"
+VERSION="${2:?usage: install-shipsmooth-beta.sh <plugin-name> <version>}"
 
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/$NAME"
 URL_BASE="${SS_URL_BASE:-https://github.com/bitkentech/shipsmooth/releases/download/v$VERSION}"
