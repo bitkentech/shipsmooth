@@ -25,6 +25,10 @@
                     <timestamp>2026-10-13T10:19:32.302Z</timestamp>
                     <message>Correction to the previous comment: no schema.location ping-pong. Both writers add [toml-schema] only if absent (Rust config_writer.rs:114, Java ConfigWriter.java:83), so the first product to create shipsmooth.toml sets location and the other never changes it. 05 ��4's 'overwrite each other' concern is likewise false.</message>
                 </comment>
+                <comment>
+                    <timestamp>2026-10-13T10:31:01.035Z</timestamp>
+                    <message>Config-isolation de-risk draft ready for review (a2056ba): resolver with_fallback(beta, shared), ConfigWriter::seeded_from(shared). 294 Rust tests / 0 failed, clippy clean, parity 60/60. Manual check: shared file sha unchanged across beta init; beta finds Java-set-up repos before and after the seed. One-way gap only matters for separate-dir (same-repo is found from the filesystem without a config entry).</message>
+                </comment>
             </comments>
             <deviations>
                 <deviation>
