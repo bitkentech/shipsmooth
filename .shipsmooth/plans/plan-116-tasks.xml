@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>116</plan>
+    <plan-version>plan-116-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>active</status>
+        <created>2026-10-15</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>pending</status>
+            <name>Set plugin author to Bitken Technologies in all manifests</name>
+            <commit></commit>
+            <created-from>plan-116-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-10-15T12:57:04.642+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
