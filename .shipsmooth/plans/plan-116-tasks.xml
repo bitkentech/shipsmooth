@@ -11,9 +11,9 @@
         <task>
             <id>1</id>
             <risk>low</risk>
-            <status>pending</status>
+            <status>agent-coded</status>
             <name>Set plugin author to Bitken Technologies in all manifests</name>
-            <commit></commit>
+            <commit>4728905af4463392b46472c46f3c4bb783f06e7d</commit>
             <created-from>plan-116-v1</created-from>
             <closed-at-version></closed-at-version>
             <comments/>
