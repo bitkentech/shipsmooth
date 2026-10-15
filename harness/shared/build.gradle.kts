@@ -431,6 +431,7 @@ val copySchemaProd = registerCopySchema(
 // (needs cargo + cargo-zigbuild + zig for the default, real-zip path via :packaging:packageBeta).
 tasks.named<Test>("test") {
     useJUnitPlatform { excludeTags("beta-e2e") }
+    systemProperty("repo.root", repoRoot.asFile.path)
 }
 
 val betaE2eTest by tasks.registering(Test::class) {

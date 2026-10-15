@@ -4,7 +4,7 @@
   "description": "${plugin.description}",
   "skills": "./skills/",
   "author": {
-    "name": "Pramod Biligiri"
+    "name": "Bitken Technologies"
   },
   "homepage": "https://github.com/bitkentech/shipsmooth",
   "repository": "https://github.com/bitkentech/shipsmooth",

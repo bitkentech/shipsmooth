@@ -2,7 +2,7 @@
   "name": "shipsmooth",
   "description": "A workflow for agentic coding where 1) you track implementation plans and tasks in version control, issue tracker 2) identify and implement the risky/unknown bits first 3) implement vertical slices of functionality 4) only increase quality and test coverage after sufficient de-risking",
   "author": {
-    "name": "Pramod Biligiri"
+    "name": "Bitken Technologies"
   },
   "homepage": "https://github.com/bitkentech/shipsmooth",
   "repository": "https://github.com/bitkentech/shipsmooth",

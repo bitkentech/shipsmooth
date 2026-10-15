@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<plan-tasks>
+    <plan>116</plan>
+    <plan-version>plan-116-v1</plan-version>
+    <metadata>
+        <backlog-issue></backlog-issue>
+        <status>complete</status>
+        <created>2026-10-15</created>
+    </metadata>
+    <tasks>
+        <task>
+            <id>1</id>
+            <risk>low</risk>
+            <status>closed</status>
+            <name>Set plugin author to Bitken Technologies in all manifests</name>
+            <commit>4728905af4463392b46472c46f3c4bb783f06e7d</commit>
+            <created-from>plan-116-v1</created-from>
+            <closed-at-version></closed-at-version>
+            <comments/>
+            <deviations/>
+        </task>
+    </tasks>
+    <project-updates>
+        <update>
+            <timestamp>2026-10-15T12:57:04.642+05:30</timestamp>
+            <message>Plan initialised.</message>
+            <blocked>false</blocked>
+        </update>
+        <update>
+            <timestamp>2026-10-15T13:02:45.603+05:30</timestamp>
+            <message>Plan complete. Plugin author is Bitken Technologies in all four manifests; LICENSE/README untouched by design.</message>
+            <blocked>false</blocked>
+        </update>
+    </project-updates>
+</plan-tasks>
